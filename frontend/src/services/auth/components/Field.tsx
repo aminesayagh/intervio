@@ -8,6 +8,7 @@ import {
 } from '@heroui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Icon } from '../../ui-kit'
 
 type Props = {
   name: string
@@ -60,7 +61,7 @@ export function Field({
       {isPassword ? (
         <InputGroup>
           <InputGroup.Input placeholder={placeholder} />
-          <InputGroup.Suffix>
+          <InputGroup.Suffix className="border-s-0">
             <button
               type="button"
               className="flex text-muted hover:text-foreground"
@@ -68,7 +69,7 @@ export function Field({
               aria-pressed={shown}
               onClick={() => setShown(!shown)}
             >
-              <EyeIcon crossed={shown} />
+              <Icon name={shown ? 'Eye-slash' : 'Eye'} size={18} />
             </button>
           </InputGroup.Suffix>
         </InputGroup>
@@ -85,26 +86,5 @@ export function Field({
                 : v.validationErrors.join(' ')}
       </FieldError>
     </TextField>
-  )
-}
-
-/** Open eye: show the password. Crossed eye: hide it again. */
-function EyeIcon({ crossed }: { crossed: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-      {crossed && <path d="M3 3l18 18" />}
-    </svg>
   )
 }

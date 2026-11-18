@@ -80,6 +80,7 @@ export function LoginPage() {
           type="password"
           autoComplete="current-password"
           label={t('login.password')}
+          placeholder={t('placeholders.password')}
           value={password}
           onChange={setPassword}
           check={check.required}

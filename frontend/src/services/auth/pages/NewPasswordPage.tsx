@@ -48,6 +48,7 @@ export function NewPasswordPage() {
           type="password"
           autoComplete="new-password"
           label={t('newPassword.password')}
+          placeholder={t('placeholders.password')}
           help={t('signup.passwordHelp')}
           value={password}
           onChange={setPassword}
@@ -58,6 +59,7 @@ export function NewPasswordPage() {
           type="password"
           autoComplete="new-password"
           label={t('newPassword.confirm')}
+          placeholder={t('placeholders.password')}
           value={confirm}
           onChange={setConfirm}
           check={check.confirmation(password)}

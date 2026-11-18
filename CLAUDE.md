@@ -24,7 +24,8 @@ Keep only the latest version of each document: update it in place, do not create
 - Corners are small and never fully rounded: buttons share the fields' radius (`--field-radius`).
 - Compact interface to show more information: 14 px base (`html { font-size: 87.5% }`), page text at the label size (`text-sm`), tight spacing.
 - Main action buttons (`.button--primary`) have a soft shadow in the primary color; fields have only a faint one.
-- Name and email fields show a placeholder (sample name, sample work email); password fields do not.
+- Every text field shows a placeholder: sample name, sample work email, and dots (••••) for passwords.
+- **Icons come only from the Intervio set** in `frontend/public/icons/`: use `<Icon name="Eye" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon library.
 - The wireframes stay grayscale; this identity applies to the built app only.
 
 ## Versioning

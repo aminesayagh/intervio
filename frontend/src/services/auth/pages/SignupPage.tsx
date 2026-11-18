@@ -95,6 +95,7 @@ export function SignupPage() {
           type="password"
           autoComplete="new-password"
           label={t('signup.password')}
+          placeholder={t('placeholders.password')}
           help={t('signup.passwordHelp')}
           value={password}
           onChange={setPassword}
@@ -105,6 +106,7 @@ export function SignupPage() {
           type="password"
           autoComplete="new-password"
           label={t('signup.confirmPassword')}
+          placeholder={t('placeholders.password')}
           value={confirm}
           onChange={setConfirm}
           check={check.confirmation(password)}

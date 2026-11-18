@@ -80,7 +80,8 @@
   },
   "placeholders": {
     "fullName": "Claire Martin",
-    "email": "name@company.com"
+    "email": "name@company.com",
+    "password": "••••••••••••"
   },
   "password": {
     "show": "Show password",

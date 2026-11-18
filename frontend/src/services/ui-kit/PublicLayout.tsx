@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { setLanguage, type Language } from '../i18n'
 import { Link } from '../navigation'
+import { Icon } from './Icon'
 import { applyTheme, initialTheme, type Theme } from './theme'
 
 /** Public screens (accounts, onboarding): header, then a centered column (grid columns 5–8). */
@@ -58,24 +59,14 @@ function ThemeToggle() {
   return (
     <button
       type="button"
+      className="flex text-muted hover:text-foreground"
       aria-label={t(next === 'dark' ? 'switchToDark' : 'switchToLight')}
       onClick={() => {
         applyTheme(next, true)
         setTheme(next)
       }}
     >
-      {/* Half-filled circle */}
-      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-        <circle
-          cx="12"
-          cy="12"
-          r="11"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <path d="M12 1a11 11 0 0 0 0 22z" fill="currentColor" />
-      </svg>
+      <Icon name={next === 'dark' ? 'Moon' : 'Sun'} size={20} />
     </button>
   )
 }

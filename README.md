@@ -11,25 +11,14 @@ One repository with a Spring Boot backend and a React frontend. Design documents
 ## Run locally
 
 ```bash
-docker compose up -d            # PostgreSQL on localhost:5433
-
-cd backend
-./mvnw spring-boot:run          # API on http://localhost:8080
-
-cd frontend
-pnpm install
-pnpm dev                        # App on http://localhost:5173, /api is proxied to the backend
+make install    # once: frontend libraries
+make dev        # PostgreSQL, backend (http://localhost:8080) and frontend (http://localhost:5173)
 ```
+
+Ctrl+C stops the backend and the frontend; `make db-stop` stops PostgreSQL. Run `make` to list every command.
 
 ## Checks
 
 ```bash
-cd backend && ./mvnw verify     # unit tests, then *IT integration tests (Testcontainers)
-
-cd frontend
-pnpm lint
-pnpm typecheck
-pnpm format:check
-pnpm test
-pnpm build
+make check      # frontend lint, types and formatting, then all backend and frontend tests
 ```

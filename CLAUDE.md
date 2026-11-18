@@ -18,6 +18,12 @@ Keep only the latest version of each document: update it in place, do not create
 
 - **No user-facing text from the backend.** Errors are sent as `{"code": "ERROR_..."}` (upper case, `ERROR_` prefix, for example `ERROR_AUTH_FAIL`). The frontend maps each key to the translated message (English and French). Emails are the only text the backend writes.
 
+## Visual identity (the built app)
+
+- Colors and font are the tokens in `frontend/src/services/ui-kit/theme.css` (primary #f4c542, background #f2f1ec, text #252522, font Manrope). HeroUI's variables point to these tokens; change the tokens, never HeroUI's values directly.
+- Corners are small and never fully rounded: buttons share the fields' radius (`--field-radius`).
+- The wireframes stay grayscale; this identity applies to the built app only.
+
 ## Versioning
 
 - The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning: after each finished piece of work (a feature, a doc update, a board change), commit with a clear message and push to `origin main`.

@@ -1,0 +1,77 @@
+/*
+ * Intervio visual identity. The tokens below are the single source of truth;
+ * HeroUI's variables are mapped to them further down.
+ */
+:root {
+  --color-primary: #f4c542;
+  --color-primary-hover: #e5b52e;
+  --color-primary-subtle: #fff5d6;
+
+  --color-background: #f2f1ec;
+  --color-background-secondary: #e8e7df;
+  --color-surface: #fcfbf8;
+
+  --color-text: #252522;
+  --color-text-secondary: #686862;
+  --color-border: #deddd5;
+
+  --font-family: 'Manrope', sans-serif;
+}
+
+/* Dark mode: proposed values derived from the light palette, to be confirmed. */
+.dark,
+[data-theme='dark'] {
+  --color-primary-subtle: #3a3320;
+
+  --color-background: #1c1c1a;
+  --color-background-secondary: #262624;
+  --color-surface: #232321;
+
+  --color-text: #f2f1ec;
+  --color-text-secondary: #a3a39b;
+  --color-border: #3a3a36;
+}
+
+/* HeroUI variables, pointed at the tokens (unlayered, so they win over HeroUI's themes). */
+:root,
+.dark,
+[data-theme='dark'] {
+  --accent: var(--color-primary);
+  --accent-hover: var(--color-primary-hover);
+  --accent-foreground: #252522; /* dark text stays readable on yellow in both modes */
+  --accent-soft: var(--color-primary-subtle);
+  --accent-soft-foreground: var(--color-text);
+
+  --background: var(--color-background);
+  --background-secondary: var(--color-background-secondary);
+  --foreground: var(--color-text);
+  --surface: var(--color-surface);
+  --surface-foreground: var(--color-text);
+  --surface-secondary: var(--color-background-secondary);
+  --overlay: var(--color-surface);
+  --overlay-foreground: var(--color-text);
+  --default: var(--color-background-secondary);
+  --default-foreground: var(--color-text);
+  --muted: var(--color-text-secondary);
+  --border: var(--color-border);
+  --separator: var(--color-border);
+  --field-background: var(--color-surface);
+  --field-foreground: var(--color-text);
+  --field-border: var(--color-border);
+  --field-border-width: 1px;
+
+  /* Corners: small and never fully rounded. */
+  --radius: 0.25rem;
+  --field-radius: 0.375rem;
+}
+
+@theme {
+  --font-sans: var(--font-family);
+}
+
+@layer components {
+  /* HeroUI buttons are 3 × --radius by default; give them the same corners as fields. */
+  .button {
+    border-radius: var(--field-radius);
+  }
+}

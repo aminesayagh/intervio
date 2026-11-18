@@ -1,0 +1,81 @@
+{
+  "login": {
+    "title": "Log in",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgot": "Forgot password?",
+    "submit": "Log in",
+    "noAccount": "No account?",
+    "signUp": "Sign up"
+  },
+  "signup": {
+    "title": "Create your account",
+    "fullName": "Full name",
+    "workEmail": "Work email",
+    "password": "Password",
+    "passwordHelp": "At least 12 characters.",
+    "confirmPassword": "Confirm password",
+    "submit": "Create account",
+    "termsStart": "By creating an account, you agree to the",
+    "terms": "Terms of use",
+    "termsMiddle": "and the",
+    "privacy": "Privacy policy",
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in"
+  },
+  "common": {
+    "google": "Continue with Google",
+    "or": "or",
+    "linkInstead": "Email me a sign-in link instead",
+    "backToLogin": "Back to log in"
+  },
+  "checkEmail": {
+    "title": "Check your email",
+    "sent": "We sent a link to {{email}}. Open it to continue.",
+    "resend": "Resend the link",
+    "resent": "We sent a new link.",
+    "another": "Use another email"
+  },
+  "forgot": {
+    "title": "Reset your password",
+    "intro": "Enter your email to receive a reset link.",
+    "email": "Email",
+    "submit": "Send reset link"
+  },
+  "resetSent": {
+    "title": "Check your email",
+    "body": "If an account exists for this email, we have sent a reset link. The link is valid for 1 hour."
+  },
+  "newPassword": {
+    "title": "Set a new password",
+    "password": "New password",
+    "confirm": "Confirm new password",
+    "submit": "Save password"
+  },
+  "linkInvalid": {
+    "title": "This link is no longer valid",
+    "body": "It has expired or has already been used."
+  },
+  "linkOpening": "Opening the link…",
+  "home": {
+    "loggedIn": "You are logged in as {{name}}.",
+    "logOut": "Log out"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "passwordLength": "Use at least 12 characters.",
+    "mismatch": "The passwords do not match."
+  },
+  "errors": {
+    "ERROR_AUTH_FAIL": "Wrong email or password.",
+    "ERROR_EMAIL_NOT_CONFIRMED": "Confirm your email to log in. We have sent you a new link.",
+    "ERROR_TOO_MANY_ATTEMPTS": "Too many attempts. Try again in 15 minutes.",
+    "ERROR_EMAIL_TAKEN": "An account already exists for this email.",
+    "ERROR_LINK_TOO_SOON": "Wait a minute before asking for a new link.",
+    "ERROR_GOOGLE_FAILED": "Google sign-in did not complete. Try again.",
+    "ERROR_VALIDATION": "Check the fields and try again.",
+    "ERROR_UNKNOWN": "Something went wrong. Try again."
+  }
+}

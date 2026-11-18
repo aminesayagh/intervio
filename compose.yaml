@@ -1,4 +1,4 @@
-# Local PostgreSQL for development. Credentials are local-only defaults.
+# Local services for development. Credentials are local-only defaults.
 services:
   postgres:
     image: postgres:18
@@ -10,5 +10,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
+  # Catches outgoing emails locally; read them on http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 volumes:
   postgres-data:

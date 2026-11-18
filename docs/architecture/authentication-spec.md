@@ -145,7 +145,20 @@ All screens: 1440 × 900, form in columns 5–8 of a 12-column grid, header with
 
 ### Messages
 
-Shown under the field concerned, or above the form for messages about the whole form.
+Shown under the field concerned, or above the form for messages about the whole form. The backend sends only a key (`{"code": "ERROR_..."}`); the frontend shows the message in the user's language.
+
+| Key from the backend | Message |
+|---|---|
+| `ERROR_AUTH_FAIL` | "Wrong email or password." |
+| `ERROR_EMAIL_NOT_CONFIRMED` | "Confirm your email to log in. We have sent you a new link." |
+| `ERROR_TOO_MANY_ATTEMPTS` | "Too many attempts. Try again in 15 minutes." |
+| `ERROR_EMAIL_TAKEN` | "An account already exists for this email." |
+| `ERROR_LINK_TOO_SOON` | "Wait a minute before asking for a new link." |
+| `ERROR_LINK_INVALID` | The "Link no longer valid" screen. |
+| `ERROR_GOOGLE_FAILED` (set by the frontend from the Google redirect) | "Google sign-in did not complete. Try again." |
+| `ERROR_UNKNOWN` (any other failure) | "Something went wrong. Try again." |
+
+All messages, by situation:
 
 | Situation | Message |
 |---|---|

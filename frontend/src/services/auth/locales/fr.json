@@ -1,0 +1,81 @@
+{
+  "login": {
+    "title": "Connexion",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgot": "Mot de passe oublié ?",
+    "submit": "Se connecter",
+    "noAccount": "Pas de compte ?",
+    "signUp": "Créer un compte"
+  },
+  "signup": {
+    "title": "Créez votre compte",
+    "fullName": "Nom complet",
+    "workEmail": "E-mail professionnel",
+    "password": "Mot de passe",
+    "passwordHelp": "Au moins 12 caractères.",
+    "confirmPassword": "Confirmez le mot de passe",
+    "submit": "Créer le compte",
+    "termsStart": "En créant un compte, vous acceptez les",
+    "terms": "Conditions d'utilisation",
+    "termsMiddle": "et la",
+    "privacy": "Politique de confidentialité",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "logIn": "Se connecter"
+  },
+  "common": {
+    "google": "Continuer avec Google",
+    "or": "ou",
+    "linkInstead": "M'envoyer plutôt un lien de connexion",
+    "backToLogin": "Retour à la connexion"
+  },
+  "checkEmail": {
+    "title": "Consultez vos e-mails",
+    "sent": "Nous avons envoyé un lien à {{email}}. Ouvrez-le pour continuer.",
+    "resend": "Renvoyer le lien",
+    "resent": "Nous avons envoyé un nouveau lien.",
+    "another": "Utiliser une autre adresse e-mail"
+  },
+  "forgot": {
+    "title": "Réinitialisez votre mot de passe",
+    "intro": "Saisissez votre e-mail pour recevoir un lien de réinitialisation.",
+    "email": "E-mail",
+    "submit": "Envoyer le lien"
+  },
+  "resetSent": {
+    "title": "Consultez vos e-mails",
+    "body": "Si un compte existe pour cet e-mail, nous avons envoyé un lien de réinitialisation. Le lien est valable 1 heure."
+  },
+  "newPassword": {
+    "title": "Définissez un nouveau mot de passe",
+    "password": "Nouveau mot de passe",
+    "confirm": "Confirmez le nouveau mot de passe",
+    "submit": "Enregistrer le mot de passe"
+  },
+  "linkInvalid": {
+    "title": "Ce lien n'est plus valable",
+    "body": "Il a expiré ou a déjà été utilisé."
+  },
+  "linkOpening": "Ouverture du lien…",
+  "home": {
+    "loggedIn": "Vous êtes connecté en tant que {{name}}.",
+    "logOut": "Se déconnecter"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "email": "Saisissez une adresse e-mail valide.",
+    "passwordLength": "Utilisez au moins 12 caractères.",
+    "mismatch": "Les mots de passe ne correspondent pas."
+  },
+  "errors": {
+    "ERROR_AUTH_FAIL": "E-mail ou mot de passe incorrect.",
+    "ERROR_EMAIL_NOT_CONFIRMED": "Confirmez votre e-mail pour vous connecter. Nous vous avons envoyé un nouveau lien.",
+    "ERROR_TOO_MANY_ATTEMPTS": "Trop de tentatives. Réessayez dans 15 minutes.",
+    "ERROR_EMAIL_TAKEN": "Un compte existe déjà pour cet e-mail.",
+    "ERROR_LINK_TOO_SOON": "Attendez une minute avant de demander un nouveau lien.",
+    "ERROR_GOOGLE_FAILED": "La connexion avec Google n'a pas abouti. Réessayez.",
+    "ERROR_VALIDATION": "Vérifiez les champs et réessayez.",
+    "ERROR_UNKNOWN": "Une erreur s'est produite. Réessayez."
+  }
+}

@@ -15,7 +15,9 @@ make install    # once: frontend libraries
 make dev        # PostgreSQL, backend (http://localhost:8080) and frontend (http://localhost:5173)
 ```
 
-Ctrl+C stops the backend and the frontend; `make db-stop` stops PostgreSQL. Run `make` to list every command.
+Emails (confirmation, sign-in and reset links) are caught locally by Mailpit: open http://localhost:8025.
+
+Ctrl+C stops the backend and the frontend; `make db-stop` stops PostgreSQL and Mailpit. Run `make` to list every command.
 
 ## Checks
 

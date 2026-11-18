@@ -14,6 +14,10 @@ The current documents are in `docs/architecture/`; the schema and wireframes are
 
 Keep only the latest version of each document: update it in place, do not create `-v2` copies.
 
+## Coding rules
+
+- **No user-facing text from the backend.** Errors are sent as `{"code": "ERROR_..."}` (upper case, `ERROR_` prefix, for example `ERROR_AUTH_FAIL`). The frontend maps each key to the translated message (English and French). Emails are the only text the backend writes.
+
 ## Versioning
 
 - The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning: after each finished piece of work (a feature, a doc update, a board change), commit with a clear message and push to `origin main`.

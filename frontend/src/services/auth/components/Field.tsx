@@ -7,6 +7,7 @@ type Props = {
   type?: 'text' | 'email' | 'password'
   autoComplete?: string
   help?: string
+  placeholder?: string
   value: string
   onChange: (value: string) => void
   /** Returns a translation key when the value is invalid. */
@@ -22,6 +23,7 @@ export function Field({
   type = 'text',
   autoComplete,
   help,
+  placeholder,
   value,
   onChange,
   check,
@@ -40,7 +42,7 @@ export function Field({
       fullWidth
     >
       <Label>{label}</Label>
-      <Input />
+      <Input placeholder={placeholder} />
       {help && <Description>{help}</Description>}
       <FieldError>{error ? t(error) : undefined}</FieldError>
     </TextField>

@@ -60,12 +60,13 @@ export function LoginPage() {
       <FormError messageKey={error} />
       <GoogleButton />
       <OrDivider />
-      <Form onSubmit={logIn} className="flex flex-col gap-4">
+      <Form onSubmit={logIn} className="flex flex-col gap-3">
         <Field
           name="email"
           type="email"
           autoComplete="email"
           label={t('login.email')}
+          placeholder={t('placeholders.email')}
           value={email}
           onChange={(v) => {
             setEmail(v)
@@ -94,11 +95,11 @@ export function LoginPage() {
           </Checkbox>
           <Link href="/forgot-password">{t('login.forgot')}</Link>
         </div>
-        <Button type="submit" fullWidth isPending={pending} className="mt-2">
+        <Button type="submit" fullWidth isPending={pending} className="mt-1">
           {t('login.submit')}
         </Button>
       </Form>
-      <div className="mt-6 flex flex-col items-center gap-8">
+      <div className="mt-4 flex flex-col items-center gap-5">
         <button
           type="button"
           className="underline underline-offset-4"

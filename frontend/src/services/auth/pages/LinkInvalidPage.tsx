@@ -8,7 +8,7 @@ export function LinkInvalidPage() {
   return (
     <>
       <Title>{t('linkInvalid.title')}</Title>
-      <p className="mb-8">{t('linkInvalid.body')}</p>
+      <p className="mb-5">{t('linkInvalid.body')}</p>
       <Link href="/login">{t('common.backToLogin')}</Link>
     </>
   )

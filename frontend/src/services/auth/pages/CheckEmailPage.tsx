@@ -31,8 +31,8 @@ export function CheckEmailPage() {
       <Title>{t('checkEmail.title')}</Title>
       <FormError messageKey={error} />
       {resent && <Notice>{t('checkEmail.resent')}</Notice>}
-      <p className="mb-8">{t('checkEmail.sent', { email })}</p>
-      <div className="flex flex-col items-start gap-6">
+      <p className="mb-5">{t('checkEmail.sent', { email })}</p>
+      <div className="flex flex-col items-start gap-3">
         <button
           type="button"
           className="underline underline-offset-4"

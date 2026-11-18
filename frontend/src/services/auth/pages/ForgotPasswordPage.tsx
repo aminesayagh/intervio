@@ -32,13 +32,14 @@ export function ForgotPasswordPage() {
     <>
       <Title>{t('forgot.title')}</Title>
       <FormError messageKey={error} />
-      <p className="mb-6">{t('forgot.intro')}</p>
-      <Form onSubmit={send} className="flex flex-col gap-6">
+      <p className="mb-4">{t('forgot.intro')}</p>
+      <Form onSubmit={send} className="flex flex-col gap-4">
         <Field
           name="email"
           type="email"
           autoComplete="email"
           label={t('forgot.email')}
+          placeholder={t('placeholders.email')}
           value={email}
           onChange={setEmail}
           check={check.email}
@@ -47,7 +48,7 @@ export function ForgotPasswordPage() {
           {t('forgot.submit')}
         </Button>
       </Form>
-      <p className="mt-6 text-center">
+      <p className="mt-4 text-center">
         <Link href="/login">{t('common.backToLogin')}</Link>
       </p>
     </>

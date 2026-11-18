@@ -59,6 +59,7 @@
   --field-foreground: var(--color-text);
   --field-border: var(--color-border);
   --field-border-width: 1px;
+  --field-shadow: 0 1px 1px 0 rgb(37 37 34 / 0.04); /* barely there; the border carries the shape */
 
   /* Corners: small and never fully rounded. */
   --radius: 0.25rem;
@@ -69,9 +70,27 @@
   --font-sans: var(--font-family);
 }
 
+/* Compact interface: a 14 px base scales text, fields, buttons and spacing together. */
+html {
+  font-size: 87.5%;
+}
+
 @layer components {
   /* HeroUI buttons are 3 × --radius by default; give them the same corners as fields. */
   .button {
     border-radius: var(--field-radius);
+  }
+
+  /* Main actions (Log in, Create account, ...) stand out with a soft shadow. */
+  .button--primary {
+    box-shadow:
+      0 1px 2px rgb(37 37 34 / 0.14),
+      0 3px 8px rgb(37 37 34 / 0.12);
+  }
+
+  .button--primary:hover {
+    box-shadow:
+      0 1px 2px rgb(37 37 34 / 0.16),
+      0 4px 12px rgb(37 37 34 / 0.16);
   }
 }

@@ -62,11 +62,12 @@ export function SignupPage() {
       <FormError messageKey={error} />
       <GoogleButton />
       <OrDivider />
-      <Form onSubmit={signUp} className="flex flex-col gap-4">
+      <Form onSubmit={signUp} className="flex flex-col gap-3">
         <Field
           name="fullName"
           autoComplete="name"
           label={t('signup.fullName')}
+          placeholder={t('placeholders.fullName')}
           value={fullName}
           onChange={(v) => {
             setFullName(v)
@@ -80,6 +81,7 @@ export function SignupPage() {
           type="email"
           autoComplete="email"
           label={t('signup.workEmail')}
+          placeholder={t('placeholders.email')}
           value={email}
           onChange={(v) => {
             setEmail(v)
@@ -107,11 +109,11 @@ export function SignupPage() {
           onChange={setConfirm}
           check={check.confirmation(password)}
         />
-        <Button type="submit" fullWidth isPending={pending} className="mt-2">
+        <Button type="submit" fullWidth isPending={pending} className="mt-1">
           {t('signup.submit')}
         </Button>
       </Form>
-      <div className="mt-6 flex flex-col items-center gap-6 text-center">
+      <div className="mt-4 flex flex-col items-center gap-4 text-center">
         <button
           type="button"
           className="underline underline-offset-4"
@@ -119,7 +121,7 @@ export function SignupPage() {
         >
           {t('common.linkInstead')}
         </button>
-        <p className="text-sm text-muted">
+        <p className="text-xs text-muted">
           {t('signup.termsStart')}{' '}
           <a href="/terms" className="underline underline-offset-4">
             {t('signup.terms')}

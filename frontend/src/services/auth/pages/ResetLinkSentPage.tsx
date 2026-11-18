@@ -8,7 +8,7 @@ export function ResetLinkSentPage() {
   return (
     <>
       <Title>{t('resetSent.title')}</Title>
-      <p className="mb-8">{t('resetSent.body')}</p>
+      <p className="mb-5">{t('resetSent.body')}</p>
       <Link href="/login">{t('common.backToLogin')}</Link>
     </>
   )

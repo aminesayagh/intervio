@@ -42,7 +42,7 @@ export function NewPasswordPage() {
     <>
       <Title>{t('newPassword.title')}</Title>
       <FormError messageKey={error} />
-      <Form onSubmit={save} className="flex flex-col gap-4">
+      <Form onSubmit={save} className="flex flex-col gap-3">
         <Field
           name="password"
           type="password"
@@ -62,7 +62,7 @@ export function NewPasswordPage() {
           onChange={setConfirm}
           check={check.confirmation(password)}
         />
-        <Button type="submit" fullWidth isPending={pending} className="mt-2">
+        <Button type="submit" fullWidth isPending={pending} className="mt-1">
           {t('newPassword.submit')}
         </Button>
       </Form>

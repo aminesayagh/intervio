@@ -18,7 +18,7 @@ export function HomePage() {
 
   return (
     <>
-      <p className="mb-6">{t('home.loggedIn', { name: user?.fullName })}</p>
+      <p className="mb-4">{t('home.loggedIn', { name: user?.fullName })}</p>
       <Button variant="secondary" onPress={logOut}>
         {t('home.logOut')}
       </Button>

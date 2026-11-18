@@ -8,16 +8,16 @@ import { applyTheme, initialTheme, type Theme } from './theme'
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="flex h-16 items-center justify-between border-b border-separator px-4 md:px-[72px]">
-        <Link href="/" className="text-xl">
+      <header className="flex h-14 items-center justify-between border-b border-separator px-4 md:px-[72px]">
+        <Link href="/" className="text-lg">
           Intervio
         </Link>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
           <LanguageSwitch />
           <ThemeToggle />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[416px] px-4 pt-14 pb-16 md:px-0 md:pt-28">
+      <main className="mx-auto w-full max-w-[416px] px-4 text-sm pt-10 pb-12 md:px-0 md:pt-16">
         {children}
       </main>
     </div>

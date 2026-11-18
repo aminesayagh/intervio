@@ -55,6 +55,7 @@ export function useCurrentUser() {
       }
     },
     staleTime: Infinity,
+    retry: false, // if the backend cannot be reached, show the public screens at once
   })
 }
 

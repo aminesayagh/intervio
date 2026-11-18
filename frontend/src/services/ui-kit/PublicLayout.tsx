@@ -86,7 +86,7 @@ function ThemeToggle() {
           }
           transition={{ duration: 0.2, ease: 'easeOut' }}
         >
-          <Icon name={theme === 'dark' ? 'Moon' : 'Sun'} size={20} />
+          <Icon name={theme === 'dark' ? 'Moon 2' : 'Sun'} size={20} />
         </motion.span>
       </AnimatePresence>
     </button>

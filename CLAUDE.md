@@ -14,6 +14,11 @@ The current documents are in `docs/architecture/`; the schema and wireframes are
 
 Keep only the latest version of each document: update it in place, do not create `-v2` copies.
 
+## Versioning
+
+- The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning: after each finished piece of work (a feature, a doc update, a board change), commit with a clear message and push to `origin main`.
+- Before each commit, check that no secrets, `.env` files or personal data are included.
+
 ## Wireframing rules (always apply)
 
 ### Drawing style

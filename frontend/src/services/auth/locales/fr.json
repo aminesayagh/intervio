@@ -27,7 +27,7 @@
   "common": {
     "google": "Continuer avec Google",
     "or": "ou",
-    "linkInstead": "M'envoyer plutôt un lien de connexion",
+    "linkInstead": "M'envoyer un lien de connexion",
     "backToLogin": "Retour à la connexion"
   },
   "checkEmail": {
@@ -86,5 +86,15 @@
   "password": {
     "show": "Afficher le mot de passe",
     "hide": "Masquer le mot de passe"
+  },
+  "linkLogin": {
+    "title": "Se connecter avec un lien",
+    "intro": "Saisissez votre e-mail et nous vous enverrons un lien de connexion.",
+    "submit": "Envoyer le lien"
+  },
+  "linkSignup": {
+    "title": "Créez votre compte",
+    "intro": "Saisissez votre nom et votre e-mail et nous vous enverrons un lien de connexion.",
+    "submit": "Envoyer le lien"
   }
 }

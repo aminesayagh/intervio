@@ -6,7 +6,9 @@ import { LoginPage } from './pages/LoginPage'
 import { NewPasswordPage } from './pages/NewPasswordPage'
 import { OpenLinkPage } from './pages/OpenLinkPage'
 import { ResetLinkSentPage } from './pages/ResetLinkSentPage'
+import { SignInLinkPage } from './pages/SignInLinkPage'
 import { SignupPage } from './pages/SignupPage'
+import { SignUpLinkPage } from './pages/SignUpLinkPage'
 
 /** guest: only when logged out · user: only when logged in · any: both. */
 export type Access = 'guest' | 'user' | 'any'
@@ -16,7 +18,9 @@ export const authRoutes: Record<
   { page: ComponentType; access: Access }
 > = {
   '/login': { page: LoginPage, access: 'guest' },
+  '/login/link': { page: SignInLinkPage, access: 'guest' },
   '/signup': { page: SignupPage, access: 'guest' },
+  '/signup/link': { page: SignUpLinkPage, access: 'guest' },
   '/check-email': { page: CheckEmailPage, access: 'guest' },
   '/forgot-password': { page: ForgotPasswordPage, access: 'guest' },
   '/reset-link-sent': { page: ResetLinkSentPage, access: 'guest' },

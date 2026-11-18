@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
 import { authApi, errorKey } from '../api'
 import { Field } from '../components/Field'
-import { FormError, GoogleButton, OrDivider, Title } from '../components/Parts'
+import {
+  FormError,
+  GoogleButton,
+  LinkButton,
+  OrDivider,
+  Title,
+} from '../components/Parts'
 import { checkEmailUrl } from '../routes'
 import * as check from '../validation'
 
@@ -15,10 +21,6 @@ export function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [linkErrors, setLinkErrors] = useState<{
-    fullName?: string | null
-    email?: string | null
-  }>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -42,25 +44,14 @@ export function SignupPage() {
     })
   }
 
-  /** Sign-up without a password: only the name and email are needed. */
-  function signUpWithLink() {
-    const errors = {
-      fullName: check.required(fullName),
-      email: check.email(email),
-    }
-    setLinkErrors(errors)
-    if (errors.fullName || errors.email) return
-    void run(async () => {
-      await authApi.signUpWithLink(fullName, email)
-      navigate(checkEmailUrl('signin', email))
-    })
-  }
-
   return (
     <>
       <Title>{t('signup.title')}</Title>
       <FormError messageKey={error} />
-      <GoogleButton />
+      <div className="flex flex-col gap-2">
+        <GoogleButton />
+        <LinkButton href="/signup/link" />
+      </div>
       <OrDivider />
       <Form onSubmit={signUp} className="flex flex-col gap-3">
         <Field
@@ -69,12 +60,8 @@ export function SignupPage() {
           label={t('signup.fullName')}
           placeholder={t('placeholders.fullName')}
           value={fullName}
-          onChange={(v) => {
-            setFullName(v)
-            setLinkErrors((e) => ({ ...e, fullName: null }))
-          }}
+          onChange={setFullName}
           check={check.required}
-          error={linkErrors.fullName}
         />
         <Field
           name="email"
@@ -83,12 +70,8 @@ export function SignupPage() {
           label={t('signup.workEmail')}
           placeholder={t('placeholders.email')}
           value={email}
-          onChange={(v) => {
-            setEmail(v)
-            setLinkErrors((e) => ({ ...e, email: null }))
-          }}
+          onChange={setEmail}
           check={check.email}
-          error={linkErrors.email}
         />
         <Field
           name="password"
@@ -116,13 +99,6 @@ export function SignupPage() {
         </Button>
       </Form>
       <div className="mt-4 flex flex-col items-center gap-4 text-center">
-        <button
-          type="button"
-          className="underline underline-offset-4"
-          onClick={signUpWithLink}
-        >
-          {t('common.linkInstead')}
-        </button>
         <p className="text-xs text-muted">
           {t('signup.termsStart')}{' '}
           <a href="/terms" className="underline underline-offset-4">

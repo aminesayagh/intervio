@@ -27,7 +27,7 @@
   "common": {
     "google": "Continue with Google",
     "or": "or",
-    "linkInstead": "Email me a sign-in link instead",
+    "linkInstead": "Email me a sign-in link",
     "backToLogin": "Back to log in"
   },
   "checkEmail": {
@@ -86,5 +86,15 @@
   "password": {
     "show": "Show password",
     "hide": "Hide password"
+  },
+  "linkLogin": {
+    "title": "Log in with a link",
+    "intro": "Enter your email and we will send you a sign-in link.",
+    "submit": "Send sign-in link"
+  },
+  "linkSignup": {
+    "title": "Create your account",
+    "intro": "Enter your name and email and we will send you a sign-in link.",
+    "submit": "Send sign-in link"
   }
 }

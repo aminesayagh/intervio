@@ -132,8 +132,10 @@ All screens: 1440 × 900, form in columns 5–8 of a 12-column grid, header with
 
 | Screen | Content (in order) |
 |---|---|
-| **Log in** (1) | Title "Log in" · button "Continue with Google" · "or" · Email · Password · checkbox "Remember me" and link "Forgot password?" · button "Log in" · link "Email me a sign-in link instead" · "No account? Sign up" |
-| **Sign up** (2) | Title "Create your account" · "Continue with Google" · "or" · Full name · Work email · Password, helper "At least 12 characters." · Confirm password · button "Create account" · link "Email me a sign-in link instead" · "By creating an account, you agree to the Terms of use and the Privacy policy." · "Already have an account? Log in" |
+| **Log in** (1) | Title "Log in" · button "Continue with Google" · button "Email me a sign-in link" (opens "Log in with a link") · "or" · Email · Password · checkbox "Remember me" and link "Forgot password?" · button "Log in" · "No account? Sign up" |
+| **Log in with a link** (new) | Title "Log in with a link" · "Enter your email and we will send you a sign-in link." · Email · button "Send sign-in link" · link "Back to log in" |
+| **Sign up** (2) | Title "Create your account" · "Continue with Google" · button "Email me a sign-in link" (opens "Sign up with a link") · "or" · Full name · Work email · Password, helper "At least 12 characters." · Confirm password · button "Create account" · "By creating an account, you agree to the Terms of use and the Privacy policy." · "Already have an account? Log in" |
+| **Sign up with a link** (new) | Title "Create your account" · "Enter your name and email and we will send you a sign-in link." · Full name · Work email · button "Send sign-in link" · terms line · "Already have an account? Log in" |
 | **Check your email** (3) | Title "Check your email" · "We sent a link to {email}. Open it to continue." · link "Resend the link" · link "Use another email" (goes to the log in screen) |
 | **Forgot password** (5) | Title "Reset your password" · "Enter your email to receive a reset link." · Email · button "Send reset link" · link "Back to log in" |
 | **Reset link sent** (6) | Title "Check your email" · "If an account exists for this email, we have sent a reset link. The link is valid for 1 hour." · link "Back to log in" |

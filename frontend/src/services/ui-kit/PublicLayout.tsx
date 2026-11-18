@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { setLanguage, type Language } from '../i18n'
@@ -56,6 +57,7 @@ function ThemeToggle() {
   const { t } = useTranslation('ui-kit')
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
+  const reduceMotion = useReducedMotion()
   return (
     <button
       type="button"
@@ -66,7 +68,27 @@ function ThemeToggle() {
         setTheme(next)
       }}
     >
-      <Icon name={next === 'dark' ? 'Moon' : 'Sun'} size={20} />
+      {/* Shows the current mode; the icons turn and fade when it changes. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={theme}
+          className="flex"
+          initial={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, rotate: -90, scale: 0.6 }
+          }
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          exit={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, rotate: 90, scale: 0.6 }
+          }
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <Icon name={theme === 'dark' ? 'Moon' : 'Sun'} size={20} />
+        </motion.span>
+      </AnimatePresence>
     </button>
   )
 }

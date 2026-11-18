@@ -5,8 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, navigate, useSearchParams } from '../../navigation'
 import { authApi, currentUserKey, errorKey } from '../api'
 import { Field } from '../components/Field'
-import { FormError, GoogleButton, OrDivider, Title } from '../components/Parts'
-import { checkEmailUrl } from '../routes'
+import {
+  FormError,
+  GoogleButton,
+  LinkButton,
+  OrDivider,
+  Title,
+} from '../components/Parts'
 import * as check from '../validation'
 
 /** Screen 1: log in. */
@@ -17,7 +22,6 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
-  const [emailError, setEmailError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(
     googleFailed ? 'errors.ERROR_GOOGLE_FAILED' : null,
   )
@@ -44,21 +48,14 @@ export function LoginPage() {
     })
   }
 
-  function sendLink() {
-    const invalid = check.email(email)
-    setEmailError(invalid)
-    if (invalid) return
-    void run(async () => {
-      await authApi.sendSignInLink(email)
-      navigate(checkEmailUrl('signin', email))
-    })
-  }
-
   return (
     <>
       <Title>{t('login.title')}</Title>
       <FormError messageKey={error} />
-      <GoogleButton />
+      <div className="flex flex-col gap-2">
+        <GoogleButton />
+        <LinkButton href="/login/link" />
+      </div>
       <OrDivider />
       <Form onSubmit={logIn} className="flex flex-col gap-3">
         <Field
@@ -68,12 +65,8 @@ export function LoginPage() {
           label={t('login.email')}
           placeholder={t('placeholders.email')}
           value={email}
-          onChange={(v) => {
-            setEmail(v)
-            setEmailError(null)
-          }}
+          onChange={setEmail}
           check={check.email}
-          error={emailError}
         />
         <Field
           name="password"
@@ -101,13 +94,6 @@ export function LoginPage() {
         </Button>
       </Form>
       <div className="mt-4 flex flex-col items-center gap-5">
-        <button
-          type="button"
-          className="underline underline-offset-4"
-          onClick={sendLink}
-        >
-          {t('common.linkInstead')}
-        </button>
         <p>
           {t('login.noAccount')} <Link href="/signup">{t('login.signUp')}</Link>
         </p>

@@ -1,6 +1,8 @@
 import { Alert, Button } from '@heroui/react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { navigate } from '../../navigation'
+import { Icon } from '../../ui-kit'
 
 export function Title({ children }: { children: ReactNode }) {
   return <h1 className="mb-5 text-2xl leading-tight">{children}</h1>
@@ -17,6 +19,17 @@ export function GoogleButton() {
     >
       <img src="/icons/google.svg" alt="" width={16} height={16} />
       {t('common.google')}
+    </Button>
+  )
+}
+
+/** Opens the screen that sends a sign-in link (same style as the Google button). */
+export function LinkButton({ href }: { href: string }) {
+  const { t } = useTranslation('auth')
+  return (
+    <Button variant="secondary" fullWidth onPress={() => navigate(href)}>
+      <Icon name="Message-5" />
+      {t('common.linkInstead')}
     </Button>
   )
 }

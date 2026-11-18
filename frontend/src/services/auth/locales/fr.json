@@ -81,5 +81,9 @@
   "placeholders": {
     "fullName": "Claire Martin",
     "email": "nom@entreprise.com"
+  },
+  "password": {
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe"
   }
 }

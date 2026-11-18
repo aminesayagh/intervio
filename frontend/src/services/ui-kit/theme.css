@@ -81,6 +81,12 @@ html {
     border-radius: var(--field-radius);
   }
 
+  /* Every field on our forms is required, so HeroUI's required asterisk is only noise. */
+  [data-required='true'] > .label::after,
+  .label--required::after {
+    content: none !important; /* HeroUI's selector is more specific */
+  }
+
   /* Main actions (Log in, Create account, ...) stand out with a soft shadow. */
   .button--primary {
     box-shadow:

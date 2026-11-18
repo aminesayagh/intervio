@@ -1,0 +1,14 @@
+# Local PostgreSQL for development. Credentials are local-only defaults.
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: intervio
+      POSTGRES_USER: intervio
+      POSTGRES_PASSWORD: intervio
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+volumes:
+  postgres-data:

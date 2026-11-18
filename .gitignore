@@ -1,0 +1,10 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store

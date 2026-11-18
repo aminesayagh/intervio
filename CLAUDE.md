@@ -23,7 +23,7 @@ Keep only the latest version of each document: update it in place, do not create
 - Colors and font are the tokens in `frontend/src/services/ui-kit/theme.css` (primary #f4c542, background #f2f1ec, text #252522, font Manrope). HeroUI's variables point to these tokens; change the tokens, never HeroUI's values directly.
 - Corners are small and never fully rounded: buttons share the fields' radius (`--field-radius`).
 - Compact interface to show more information: 14 px base (`html { font-size: 87.5% }`), page text at the label size (`text-sm`), tight spacing.
-- Main action buttons (`.button--primary`) have a soft shadow; fields have only a faint one.
+- Main action buttons (`.button--primary`) have a soft shadow in the primary color; fields have only a faint one.
 - Name and email fields show a placeholder (sample name, sample work email); password fields do not.
 - The wireframes stay grayscale; this identity applies to the built app only.
 

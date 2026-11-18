@@ -15,6 +15,7 @@ export function GoogleButton() {
       fullWidth
       onPress={() => window.location.assign('/oauth2/authorization/google')}
     >
+      <img src="/icons/google.svg" alt="" width={16} height={16} />
       {t('common.google')}
     </Button>
   )

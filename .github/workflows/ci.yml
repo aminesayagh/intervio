@@ -1,9 +1,12 @@
-# Runs every check on each push and pull request, the same as `make check`.
+# Runs every check, the same as `make check`, on main: on each push to main and on each
+# pull request into main (so a feature branch is tested before it is merged).
 name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}

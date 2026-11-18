@@ -28,6 +28,11 @@ Keep only the latest version of each document: update it in place, do not create
 - **Icons come only from the Intervio set** in `frontend/public/icons/`: use `<Icon name="Eye" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon library.
 - The wireframes stay grayscale; this identity applies to the built app only.
 
+## Running app
+
+- The user reviews the app continuously: keep `make dev` running (frontend http://localhost:5173, emails http://localhost:8025). Do not stop it after checks; start it again if it is not running.
+- Frontend changes reload by themselves. After backend (Java) changes, restart only the backend so the frontend stays open.
+
 ## Versioning
 
 - The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning: after each finished piece of work (a feature, a doc update, a board change), commit with a clear message and push to `origin main`.

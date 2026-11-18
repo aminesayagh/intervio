@@ -48,7 +48,7 @@ Keep only the latest version of each document: update it in place, do not create
 - **Grid:** 12 columns, 72 px side margins, 24 px gutters: columns are 86 px, content area 1296 px.
 - **Spacing unit:** 8 px. All gaps and sizes are multiples of 8.
 - **Visible grid:** the 12 columns are drawn as very light gray bands on a locked layer behind each screen.
-- **Header:** every public screen (accounts, onboarding) starts with a 64 px header: the logo ("Intervio", size 20) on the left at the margin, and on the right the language switcher (EN / FR, size 14, active language in black) and the light and dark mode switch (a half-filled circle). A light gray line closes the header.
+- **Header:** every public screen (accounts, onboarding) starts with a 64 px header: the logo ("Intervio", size 20) on the left at the margin, and on the right the language switcher (EN / FR, size 14, active language in black) and the light and dark mode switch (a half-filled circle).
 - **Signed-in screens:** full width, no centered content area. A 264 px sidebar on the left (16 px inner padding, light gray right border) replaces the header. The body grid has 12 columns of 72 px, 24 px gutters and 24 px margins.
 - **Areas on the board:** once an area is finished, its screens are grouped in one box with the area's title (size 28) at the top left, 80 px padding, and a single Excalidraw group so the area moves as one. Screens are numbered in sequence across areas.
 

@@ -10,7 +10,7 @@ import { applyTheme, initialTheme, type Theme } from './theme'
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="flex h-14 items-center justify-between border-b border-separator px-4 md:px-[72px]">
+      <header className="flex h-14 items-center justify-between px-4 md:px-[72px]">
         <Link href="/" className="flex items-center gap-2 text-lg">
           <img src="/logo.svg" alt="" width={24} height={24} />
           Intervio

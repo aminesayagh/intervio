@@ -11,33 +11,76 @@ const TABS = [
   { href: '/resources', label: 'nav.resources', icon: 'Work' },
 ] as const
 
-/** Signed-in client screens: a 264 px sidebar, a drawer below 1024 px (decisions 66, 84). */
+const SIDEBAR_KEY = 'intervio.sidebarHidden'
+
+function savedSidebarHidden() {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === 'true'
+  } catch {
+    return false // storage can be blocked; the sidebar shows
+  }
+}
+
+/**
+ * Signed-in client screens: a 264 px sidebar the user can hide, a drawer below 1024 px
+ * (decisions 66, 84, 85).
+ */
 export function ClientBoardLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('client-board')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [sidebarHidden, setSidebarHidden] = useState(savedSidebarHidden)
+
+  function hideSidebar(hidden: boolean) {
+    setSidebarHidden(hidden)
+    try {
+      localStorage.setItem(SIDEBAR_KEY, String(hidden))
+    } catch {
+      // not remembered; the choice holds until the page is reloaded
+    }
+  }
+
+  function openMenu() {
+    // Wide screens bring the sidebar back; narrow screens open the drawer.
+    if (window.matchMedia('(min-width: 1024px)').matches) hideSidebar(false)
+    else setMenuOpen(true)
+  }
+
   return (
     <div className="flex min-h-screen bg-background text-sm text-foreground">
-      <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 border-e border-border lg:flex">
-        <Sidebar />
+      <aside
+        className={`sticky top-0 hidden h-screen w-[264px] shrink-0 border-e border-border ${
+          sidebarHidden ? '' : 'lg:flex'
+        }`}
+      >
+        <Sidebar onHide={() => hideSidebar(true)} />
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex h-14 items-center gap-3 px-4 lg:hidden">
+        <header
+          className={`flex h-14 items-center gap-3 px-4 lg:px-6 ${
+            sidebarHidden ? '' : 'lg:hidden'
+          }`}
+        >
           <button
             type="button"
             aria-label={t('nav.openMenu')}
             className="flex text-muted hover:text-foreground"
-            onClick={() => setMenuOpen(true)}
+            onClick={openMenu}
           >
             <Icon name="Menu-1" size={20} />
           </button>
           <Logo />
         </header>
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className={`p-4 lg:p-6 ${sidebarHidden ? 'lg:pt-2' : ''}`}>
+          {children}
+        </main>
       </div>
       <Drawer.Backdrop isOpen={menuOpen} onOpenChange={setMenuOpen}>
         <Drawer.Content placement="left" className="w-[264px] max-w-full">
           <Drawer.Dialog aria-label={t('nav.main')} className="h-full p-0">
-            <Sidebar onNavigate={() => setMenuOpen(false)} />
+            <Sidebar
+              onNavigate={() => setMenuOpen(false)}
+              onHide={() => setMenuOpen(false)}
+            />
           </Drawer.Dialog>
         </Drawer.Content>
       </Drawer.Backdrop>
@@ -58,13 +101,28 @@ function Logo({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar({
+  onNavigate,
+  onHide,
+}: {
+  onNavigate?: () => void
+  onHide: () => void
+}) {
   const { t } = useTranslation('client-board')
   const path = usePath()
   return (
     <div className="flex h-full w-full flex-col p-4">
-      <div className="flex h-8 items-center">
+      <div className="flex h-8 items-center justify-between">
         <Logo onNavigate={onNavigate} />
+        <button
+          type="button"
+          aria-label={t('nav.hideSidebar')}
+          title={t('nav.hideSidebar')}
+          className="flex size-7 items-center justify-center rounded-[var(--field-radius)] text-muted hover:bg-default hover:text-foreground"
+          onClick={onHide}
+        >
+          <Icon name="Arrow - Left-2" size={18} />
+        </button>
       </div>
       <nav className="mt-6 flex flex-col gap-0.5">
         <p className="mb-1 px-2 text-xs text-muted">{t('nav.main')}</p>

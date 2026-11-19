@@ -3,7 +3,8 @@
     "main": "Main",
     "dashboard": "Dashboard",
     "resources": "Resources",
-    "openMenu": "Open menu"
+    "openMenu": "Show sidebar",
+    "hideSidebar": "Hide sidebar"
   },
   "profile": {
     "manage": "Manage profile",

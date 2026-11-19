@@ -3,7 +3,8 @@
     "main": "Principal",
     "dashboard": "Tableau de bord",
     "resources": "Ressources",
-    "openMenu": "Ouvrir le menu"
+    "openMenu": "Afficher la barre latérale",
+    "hideSidebar": "Masquer la barre latérale"
   },
   "profile": {
     "manage": "Gérer le profil",

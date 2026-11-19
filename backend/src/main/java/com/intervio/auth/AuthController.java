@@ -1,5 +1,6 @@
 package com.intervio.auth;
 
+import com.intervio.api.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -9,7 +10,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -17,8 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -114,7 +112,7 @@ class AuthController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void setPassword(@Valid @RequestBody PasswordRequest r, Authentication authentication, HttpSession session) {
 		if (!Boolean.TRUE.equals(session.getAttribute(RESET_ALLOWED))) {
-			throw new AuthException(HttpStatus.FORBIDDEN, "ERROR_RESET_NOT_ALLOWED");
+			throw new ApiException(HttpStatus.FORBIDDEN, "ERROR_RESET_NOT_ALLOWED");
 		}
 		auth.setPassword(authentication.getName(), r.password());
 		session.removeAttribute(RESET_ALLOWED);
@@ -124,16 +122,6 @@ class AuthController {
 	Map<String, String> me(Authentication authentication) {
 		User user = auth.find(authentication.getName()).orElseThrow();
 		return Map.of("fullName", user.getFullName(), "email", user.getEmail());
-	}
-
-	@ExceptionHandler(AuthException.class)
-	ResponseEntity<Map<String, String>> onAuthError(AuthException e) {
-		return ResponseEntity.status(e.status).body(Map.of("code", e.code));
-	}
-
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	ResponseEntity<Map<String, String>> onInvalid(MethodArgumentNotValidException e) {
-		return ResponseEntity.badRequest().body(Map.of("code", "ERROR_VALIDATION"));
 	}
 
 }

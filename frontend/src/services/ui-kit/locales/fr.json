@@ -1,5 +1,15 @@
 {
   "switchToDark": "Passer en mode sombre",
   "switchToLight": "Passer en mode clair",
-  "language": "Langue"
+  "language": "Langue",
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "email": "Saisissez une adresse e-mail valide.",
+    "passwordLength": "Utilisez au moins 12 caractères.",
+    "mismatch": "Les mots de passe ne correspondent pas."
+  },
+  "password": {
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe"
+  }
 }

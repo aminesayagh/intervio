@@ -1,0 +1,47 @@
+{
+  "step": "Étape {{step}} sur 3",
+  "continue": "Continuer",
+  "back": "Retour",
+  "skip": "Passer",
+  "company": {
+    "title": "Votre entreprise",
+    "name": "Nom de l'entreprise",
+    "namePlaceholder": "Martin Industries",
+    "country": "Pays d'immatriculation",
+    "countryPlaceholder": "Sélectionnez un pays",
+    "number": "Numéro d'immatriculation",
+    "numberPlaceholder": "123 456 789 00012"
+  },
+  "industries": {
+    "title": "Secteurs",
+    "intro": "Sélectionnez les secteurs dans lesquels vous travaillez.",
+    "1": "Industrie manufacturière",
+    "2": "Énergie et services publics",
+    "3": "Pétrole et gaz",
+    "4": "Chimie",
+    "5": "Pharmacie",
+    "6": "Agroalimentaire",
+    "7": "Automobile",
+    "8": "Aéronautique",
+    "9": "Mines",
+    "10": "Eau et assainissement",
+    "11": "Bâtiment et installations",
+    "12": "Transport et logistique",
+    "13": "Santé",
+    "14": "Autre"
+  },
+  "logo": {
+    "title": "Logo de l'entreprise",
+    "upload": "Importer un logo",
+    "change": "Choisir un autre fichier",
+    "help": "PNG ou JPG, 2 Mo maximum.",
+    "finish": "Terminer"
+  },
+  "errors": {
+    "ERROR_COMPANY_EXISTS": "Une entreprise avec ce numéro d'immatriculation est déjà enregistrée.",
+    "ERROR_LOGO_TYPE": "Choisissez un fichier PNG ou JPG.",
+    "ERROR_FILE_TOO_LARGE": "Le fichier dépasse 2 Mo.",
+    "ERROR_VALIDATION": "Vérifiez les champs et réessayez.",
+    "ERROR_UNKNOWN": "Une erreur s'est produite. Réessayez."
+  }
+}

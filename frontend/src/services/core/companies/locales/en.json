@@ -1,0 +1,47 @@
+{
+  "step": "Step {{step}} of 3",
+  "continue": "Continue",
+  "back": "Back",
+  "skip": "Skip",
+  "company": {
+    "title": "Your company",
+    "name": "Company name",
+    "namePlaceholder": "Martin Industries",
+    "country": "Country of registration",
+    "countryPlaceholder": "Select a country",
+    "number": "Registration number",
+    "numberPlaceholder": "123 456 789 00012"
+  },
+  "industries": {
+    "title": "Industries",
+    "intro": "Select the industries you work in.",
+    "1": "Manufacturing",
+    "2": "Energy and utilities",
+    "3": "Oil and gas",
+    "4": "Chemicals",
+    "5": "Pharmaceuticals",
+    "6": "Food and beverage",
+    "7": "Automotive",
+    "8": "Aerospace",
+    "9": "Mining",
+    "10": "Water and wastewater",
+    "11": "Building and facilities",
+    "12": "Transport and logistics",
+    "13": "Healthcare",
+    "14": "Other"
+  },
+  "logo": {
+    "title": "Company logo",
+    "upload": "Upload a logo",
+    "change": "Choose another file",
+    "help": "PNG or JPG, up to 2 MB.",
+    "finish": "Finish"
+  },
+  "errors": {
+    "ERROR_COMPANY_EXISTS": "A company with this registration number is already registered.",
+    "ERROR_LOGO_TYPE": "Choose a PNG or JPG file.",
+    "ERROR_FILE_TOO_LARGE": "The file is larger than 2 MB.",
+    "ERROR_VALIDATION": "Check the fields and try again.",
+    "ERROR_UNKNOWN": "Something went wrong. Try again."
+  }
+}

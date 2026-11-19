@@ -6,5 +6,8 @@ import { applyTheme, initialTheme } from './theme'
 addTranslations('ui-kit', { en, fr })
 applyTheme(initialTheme())
 
+export { Field } from './Field'
+export { FormError, Notice, Title } from './FormParts'
 export { Icon } from './Icon'
+export * as check from './validation'
 export { PublicLayout } from './PublicLayout'

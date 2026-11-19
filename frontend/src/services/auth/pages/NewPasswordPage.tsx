@@ -3,10 +3,8 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../http'
 import { navigate } from '../../navigation'
+import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
-import { Field } from '../components/Field'
-import { FormError, Title } from '../components/Parts'
-import * as check from '../validation'
 
 /** Screen 7: set a new password, reached from a reset link. Saving keeps the user logged in. */
 export function NewPasswordPage() {
@@ -41,7 +39,7 @@ export function NewPasswordPage() {
   return (
     <>
       <Title>{t('newPassword.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       <Form onSubmit={save} className="flex flex-col gap-3">
         <Field
           name="password"

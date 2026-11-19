@@ -2,11 +2,9 @@ import { Button, Form } from '@heroui/react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
+import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
-import { Field } from '../components/Field'
-import { FormError, Title } from '../components/Parts'
 import { checkEmailUrl } from '../routes'
-import * as check from '../validation'
 
 /** Log in with a sign-in link: email only. */
 export function SignInLinkPage() {
@@ -32,7 +30,7 @@ export function SignInLinkPage() {
   return (
     <>
       <Title>{t('linkLogin.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       <p className="mb-4">{t('linkLogin.intro')}</p>
       <Form onSubmit={send} className="flex flex-col gap-4">
         <Field

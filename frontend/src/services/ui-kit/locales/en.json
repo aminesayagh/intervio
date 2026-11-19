@@ -1,5 +1,15 @@
 {
   "switchToDark": "Switch to dark mode",
   "switchToLight": "Switch to light mode",
-  "language": "Language"
+  "language": "Language",
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "passwordLength": "Use at least 12 characters.",
+    "mismatch": "The passwords do not match."
+  },
+  "password": {
+    "show": "Show password",
+    "hide": "Hide password"
+  }
 }

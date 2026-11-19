@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { Title } from '../../ui-kit'
 import { Link } from '../../navigation'
-import { Title } from '../components/Parts'
 
 /** Screen 6: reset link sent. Same answer whether or not the account exists. */
 export function ResetLinkSentPage() {

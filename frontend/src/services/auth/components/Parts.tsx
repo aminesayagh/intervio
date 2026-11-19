@@ -1,12 +1,7 @@
-import { Alert, Button } from '@heroui/react'
-import type { ReactNode } from 'react'
+import { Button } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../navigation'
 import { Icon } from '../../ui-kit'
-
-export function Title({ children }: { children: ReactNode }) {
-  return <h1 className="mb-5 text-2xl leading-tight">{children}</h1>
-}
 
 /** Full-page navigation: Google sign-in leaves the app and comes back. */
 export function GoogleButton() {
@@ -42,30 +37,5 @@ export function OrDivider() {
       {t('common.or')}
       <span className="h-px flex-1 bg-separator" />
     </div>
-  )
-}
-
-/** Message about the whole form, shown above it. */
-export function FormError({ messageKey }: { messageKey: string | null }) {
-  const { t } = useTranslation('auth')
-  if (!messageKey) return null
-  return (
-    <Alert status="danger" className="mb-4">
-      <Alert.Indicator />
-      <Alert.Content>
-        <Alert.Description>{t(messageKey)}</Alert.Description>
-      </Alert.Content>
-    </Alert>
-  )
-}
-
-export function Notice({ children }: { children: ReactNode }) {
-  return (
-    <Alert status="success" className="mb-4">
-      <Alert.Indicator />
-      <Alert.Content>
-        <Alert.Description>{children}</Alert.Description>
-      </Alert.Content>
-    </Alert>
   )
 }

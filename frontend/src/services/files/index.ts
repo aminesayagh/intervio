@@ -4,7 +4,14 @@ import fr from './locales/fr.json'
 
 addTranslations('files', { en, fr })
 
-export { fileUrl, uploadErrorKey, uploadFile, type UploadedFile } from './api'
+export {
+  fileUrl,
+  formatSize,
+  uploadErrorKey,
+  uploadFile,
+  type UploadedFile,
+} from './api'
+export { DocumentsField } from './DocumentsField'
 export { FileDropzone } from './FileDropzone'
 export { ImagePicker } from './ImagePicker'
 export { checkFile, FILE_PURPOSES, type FilePurpose } from './purposes'

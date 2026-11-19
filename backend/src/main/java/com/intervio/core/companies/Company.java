@@ -48,6 +48,16 @@ public class Company {
 	@Column(name = "logo_file_id")
 	private Long logoFileId;
 
+	/** Registered address (decision 59): asked with the first intervention, null before. */
+	@Column(length = 200)
+	private String street;
+
+	@Column(length = 100)
+	private String city;
+
+	@Column(name = "postal_code", length = 20)
+	private String postalCode;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -83,6 +93,28 @@ public class Company {
 
 	void setLogoFileId(Long logoFileId) {
 		this.logoFileId = logoFileId;
+	}
+
+	public boolean hasAddress() {
+		return street != null;
+	}
+
+	public void setAddress(String street, String city, String postalCode) {
+		this.street = street;
+		this.city = city;
+		this.postalCode = postalCode;
+	}
+
+	public String getStreet() {
+		return street;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
 	}
 
 	public UUID getUuid() {

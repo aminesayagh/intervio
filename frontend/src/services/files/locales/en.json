@@ -11,5 +11,9 @@
     "ERROR_UNKNOWN": "Something went wrong. Try again."
   },
   "imageRules": "{{types}}, up to {{size}} MB.",
-  "or": " or "
+  "or": " or ",
+  "dropOrBrowse": "Drop files here or browse",
+  "uploading": "Uploading…",
+  "documentRules": "PDF, Office files or images, up to {{size}} MB each.",
+  "removeFile": "Remove {{name}}"
 }

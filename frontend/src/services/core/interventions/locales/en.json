@@ -1,0 +1,45 @@
+{
+  "title": "Interventions",
+  "all": "All interventions",
+  "create": "Create an intervention",
+  "none": "No interventions yet.",
+  "subtabs": "Intervention sections",
+  "overview": "Overview",
+  "offersDue": "Offers due {{date}}",
+  "documents_one": "{{count}} document",
+  "documents_other": "{{count}} documents",
+  "publish": "Publish",
+  "publishedOn": "Published on {{date}}",
+  "noSpecifications": "No specifications yet.",
+  "status": {
+    "label": "Status",
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "form": {
+    "title": "Title",
+    "titlePlaceholder": "Pump overhaul, line 3",
+    "description": "Description",
+    "descriptionPlaceholder": "Replace the seals and bearings of the main pump.",
+    "specifications": "Specifications",
+    "offerDeadline": "Offer deadline",
+    "addressTitle": "Registered address of {{company}}",
+    "addressHelp": "Asked once, for your first intervention.",
+    "street": "Street",
+    "streetPlaceholder": "12 rue des Ateliers",
+    "city": "City",
+    "cityPlaceholder": "Lyon",
+    "postalCode": "Postal code",
+    "postalCodePlaceholder": "69007",
+    "submit": "Create draft"
+  },
+  "errors": {
+    "ERROR_VALIDATION": "Check the fields and try again.",
+    "ERROR_ADDRESS_REQUIRED": "Enter your company's registered address.",
+    "ERROR_DEADLINE_PAST": "The offer deadline must be after today.",
+    "ERROR_ALREADY_PUBLISHED": "This intervention is already published.",
+    "ERROR_INTERVENTION_NOT_FOUND": "This intervention was not found.",
+    "ERROR_FILE_NOT_FOUND": "A specification was not found. Upload it again.",
+    "ERROR_UNKNOWN": "Something went wrong. Try again."
+  }
+}

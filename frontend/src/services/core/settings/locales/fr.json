@@ -71,6 +71,7 @@
     "ERROR_LINK_TOO_SOON": "Un lien vient d'être envoyé. Attendez une minute avant de redemander.",
     "ERROR_WRONG_PASSWORD": "Le mot de passe actuel est incorrect.",
     "ERROR_EMAIL_MISMATCH": "L'e-mail ne correspond pas à votre compte.",
-    "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez."
+    "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez.",
+    "ERROR_ACCOUNT_HAS_INTERVENTIONS": "Votre entreprise a une intervention publiée : le compte ne peut pas être supprimé."
   }
 }

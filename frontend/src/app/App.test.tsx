@@ -42,9 +42,14 @@ test('a logged-in client opening "/" lands on the dashboard tab', async () => {
         name: 'Martin Industries',
         country: 'FR',
         registrationNumber: '123',
+        id: '01970000-0000-7000-8000-000000000000',
         industries: [],
         logoFileId: null,
+        hasAddress: false,
       }),
+    ),
+    http.get('/api/interventions/recent', () =>
+      HttpResponse.json({ items: [], total: 0 }),
     ),
   )
   window.history.pushState(null, '', '/')

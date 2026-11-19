@@ -8,6 +8,8 @@ export type Company = {
   registrationNumber: string
   industries: number[]
   logoFileId: string | null
+  /** The registered address is asked with the first intervention (decision 59). */
+  hasAddress: boolean
 }
 
 export const companyKey = ['company']

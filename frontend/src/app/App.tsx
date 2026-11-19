@@ -16,6 +16,11 @@ import {
   CompanySettingsPage,
   settingsRoutes,
 } from '../services/core/settings'
+import {
+  INTERVENTION_PREFIX,
+  interventionRoutes,
+  InterventionPage,
+} from '../services/core/interventions'
 import { navigate, usePath } from '../services/navigation'
 import { PublicLayout } from '../services/ui-kit'
 
@@ -30,18 +35,25 @@ const routes: Record<string, Route> = {
     ]),
   ),
   ...Object.fromEntries(
-    Object.entries({ ...clientBoardRoutes, ...settingsRoutes }).map(
-      ([path, page]) => [path, { page, access: 'user', board: true }],
-    ),
+    Object.entries({
+      ...clientBoardRoutes,
+      ...settingsRoutes,
+      ...interventionRoutes,
+    }).map(([path, page]) => [path, { page, access: 'user', board: true }]),
   ),
 }
 
-/** Every company tab shares one page, which reads the company id from the address. */
-const companySettingsRoute: Route = {
-  page: CompanySettingsPage,
-  access: 'user',
-  board: true,
-}
+/** Addresses with an id: one page each, which reads the id from the address. */
+const prefixRoutes: [string, Route][] = [
+  [
+    COMPANY_SETTINGS_PREFIX,
+    { page: CompanySettingsPage, access: 'user', board: true },
+  ],
+  [
+    INTERVENTION_PREFIX,
+    { page: InterventionPage, access: 'user', board: true },
+  ],
+]
 
 /** Pages a logged-in user may open before onboarding is done. */
 const BEFORE_ONBOARDING = [
@@ -55,9 +67,9 @@ function Router() {
   const path = usePath()
   const { data: user, isPending: userPending } = useCurrentUser()
   const { data: company, isPending: companyPending } = useCompany(!!user)
-  const route = path.startsWith(COMPANY_SETTINGS_PREFIX)
-    ? companySettingsRoute
-    : routes[path]
+  const route =
+    routes[path] ??
+    prefixRoutes.find(([prefix]) => path.startsWith(prefix))?.[1]
   const isPending = userPending || (!!user && companyPending)
 
   let redirect: string | null = null

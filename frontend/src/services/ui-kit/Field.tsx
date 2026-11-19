@@ -4,6 +4,7 @@ import {
   Input,
   InputGroup,
   Label,
+  TextArea,
   TextField,
 } from '@heroui/react'
 import { useState } from 'react'
@@ -13,7 +14,9 @@ import { Icon } from './Icon'
 type Props = {
   name: string
   label: string
-  type?: 'text' | 'email' | 'password'
+  type?: 'text' | 'email' | 'password' | 'date'
+  /** A multi-line text area instead of a one-line input. */
+  multiline?: boolean
   autoComplete?: string
   help?: string
   placeholder?: string
@@ -34,6 +37,7 @@ export function Field({
   value,
   onChange,
   check,
+  multiline = false,
 }: Props) {
   const { t } = useTranslation('ui-kit')
   const [shown, setShown] = useState(false)
@@ -69,6 +73,8 @@ export function Field({
             </button>
           </InputGroup.Suffix>
         </InputGroup>
+      ) : multiline ? (
+        <TextArea placeholder={placeholder} rows={3} />
       ) : (
         <Input placeholder={placeholder} />
       )}

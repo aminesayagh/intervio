@@ -162,6 +162,13 @@
 90. **An account can be deleted only while its company has no published intervention.** Deleting removes the account, the company, its logo and its files for good, after the user types their email to confirm. Once an intervention is published, the section explains that the account cannot be deleted.
 91. **Each company tab:** the onboarding fields (company name, country of registration, registration number, industries, logo), editable with the same rules as in onboarding.
 
+### Interventions on the client board
+
+92. **The sidebar lists the interventions under "Main":** the six the user opened last, most recent first, remembered on the server so the list follows the user from one device to another. When the company has more than six interventions, a seventh entry, "All interventions", opens the gallery. Below the list, a "Create an intervention" button is always shown. In the collapsed sidebar only the create button stays, as a "+" icon.
+93. **"All interventions" is a gallery of cards**, most recently updated first. Each card shows the title, the status (Draft or Published), the offer deadline and the number of documents, and opens the intervention.
+94. **"Create an intervention" opens its own page** (/interventions/new) with a short form: title, short description, specifications (files, through the upload module) and the offer deadline. For the company's first intervention, the form also asks the company's registered address (street, city, postal code; the country is the country of registration). The form creates a draft and opens its Overview; shared documents and publishing come later.
+95. **Each intervention has its own page** (/interventions/{id}): its title, then horizontal subtabs. The first is Overview: status, offer deadline, description, specifications and, for a draft, the Publish button. More subtabs come later.
+
 ## 2. Use cases
 
 ### Accounts

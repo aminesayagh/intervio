@@ -2,11 +2,9 @@ import { Button, Form } from '@heroui/react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
+import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
-import { Field } from '../components/Field'
-import { FormError, Title } from '../components/Parts'
 import { checkEmailUrl } from '../routes'
-import * as check from '../validation'
 
 /** Sign up with a sign-in link: no password; the name is needed to create the account. */
 export function SignUpLinkPage() {
@@ -33,7 +31,7 @@ export function SignUpLinkPage() {
   return (
     <>
       <Title>{t('linkSignup.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       <p className="mb-4">{t('linkSignup.intro')}</p>
       <Form onSubmit={send} className="flex flex-col gap-3">
         <Field

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from '../../navigation'
+import { FormError, Notice, Title } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
-import { FormError, Notice, Title } from '../components/Parts'
 
 /** Screen 3: check your email, after a sign-up or a sign-in link request. */
 export function CheckEmailPage() {
@@ -29,7 +29,7 @@ export function CheckEmailPage() {
   return (
     <>
       <Title>{t('checkEmail.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       {resent && <Notice>{t('checkEmail.resent')}</Notice>}
       <p className="mb-5">{t('checkEmail.sent', { email })}</p>
       <div className="flex flex-col items-start gap-3">

@@ -2,17 +2,10 @@ import { Button, Form } from '@heroui/react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
+import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
-import { Field } from '../components/Field'
-import {
-  FormError,
-  GoogleButton,
-  LinkButton,
-  OrDivider,
-  Title,
-} from '../components/Parts'
+import { GoogleButton, LinkButton, OrDivider } from '../components/Parts'
 import { checkEmailUrl } from '../routes'
-import * as check from '../validation'
 
 /** Screen 2: sign up. */
 export function SignupPage() {
@@ -47,7 +40,7 @@ export function SignupPage() {
   return (
     <>
       <Title>{t('signup.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       <div className="flex flex-col gap-2">
         <GoogleButton />
         <LinkButton href="/signup/link" />

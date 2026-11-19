@@ -8,7 +8,7 @@ import {
 } from '@heroui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Icon } from '../../ui-kit'
+import { Icon } from './Icon'
 
 type Props = {
   name: string
@@ -21,8 +21,6 @@ type Props = {
   onChange: (value: string) => void
   /** Returns a translation key when the value is invalid. */
   check?: (value: string) => string | null
-  /** Error shown from outside the field, as a translation key. */
-  error?: string | null
 }
 
 /** A labelled text field whose checks show translated messages. Password fields get a show/hide button. */
@@ -36,9 +34,8 @@ export function Field({
   value,
   onChange,
   check,
-  error,
 }: Props) {
-  const { t } = useTranslation('auth')
+  const { t } = useTranslation('ui-kit')
   const [shown, setShown] = useState(false)
   const isPassword = type === 'password'
   return (
@@ -54,7 +51,6 @@ export function Field({
       validate={
         check ? (v) => (v && check(v) ? t(check(v)!) : null) : undefined
       }
-      isInvalid={error ? true : undefined}
       fullWidth
     >
       <Label>{label}</Label>
@@ -78,12 +74,11 @@ export function Field({
       )}
       {help && <Description>{help}</Description>}
       <FieldError>
-        {error
-          ? t(error)
-          : (v) =>
-              v.validationDetails.valueMissing
-                ? t('validation.required')
-                : v.validationErrors.join(' ')}
+        {(v) =>
+          v.validationDetails.valueMissing
+            ? t('validation.required')
+            : v.validationErrors.join(' ')
+        }
       </FieldError>
     </TextField>
   )

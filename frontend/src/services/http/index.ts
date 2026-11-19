@@ -10,7 +10,8 @@ export class ApiError extends Error {
   }
 }
 
-type Body = { json: unknown } | { form: Record<string, string> }
+type Body =
+  { json: unknown } | { form: Record<string, string> } | { file: FormData }
 
 function csrfToken() {
   return document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)?.[1]
@@ -36,6 +37,8 @@ export async function api<T = void>(
   if (options.body && 'json' in options.body) {
     headers['Content-Type'] = 'application/json'
     body = JSON.stringify(options.body.json)
+  } else if (options.body && 'file' in options.body) {
+    body = options.body.file // the browser sets the multipart Content-Type
   } else if (options.body) {
     body = new URLSearchParams(options.body.form)
   }

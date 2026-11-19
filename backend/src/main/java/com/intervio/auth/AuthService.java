@@ -1,5 +1,6 @@
 package com.intervio.auth;
 
+import com.intervio.api.ApiException;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
@@ -72,7 +73,7 @@ public class AuthService implements UserDetailsService {
 	private User newClient(String fullName, String email, String locale) {
 		String normalized = normalize(email);
 		if (users.existsByEmail(normalized)) {
-			throw new AuthException(HttpStatus.CONFLICT, "ERROR_EMAIL_TAKEN");
+			throw new ApiException(HttpStatus.CONFLICT, "ERROR_EMAIL_TAKEN");
 		}
 		short lang = "fr".equals(locale) ? User.LOCALE_FR : User.LOCALE_EN;
 		return User.client(fullName.trim(), normalized, lang);
@@ -85,7 +86,7 @@ public class AuthService implements UserDetailsService {
 	public void requestLink(EmailLink link, String email) {
 		String normalized = normalize(email);
 		if (!limiter.allowLink(link.name(), normalized)) {
-			throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "ERROR_LINK_TOO_SOON");
+			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "ERROR_LINK_TOO_SOON");
 		}
 		Optional<User> user = users.findByEmail(normalized);
 		if (link == EmailLink.CONFIRM) {
@@ -115,10 +116,10 @@ public class AuthService implements UserDetailsService {
 	public UsedLink useLink(String tokenValue) {
 		OneTimeToken token = tokens.consume(new OneTimeTokenAuthenticationToken(tokenValue));
 		if (token == null) {
-			throw new AuthException(HttpStatus.GONE, "ERROR_LINK_INVALID");
+			throw new ApiException(HttpStatus.GONE, "ERROR_LINK_INVALID");
 		}
 		String[] parts = token.getUsername().split(":", 2);
-		User user = users.findByEmail(parts[1]).orElseThrow(() -> new AuthException(HttpStatus.GONE, "ERROR_LINK_INVALID"));
+		User user = users.findByEmail(parts[1]).orElseThrow(() -> new ApiException(HttpStatus.GONE, "ERROR_LINK_INVALID"));
 		user.verifyEmail();
 		return new UsedLink(EmailLink.valueOf(parts[0]), user.getEmail());
 	}

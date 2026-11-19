@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { Title } from '../../ui-kit'
 import { Link } from '../../navigation'
-import { Title } from '../components/Parts'
 
 /** Shown for any expired or already used email link. */
 export function LinkInvalidPage() {

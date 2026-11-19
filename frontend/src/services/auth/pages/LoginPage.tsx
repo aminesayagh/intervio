@@ -3,16 +3,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate, useSearchParams } from '../../navigation'
+import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, currentUserKey, errorKey } from '../api'
-import { Field } from '../components/Field'
-import {
-  FormError,
-  GoogleButton,
-  LinkButton,
-  OrDivider,
-  Title,
-} from '../components/Parts'
-import * as check from '../validation'
+import { GoogleButton, LinkButton, OrDivider } from '../components/Parts'
 
 /** Screen 1: log in. */
 export function LoginPage() {
@@ -51,7 +44,7 @@ export function LoginPage() {
   return (
     <>
       <Title>{t('login.title')}</Title>
-      <FormError messageKey={error} />
+      <FormError message={error && t(error)} />
       <div className="flex flex-col gap-2">
         <GoogleButton />
         <LinkButton href="/login/link" />

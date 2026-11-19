@@ -62,12 +62,6 @@
     "loggedIn": "Vous êtes connecté en tant que {{name}}.",
     "logOut": "Se déconnecter"
   },
-  "validation": {
-    "required": "Ce champ est obligatoire.",
-    "email": "Saisissez une adresse e-mail valide.",
-    "passwordLength": "Utilisez au moins 12 caractères.",
-    "mismatch": "Les mots de passe ne correspondent pas."
-  },
   "errors": {
     "ERROR_AUTH_FAIL": "E-mail ou mot de passe incorrect.",
     "ERROR_EMAIL_NOT_CONFIRMED": "Confirmez votre e-mail pour vous connecter. Nous vous avons envoyé un nouveau lien.",
@@ -82,10 +76,6 @@
     "fullName": "Claire Martin",
     "email": "nom@entreprise.com",
     "password": "••••••••••••"
-  },
-  "password": {
-    "show": "Afficher le mot de passe",
-    "hide": "Masquer le mot de passe"
   },
   "linkLogin": {
     "title": "Se connecter avec un lien",

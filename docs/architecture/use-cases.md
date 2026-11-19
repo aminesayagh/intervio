@@ -151,6 +151,7 @@
 82. **Each client board tab has its own address:** /dashboard and /resources. The address "/" sends a logged-in client to the dashboard (after logging in and after onboarding) and a logged-out visitor to log in; an unknown address does the same.
 83. **Until interventions and resources are built, the Dashboard and Resources pages show only their title.**
 84. **Below 1024 px wide, the sidebar hides behind a menu button at the top left** and slides in over the page; choosing a tab closes it.
+85. **The client can hide the sidebar** with a button at its top right, next to the logo. A menu button at the top left of the page brings it back. The choice is remembered on that browser. On narrow screens the same button closes the drawer.
 
 ## 2. Use cases
 

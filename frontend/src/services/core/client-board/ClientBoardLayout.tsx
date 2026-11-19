@@ -9,7 +9,7 @@ import { applyTheme, Icon, useTheme } from '../../ui-kit'
 
 const TABS = [
   { href: '/dashboard', label: 'nav.dashboard', icon: 'Grid - 3' },
-  { href: '/resources', label: 'nav.resources', icon: 'Work' },
+  { href: '/resources', label: 'nav.resources', icon: 'Folder' },
 ] as const
 
 const COLLAPSED_KEY = 'intervio.sidebarCollapsed'

@@ -9,8 +9,10 @@ export default defineConfig({
     // Backend requests, and the Google sign-in round trip, go to Spring Boot in development.
     proxy: {
       '/api': 'http://localhost:8080',
-      '/oauth2': 'http://localhost:8080',
-      '/login/oauth2': 'http://localhost:8080',
+      // Keep the browser's host (localhost:5173) so Spring builds the Google return address
+      // registered in Google Cloud: http://localhost:5173/login/oauth2/code/google
+      '/oauth2': { target: 'http://localhost:8080', changeOrigin: false },
+      '/login/oauth2': { target: 'http://localhost:8080', changeOrigin: false },
     },
   },
   test: {

@@ -187,6 +187,8 @@ All messages, by situation:
 
 Sent in the user's language (`users.locale`). French versions are simple translations, written during the build.
 
+**Layout:** one minimal HTML template for every email (`backend/src/main/resources/mail/email.html`): the Intervio logo and name, a card with the greeting, one sentence, the link as a yellow button and the validity note, then the line "This email was sent by Intervio." The logo travels inside the email (email apps cannot fetch files that need a login), as PNG since several email apps do not show SVG. The same text is also sent as plain text, for email apps without HTML.
+
 **Email confirmation** (sign-up with email and password)
 - Subject: Confirm your email
 - Body: "Hello {full name}, confirm your email to activate your Intervio account." · button "Confirm email" · "The link is valid for 24 hours. If you did not create this account, you can ignore this email."

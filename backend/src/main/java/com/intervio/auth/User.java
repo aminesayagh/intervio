@@ -53,6 +53,21 @@ public class User {
 	@Column(nullable = false)
 	private short locale = LOCALE_EN;
 
+	@Column(name = "photo_file_id")
+	private Long photoFileId;
+
+	/** The new email, until its confirmation link is opened (decision 88). */
+	@Column(name = "pending_email", length = 320)
+	private String pendingEmail;
+
+	/** Sessions and "Remember me" cookies older than this are ended (decision 89). */
+	/** The Google account photo, refreshed at each Google log-in; an uploaded photo wins. */
+	@Column(name = "google_picture_url", length = 1000)
+	private String googlePictureUrl;
+
+	@Column(name = "sessions_valid_after")
+	private Instant sessionsValidAfter;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -106,6 +121,52 @@ public class User {
 			verifyEmail();
 		}
 		this.googleId = googleId;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public void setPhotoFileId(Long photoFileId) {
+		this.photoFileId = photoFileId;
+	}
+
+	public void setPendingEmail(String pendingEmail) {
+		this.pendingEmail = pendingEmail;
+	}
+
+	/** The new email replaces the old one; Google was linked to the old one, so it is unlinked. */
+	void confirmEmailChange() {
+		email = pendingEmail;
+		pendingEmail = null;
+		googleId = null;
+		googlePictureUrl = null;
+		verifyEmail();
+	}
+
+	void endSessionsBefore(Instant instant) {
+		sessionsValidAfter = instant;
+	}
+
+	/** Only an https address from Google is kept; anything else is dropped. */
+	void setGooglePictureUrl(String url) {
+		googlePictureUrl = url != null && url.startsWith("https://") && url.length() <= 1000 ? url : null;
+	}
+
+	public String getGooglePictureUrl() {
+		return googlePictureUrl;
+	}
+
+	public Long getPhotoFileId() {
+		return photoFileId;
+	}
+
+	public String getPendingEmail() {
+		return pendingEmail;
+	}
+
+	public Instant getSessionsValidAfter() {
+		return sessionsValidAfter;
 	}
 
 	public Long getId() {

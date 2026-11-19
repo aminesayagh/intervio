@@ -10,7 +10,10 @@ public enum FilePurpose {
 	COMPANY_LOGO(1, 2, EnumSet.of(FileType.PNG, FileType.JPEG), 2000),
 
 	/** Specifications, shared documents, RFI and change-request documents, reports: 10 MB. */
-	DOCUMENT(2, 10, EnumSet.allOf(FileType.class), 8000);
+	DOCUMENT(2, 10, EnumSet.allOf(FileType.class), 8000),
+
+	/** Profile photo (decision 87): PNG or JPG, 2 MB. */
+	USER_PHOTO(3, 2, EnumSet.of(FileType.PNG, FileType.JPEG), 2000);
 
 	public final short code;
 

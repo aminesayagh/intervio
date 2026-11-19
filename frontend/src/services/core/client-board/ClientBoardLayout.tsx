@@ -4,8 +4,8 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser, useLogOut } from '../../auth'
 import { setLanguage } from '../../i18n'
-import { Link, usePath } from '../../navigation'
-import { applyTheme, Icon, initialTheme, type Theme } from '../../ui-kit'
+import { Link, navigate, usePath } from '../../navigation'
+import { applyTheme, Icon, useTheme } from '../../ui-kit'
 
 const TABS = [
   { href: '/dashboard', label: 'nav.dashboard', icon: 'Grid - 3' },
@@ -171,15 +171,12 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
   const { t, i18n } = useTranslation('client-board')
   const { data: user } = useCurrentUser()
   const logOut = useLogOut()
-  const [theme, setTheme] = useState<Theme>(initialTheme)
+  const theme = useTheme()
 
   function onAction(key: React.Key) {
+    if (key === 'profile') navigate('/settings/profile')
     if (key === 'language') setLanguage(i18n.language === 'fr' ? 'en' : 'fr')
-    if (key === 'theme') {
-      const next = theme === 'dark' ? 'light' : 'dark'
-      applyTheme(next, true)
-      setTheme(next)
-    }
+    if (key === 'theme') applyTheme(theme === 'dark' ? 'light' : 'dark', true)
     if (key === 'logout') void logOut()
   }
 
@@ -193,8 +190,17 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
           collapsed ? 'justify-center px-0' : 'justify-start px-2'
         }`}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--field-radius)] bg-default font-medium">
-          {user?.fullName.charAt(0).toUpperCase()}
+        <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[var(--field-radius)] bg-default font-medium">
+          {user?.photoUrl ? (
+            <img
+              src={user.photoUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="size-full object-cover"
+            />
+          ) : (
+            user?.fullName.charAt(0).toUpperCase()
+          )}
         </span>
         {!collapsed && (
           <FadeIn className="flex min-w-0 flex-1 items-center gap-2">
@@ -212,11 +218,7 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
       </Button>
       <Dropdown.Popover placement="top start" className="min-w-[232px]">
         <Dropdown.Menu onAction={onAction}>
-          <Dropdown.Item
-            id="profile"
-            textValue={t('profile.manage')}
-            isDisabled
-          >
+          <Dropdown.Item id="profile" textValue={t('profile.manage')}>
             <Icon name="User" size={18} />
             <Label>{t('profile.manage')}</Label>
           </Dropdown.Item>

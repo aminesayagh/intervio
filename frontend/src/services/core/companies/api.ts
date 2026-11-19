@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, ApiError } from '../../http'
 
 export type Company = {
+  id: string
   name: string
   country: string
   registrationNumber: string
@@ -10,6 +11,11 @@ export type Company = {
 }
 
 export const companyKey = ['company']
+
+/** Industry codes 1-14, matching the backend's list. */
+export const INDUSTRY_CODES = Array.from({ length: 14 }, (_, i) =>
+  String(i + 1),
+)
 
 export const companyApi = {
   saveDetails: (name: string, country: string, registrationNumber: string) =>
@@ -28,6 +34,7 @@ export const companyApi = {
       method: 'PUT',
       body: { json: { fileId } },
     }),
+  removeLogo: () => api<Company>('/api/company/logo', { method: 'DELETE' }),
 }
 
 /** The client's company, or null before onboarding. */

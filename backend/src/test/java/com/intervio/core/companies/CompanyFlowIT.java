@@ -71,6 +71,8 @@ class CompanyFlowIT {
 
 	@Test
 	void onlyClientsHaveACompany() throws Exception {
+		// A real account (sessions of unknown users are ended), seen with another role.
+		users.save(User.client("Test Contractor", "contractor@company.test", User.LOCALE_EN));
 		mvc.perform(get("/api/company").with(user("contractor@company.test").roles("CONTRACTOR")))
 			.andExpect(status().isForbidden());
 	}

@@ -4,10 +4,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../../navigation'
 import { FormError } from '../../../ui-kit'
-import { companyApi, companyKey, errorKey, useCompany } from '../api'
+import {
+  companyApi,
+  companyKey,
+  errorKey,
+  INDUSTRY_CODES,
+  useCompany,
+} from '../api'
 import { StepLinks, StepTitle } from '../components'
-
-const CODES = Array.from({ length: 14 }, (_, i) => String(i + 1))
 
 /** Step 2 (optional): the industries the company works in, in two columns. */
 export function IndustriesStepPage() {
@@ -57,7 +61,7 @@ function IndustriesForm({ initial }: { initial: number[] }) {
       >
         <p className="mb-3">{t('industries.intro')}</p>
         <div className="grid grid-flow-col grid-cols-2 grid-rows-7 gap-x-4 gap-y-0">
-          {CODES.map((code) => (
+          {INDUSTRY_CODES.map((code) => (
             <Checkbox key={code} value={code}>
               <Checkbox.Content>
                 <Checkbox.Control>

@@ -41,6 +41,7 @@ class GoogleUserService extends OidcUserService {
 			found.linkGoogle(google.getSubject());
 			return users.save(found);
 		});
+		user.setGooglePictureUrl(google.getPicture());
 		// The principal's name is the email, like for password log-in.
 		var authorities = List.of(new SimpleGrantedAuthority("ROLE_CLIENT"));
 		return new DefaultOidcUser(authorities, google.getIdToken(), google.getUserInfo(), "email") {

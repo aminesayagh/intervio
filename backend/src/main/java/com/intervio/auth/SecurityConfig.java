@@ -17,6 +17,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import tools.jackson.databind.json.JsonMapper;
@@ -29,7 +30,7 @@ class SecurityConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, AuthService auth, AttemptLimiter limiter,
 			AuthProperties props, GoogleUserService googleUsers, ObjectProvider<ClientRegistrationRepository> google,
-			JsonMapper json) throws Exception {
+			JsonMapper json, StampedRememberMeServices rememberMe, UserRepository users) throws Exception {
 		http.csrf(csrf -> csrf.spa())
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers("/api/auth/me", "/api/auth/password").authenticated()
@@ -67,9 +68,8 @@ class SecurityConfig {
 					response.setContentType("application/json");
 					json.writeValue(response.getOutputStream(), Map.of("code", code));
 				}))
-			.rememberMe(remember -> remember.key(props.rememberMeKey())
-				.rememberMeParameter("rememberMe")
-				.tokenValiditySeconds(REMEMBER_ME_SECONDS))
+			.rememberMe(remember -> remember.key(props.rememberMeKey()).rememberMeServices(rememberMe))
+			.addFilterBefore(new SessionCutoffFilter(users), AuthorizationFilter.class)
 			.logout(logout -> logout.logoutUrl("/api/auth/logout")
 				.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()));
 		// Google is enabled only when its client id and secret are configured.
@@ -101,6 +101,11 @@ class SecurityConfig {
 			}
 		});
 		return provider;
+	}
+
+	@Bean
+	StampedRememberMeServices rememberMeServices(AuthProperties props, AuthService auth, UserRepository users) {
+		return new StampedRememberMeServices(props.rememberMeKey(), auth, users);
 	}
 
 	@Bean

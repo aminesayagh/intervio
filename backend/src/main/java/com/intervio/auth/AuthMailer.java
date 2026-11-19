@@ -36,20 +36,44 @@ class AuthMailer {
 	record Content(String subject, String intro, String button, String note) {
 	}
 
+	/** A link email; an email-change link goes to the new address. */
 	void send(User user, EmailLink link, String token) {
 		boolean fr = user.getLocale() == User.LOCALE_FR;
 		String url = props.frontendUrl() + "/auth/link?token=" + token;
+		String to = link == EmailLink.CHANGE_EMAIL ? user.getPendingEmail() : user.getEmail();
+		deliver(user, to, content(link, fr), url);
+	}
+
+	/** Tells the current address that the email is changing (decision 88); no button. */
+	void sendEmailChangeNotice(User user) {
+		boolean fr = user.getLocale() == User.LOCALE_FR;
+		Content c = fr ? new Content("Votre adresse e-mail Intervio va changer",
+				"Le changement de l'adresse e-mail de votre compte vers " + user.getPendingEmail()
+						+ " a été demandé. Votre adresse actuelle reste active jusqu'à la confirmation de la nouvelle.",
+				"", "Si vous n'êtes pas à l'origine de cette demande, connectez-vous et annulez le changement dans les paramètres.")
+				: new Content("Your Intervio email is changing",
+						"A change of your account email to " + user.getPendingEmail()
+								+ " was requested. Your current email stays active until the new one is confirmed.",
+						"", "If you did not ask for this, log in and cancel the change in Settings.");
+		deliver(user, user.getEmail(), c, null);
+	}
+
+	private void deliver(User user, String to, Content c, String url) {
+		boolean fr = user.getLocale() == User.LOCALE_FR;
 		String greeting = (fr ? "Bonjour " : "Hello ") + user.getFullName() + ",";
-		Content c = content(link, fr);
 		String footer = fr ? "Cet e-mail a été envoyé par Intervio." : "This email was sent by Intervio.";
-		String plain = greeting + "\n\n" + c.intro() + "\n\n" + c.button() + (fr ? " : " : ": ") + url + "\n\n" + c.note() + "\n";
+		String action = url == null ? "" : c.button() + (fr ? " : " : ": ") + url + "\n\n";
+		String plain = greeting + "\n\n" + c.intro() + "\n\n" + action + c.note() + "\n";
 		String html = fill(Map.of("lang", fr ? "fr" : "en", "subject", c.subject(), "greeting", greeting, "intro",
-				c.intro(), "button", c.button(), "url", url, "note", c.note(), "footer", footer));
+				c.intro(), "button", c.button(), "url", url == null ? "" : url, "note", c.note(), "footer", footer));
+		if (url == null) {
+			html = html.replaceAll("(?s)<!--button-->.*?<!--/button-->", "");
+		}
 		try {
 			MimeMessage message = sender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
 			helper.setFrom(props.mailFrom());
-			helper.setTo(user.getEmail());
+			helper.setTo(to);
 			helper.setSubject(c.subject());
 			helper.setText(plain, html);
 			helper.addInline("logo", LOGO, "image/png");
@@ -82,6 +106,14 @@ class AuthMailer {
 							"Le lien est valable 1 heure. Si vous ne l'avez pas demandé, ignorez cet e-mail.")
 					: new Content("Reset your password", "Use this link to set a new password.", "Set a new password",
 							"The link is valid for 1 hour. If you did not ask for it, you can ignore this email.");
+			case CHANGE_EMAIL -> fr
+					? new Content("Confirmez votre nouvelle adresse e-mail",
+							"Confirmez cette adresse pour en faire l'adresse de votre compte Intervio.",
+							"Confirmer l'adresse e-mail",
+							"Le lien est valable 24 heures. Si vous ne l'avez pas demandé, ignorez cet e-mail.")
+					: new Content("Confirm your new email", "Confirm this address to make it your Intervio account email.",
+							"Confirm email",
+							"The link is valid for 24 hours. If you did not ask for it, you can ignore this email.");
 		};
 	}
 

@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,7 +51,7 @@ class CompanyController {
 	record LogoRequest(@NotNull UUID fileId) {
 	}
 
-	record CompanyResponse(String name, String country, String registrationNumber, List<Integer> industries,
+	record CompanyResponse(UUID id, String name, String country, String registrationNumber, List<Integer> industries,
 			UUID logoFileId) {
 	}
 
@@ -60,7 +61,8 @@ class CompanyController {
 			industries.add((int) code);
 		}
 		UUID logo = c.getLogoFileId() == null ? null : files.get(c.getLogoFileId()).getUuid();
-		return new CompanyResponse(c.getName(), c.getCountry(), c.getRegistrationNumber(), industries, logo);
+		return new CompanyResponse(c.getUuid(), c.getName(), c.getCountry(), c.getRegistrationNumber(), industries,
+				logo);
 	}
 
 	@GetMapping
@@ -110,6 +112,19 @@ class CompanyController {
 		Company company = current(authentication);
 		Long previous = company.getLogoFileId();
 		company.setLogoFileId(files.attach(r.fileId(), userId, FilePurpose.COMPANY_LOGO).getId());
+		if (previous != null) {
+			files.delete(previous);
+		}
+		return response(company);
+	}
+
+	/** Settings, company tab: "Remove" under the logo. */
+	@DeleteMapping("/logo")
+	@Transactional
+	CompanyResponse removeLogo(Authentication authentication) {
+		Company company = current(authentication);
+		Long previous = company.getLogoFileId();
+		company.setLogoFileId(null);
 		if (previous != null) {
 			files.delete(previous);
 		}

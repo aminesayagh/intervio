@@ -3,7 +3,16 @@ import { api, ApiError } from '../http'
 import { i18n } from '../i18n'
 import { navigate } from '../navigation'
 
-export type CurrentUser = { fullName: string; email: string }
+export type CurrentUser = {
+  fullName: string
+  email: string
+  /** The new email, until its confirmation link is opened. */
+  pendingEmail: string | null
+  /** The uploaded photo, else the Google account photo, else null. */
+  photoUrl: string | null
+  hasPassword: boolean
+  googleConnected: boolean
+}
 
 const locale = () => i18n.language
 
@@ -33,7 +42,7 @@ export const authApi = {
   forgotPassword: (email: string) =>
     api('/api/auth/password/forgot', { body: { json: { email } } }),
   openLink: (token: string) =>
-    api<{ next: 'home' | 'reset-password' }>('/api/auth/token', {
+    api<{ next: 'home' | 'reset-password' | 'profile' }>('/api/auth/token', {
       body: { json: { token } },
     }),
   setPassword: (password: string) =>

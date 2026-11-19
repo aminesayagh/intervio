@@ -31,9 +31,6 @@ Let a client invite colleagues as additional clients of the same company. For no
 
 **Why deferred:** the invitation flow for this is a separate feature; client staff already cover colleagues who help.
 
-## Profile and company settings
+## Several companies per user
 
-Let users edit their profile, and let the client edit the company details given during onboarding, including the optional industries and logo.
-
-**Why deferred:** onboarding collects what is needed to start; editing comes later.
-
+Let a user own and manage several companies. The data already allows it (decision 67) and Settings has one tab per company with an "Add a company" button (decision 86), which only says it is not available yet. Still to design: what the button opens, and how the client board shows which company the user is working in.

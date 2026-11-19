@@ -153,6 +153,15 @@
 84. **Below 1024 px wide, the sidebar hides behind a menu button at the top left** and slides in over the page; choosing a tab closes it.
 85. **The client can collapse the sidebar** with the sidebar button at its top right. Collapsed, it is 57 px wide and keeps the button, the tab icons (their names show on hover) and the profile initial, which still opens the profile menu; the same button opens it again. The choice is remembered on that browser. On narrow screens the button closes the drawer.
 
+### Settings
+
+86. **"Manage profile" opens the Settings page inside the client board** (the sidebar stays). Its tabs are a vertical list on the left, in two groups: Account, with Profile (/settings/profile) and Security (/settings/security); and Companies, with one tab per company the user owns, named after it (/settings/companies/{company id}), so a user with several companies manages each one in its own tab. An "Add a company" button closes the Companies list; for now it opens a dialog saying that managing several companies is not available yet.
+87. **Profile:** a photo (PNG or JPEG, up to 2 MB, through the upload module), which replaces the initial in the sidebar and can be removed; the full name; the work email; and the preferences: language (English or French) and theme (light or dark), the same choices as in the sidebar menu, applied at once.
+88. **Changing the email needs confirmation.** The new address receives a confirmation link valid for 24 hours; the current address keeps working until then and receives a notice that the email is changing. If Google sign-in is connected with the old address, it is disconnected when the new address is confirmed.
+89. **Security:** change the password (current password, then the new one twice, at least 12 characters); a user without a password (Google or sign-in link) sees "Set a password" instead, without the current password. Sign-in methods show Google as connected or not connected, read-only for now. "Log out of other devices" ends every other session, including "Remember me", and keeps the current one.
+90. **An account can be deleted only while its company has no published intervention.** Deleting removes the account, the company, its logo and its files for good, after the user types their email to confirm. Once an intervention is published, the section explains that the account cannot be deleted.
+91. **Each company tab:** the onboarding fields (company name, country of registration, registration number, industries, logo), editable with the same rules as in onboarding.
+
 ## 2. Use cases
 
 ### Accounts

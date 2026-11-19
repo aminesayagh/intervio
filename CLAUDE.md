@@ -38,7 +38,7 @@ Keep only the latest version of each document: update it in place, do not create
 
 - The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning.
 - **One branch per feature or change**, never directly on `main`. Branch names: `feature/<short-name>` for features, `fix/<short-name>` for fixes, `chore/<short-name>` for tooling and docs (for example `feature/onboarding`).
-- Commit with clear messages on the branch, push it, and open a pull request into `main`. CI (GitHub Actions, `.github/workflows/ci.yml`) runs on the pull request; merge only when it is green, then delete the branch.
+- Commit with clear messages on the branch, push it, and open a pull request into `main`. CI (GitHub Actions, `.github/workflows/ci.yml`) runs on the pull request; merge only when its jobs are green, then delete the branch. Review apps installed on the repository (Sourcery, Socket) do not block a merge.
 - Before each commit, check that no secrets, `.env` files or personal data are included.
 
 ## Wireframing rules (always apply)

@@ -37,11 +37,11 @@ interface InterventionRepository extends JpaRepository<Intervention, Long> {
 			select r.id, :interventionId, :type, now() from r""", nativeQuery = true)
 	void addDocument(UUID uuid, Long companyId, Long interventionId, String name, Long fileId, short type);
 
-	/** File ids of the intervention's documents of one type, oldest first. */
+	/** The intervention's documents as [file id, type], oldest first. */
 	@Query(value = """
-			select r.file_id from intervention_documents d join resources r on r.id = d.resource_id
-			where d.intervention_id = :interventionId and d.type = :type order by d.created_at, r.id""", nativeQuery = true)
-	List<Long> documentFileIds(Long interventionId, short type);
+			select r.file_id, d.type from intervention_documents d join resources r on r.id = d.resource_id
+			where d.intervention_id = :interventionId order by d.created_at, r.id""", nativeQuery = true)
+	List<Object[]> documents(Long interventionId);
 
 	@Query(value = "select count(*) from intervention_documents where intervention_id = :interventionId", nativeQuery = true)
 	int countDocuments(Long interventionId);

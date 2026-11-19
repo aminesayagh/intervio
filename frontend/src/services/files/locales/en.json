@@ -15,5 +15,8 @@
   "dropOrBrowse": "Drop files here or browse",
   "uploading": "Uploading…",
   "documentRules": "PDF, Office files or images, up to {{size}} MB each.",
-  "removeFile": "Remove {{name}}"
+  "removeFile": "Remove {{name}}",
+  "previewLoading": "Loading the preview…",
+  "previewUnavailable": "This type of file cannot be previewed.",
+  "previewFailed": "The preview could not be loaded."
 }

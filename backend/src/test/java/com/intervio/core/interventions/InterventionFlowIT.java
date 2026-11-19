@@ -64,7 +64,8 @@ class InterventionFlowIT {
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.title").value("Pump overhaul"))
 			.andExpect(jsonPath("$.status").value("draft"))
-			.andExpect(jsonPath("$.specifications[0].name").value("Pump specification.pdf"))
+			.andExpect(jsonPath("$.documents[0].name").value("Pump specification.pdf"))
+			.andExpect(jsonPath("$.documents[0].type").value("specification"))
 			.andReturn()
 			.getResponse()
 			.getContentAsString();

@@ -15,5 +15,8 @@
   "dropOrBrowse": "Déposez des fichiers ici ou parcourez",
   "uploading": "Envoi en cours…",
   "documentRules": "PDF, fichiers Office ou images, jusqu'à {{size}} Mo chacun.",
-  "removeFile": "Retirer {{name}}"
+  "removeFile": "Retirer {{name}}",
+  "previewLoading": "Chargement de l'aperçu…",
+  "previewUnavailable": "Ce type de fichier ne peut pas être prévisualisé.",
+  "previewFailed": "L'aperçu n'a pas pu être chargé."
 }

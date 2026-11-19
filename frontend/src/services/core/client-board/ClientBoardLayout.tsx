@@ -1,4 +1,5 @@
 import { Button, Drawer, Dropdown, Label, Separator } from '@heroui/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser, useLogOut } from '../../auth'
@@ -11,75 +12,66 @@ const TABS = [
   { href: '/resources', label: 'nav.resources', icon: 'Work' },
 ] as const
 
-const SIDEBAR_KEY = 'intervio.sidebarHidden'
+const COLLAPSED_KEY = 'intervio.sidebarCollapsed'
 
-function savedSidebarHidden() {
+function savedCollapsed() {
   try {
-    return localStorage.getItem(SIDEBAR_KEY) === 'true'
+    return localStorage.getItem(COLLAPSED_KEY) === 'true'
   } catch {
-    return false // storage can be blocked; the sidebar shows
+    return false // storage can be blocked; the sidebar opens full width
   }
 }
 
 /**
- * Signed-in client screens: a 264 px sidebar the user can hide, a drawer below 1024 px
- * (decisions 66, 84, 85).
+ * Signed-in client screens: a 264 px sidebar that collapses to a 57 px rail of icons,
+ * and a drawer below 1024 px (decisions 66, 84, 85).
  */
 export function ClientBoardLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('client-board')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [sidebarHidden, setSidebarHidden] = useState(savedSidebarHidden)
+  const [collapsed, setCollapsed] = useState(savedCollapsed)
+  const reduceMotion = useReducedMotion()
 
-  function hideSidebar(hidden: boolean) {
-    setSidebarHidden(hidden)
+  function toggleCollapsed() {
+    setCollapsed(!collapsed)
     try {
-      localStorage.setItem(SIDEBAR_KEY, String(hidden))
+      localStorage.setItem(COLLAPSED_KEY, String(!collapsed))
     } catch {
       // not remembered; the choice holds until the page is reloaded
     }
   }
 
-  function openMenu() {
-    // Wide screens bring the sidebar back; narrow screens open the drawer.
-    if (window.matchMedia('(min-width: 1024px)').matches) hideSidebar(false)
-    else setMenuOpen(true)
-  }
-
   return (
     <div className="flex min-h-screen bg-background text-sm text-foreground">
-      <aside
-        className={`sticky top-0 hidden h-screen w-[264px] shrink-0 border-e border-border ${
-          sidebarHidden ? '' : 'lg:flex'
-        }`}
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 57 : 264 }}
+        transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+        className="sticky top-0 hidden h-screen shrink-0 overflow-hidden border-e border-border lg:flex"
       >
-        <Sidebar onHide={() => hideSidebar(true)} />
-      </aside>
+        <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
+      </motion.aside>
       <div className="min-w-0 flex-1">
-        <header
-          className={`flex h-14 items-center gap-3 px-4 lg:px-6 ${
-            sidebarHidden ? '' : 'lg:hidden'
-          }`}
-        >
+        <header className="flex h-14 items-center gap-3 px-4 lg:hidden">
           <button
             type="button"
             aria-label={t('nav.openMenu')}
             className="flex text-muted hover:text-foreground"
-            onClick={openMenu}
+            onClick={() => setMenuOpen(true)}
           >
             <Icon name="Menu-1" size={20} />
           </button>
           <Logo />
         </header>
-        <main className={`p-4 lg:p-6 ${sidebarHidden ? 'lg:pt-2' : ''}`}>
-          {children}
-        </main>
+        <main className="p-4 lg:p-6">{children}</main>
       </div>
       <Drawer.Backdrop isOpen={menuOpen} onOpenChange={setMenuOpen}>
         <Drawer.Content placement="left" className="w-[264px] max-w-full">
           <Drawer.Dialog aria-label={t('nav.main')} className="h-full p-0">
             <Sidebar
+              collapsed={false}
               onNavigate={() => setMenuOpen(false)}
-              onHide={() => setMenuOpen(false)}
+              onToggle={() => setMenuOpen(false)}
             />
           </Drawer.Dialog>
         </Drawer.Content>
@@ -101,31 +93,48 @@ function Logo({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+/** Collapsed: only the toggle, the tab icons and the profile initial stay (decision 85). */
 function Sidebar({
+  collapsed,
   onNavigate,
-  onHide,
+  onToggle,
 }: {
+  collapsed: boolean
   onNavigate?: () => void
-  onHide: () => void
+  onToggle: () => void
 }) {
   const { t } = useTranslation('client-board')
   const path = usePath()
+  const toggleLabel = t(collapsed ? 'nav.expandSidebar' : 'nav.collapseSidebar')
   return (
-    <div className="flex h-full w-full flex-col p-4">
-      <div className="flex h-8 items-center justify-between">
-        <Logo onNavigate={onNavigate} />
+    <div
+      className={`flex h-full w-full flex-col py-4 ${collapsed ? 'px-2' : 'px-4'}`}
+    >
+      <div
+        className={`flex h-8 items-center ${collapsed ? 'justify-center' : 'justify-between'}`}
+      >
+        {!collapsed && (
+          <FadeIn>
+            <Logo onNavigate={onNavigate} />
+          </FadeIn>
+        )}
         <button
           type="button"
-          aria-label={t('nav.hideSidebar')}
-          title={t('nav.hideSidebar')}
-          className="flex size-7 items-center justify-center rounded-[var(--field-radius)] text-muted hover:bg-default hover:text-foreground"
-          onClick={onHide}
+          aria-label={toggleLabel}
+          title={toggleLabel}
+          aria-expanded={!collapsed}
+          className="flex size-8 items-center justify-center rounded-[var(--field-radius)] text-muted hover:bg-default hover:text-foreground"
+          onClick={onToggle}
         >
-          <Icon name="Arrow - Left-2" size={18} />
+          <Icon name="Sidebar" size={18} />
         </button>
       </div>
-      <nav className="mt-6 flex flex-col gap-0.5">
-        <p className="mb-1 px-2 text-xs text-muted">{t('nav.main')}</p>
+      <nav className="mt-6 flex flex-col gap-1">
+        <p
+          className={`mb-1 h-4 truncate px-2 text-xs text-muted ${collapsed ? 'invisible' : ''}`}
+        >
+          {t('nav.main')}
+        </p>
         {TABS.map((tab) => {
           const active = path === tab.href
           return (
@@ -134,27 +143,31 @@ function Sidebar({
               href={tab.href}
               onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
-              className={`flex h-8 items-center gap-2 rounded-[var(--field-radius)] px-2 ${
+              aria-label={collapsed ? t(tab.label) : undefined}
+              title={collapsed ? t(tab.label) : undefined}
+              className={`flex h-9 items-center gap-2 rounded-[var(--field-radius)] ${
+                collapsed ? 'justify-center' : 'px-2'
+              } ${
                 active
                   ? 'bg-default font-medium text-foreground'
                   : 'text-muted hover:bg-default hover:text-foreground'
               }`}
             >
               <Icon name={tab.icon} size={18} />
-              {t(tab.label)}
+              {!collapsed && <FadeIn>{t(tab.label)}</FadeIn>}
             </Link>
           )
         })}
       </nav>
       <div className="mt-auto">
-        <ProfileMenu />
+        <ProfileMenu collapsed={collapsed} />
       </div>
     </div>
   )
 }
 
 /** Name and email; opens Manage profile, language, theme and log out (decision 81). */
-function ProfileMenu() {
+function ProfileMenu({ collapsed }: { collapsed: boolean }) {
   const { t, i18n } = useTranslation('client-board')
   const { data: user } = useCurrentUser()
   const logOut = useLogOut()
@@ -175,18 +188,27 @@ function ProfileMenu() {
       <Button
         variant="ghost"
         fullWidth
-        className="h-auto justify-start gap-2 px-2 py-1.5 text-start"
+        aria-label={collapsed ? user?.fullName : undefined}
+        className={`h-auto gap-2 py-1.5 text-start ${
+          collapsed ? 'justify-center px-0' : 'justify-start px-2'
+        }`}
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--field-radius)] bg-default font-medium">
           {user?.fullName.charAt(0).toUpperCase()}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{user?.fullName}</span>
-          <span className="block truncate text-xs text-muted">
-            {user?.email}
-          </span>
-        </span>
-        <Icon name="More-1" size={18} className="text-muted" />
+        {!collapsed && (
+          <FadeIn className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium">
+                {user?.fullName}
+              </span>
+              <span className="block truncate text-xs text-muted">
+                {user?.email}
+              </span>
+            </span>
+            <Icon name="More-1" size={18} className="text-muted" />
+          </FadeIn>
+        )}
       </Button>
       <Dropdown.Popover placement="top start" className="min-w-[232px]">
         <Dropdown.Menu onAction={onAction}>
@@ -230,6 +252,30 @@ function ProfileMenu() {
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>
+  )
+}
+
+/** Labels fade in once the sidebar has widened, so they never wrap mid-animation. */
+function FadeIn({
+  children,
+  className = 'truncate',
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  const reduceMotion = useReducedMotion()
+  return (
+    <motion.span
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        duration: reduceMotion ? 0 : 0.15,
+        delay: reduceMotion ? 0 : 0.1,
+      }}
+      className={className}
+    >
+      {children}
+    </motion.span>
   )
 }
 

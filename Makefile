@@ -1,10 +1,15 @@
 # Intervio: run `make` to list the commands.
 
 .DEFAULT_GOAL := help
+
+# Local secrets (Google sign-in keys), never committed: loaded from .env when present.
+-include .env
+export $(shell sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' .env 2>/dev/null)
+
 .PHONY: help install db db-stop backend frontend dev test lint check
 
 help: ## List the commands
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
+	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
 
 install: ## Install frontend libraries (the backend downloads its own on first run)
 	cd frontend && pnpm install

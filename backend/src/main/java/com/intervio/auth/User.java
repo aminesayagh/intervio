@@ -8,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.id.uuid.UuidVersion7Strategy;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -25,8 +27,10 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true)
-	private UUID uuid = UUID.randomUUID();
+	/** Public identifier (UUID v7), the only id served outside the backend. */
+	@UuidGenerator(algorithm = UuidVersion7Strategy.class)
+	@Column(nullable = false, unique = true, updatable = false)
+	private UUID uuid;
 
 	@Column(name = "full_name", nullable = false, length = 200)
 	private String fullName;

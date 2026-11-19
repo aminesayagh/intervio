@@ -16,5 +16,13 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+  # Virus scanner for uploads (port 3310). First start downloads the signatures (a few minutes).
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
 volumes:
   postgres-data:
+  clamav-data:

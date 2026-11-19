@@ -24,6 +24,8 @@ SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
 
 In Google Cloud, the OAuth client allows the origin `http://localhost:5173` and the redirect URI `http://localhost:5173/login/oauth2/code/google`. Without `.env`, everything else works and the Google button is inactive.
 
+Uploaded files are kept in `storage/` at the root (git-ignored) and scanned by ClamAV, which `make db` starts with the database. ClamAV needs about 1–1.5 GB of memory and downloads its virus signatures on first start (a few minutes); until it is ready, uploads are refused.
+
 Emails (confirmation, sign-in and reset links) are caught locally by Mailpit: open http://localhost:8025.
 
 Ctrl+C stops the backend and the frontend; `make db-stop` stops PostgreSQL and Mailpit. Run `make` to list every command.

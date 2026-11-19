@@ -16,6 +16,7 @@ Keep only the latest version of each document: update it in place, do not create
 
 ## Coding rules
 
+- **Public identifiers are UUID v7.** Every entity served outside the backend (API responses, URLs, ids sent by the frontend) is identified by its `uuid` column, generated as UUID v7 (`@UuidGenerator(algorithm = UuidVersion7Strategy.class)`). The integer `id` is internal only: never in a response, a URL or a request. Secrets (email-link tokens) and storage keys stay random, not v7.
 - **No user-facing text from the backend.** Errors are sent as `{"code": "ERROR_..."}` (upper case, `ERROR_` prefix, for example `ERROR_AUTH_FAIL`). The frontend maps each key to the translated message (English and French). Emails are the only text the backend writes.
 
 ## Visual identity (the built app)

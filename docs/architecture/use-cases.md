@@ -138,6 +138,15 @@
 
 67. **Business objects belong to a company, and the company belongs to its owner.** Interventions and resources reference the company, not the user, so that a user can later own several companies. Client staff reach an intervention through their invitation only.
 
+### Files
+
+74. **One upload module for every file** (logos, specifications, shared documents, RFI and change-request documents, reports). A file is uploaded first, then attached to a business record by its id; a file not attached within a day is deleted.
+75. **Accepted formats:** PDF, PNG, JPG/JPEG, Excel (.xlsx, .xls), CSV and Office files (.docx, .doc, .pptx, .ppt). The type is recognized from the file's content, never from its name. Office files containing macros are refused.
+76. **Size limits:** 10 MB for documents, 2 MB for a company logo (decision 63). Images are rebuilt without their metadata and limited to 2000 × 2000 pixels for a logo.
+77. **Every upload is scanned for viruses** (ClamAV, run locally). An infected file is refused and never stored; if the scanner is unavailable, the upload is refused.
+78. **Files are stored on the local disk** (`storage/` at the repository root, never in git), under random names, and are never served directly.
+79. **Reading a file requires a logged-in user allowed to see that particular file**: the uploader, and the people of the record it belongs to (for a logo, its company). Documents download as attachments; only images are shown in the page.
+
 ## 2. Use cases
 
 ### Accounts

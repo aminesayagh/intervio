@@ -33,14 +33,11 @@
   "logo": {
     "title": "Company logo",
     "upload": "Upload a logo",
-    "change": "Choose another file",
     "help": "PNG or JPG, up to 2 MB.",
     "finish": "Finish"
   },
   "errors": {
     "ERROR_COMPANY_EXISTS": "A company with this registration number is already registered.",
-    "ERROR_LOGO_TYPE": "Choose a PNG or JPG file.",
-    "ERROR_FILE_TOO_LARGE": "The file is larger than 2 MB.",
     "ERROR_VALIDATION": "Check the fields and try again.",
     "ERROR_UNKNOWN": "Something went wrong. Try again."
   }

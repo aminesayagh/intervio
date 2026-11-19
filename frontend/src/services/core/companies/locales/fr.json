@@ -33,14 +33,11 @@
   "logo": {
     "title": "Logo de l'entreprise",
     "upload": "Importer un logo",
-    "change": "Choisir un autre fichier",
     "help": "PNG ou JPG, 2 Mo maximum.",
     "finish": "Terminer"
   },
   "errors": {
     "ERROR_COMPANY_EXISTS": "Une entreprise avec ce numéro d'immatriculation est déjà enregistrée.",
-    "ERROR_LOGO_TYPE": "Choisissez un fichier PNG ou JPG.",
-    "ERROR_FILE_TOO_LARGE": "Le fichier dépasse 2 Mo.",
     "ERROR_VALIDATION": "Vérifiez les champs et réessayez.",
     "ERROR_UNKNOWN": "Une erreur s'est produite. Réessayez."
   }

@@ -169,8 +169,8 @@
       "index": "b1Z",
       "roundness": null,
       "seed": 201773591,
-      "version": 206,
-      "versionNonce": 1786351637,
+      "version": 207,
+      "versionNonce": 1300890597,
       "isDeleted": false,
       "boundElements": [
         {
@@ -192,18 +192,22 @@
         {
           "id": "arr-companies-users",
           "type": "arrow"
+        },
+        {
+          "id": "arr-files-users",
+          "type": "arrow"
         }
       ],
       "updated": 1794994336953,
       "link": null,
       "locked": false,
-      "text": "users\n- id: PK\n- full_name\n- email: unique\n- uuid\n- role: smallint\n    1 client | 2 client_staff | 3 contractor\n- password_hash: nullable\n- google_id: nullable, unique\n- email_verified_at: date\n- locale: smallint\n    1 en | 2 fr\n- created_at: date\n- updated_at: date",
+      "text": "users\n- id: PK\n- full_name\n- email: unique\n- uuid (v7, public)\n- role: smallint\n    1 client | 2 client_staff | 3 contractor\n- password_hash: nullable\n- google_id: nullable, unique\n- email_verified_at: date\n- locale: smallint\n    1 en | 2 fr\n- created_at: date\n- updated_at: date",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "users\n- id: PK\n- full_name\n- email: unique\n- uuid\n- role: smallint\n    1 client | 2 client_staff | 3 contractor\n- password_hash: nullable\n- google_id: nullable, unique\n- email_verified_at: date\n- locale: smallint\n    1 en | 2 fr\n- created_at: date\n- updated_at: date",
+      "originalText": "users\n- id: PK\n- full_name\n- email: unique\n- uuid (v7, public)\n- role: smallint\n    1 client | 2 client_staff | 3 contractor\n- password_hash: nullable\n- google_id: nullable, unique\n- email_verified_at: date\n- locale: smallint\n    1 en | 2 fr\n- created_at: date\n- updated_at: date",
       "autoResize": true,
       "lineHeight": 1.25
     },
@@ -237,10 +241,6 @@
         },
         {
           "id": "XUr0I5KcQhZOxvcc9XnjY",
-          "type": "arrow"
-        },
-        {
-          "id": "LKh2Ni4dk5DcNjgIyogzR",
           "type": "arrow"
         },
         {
@@ -278,8 +278,8 @@
       "type": "text",
       "x": 475.4223374656767,
       "y": 1326.0571631317484,
-      "width": 121.33990478515625,
-      "height": 100,
+      "width": 348,
+      "height": 300,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -293,25 +293,29 @@
       "index": "b1b",
       "roundness": null,
       "seed": 716726199,
-      "version": 469,
-      "versionNonce": 1397894009,
+      "version": 470,
+      "versionNonce": 1217418453,
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "LKh2Ni4dk5DcNjgIyogzR",
+          "id": "arr-files-users",
+          "type": "arrow"
+        },
+        {
+          "id": "arr-companies-files",
           "type": "arrow"
         }
       ],
       "updated": 1794947114326,
       "link": null,
       "locked": false,
-      "text": "files\n- id: PK\n- file: jsonb\n- resource #",
+      "text": "files\n- id: PK\n- uuid (v7, public)\n- purpose: smallint\n    1 company_logo | 2 document\n- uploaded_by (#user_id)\n- storage_key\n- metadata: jsonb\n    content_type, size_bytes, sha256,\n    original_name, width, height\n- attached_at: date, nullable\n- created_at: date",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "files\n- id: PK\n- file: jsonb\n- resource #",
+      "originalText": "files\n- id: PK\n- uuid (v7, public)\n- purpose: smallint\n    1 company_logo | 2 document\n- uploaded_by (#user_id)\n- storage_key\n- metadata: jsonb\n    content_type, size_bytes, sha256,\n    original_name, width, height\n- attached_at: date, nullable\n- created_at: date",
       "autoResize": true,
       "lineHeight": 1.25
     },
@@ -836,60 +840,6 @@
       "elbowed": false
     },
     {
-      "id": "LKh2Ni4dk5DcNjgIyogzR",
-      "type": "arrow",
-      "x": 541.1988955943547,
-      "y": 1316.0932292973894,
-      "width": 16.162868441093224,
-      "height": 189.7912672058692,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "index": "b1n",
-      "roundness": {
-        "type": 2
-      },
-      "seed": 1658756409,
-      "version": 322,
-      "versionNonce": 1772788857,
-      "isDeleted": false,
-      "boundElements": [],
-      "updated": 1794947114326,
-      "link": null,
-      "locked": false,
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          16.162868441093224,
-          -189.7912672058692
-        ]
-      ],
-      "lastCommittedPoint": null,
-      "startBinding": {
-        "elementId": "heCn0HG92u5rpC16E2H3I",
-        "focus": 0,
-        "gap": 10
-      },
-      "endBinding": {
-        "elementId": "Dc9SHk9oFYFbQITjUV-C3",
-        "focus": 0,
-        "gap": 10
-      },
-      "startArrowhead": null,
-      "endArrowhead": "arrow",
-      "elbowed": false
-    },
-    {
       "id": "Dc9SHk9oFYFbQITjUV-C3",
       "type": "text",
       "x": 459.7909501644199,
@@ -919,10 +869,6 @@
         },
         {
           "id": "X6qyMSSdyp2TnRII9PA-l",
-          "type": "arrow"
-        },
-        {
-          "id": "LKh2Ni4dk5DcNjgIyogzR",
           "type": "arrow"
         },
         {
@@ -8677,8 +8623,8 @@
       "type": "text",
       "x": -620,
       "y": -380,
-      "width": 226,
-      "height": 300,
+      "width": 254,
+      "height": 275,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -8691,8 +8637,8 @@
       "frameId": null,
       "roundness": null,
       "seed": 916982918,
-      "version": 207,
-      "versionNonce": 1918066395,
+      "version": 208,
+      "versionNonce": 287539731,
       "isDeleted": false,
       "boundElements": [
         {
@@ -8706,18 +8652,22 @@
         {
           "id": "arr-resources-companies",
           "type": "arrow"
+        },
+        {
+          "id": "arr-companies-files",
+          "type": "arrow"
         }
       ],
       "updated": 1794994336953,
       "link": null,
       "locked": false,
-      "text": "companies\n- id: PK\n- uuid\n- owner (#user_id)\n- name\n- country: varchar(2)\n- registration_number\n- industries: smallint[]\n- logo: bytea, nullable\n- logo_content_type\n- created_at: date\n- updated_at: date",
+      "text": "companies\n- id: PK\n- uuid (v7, public)\n- owner (#user_id)\n- name\n- country: varchar(2)\n- registration_number\n- industries: smallint[]\n- logo (#file_id), nullable\n- created_at: date\n- updated_at: date",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "companies\n- id: PK\n- uuid\n- owner (#user_id)\n- name\n- country: varchar(2)\n- registration_number\n- industries: smallint[]\n- logo: bytea, nullable\n- logo_content_type\n- created_at: date\n- updated_at: date",
+      "originalText": "companies\n- id: PK\n- uuid (v7, public)\n- owner (#user_id)\n- name\n- country: varchar(2)\n- registration_number\n- industries: smallint[]\n- logo (#file_id), nullable\n- created_at: date\n- updated_at: date",
       "autoResize": true,
       "lineHeight": 1.25
     },
@@ -18253,6 +18203,112 @@
       "containerId": null,
       "lineHeight": 1.25,
       "autoResize": true
+    },
+    {
+      "id": "arr-files-users",
+      "type": "arrow",
+      "x": 579.3172973239756,
+      "y": 1316.90567512402,
+      "width": 421.8835561902465,
+      "height": 957.7541871162915,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 607751977,
+      "version": 242,
+      "versionNonce": 758168748,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1794943110993,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -421.8835561902465,
+          -957.7541871162915
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "heCn0HG92u5rpC16E2H3I",
+        "focus": 0,
+        "gap": 10
+      },
+      "endBinding": {
+        "elementId": "47u8MDvDa8PNb290otn2I",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "arr-companies-files",
+      "type": "arrow",
+      "x": -396.0599726729074,
+      "y": -96.67216304896723,
+      "width": 940.2328244328725,
+      "height": 1414.4014892296827,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1979666408,
+      "version": 242,
+      "versionNonce": 758168748,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1794943110993,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          940.2328244328725,
+          1414.4014892296827
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "tbl-companies",
+        "focus": 0,
+        "gap": 10
+      },
+      "endBinding": {
+        "elementId": "heCn0HG92u5rpC16E2H3I",
+        "focus": 0,
+        "gap": 10
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
     }
   ],
   "appState": {

@@ -151,7 +151,7 @@
 82. **Each client board tab has its own address:** /dashboard and /resources. The address "/" sends a logged-in client to the dashboard (after logging in and after onboarding) and a logged-out visitor to log in; an unknown address does the same.
 83. **Until interventions and resources are built, the Dashboard and Resources pages show only their title.**
 84. **Below 1024 px wide, the sidebar hides behind a menu button at the top left** and slides in over the page; choosing a tab closes it.
-85. **The client can collapse the sidebar** with the sidebar button at its top right. Collapsed, it is 57 px wide and keeps the button, the tab icons (their names show on hover) and the profile initial, which still opens the profile menu; the same button opens it again. The choice is remembered on that browser. On narrow screens the button closes the drawer.
+85. **The client can collapse the sidebar** with the sidebar button at its top right. Collapsed, it is 57 px wide and keeps the logo at the top (it becomes the button that opens the sidebar again, shown as the sidebar icon on hover), the tab icons (their names show on hover) and the profile initial, which still opens the profile menu. The choice is remembered on that browser. On narrow screens the button closes the drawer.
 
 ### Settings
 
@@ -161,6 +161,13 @@
 89. **Security:** change the password (current password, then the new one twice, at least 12 characters); a user without a password (Google or sign-in link) sees "Set a password" instead, without the current password. Sign-in methods show Google as connected or not connected, read-only for now. "Log out of other devices" ends every other session, including "Remember me", and keeps the current one.
 90. **An account can be deleted only while its company has no published intervention.** Deleting removes the account, the company, its logo and its files for good, after the user types their email to confirm. Once an intervention is published, the section explains that the account cannot be deleted.
 91. **Each company tab:** the onboarding fields (company name, country of registration, registration number, industries, logo), editable with the same rules as in onboarding.
+
+### Interventions on the client board
+
+92. **The sidebar lists the interventions under "Main":** the six the user opened last, most recent first, remembered on the server so the list follows the user from one device to another. When the company has more than six interventions, a seventh entry, "All interventions", opens the gallery. Below the list, a "Create an intervention" button is always shown. In the collapsed sidebar only the create button stays, as a "+" icon.
+93. **"All interventions" is a gallery of cards**, most recently updated first. Each card shows the title, the status (Draft or Published), the offer deadline and the number of documents, and opens the intervention.
+94. **"Create an intervention" opens its own page** (/interventions/new) with a short form: title, short description, specifications (files, through the upload module) and the offer deadline. For the company's first intervention, the form also asks the company's registered address (street, city, postal code; the country is the country of registration). The form creates a draft and opens its Overview; shared documents and publishing come later.
+95. **Each intervention has its own page** (/interventions/{id}): its title, then horizontal subtabs. The first is Overview: status, offer deadline, description, specifications and, for a draft, the Publish button. More subtabs come later.
 
 ## 2. Use cases
 

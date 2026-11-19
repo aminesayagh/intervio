@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,6 +13,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.intervio.TestcontainersConfiguration;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +28,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -45,6 +50,7 @@ class AuthFlowIT {
 	@BeforeEach
 	void resetMail() {
 		clearInvocations(mail);
+		when(mail.createMimeMessage()).thenAnswer(i -> new MimeMessage((Session) null));
 	}
 
 	@Test
@@ -86,7 +92,7 @@ class AuthFlowIT {
 	@Test
 	void forgotPasswordNeverRevealsAccounts() throws Exception {
 		postJson("/api/auth/password/forgot", "{\"email\":\"nobody@example.com\"}").andExpect(status().isNoContent());
-		verify(mail, never()).send(any(SimpleMailMessage.class));
+		verify(mail, never()).send(any(MimeMessage.class));
 	}
 
 	@Test
@@ -136,12 +142,30 @@ class AuthFlowIT {
 		return mvc.perform(post(url).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body));
 	}
 
-	private String lastLinkToken() {
-		ArgumentCaptor<SimpleMailMessage> sent = ArgumentCaptor.forClass(SimpleMailMessage.class);
+	private String lastLinkToken() throws Exception {
+		ArgumentCaptor<MimeMessage> sent = ArgumentCaptor.forClass(MimeMessage.class);
 		verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
-		Matcher m = Pattern.compile("token=([\\w-]+)").matcher(sent.getValue().getText());
+		Matcher m = Pattern.compile("token=([\\w-]+)").matcher(plainText(sent.getValue()));
 		assertThat(m.find()).isTrue();
 		return m.group(1);
+	}
+
+	/** The plain-text part of an HTML email (the HTML part carries the same link). */
+	private static String plainText(Part part) throws Exception {
+		Object content = part.getContent();
+		if (content instanceof String text) {
+			return part.isMimeType("text/plain") ? text : null;
+		}
+		if (content instanceof Multipart multipart) {
+			for (int i = 0; i < multipart.getCount(); i++) {
+				BodyPart child = multipart.getBodyPart(i);
+				String text = plainText(child);
+				if (text != null) {
+					return text;
+				}
+			}
+		}
+		return null;
 	}
 
 }

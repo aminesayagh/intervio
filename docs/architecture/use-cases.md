@@ -147,6 +147,10 @@
 78. **Files are stored on the local disk** (`storage/` at the repository root, never in git), under random names, and are never served directly.
 79. **Reading a file requires a logged-in user allowed to see that particular file**: the uploader, and the people of the record it belongs to (for a logo, its company). Documents download as attachments; only images are shown in the page.
 80. **The country of registration lists only places with their own company register.** Territories whose companies register in another country's register are left out: the French overseas regions and collectivities (French Guiana, Guadeloupe, Martinique, Réunion, Mayotte, Saint Barthélemy, Saint Martin, Saint Pierre and Miquelon) register in France, Åland in Finland, Greenland in Denmark, Svalbard in Norway, the Caribbean Netherlands in the Netherlands, and Christmas, Cocos and Norfolk islands in Australia. Uninhabited territories are left out too. Each country is shown with its flag.
+81. **The "Manage profile" button at the bottom of the sidebar shows the user's name and email and opens a menu:** Manage profile (its page comes later), Language (EN / FR), Theme (light / dark) and Log out. Signed-in screens have no header, so this menu is where these settings live.
+82. **Each client board tab has its own address:** /dashboard and /resources. The address "/" sends a logged-in client to the dashboard (after logging in and after onboarding) and a logged-out visitor to log in; an unknown address does the same.
+83. **Until interventions and resources are built, the Dashboard and Resources pages show only their title.**
+84. **Below 1024 px wide, the sidebar hides behind a menu button at the top left** and slides in over the page; choosing a tab closes it.
 
 ## 2. Use cases
 

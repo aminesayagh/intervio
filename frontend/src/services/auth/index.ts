@@ -4,6 +4,5 @@ import fr from './locales/fr.json'
 
 addTranslations('auth', { en, fr })
 
-export { useCurrentUser } from './api'
-export { HomePage } from './pages/HomePage'
+export { useCurrentUser, useLogOut } from './api'
 export { authRoutes, type Access } from './routes'

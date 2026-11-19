@@ -58,10 +58,6 @@
     "body": "Il a expiré ou a déjà été utilisé."
   },
   "linkOpening": "Ouverture du lien…",
-  "home": {
-    "loggedIn": "Vous êtes connecté en tant que {{name}}.",
-    "logOut": "Se déconnecter"
-  },
   "errors": {
     "ERROR_AUTH_FAIL": "E-mail ou mot de passe incorrect.",
     "ERROR_EMAIL_NOT_CONFIRMED": "Confirmez votre e-mail pour vous connecter. Nous vous avons envoyé un nouveau lien.",

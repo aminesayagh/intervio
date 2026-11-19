@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "main": "Main",
+    "dashboard": "Dashboard",
+    "resources": "Resources",
+    "openMenu": "Open menu"
+  },
+  "profile": {
+    "manage": "Manage profile",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "logOut": "Log out"
+  }
+}

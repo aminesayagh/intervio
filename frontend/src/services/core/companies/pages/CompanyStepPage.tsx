@@ -81,14 +81,24 @@ function CompanyForm() {
           isInvalid={countryMissing}
         >
           <Label>{t('company.country')}</Label>
-          <ComboBox.InputGroup>
-            <Input placeholder={t('company.countryPlaceholder')} />
+          <ComboBox.InputGroup className="relative">
+            {country && (
+              <Flag
+                code={country}
+                className="pointer-events-none absolute start-3 top-1/2 z-10 -translate-y-1/2"
+              />
+            )}
+            <Input
+              placeholder={t('company.countryPlaceholder')}
+              className={country ? 'ps-10' : undefined}
+            />
             <ComboBox.Trigger />
           </ComboBox.InputGroup>
           <ComboBox.Popover>
             <ListBox>
               {options.map((c) => (
                 <ListBox.Item key={c.code} id={c.code} textValue={c.name}>
+                  <Flag code={c.code} />
                   {c.name}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -110,5 +120,19 @@ function CompanyForm() {
         </Button>
       </Form>
     </>
+  )
+}
+
+/** Country flag from /public/flags (4:3), decorative: the country name is always beside it. */
+function Flag({ code, className = '' }: { code: string; className?: string }) {
+  return (
+    <img
+      src={`/flags/${code.toLowerCase()}.svg`}
+      alt=""
+      width={16}
+      height={12}
+      loading="lazy"
+      className={`shrink-0 rounded-[2px] shadow-[0_0_0_1px_rgb(0_0_0/0.08)] ${className}`}
+    />
   )
 }

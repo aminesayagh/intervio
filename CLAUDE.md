@@ -27,6 +27,7 @@ Keep only the latest version of each document: update it in place, do not create
 - Main action buttons (`.button--primary`) have a soft shadow in the primary color; fields have only a faint one.
 - Every text field shows a placeholder: sample name, sample work email, and dots (••••) for passwords.
 - **Icons come only from the Intervio set** in `frontend/public/icons/`: use `<Icon name="Eye" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon library.
+- **Country flags** are images, not icons: SVGs from flag-icons (MIT, licence beside them) copied into `frontend/public/flags/<code>.svg` and shown as a 16 × 12 `<img>` beside the country name.
 - The wireframes stay grayscale; this identity applies to the built app only.
 
 ## Running app

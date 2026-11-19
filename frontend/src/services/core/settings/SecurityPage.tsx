@@ -176,7 +176,7 @@ function OtherDevices() {
         message={state === 'error' ? t('errors.ERROR_UNKNOWN') : null}
       />
       <Button
-        variant="secondary"
+        variant="danger"
         className="w-fit"
         isPending={state === 'pending'}
         onPress={end}
@@ -212,11 +212,7 @@ function DeleteAccount() {
 
   return (
     <Section title={t('security.delete')} text={t('security.deleteText')}>
-      <Button
-        variant="secondary"
-        className="w-fit"
-        onPress={() => setOpen(true)}
-      >
+      <Button variant="danger" className="w-fit" onPress={() => setOpen(true)}>
         {t('security.delete')}
       </Button>
       <Modal.Backdrop

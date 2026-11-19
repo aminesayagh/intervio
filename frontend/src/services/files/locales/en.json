@@ -1,0 +1,13 @@
+{
+  "chooseAnother": "Choose another file",
+  "errors": {
+    "ERROR_FILE_TYPE": "This type of file is not accepted.",
+    "ERROR_FILE_TOO_LARGE": "The file is too large.",
+    "ERROR_IMAGE_TOO_LARGE": "The image is too large. Use an image of at most 2000 × 2000 pixels.",
+    "ERROR_FILE_INFECTED": "The file was refused because it may contain a virus.",
+    "ERROR_SCAN_UNAVAILABLE": "Files cannot be checked right now. Try again in a few minutes.",
+    "ERROR_TOO_MANY_UPLOADS": "Too many files uploaded. Try again in an hour.",
+    "ERROR_FILE_NOT_FOUND": "The file was not found. Upload it again.",
+    "ERROR_UNKNOWN": "Something went wrong. Try again."
+  }
+}

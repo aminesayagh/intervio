@@ -11,3 +11,6 @@
 
 # Local tool settings
 .serena/
+
+# Uploaded files (local storage)
+storage/

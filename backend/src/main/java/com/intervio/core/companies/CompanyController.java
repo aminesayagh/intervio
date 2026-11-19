@@ -2,44 +2,42 @@ package com.intervio.core.companies;
 
 import com.intervio.api.ApiException;
 import com.intervio.auth.AuthService;
+import com.intervio.files.FilePurpose;
+import com.intervio.files.FileService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 /** Onboarding: the client's company, its industries and its logo. */
 @RestController
 @RequestMapping("/api/company")
 class CompanyController {
 
-	static final long MAX_LOGO_BYTES = 2 * 1024 * 1024;
-
 	private final CompanyRepository companies;
 
 	private final AuthService auth;
 
-	CompanyController(CompanyRepository companies, AuthService auth) {
+	private final FileService files;
+
+	CompanyController(CompanyRepository companies, AuthService auth, FileService files) {
 		this.companies = companies;
 		this.auth = auth;
+		this.files = files;
 	}
 
 	record DetailsRequest(@NotBlank @Size(max = 200) String name, @NotNull @Pattern(regexp = "[A-Z]{2}") String country,
@@ -49,22 +47,25 @@ class CompanyController {
 	record IndustriesRequest(@NotNull List<Integer> industries) {
 	}
 
-	record CompanyResponse(String name, String country, String registrationNumber, List<Integer> industries,
-			boolean hasLogo) {
+	record LogoRequest(@NotNull UUID fileId) {
+	}
 
-		static CompanyResponse of(Company c) {
-			List<Integer> industries = new java.util.ArrayList<>();
-			for (short code : c.getIndustries()) {
-				industries.add((int) code);
-			}
-			return new CompanyResponse(c.getName(), c.getCountry(), c.getRegistrationNumber(), industries,
-					c.getLogo() != null);
+	record CompanyResponse(String name, String country, String registrationNumber, List<Integer> industries,
+			UUID logoFileId) {
+	}
+
+	private CompanyResponse response(Company c) {
+		List<Integer> industries = new java.util.ArrayList<>();
+		for (short code : c.getIndustries()) {
+			industries.add((int) code);
 		}
+		UUID logo = c.getLogoFileId() == null ? null : files.get(c.getLogoFileId()).getUuid();
+		return new CompanyResponse(c.getName(), c.getCountry(), c.getRegistrationNumber(), industries, logo);
 	}
 
 	@GetMapping
 	CompanyResponse get(Authentication authentication) {
-		return CompanyResponse.of(current(authentication));
+		return response(current(authentication));
 	}
 
 	/** Step 1: creates the company, or updates it when the client comes back to this step. */
@@ -81,7 +82,7 @@ class CompanyController {
 				throw new ApiException(HttpStatus.CONFLICT, "ERROR_COMPANY_EXISTS");
 			});
 		company.setDetails(r.name().trim(), r.country(), number);
-		return CompanyResponse.of(companies.save(company));
+		return response(companies.save(company));
 	}
 
 	/** Step 2: the industries, from none to all. */
@@ -98,43 +99,21 @@ class CompanyController {
 		}
 		Company company = current(authentication);
 		company.setIndustries(sortedUnique(codes));
-		return CompanyResponse.of(company);
+		return response(company);
 	}
 
-	/** Step 3: the logo, PNG or JPG up to 2 MB (decision 63). */
-	@PutMapping(path = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@ResponseStatus(HttpStatus.NO_CONTENT)
+	/** Step 3: the logo, uploaded first to /api/files (purpose 1); the previous logo is deleted. */
+	@PutMapping("/logo")
 	@Transactional
-	void saveLogo(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
-		if (file.getSize() > MAX_LOGO_BYTES) {
-			throw new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "ERROR_FILE_TOO_LARGE");
-		}
-		byte[] bytes = file.getBytes();
-		String type = imageType(bytes);
-		if (type == null) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_LOGO_TYPE");
-		}
-		current(authentication).setLogo(bytes, type);
-	}
-
-	@GetMapping("/logo")
-	ResponseEntity<byte[]> logo(Authentication authentication) {
+	CompanyResponse saveLogo(@Valid @RequestBody LogoRequest r, Authentication authentication) {
+		Long userId = ownerId(authentication);
 		Company company = current(authentication);
-		if (company.getLogo() == null) {
-			throw new ApiException(HttpStatus.NOT_FOUND, "ERROR_NO_LOGO");
+		Long previous = company.getLogoFileId();
+		company.setLogoFileId(files.attach(r.fileId(), userId, FilePurpose.COMPANY_LOGO).getId());
+		if (previous != null) {
+			files.delete(previous);
 		}
-		return ResponseEntity.ok().contentType(MediaType.parseMediaType(company.getLogoContentType())).body(company.getLogo());
-	}
-
-	/** Reads the file's first bytes rather than trusting its name or declared type. */
-	static String imageType(byte[] b) {
-		if (b.length > 8 && (b[0] & 0xFF) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') {
-			return MediaType.IMAGE_PNG_VALUE;
-		}
-		if (b.length > 3 && (b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) {
-			return MediaType.IMAGE_JPEG_VALUE;
-		}
-		return null;
+		return response(company);
 	}
 
 	private static short[] sortedUnique(short[] codes) {

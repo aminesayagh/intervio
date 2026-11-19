@@ -6,7 +6,7 @@ export type Company = {
   country: string
   registrationNumber: string
   industries: number[]
-  hasLogo: boolean
+  logoFileId: string | null
 }
 
 export const companyKey = ['company']
@@ -22,11 +22,12 @@ export const companyApi = {
       method: 'PUT',
       body: { json: { industries } },
     }),
-  uploadLogo: (file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api('/api/company/logo', { method: 'PUT', body: { file: form } })
-  },
+  /** Uses an uploaded file (purpose companyLogo) as the logo; the previous logo is deleted. */
+  setLogo: (fileId: string) =>
+    api<Company>('/api/company/logo', {
+      method: 'PUT',
+      body: { json: { fileId } },
+    }),
 }
 
 /** The client's company, or null before onboarding. */

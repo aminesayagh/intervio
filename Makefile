@@ -14,10 +14,10 @@ help: ## List the commands
 install: ## Install frontend libraries (the backend downloads its own on first run)
 	cd frontend && pnpm install
 
-db: ## Start PostgreSQL (port 5433) and the email catcher (http://localhost:8025)
+db: ## Start PostgreSQL (5433), the email catcher (http://localhost:8025) and the virus scanner (3310)
 	docker compose up -d
 
-db-stop: ## Stop PostgreSQL and the email catcher
+db-stop: ## Stop PostgreSQL, the email catcher and the virus scanner
 	docker compose down
 
 backend: db ## Run the backend on http://localhost:8080

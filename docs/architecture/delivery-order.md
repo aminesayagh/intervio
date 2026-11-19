@@ -11,9 +11,9 @@ A table's level is one more than the highest level among the tables it **must** 
 |---|---|---|
 | **0** | users | — |
 | **1** | companies | users (owner) |
+| **1** | files | users (uploader) |
 | **2** | resources | companies |
 | **2** | interventions | companies |
-| **3** | files | resources |
 | **3** | invitations | interventions (the user is optional until the account exists) |
 | **3** | intervention_documents | interventions, resources |
 | **3** | offers | interventions, users (bidder) |
@@ -32,13 +32,14 @@ A table's level is one more than the highest level among the tables it **must** 
 
 ### Optional links that close a loop
 
-These nullable foreign keys link level 5 tables to each other. They are filled later in the life of a row, so they do not count for the levels:
+These nullable foreign keys are filled later in the life of a row, so they do not count for the levels:
 
 | Column | Filled when |
 |---|---|
 | requests.change_request_id | a change request asks for extra resources (after the contract) |
 | acceptance_criteria.witness_request_id | the client assigns a witness (after the award) |
 | change_requests.criterion_id, target_milestone_id | the change request moves or waives a criterion |
+| companies.logo_file_id | the client adds a logo during onboarding |
 
 `test_results.test_item_id` is also nullable (only acceptance tests have items).
 

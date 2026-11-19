@@ -1,0 +1,13 @@
+{
+  "chooseAnother": "Choisir un autre fichier",
+  "errors": {
+    "ERROR_FILE_TYPE": "Ce type de fichier n'est pas accepté.",
+    "ERROR_FILE_TOO_LARGE": "Le fichier est trop volumineux.",
+    "ERROR_IMAGE_TOO_LARGE": "L'image est trop grande. Utilisez une image de 2000 × 2000 pixels maximum.",
+    "ERROR_FILE_INFECTED": "Le fichier a été refusé car il pourrait contenir un virus.",
+    "ERROR_SCAN_UNAVAILABLE": "Les fichiers ne peuvent pas être vérifiés pour le moment. Réessayez dans quelques minutes.",
+    "ERROR_TOO_MANY_UPLOADS": "Trop de fichiers importés. Réessayez dans une heure.",
+    "ERROR_FILE_NOT_FOUND": "Le fichier est introuvable. Importez-le de nouveau.",
+    "ERROR_UNKNOWN": "Une erreur s'est produite. Réessayez."
+  }
+}

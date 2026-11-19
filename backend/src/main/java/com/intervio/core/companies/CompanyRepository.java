@@ -10,4 +10,6 @@ interface CompanyRepository extends JpaRepository<Company, Long> {
 
 	Optional<Company> findByCountryAndRegistrationNumber(String country, String registrationNumber);
 
+	boolean existsByLogoFileIdAndOwnerId(Long logoFileId, Long ownerId);
+
 }

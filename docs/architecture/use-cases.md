@@ -151,7 +151,7 @@
 82. **Each client board tab has its own address:** /dashboard and /resources. The address "/" sends a logged-in client to the dashboard (after logging in and after onboarding) and a logged-out visitor to log in; an unknown address does the same.
 83. **Until interventions and resources are built, the Dashboard and Resources pages show only their title.**
 84. **Below 1024 px wide, the sidebar hides behind a menu button at the top left** and slides in over the page; choosing a tab closes it.
-85. **The client can collapse the sidebar** with the sidebar button at its top right. Collapsed, it is 57 px wide and keeps the button, the tab icons (their names show on hover) and the profile initial, which still opens the profile menu; the same button opens it again. The choice is remembered on that browser. On narrow screens the button closes the drawer.
+85. **The client can collapse the sidebar** with the sidebar button at its top right. Collapsed, it is 57 px wide and keeps the logo at the top (it becomes the button that opens the sidebar again, shown as the sidebar icon on hover), the tab icons (their names show on hover) and the profile initial, which still opens the profile menu. The choice is remembered on that browser. On narrow screens the button closes the drawer.
 
 ### Settings
 

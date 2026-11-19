@@ -123,10 +123,26 @@ function Sidebar({
           aria-label={toggleLabel}
           title={toggleLabel}
           aria-expanded={!collapsed}
-          className="flex size-8 items-center justify-center rounded-[var(--field-radius)] text-muted hover:bg-default hover:text-foreground"
+          className="group flex size-8 items-center justify-center rounded-[var(--field-radius)] text-muted hover:bg-default hover:text-foreground"
           onClick={onToggle}
         >
-          <Icon name="Sidebar" size={18} />
+          {collapsed ? (
+            // Collapsed: the logo, which turns into the expand icon on hover or focus.
+            <>
+              <img
+                src="/logo.svg"
+                alt=""
+                width={24}
+                height={24}
+                className="group-hover:hidden group-focus-visible:hidden"
+              />
+              <span className="hidden group-hover:flex group-focus-visible:flex">
+                <Icon name="Sidebar" size={18} />
+              </span>
+            </>
+          ) : (
+            <Icon name="Sidebar" size={18} />
+          )}
         </button>
       </div>
       <nav className="mt-6 flex flex-col gap-1">

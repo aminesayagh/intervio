@@ -146,6 +146,7 @@
 77. **Every upload is scanned for viruses** (ClamAV, run locally). An infected file is refused and never stored; if the scanner is unavailable, the upload is refused.
 78. **Files are stored on the local disk** (`storage/` at the repository root, never in git), under random names, and are never served directly.
 79. **Reading a file requires a logged-in user allowed to see that particular file**: the uploader, and the people of the record it belongs to (for a logo, its company). Documents download as attachments; only images are shown in the page.
+80. **The country of registration lists only places with their own company register.** Territories whose companies register in another country's register are left out: the French overseas regions and collectivities (French Guiana, Guadeloupe, Martinique, Réunion, Mayotte, Saint Barthélemy, Saint Martin, Saint Pierre and Miquelon) register in France, Åland in Finland, Greenland in Denmark, Svalbard in Norway, the Caribbean Netherlands in the Netherlands, and Christmas, Cocos and Norfolk islands in Australia. Uninhabited territories are left out too. Each country is shown with its flag.
 
 ## 2. Use cases
 

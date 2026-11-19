@@ -58,10 +58,6 @@
     "body": "It has expired or has already been used."
   },
   "linkOpening": "Opening the link…",
-  "home": {
-    "loggedIn": "You are logged in as {{name}}.",
-    "logOut": "Log out"
-  },
   "errors": {
     "ERROR_AUTH_FAIL": "Wrong email or password.",
     "ERROR_EMAIL_NOT_CONFIRMED": "Confirm your email to log in. We have sent you a new link.",

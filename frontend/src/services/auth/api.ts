@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '../http'
 import { i18n } from '../i18n'
+import { navigate } from '../navigation'
 
 export type CurrentUser = { fullName: string; email: string }
 
@@ -57,6 +58,16 @@ export function useCurrentUser() {
     staleTime: Infinity,
     retry: false, // if the backend cannot be reached, show the public screens at once
   })
+}
+
+/** Logs out, forgets every cached user data, and opens log in. */
+export function useLogOut() {
+  const queryClient = useQueryClient()
+  return async () => {
+    await authApi.logOut()
+    queryClient.clear()
+    navigate('/login', { replace: true })
+  }
 }
 
 /** Translation key of the message for any error. */

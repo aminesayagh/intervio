@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { afterAll, beforeAll, expect, test } from 'vitest'
+import { afterAll, afterEach, beforeAll, expect, test } from 'vitest'
 import '../services/i18n'
 import { App } from './App'
 
@@ -13,6 +13,10 @@ const server = setupServer(
   ),
 )
 beforeAll(() => server.listen())
+afterEach(() => {
+  cleanup()
+  server.resetHandlers()
+})
 afterAll(() => server.close())
 
 test('the log-in screen shows the message for the backend error key', async () => {
@@ -26,4 +30,32 @@ test('the log-in screen shows the message for the backend error key', async () =
   expect(
     await screen.findByText('Wrong email or password.'),
   ).toBeInTheDocument()
+})
+
+test('a logged-in client opening "/" lands on the dashboard tab', async () => {
+  server.use(
+    http.get('/api/auth/me', () =>
+      HttpResponse.json({ fullName: 'Ada Martin', email: 'ada@example.com' }),
+    ),
+    http.get('/api/company', () =>
+      HttpResponse.json({
+        name: 'Martin Industries',
+        country: 'FR',
+        registrationNumber: '123',
+        industries: [],
+        logoFileId: null,
+      }),
+    ),
+  )
+  window.history.pushState(null, '', '/')
+  render(<App />)
+
+  expect(
+    await screen.findByRole('heading', { name: 'Dashboard' }),
+  ).toBeInTheDocument()
+  expect(window.location.pathname).toBe('/dashboard')
+  expect(screen.getAllByRole('link', { name: 'Dashboard' })[0]).toHaveAttribute(
+    'aria-current',
+    'page',
+  )
 })

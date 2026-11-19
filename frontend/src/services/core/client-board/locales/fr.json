@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "main": "Principal",
+    "dashboard": "Tableau de bord",
+    "resources": "Ressources",
+    "openMenu": "Ouvrir le menu"
+  },
+  "profile": {
+    "manage": "Gérer le profil",
+    "language": "Langue",
+    "theme": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "logOut": "Se déconnecter"
+  }
+}

@@ -3,8 +3,9 @@
     "main": "Main",
     "dashboard": "Dashboard",
     "resources": "Resources",
-    "openMenu": "Show sidebar",
-    "hideSidebar": "Hide sidebar"
+    "openMenu": "Open menu",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "profile": {
     "manage": "Manage profile",

@@ -247,7 +247,11 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
             />
           </Dropdown.Item>
           <Separator />
-          <Dropdown.Item id="logout" textValue={t('profile.logOut')}>
+          <Dropdown.Item
+            id="logout"
+            textValue={t('profile.logOut')}
+            variant="danger"
+          >
             <Icon name="Turn off" size={18} />
             <Label>{t('profile.logOut')}</Label>
           </Dropdown.Item>

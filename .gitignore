@@ -8,3 +8,6 @@
 .vscode/
 *.iml
 .DS_Store
+
+# Local tool settings
+.serena/

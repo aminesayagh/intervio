@@ -20,6 +20,9 @@ export function SidebarInterventions({
   const path = usePath()
   const { data } = useRecentInterventions()
   const create = path === '/interventions/new'
+  // An intervention stays highlighted on any of its subtabs.
+  const isOpen = (id: string) =>
+    path === `/interventions/${id}` || path.startsWith(`/interventions/${id}/`)
 
   if (collapsed)
     return (
@@ -52,10 +55,8 @@ export function SidebarInterventions({
           key={item.id}
           href={`/interventions/${item.id}`}
           onClick={onNavigate}
-          aria-current={
-            path === `/interventions/${item.id}` ? 'page' : undefined
-          }
-          className={entry(path === `/interventions/${item.id}`)}
+          aria-current={isOpen(item.id) ? 'page' : undefined}
+          className={entry(isOpen(item.id))}
         >
           <span className="truncate">{item.title}</span>
         </Link>

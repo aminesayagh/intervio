@@ -13,5 +13,6 @@ export {
 } from './api'
 export { DocumentsField } from './DocumentsField'
 export { FileDropzone } from './FileDropzone'
+export { FilePreview, type PreviewFile } from './FilePreview'
 export { ImagePicker } from './ImagePicker'
 export { checkFile, FILE_PURPOSES, type FilePurpose } from './purposes'

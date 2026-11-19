@@ -6,11 +6,8 @@
   "subtabs": "Intervention sections",
   "overview": "Overview",
   "offersDue": "Offers due {{date}}",
-  "documents_one": "{{count}} document",
-  "documents_other": "{{count}} documents",
   "publish": "Publish",
   "publishedOn": "Published on {{date}}",
-  "noSpecifications": "No specifications yet.",
   "status": {
     "label": "Status",
     "draft": "Draft",
@@ -21,7 +18,7 @@
     "titlePlaceholder": "Pump overhaul, line 3",
     "description": "Description",
     "descriptionPlaceholder": "Replace the seals and bearings of the main pump.",
-    "specifications": "Specifications",
+    "specifications": "Resources",
     "offerDeadline": "Offer deadline",
     "addressTitle": "Registered address of {{company}}",
     "addressHelp": "Asked once, for your first intervention.",
@@ -39,7 +36,21 @@
     "ERROR_DEADLINE_PAST": "The offer deadline must be after today.",
     "ERROR_ALREADY_PUBLISHED": "This intervention is already published.",
     "ERROR_INTERVENTION_NOT_FOUND": "This intervention was not found.",
-    "ERROR_FILE_NOT_FOUND": "A specification was not found. Upload it again.",
+    "ERROR_FILE_NOT_FOUND": "A file was not found. Upload it again.",
     "ERROR_UNKNOWN": "Something went wrong. Try again."
+  },
+  "view": {
+    "label": "View",
+    "cards": "Cards",
+    "table": "Table"
+  },
+  "table": {
+    "updated": "Last updated"
+  },
+  "resources": "Resources",
+  "noResources": "No resources yet.",
+  "documentType": {
+    "specification": "Specification",
+    "shared": "Shared"
   }
 }

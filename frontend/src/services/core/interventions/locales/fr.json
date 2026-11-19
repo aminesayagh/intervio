@@ -6,11 +6,8 @@
   "subtabs": "Sections de l'intervention",
   "overview": "Vue d'ensemble",
   "offersDue": "Offres attendues le {{date}}",
-  "documents_one": "{{count}} document",
-  "documents_other": "{{count}} documents",
   "publish": "Publier",
   "publishedOn": "Publiée le {{date}}",
-  "noSpecifications": "Aucun cahier des charges pour le moment.",
   "status": {
     "label": "Statut",
     "draft": "Brouillon",
@@ -21,7 +18,7 @@
     "titlePlaceholder": "Révision de la pompe, ligne 3",
     "description": "Description",
     "descriptionPlaceholder": "Remplacer les joints et les roulements de la pompe principale.",
-    "specifications": "Cahier des charges",
+    "specifications": "Ressources",
     "offerDeadline": "Date limite des offres",
     "addressTitle": "Adresse du siège de {{company}}",
     "addressHelp": "Demandée une seule fois, pour votre première intervention.",
@@ -39,7 +36,21 @@
     "ERROR_DEADLINE_PAST": "La date limite des offres doit être postérieure à aujourd'hui.",
     "ERROR_ALREADY_PUBLISHED": "Cette intervention est déjà publiée.",
     "ERROR_INTERVENTION_NOT_FOUND": "Cette intervention est introuvable.",
-    "ERROR_FILE_NOT_FOUND": "Un document du cahier des charges est introuvable. Importez-le à nouveau.",
+    "ERROR_FILE_NOT_FOUND": "Un fichier est introuvable. Importez-le à nouveau.",
     "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez."
+  },
+  "view": {
+    "label": "Affichage",
+    "cards": "Cartes",
+    "table": "Tableau"
+  },
+  "table": {
+    "updated": "Dernière modification"
+  },
+  "resources": "Ressources",
+  "noResources": "Aucune ressource pour le moment.",
+  "documentType": {
+    "specification": "Cahier des charges",
+    "shared": "Partagé"
   }
 }

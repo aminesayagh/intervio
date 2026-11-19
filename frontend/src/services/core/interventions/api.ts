@@ -13,11 +13,13 @@ export type InterventionSummary = {
   updatedAt: string
 }
 
+/** A document resource of the intervention; type is its role. */
 export type InterventionDocument = {
   id: string
   name: string
   contentType: string
   sizeBytes: number
+  type: 'specification' | 'shared'
 }
 
 export type Intervention = {
@@ -27,7 +29,7 @@ export type Intervention = {
   status: InterventionStatus
   offerDeadline: string
   publishedAt: string | null
-  specifications: InterventionDocument[]
+  documents: InterventionDocument[]
 }
 
 export type NewIntervention = {

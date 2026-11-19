@@ -71,11 +71,12 @@ class InterventionController {
 	record Recent(List<Summary> items, long total) {
 	}
 
-	record Document(UUID id, String name, String contentType, long sizeBytes) {
+	/** type: "specification" or "shared". */
+	record Document(UUID id, String name, String contentType, long sizeBytes, String type) {
 	}
 
 	record Detail(UUID id, String title, String description, String status, LocalDate offerDeadline,
-			Instant publishedAt, List<Document> specifications) {
+			Instant publishedAt, List<Document> documents) {
 	}
 
 	/** "All interventions": the gallery, most recently updated first (decision 93). */
@@ -169,10 +170,13 @@ class InterventionController {
 	}
 
 	private Detail detail(Intervention i) {
-		List<Document> specs = interventions.documentFileIds(i.getId(), SPECIFICATION).stream().map(files::get).map(f ->
-				new Document(f.getUuid(), f.originalName(), f.contentType(), f.sizeBytes())).toList();
+		List<Document> documents = interventions.documents(i.getId()).stream().map(row -> {
+			StoredFile f = files.get(((Number) row[0]).longValue());
+			String type = ((Number) row[1]).shortValue() == SPECIFICATION ? "specification" : "shared";
+			return new Document(f.getUuid(), f.originalName(), f.contentType(), f.sizeBytes(), type);
+		}).toList();
 		return new Detail(i.getUuid(), i.getTitle(), i.getDescription(), status(i), i.getOfferDeadline(),
-				i.getPublishedAt(), specs);
+				i.getPublishedAt(), documents);
 	}
 
 	private static String status(Intervention i) {

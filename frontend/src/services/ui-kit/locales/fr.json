@@ -6,7 +6,8 @@
     "required": "Ce champ est obligatoire.",
     "email": "Saisissez une adresse e-mail valide.",
     "passwordLength": "Utilisez au moins 12 caractères.",
-    "mismatch": "Les mots de passe ne correspondent pas."
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "futureDate": "Choisissez une date postérieure à aujourd'hui."
   },
   "password": {
     "show": "Afficher le mot de passe",

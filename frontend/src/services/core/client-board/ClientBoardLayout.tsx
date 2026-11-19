@@ -6,6 +6,7 @@ import { useCurrentUser, useLogOut } from '../../auth'
 import { setLanguage } from '../../i18n'
 import { Link, navigate, usePath } from '../../navigation'
 import { applyTheme, Icon, useTheme } from '../../ui-kit'
+import { SidebarInterventions } from '../interventions'
 
 const TABS = [
   { href: '/dashboard', label: 'nav.dashboard', icon: 'Grid - 3' },
@@ -175,6 +176,7 @@ function Sidebar({
           )
         })}
       </nav>
+      <SidebarInterventions collapsed={collapsed} onNavigate={onNavigate} />
       <div className="mt-auto">
         <ProfileMenu collapsed={collapsed} />
       </div>

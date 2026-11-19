@@ -25,3 +25,10 @@ export function fileUrl(id: string) {
 export function uploadErrorKey(error: unknown) {
   return `errors.${error instanceof ApiError ? error.code : 'ERROR_UNKNOWN'}`
 }
+
+/** Size for people: "48 KB", "1.2 MB". */
+export function formatSize(bytes: number) {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}

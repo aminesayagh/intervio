@@ -6,7 +6,8 @@
     "required": "This field is required.",
     "email": "Enter a valid email address.",
     "passwordLength": "Use at least 12 characters.",
-    "mismatch": "The passwords do not match."
+    "mismatch": "The passwords do not match.",
+    "futureDate": "Choose a date after today."
   },
   "password": {
     "show": "Show password",

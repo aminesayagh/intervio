@@ -34,7 +34,7 @@ class SecurityConfig {
 		http.csrf(csrf -> csrf.spa())
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers("/api/auth/me", "/api/auth/password").authenticated()
-				.requestMatchers("/api/company/**").hasRole("CLIENT")
+				.requestMatchers("/api/company/**", "/api/interventions/**").hasRole("CLIENT")
 				.requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**", "/error").permitAll()
 				.anyRequest().authenticated())
 			.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

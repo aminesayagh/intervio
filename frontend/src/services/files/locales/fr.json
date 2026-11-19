@@ -11,5 +11,9 @@
     "ERROR_UNKNOWN": "Une erreur s'est produite. Réessayez."
   },
   "imageRules": "{{types}}, jusqu'à {{size}} Mo.",
-  "or": " ou "
+  "or": " ou ",
+  "dropOrBrowse": "Déposez des fichiers ici ou parcourez",
+  "uploading": "Envoi en cours…",
+  "documentRules": "PDF, fichiers Office ou images, jusqu'à {{size}} Mo chacun.",
+  "removeFile": "Retirer {{name}}"
 }

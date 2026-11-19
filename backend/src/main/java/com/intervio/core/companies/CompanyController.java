@@ -52,7 +52,7 @@ class CompanyController {
 	}
 
 	record CompanyResponse(UUID id, String name, String country, String registrationNumber, List<Integer> industries,
-			UUID logoFileId) {
+			UUID logoFileId, boolean hasAddress) {
 	}
 
 	private CompanyResponse response(Company c) {
@@ -62,7 +62,7 @@ class CompanyController {
 		}
 		UUID logo = c.getLogoFileId() == null ? null : files.get(c.getLogoFileId()).getUuid();
 		return new CompanyResponse(c.getUuid(), c.getName(), c.getCountry(), c.getRegistrationNumber(), industries,
-				logo);
+				logo, c.hasAddress());
 	}
 
 	@GetMapping

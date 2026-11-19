@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.authentication.RememberMeServices;
@@ -36,7 +37,11 @@ class AccountController {
 
 	private final LogoutHandler rememberMe;
 
-	AccountController(AuthService auth, CompanyRepository companies, FileService files, RememberMeServices rememberMe) {
+	private final JdbcTemplate jdbc;
+
+	AccountController(AuthService auth, CompanyRepository companies, FileService files, RememberMeServices rememberMe,
+			JdbcTemplate jdbc) {
+		this.jdbc = jdbc;
 		this.auth = auth;
 		this.companies = companies;
 		this.files = files;
@@ -59,9 +64,17 @@ class AccountController {
 		if (!user.getEmail().equalsIgnoreCase(r.email().trim())) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_EMAIL_MISMATCH");
 		}
-		// ponytail: interventions do not exist yet, so nothing blocks the deletion; check for a
-		// published intervention here when they arrive (decision 90).
-		companies.findFirstByOwnerIdOrderById(user.getId()).ifPresent(companies::delete);
+		companies.findFirstByOwnerIdOrderById(user.getId()).ifPresent(company -> {
+			// A published intervention involves bidders, so the account stays (decision 90). Drafts,
+			// documents and visits are deleted with the company (on delete cascade).
+			Boolean published = jdbc.queryForObject(
+					"select exists (select 1 from interventions where company_id = ? and published_at is not null)",
+					Boolean.class, company.getId());
+			if (Boolean.TRUE.equals(published)) {
+				throw new ApiException(HttpStatus.CONFLICT, "ERROR_ACCOUNT_HAS_INTERVENTIONS");
+			}
+			companies.delete(company);
+		});
 		user.setPhotoFileId(null);
 		companies.flush();
 		files.deleteAllUploadedBy(user.getId());

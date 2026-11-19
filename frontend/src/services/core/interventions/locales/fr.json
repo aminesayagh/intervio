@@ -1,0 +1,45 @@
+{
+  "title": "Interventions",
+  "all": "Toutes les interventions",
+  "create": "Créer une intervention",
+  "none": "Aucune intervention pour le moment.",
+  "subtabs": "Sections de l'intervention",
+  "overview": "Vue d'ensemble",
+  "offersDue": "Offres attendues le {{date}}",
+  "documents_one": "{{count}} document",
+  "documents_other": "{{count}} documents",
+  "publish": "Publier",
+  "publishedOn": "Publiée le {{date}}",
+  "noSpecifications": "Aucun cahier des charges pour le moment.",
+  "status": {
+    "label": "Statut",
+    "draft": "Brouillon",
+    "published": "Publiée"
+  },
+  "form": {
+    "title": "Titre",
+    "titlePlaceholder": "Révision de la pompe, ligne 3",
+    "description": "Description",
+    "descriptionPlaceholder": "Remplacer les joints et les roulements de la pompe principale.",
+    "specifications": "Cahier des charges",
+    "offerDeadline": "Date limite des offres",
+    "addressTitle": "Adresse du siège de {{company}}",
+    "addressHelp": "Demandée une seule fois, pour votre première intervention.",
+    "street": "Rue",
+    "streetPlaceholder": "12 rue des Ateliers",
+    "city": "Ville",
+    "cityPlaceholder": "Lyon",
+    "postalCode": "Code postal",
+    "postalCodePlaceholder": "69007",
+    "submit": "Créer le brouillon"
+  },
+  "errors": {
+    "ERROR_VALIDATION": "Vérifiez les champs et réessayez.",
+    "ERROR_ADDRESS_REQUIRED": "Saisissez l'adresse du siège de votre entreprise.",
+    "ERROR_DEADLINE_PAST": "La date limite des offres doit être postérieure à aujourd'hui.",
+    "ERROR_ALREADY_PUBLISHED": "Cette intervention est déjà publiée.",
+    "ERROR_INTERVENTION_NOT_FOUND": "Cette intervention est introuvable.",
+    "ERROR_FILE_NOT_FOUND": "Un document du cahier des charges est introuvable. Importez-le à nouveau.",
+    "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez."
+  }
+}

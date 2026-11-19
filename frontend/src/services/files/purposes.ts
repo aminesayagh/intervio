@@ -1,6 +1,7 @@
 /** Mirrors the backend's FilePurpose: the server checks again; this only gives instant feedback. */
 export const FILE_PURPOSES = {
   companyLogo: { code: 1, maxMb: 2, extensions: ['png', 'jpg', 'jpeg'] },
+  userPhoto: { code: 3, maxMb: 2, extensions: ['png', 'jpg', 'jpeg'] },
   document: {
     code: 2,
     maxMb: 10,

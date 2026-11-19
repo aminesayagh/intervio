@@ -12,4 +12,6 @@ interface StoredFileRepository extends JpaRepository<StoredFile, Long> {
 
 	List<StoredFile> findByAttachedAtIsNullAndCreatedAtBefore(Instant before);
 
+	List<StoredFile> findByUploadedBy(Long userId);
+
 }

@@ -21,9 +21,12 @@ export function OpenLinkPage() {
       .openLink(token)
       .then(async ({ next }) => {
         await queryClient.invalidateQueries({ queryKey: currentUserKey })
-        navigate(next === 'reset-password' ? '/reset-password' : '/', {
-          replace: true,
-        })
+        const to = {
+          'reset-password': '/reset-password',
+          profile: '/settings/profile',
+          home: '/',
+        }
+        navigate(to[next], { replace: true })
       })
       .catch(() => navigate('/link-invalid', { replace: true }))
   }, [token, queryClient])

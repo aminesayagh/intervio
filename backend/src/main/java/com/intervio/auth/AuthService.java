@@ -1,9 +1,12 @@
 package com.intervio.auth;
 
 import com.intervio.api.ApiException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.ott.GenerateOneTimeTokenRequest;
 import org.springframework.security.authentication.ott.OneTimeToken;
 import org.springframework.security.authentication.ott.OneTimeTokenAuthenticationToken;
@@ -29,8 +32,11 @@ public class AuthService implements UserDetailsService {
 
 	private final AttemptLimiter limiter;
 
+	private final JdbcTemplate jdbc;
+
 	AuthService(UserRepository users, PasswordEncoder passwords, OneTimeTokenService tokens, AuthMailer mailer,
-			AttemptLimiter limiter) {
+			AttemptLimiter limiter, JdbcTemplate jdbc) {
+		this.jdbc = jdbc;
 		this.users = users;
 		this.passwords = passwords;
 		this.tokens = tokens;
@@ -119,14 +125,102 @@ public class AuthService implements UserDetailsService {
 			throw new ApiException(HttpStatus.GONE, "ERROR_LINK_INVALID");
 		}
 		String[] parts = token.getUsername().split(":", 2);
+		EmailLink link = EmailLink.valueOf(parts[0]);
+		if (link == EmailLink.CHANGE_EMAIL) {
+			return new UsedLink(link, confirmEmailChange(parts[1]));
+		}
 		User user = users.findByEmail(parts[1]).orElseThrow(() -> new ApiException(HttpStatus.GONE, "ERROR_LINK_INVALID"));
 		user.verifyEmail();
-		return new UsedLink(EmailLink.valueOf(parts[0]), user.getEmail());
+		return new UsedLink(link, user.getEmail());
+	}
+
+	/**
+	 * The link names the current and the new address, so a link for an address the user has
+	 * since replaced or cancelled no longer works.
+	 */
+	private String confirmEmailChange(String addresses) {
+		String[] emails = addresses.split("\t", 2);
+		User user = users.findByEmail(emails[0])
+			.filter(u -> emails.length == 2 && emails[1].equals(u.getPendingEmail()))
+			.orElseThrow(() -> new ApiException(HttpStatus.GONE, "ERROR_LINK_INVALID"));
+		if (users.existsByEmail(emails[1])) {
+			throw new ApiException(HttpStatus.CONFLICT, "ERROR_EMAIL_TAKEN");
+		}
+		user.confirmEmailChange();
+		return user.getEmail();
 	}
 
 	@Transactional
 	public void setPassword(String email, String password) {
 		users.findByEmail(email).orElseThrow().setPasswordHash(passwords.encode(password));
+	}
+
+	/** Settings, Profile: the full name. */
+	@Transactional
+	public User rename(String email, String fullName) {
+		User user = current(email);
+		user.setFullName(fullName.trim());
+		return user;
+	}
+
+	/** Settings, Profile: links the new email; the current one stays until it is confirmed (decision 88). */
+	@Transactional
+	public User requestEmailChange(String email, String newEmail) {
+		User user = current(email);
+		String normalized = normalize(newEmail);
+		if (normalized.equals(user.getEmail())) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_SAME_EMAIL");
+		}
+		if (users.existsByEmail(normalized)) {
+			throw new ApiException(HttpStatus.CONFLICT, "ERROR_EMAIL_TAKEN");
+		}
+		if (!limiter.allowLink(EmailLink.CHANGE_EMAIL.name(), user.getEmail())) {
+			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "ERROR_LINK_TOO_SOON");
+		}
+		user.setPendingEmail(normalized);
+		mailer.sendEmailChangeNotice(user);
+		OneTimeToken token = tokens.generate(new GenerateOneTimeTokenRequest(
+				EmailLink.CHANGE_EMAIL.name() + ":" + user.getEmail() + "\t" + normalized, EmailLink.CHANGE_EMAIL.validity));
+		mailer.send(user, EmailLink.CHANGE_EMAIL, token.getTokenValue());
+		return user;
+	}
+
+	@Transactional
+	public User cancelEmailChange(String email) {
+		User user = current(email);
+		user.setPendingEmail(null);
+		return user;
+	}
+
+	/** Settings, Security: change the password, or set one when the user has none (decision 89). */
+	@Transactional
+	public void changePassword(String email, String currentPassword, String newPassword) {
+		User user = current(email);
+		if (user.getPasswordHash() != null
+				&& (currentPassword == null || !passwords.matches(currentPassword, user.getPasswordHash()))) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_WRONG_PASSWORD");
+		}
+		user.setPasswordHash(passwords.encode(newPassword));
+	}
+
+	/** Ends every session and "Remember me" cookie created before now (decision 89). */
+	@Transactional
+	public void endSessions(String email) {
+		// Milliseconds, like a session's creation time, so a session created right after is kept.
+		current(email).endSessionsBefore(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+	}
+
+	/** Deletes the account and its email links; its files and company are deleted before. */
+	@Transactional
+	public void delete(User user) {
+		// "PURPOSE:email", or "CHANGE_EMAIL:email<tab>new email"
+		jdbc.update("delete from one_time_tokens where split_part(split_part(username, ':', 2), chr(9), 1) = ?",
+				user.getEmail());
+		users.delete(user);
+	}
+
+	public User current(String email) {
+		return find(email).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "ERROR_UNAUTHORIZED"));
 	}
 
 	public Optional<User> find(String email) {

@@ -107,6 +107,15 @@ public class FileService {
 		});
 	}
 
+	/** Account deletion (decision 90): every file the user uploaded. */
+	@Transactional
+	public void deleteAllUploadedBy(Long userId) {
+		for (StoredFile file : files.findByUploadedBy(userId)) {
+			files.delete(file);
+			storage.delete(file.getStorageKey());
+		}
+	}
+
 	/** Files uploaded but never used within a day are removed. */
 	@Scheduled(fixedDelay = 60 * 60 * 1000, initialDelay = 60 * 1000)
 	@Transactional

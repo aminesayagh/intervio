@@ -1,0 +1,76 @@
+{
+  "title": "Settings",
+  "nav": {
+    "account": "Account",
+    "profile": "Profile",
+    "security": "Security",
+    "companies": "Companies",
+    "addCompany": "Add a company"
+  },
+  "addCompany": {
+    "title": "Not available yet",
+    "text": "Managing several companies will come in a later version."
+  },
+  "save": "Save changes",
+  "saved": "Changes saved.",
+  "remove": "Remove",
+  "cancel": "Cancel",
+  "close": "Close",
+  "profile": {
+    "title": "Profile",
+    "description": "Your photo, name and email, and how Intervio looks for you.",
+    "photo": "Photo",
+    "uploadPhoto": "Upload photo",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Ada Martin",
+    "email": "Work email",
+    "emailPlaceholder": "ada@company.com",
+    "pending": "Confirm your new email: we sent a link to {{pending}}. Until then, {{current}} stays active.",
+    "resend": "Resend the link",
+    "cancelChange": "Cancel the change",
+    "preferences": "Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "security": {
+    "title": "Security",
+    "description": "Your password, the ways you log in, and your account.",
+    "password": "Password",
+    "setPassword": "Set a password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePassword": "Change password",
+    "passwordChanged": "Your password was changed.",
+    "methods": "Sign-in methods",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "devices": "Other devices",
+    "devicesText": "Log out everywhere except on this device.",
+    "logOutOthers": "Log out of other devices",
+    "devicesDone": "You are logged out of every other device.",
+    "delete": "Delete account",
+    "deleteText": "Delete your account and your company for good.",
+    "deleteTitle": "Delete your account?",
+    "deleteConfirm": "Your account, your company, its logo and its files are deleted for good.",
+    "typeEmail": "Type your email to confirm"
+  },
+  "company": {
+    "description": "The details and logo of this company.",
+    "industries": "Industries",
+    "industriesPlaceholder": "Select industries",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo"
+  },
+  "errors": {
+    "ERROR_VALIDATION": "Check the fields and try again.",
+    "ERROR_EMAIL_TAKEN": "This email is already used by another account.",
+    "ERROR_SAME_EMAIL": "This is already your email.",
+    "ERROR_LINK_TOO_SOON": "A link was sent a moment ago. Wait a minute before asking again.",
+    "ERROR_WRONG_PASSWORD": "The current password is not correct.",
+    "ERROR_EMAIL_MISMATCH": "The email does not match your account.",
+    "ERROR_UNKNOWN": "Something went wrong. Try again."
+  }
+}

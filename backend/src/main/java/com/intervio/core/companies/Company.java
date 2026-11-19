@@ -85,6 +85,10 @@ public class Company {
 		this.logoFileId = logoFileId;
 	}
 
+	public UUID getUuid() {
+		return uuid;
+	}
+
 	public Long getId() {
 		return id;
 	}

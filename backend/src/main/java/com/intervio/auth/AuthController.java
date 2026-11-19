@@ -1,6 +1,7 @@
 package com.intervio.auth;
 
 import com.intervio.api.ApiException;
+import com.intervio.files.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -36,7 +37,10 @@ class AuthController {
 
 	private final SecurityContextRepository contexts = new HttpSessionSecurityContextRepository();
 
-	AuthController(AuthService auth) {
+	private final FileService files;
+
+	AuthController(AuthService auth, FileService files) {
+		this.files = files;
 		this.auth = auth;
 	}
 
@@ -104,7 +108,9 @@ class AuthController {
 		contexts.saveContext(context, request, response);
 		boolean reset = used.link() == EmailLink.RESET;
 		request.getSession().setAttribute(RESET_ALLOWED, reset);
-		return Map.of("next", reset ? "reset-password" : "home");
+		// After confirming a new email, the user lands back on their profile (decision 88).
+		String next = reset ? "reset-password" : used.link() == EmailLink.CHANGE_EMAIL ? "profile" : "home";
+		return Map.of("next", next);
 	}
 
 	/** "Set a new password" after a reset link; the user stays logged in. */
@@ -119,9 +125,8 @@ class AuthController {
 	}
 
 	@GetMapping("/me")
-	Map<String, String> me(Authentication authentication) {
-		User user = auth.find(authentication.getName()).orElseThrow();
-		return Map.of("fullName", user.getFullName(), "email", user.getEmail());
+	Me me(Authentication authentication) {
+		return Me.of(auth.current(authentication.getName()), files);
 	}
 
 }

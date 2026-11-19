@@ -4,5 +4,13 @@ import fr from './locales/fr.json'
 
 addTranslations('companies', { en, fr })
 
-export { useCompany } from './api'
+export {
+  companyApi,
+  companyKey,
+  errorKey as companyErrorKey,
+  INDUSTRY_CODES,
+  useCompany,
+  type Company,
+} from './api'
+export { CountryField } from './components'
 export { ONBOARDING_START, onboardingRoutes } from './routes'

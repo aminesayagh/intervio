@@ -1,6 +1,9 @@
+import { useSyncExternalStore } from 'react'
+
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'intervio.theme'
+const THEME_EVENT = 'intervio:theme'
 
 /** Saved choice first, else the computer setting. */
 export function initialTheme(): Theme {
@@ -21,6 +24,7 @@ export function applyTheme(theme: Theme, save = false) {
   root.classList.toggle('dark', theme === 'dark')
   root.classList.toggle('light', theme === 'light')
   root.dataset.theme = theme
+  window.dispatchEvent(new Event(THEME_EVENT))
   if (save) {
     try {
       localStorage.setItem(STORAGE_KEY, theme)
@@ -28,4 +32,16 @@ export function applyTheme(theme: Theme, save = false) {
       // Not saved; the choice still applies until the page is closed.
     }
   }
+}
+
+/** The current theme, updated wherever it is changed (sidebar menu, Settings). */
+export function useTheme(): Theme {
+  return useSyncExternalStore(
+    (listener) => {
+      window.addEventListener(THEME_EVENT, listener)
+      return () => window.removeEventListener(THEME_EVENT, listener)
+    },
+    () =>
+      document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  )
 }

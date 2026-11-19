@@ -1,0 +1,76 @@
+{
+  "title": "Paramètres",
+  "nav": {
+    "account": "Compte",
+    "profile": "Profil",
+    "security": "Sécurité",
+    "companies": "Entreprises",
+    "addCompany": "Ajouter une entreprise"
+  },
+  "addCompany": {
+    "title": "Pas encore disponible",
+    "text": "La gestion de plusieurs entreprises arrivera dans une prochaine version."
+  },
+  "save": "Enregistrer",
+  "saved": "Modifications enregistrées.",
+  "remove": "Supprimer",
+  "cancel": "Annuler",
+  "close": "Fermer",
+  "profile": {
+    "title": "Profil",
+    "description": "Votre photo, votre nom et votre e-mail, et l'apparence d'Intervio.",
+    "photo": "Photo",
+    "uploadPhoto": "Importer une photo",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Ada Martin",
+    "email": "E-mail professionnel",
+    "emailPlaceholder": "ada@entreprise.com",
+    "pending": "Confirmez votre nouvel e-mail : nous avons envoyé un lien à {{pending}}. D'ici là, {{current}} reste actif.",
+    "resend": "Renvoyer le lien",
+    "cancelChange": "Annuler le changement",
+    "preferences": "Préférences",
+    "language": "Langue",
+    "theme": "Thème",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "security": {
+    "title": "Sécurité",
+    "description": "Votre mot de passe, vos moyens de connexion et votre compte.",
+    "password": "Mot de passe",
+    "setPassword": "Définir un mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le nouveau mot de passe",
+    "changePassword": "Changer le mot de passe",
+    "passwordChanged": "Votre mot de passe a été changé.",
+    "methods": "Moyens de connexion",
+    "connected": "Connecté",
+    "notConnected": "Non connecté",
+    "devices": "Autres appareils",
+    "devicesText": "Déconnectez-vous partout sauf sur cet appareil.",
+    "logOutOthers": "Se déconnecter des autres appareils",
+    "devicesDone": "Vous êtes déconnecté de tous les autres appareils.",
+    "delete": "Supprimer le compte",
+    "deleteText": "Supprimez définitivement votre compte et votre entreprise.",
+    "deleteTitle": "Supprimer votre compte ?",
+    "deleteConfirm": "Votre compte, votre entreprise, son logo et ses fichiers sont supprimés définitivement.",
+    "typeEmail": "Saisissez votre e-mail pour confirmer"
+  },
+  "company": {
+    "description": "Les informations et le logo de cette entreprise.",
+    "industries": "Secteurs d'activité",
+    "industriesPlaceholder": "Choisir des secteurs",
+    "logo": "Logo",
+    "uploadLogo": "Importer un logo"
+  },
+  "errors": {
+    "ERROR_VALIDATION": "Vérifiez les champs et réessayez.",
+    "ERROR_EMAIL_TAKEN": "Cet e-mail est déjà utilisé par un autre compte.",
+    "ERROR_SAME_EMAIL": "C'est déjà votre e-mail.",
+    "ERROR_LINK_TOO_SOON": "Un lien vient d'être envoyé. Attendez une minute avant de redemander.",
+    "ERROR_WRONG_PASSWORD": "Le mot de passe actuel est incorrect.",
+    "ERROR_EMAIL_MISMATCH": "L'e-mail ne correspond pas à votre compte.",
+    "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez."
+  }
+}

@@ -11,6 +11,11 @@ import {
   onboardingRoutes,
   useCompany,
 } from '../services/core/companies'
+import {
+  COMPANY_SETTINGS_PREFIX,
+  CompanySettingsPage,
+  settingsRoutes,
+} from '../services/core/settings'
 import { navigate, usePath } from '../services/navigation'
 import { PublicLayout } from '../services/ui-kit'
 
@@ -25,11 +30,17 @@ const routes: Record<string, Route> = {
     ]),
   ),
   ...Object.fromEntries(
-    Object.entries(clientBoardRoutes).map(([path, page]) => [
-      path,
-      { page, access: 'user', board: true },
-    ]),
+    Object.entries({ ...clientBoardRoutes, ...settingsRoutes }).map(
+      ([path, page]) => [path, { page, access: 'user', board: true }],
+    ),
   ),
+}
+
+/** Every company tab shares one page, which reads the company id from the address. */
+const companySettingsRoute: Route = {
+  page: CompanySettingsPage,
+  access: 'user',
+  board: true,
 }
 
 /** Pages a logged-in user may open before onboarding is done. */
@@ -44,7 +55,9 @@ function Router() {
   const path = usePath()
   const { data: user, isPending: userPending } = useCurrentUser()
   const { data: company, isPending: companyPending } = useCompany(!!user)
-  const route = routes[path]
+  const route = path.startsWith(COMPANY_SETTINGS_PREFIX)
+    ? companySettingsRoute
+    : routes[path]
   const isPending = userPending || (!!user && companyPending)
 
   let redirect: string | null = null

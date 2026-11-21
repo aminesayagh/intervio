@@ -46,6 +46,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 |---|---|---|
 | What opens where | Records people look at open in the panel; records people work inside (intervention, later offer) open their own page | 109 |
 | List structure | Header (title, main action) · toolbar (search, filters, Cards / Table) · records · loading row | 110 |
+| Sorting | A sortable header: first click sorts in the column's first direction, second reverses it, third goes back to the default order (no sort in the address) | 110 |
 | Loading more | **Infinite scroll**, no page numbers. The header shows the total ("42 records") | 110 |
 | Panel position | Beside the list, never over it; the list stays usable; the open record is marked | 111 |
 | Addresses | Every state that matters is in the address: search, filters, sort, open record, creation | 112 |

@@ -188,7 +188,7 @@ test('a search with no match shows its message, with Clear filters', async () =>
   expect(await screen.findByText('5 items')).toBeInTheDocument()
 })
 
-test('a column header sorts through the server, then flips, and the address follows', async () => {
+test('a column header sorts, then reverses, then goes back to the default order', async () => {
   renderAt(
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
@@ -210,6 +210,14 @@ test('a column header sorts through the server, then flips, and the address foll
   await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
   await waitFor(() => expect(firstName()).toBe('Item 042'))
   expect(window.location.search).toBe('?sort=name%3Adesc')
+
+  // A third click goes back to the default order, and the sort leaves the address.
+  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await waitFor(() => expect(window.location.search).toBe(''))
+  expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  )
   // Columns without a sort have no button.
   expect(
     screen.queryByRole('button', { name: 'Sort by Owner' }),

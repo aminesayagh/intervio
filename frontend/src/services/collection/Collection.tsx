@@ -233,14 +233,16 @@ function RecordTable<T extends RowData, C>({
     : 0
   const byId = new Map(definition.columns.map((column) => [column.id, column]))
 
-  /** A column chosen again flips its direction; a new one starts with its own. */
+  /**
+   * Three clicks on a header: its first direction, then reversed, then back to the
+   * collection's default order (which removes the sort from the address).
+   */
   function sortBy(column: ColumnDefinition<T>) {
-    if (sort.by === column.id)
-      onSort({
-        by: column.id,
-        direction: sort.direction === 'asc' ? 'desc' : 'asc',
-      })
-    else onSort({ by: column.id, direction: column.sort ?? 'asc' })
+    const first = column.sort ?? 'asc'
+    if (sort.by !== column.id) onSort({ by: column.id, direction: first })
+    else if (sort.direction === first)
+      onSort({ by: column.id, direction: first === 'asc' ? 'desc' : 'asc' })
+    else onSort(definition.defaultSort)
   }
 
   return (

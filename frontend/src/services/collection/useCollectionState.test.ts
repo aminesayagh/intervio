@@ -18,32 +18,34 @@ beforeEach(() => {
 test('reads search, filters and sort from the address, with defaults for the rest', () => {
   const listing = readListing(
     new URLSearchParams('q=pump&f.status=valid,draft&sort=name:asc&open=7'),
-    defaultSort,
   )
   expect(listing).toEqual({
     search: 'pump',
     filters: { status: ['valid', 'draft'] },
     sort: { by: 'name', direction: 'asc' },
   })
-  expect(
-    readListing(new URLSearchParams('sort=bad'), defaultSort).sort,
-  ).toEqual(defaultSort)
+  // No sort, or a wrong one: none chosen, the default order applies.
+  expect(readListing(new URLSearchParams('sort=bad')).sort).toBeNull()
 })
 
-test('writes only what differs from the defaults, and keeps other parameters', () => {
-  const params = writeListing(
-    new URLSearchParams('open=7&q=old'),
-    {
-      search: ' valve ',
-      filters: { status: ['valid'], owner: [] },
-      sort: defaultSort,
-    },
-    defaultSort,
-  )
+test('writes only what is set, and keeps other parameters', () => {
+  const params = writeListing(new URLSearchParams('open=7&q=old'), {
+    search: ' valve ',
+    filters: { status: ['valid'], owner: [] },
+    sort: null,
+  })
   expect(params.toString()).toBe('open=7&q=valve&f.status=valid')
+  // A sort chosen goes to the address, even when it matches the default order.
   expect(
-    isNarrowed({ search: '', filters: { owner: [] }, sort: defaultSort }),
-  ).toBe(false)
+    writeListing(new URLSearchParams(), {
+      search: '',
+      filters: {},
+      sort: defaultSort,
+    }).toString(),
+  ).toBe('sort=updated%3Adesc')
+  expect(isNarrowed({ search: '', filters: { owner: [] }, sort: null })).toBe(
+    false,
+  )
 })
 
 test('changes replace the address, and the sort is remembered', () => {
@@ -60,6 +62,12 @@ test('changes replace the address, and the sort is remembered', () => {
 
   act(() => result.current.clear())
   expect(window.location.search).toBe('?sort=name%3Aasc')
+
+  // Back to the default order: the sort leaves the address and is forgotten.
+  act(() => result.current.setSort(null))
+  expect(window.location.search).toBe('')
+  expect(result.current.query.sort).toEqual(defaultSort)
+  expect(localStorage.getItem('intervio.collection.items.sort')).toBeNull()
 })
 
 test('a bare address takes back the tab’s last list state', () => {

@@ -196,7 +196,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
   await screen.findByText('42 items')
   expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
     'aria-sort',
-    'descending',
+    'none',
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
@@ -216,7 +216,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
   await waitFor(() => expect(window.location.search).toBe(''))
   expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
     'aria-sort',
-    'descending',
+    'none',
   )
   // Columns without a sort have no button.
   expect(
@@ -249,4 +249,30 @@ test('the search field keeps a trailing space while the search is trimmed', asyn
   // A change from elsewhere still reaches the field.
   await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
   await waitFor(() => expect(field).toHaveValue(''))
+})
+
+test('the default column cycles the same way: chosen, reversed, then no sort', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
+  )
+  await screen.findByText('42 items')
+  const header = () => screen.getByRole('columnheader', { name: /Updated/ })
+  const button = () => screen.getByRole('button', { name: 'Sort by Updated' })
+  expect(header()).toHaveAttribute('aria-sort', 'none')
+
+  await userEvent.click(button())
+  await waitFor(() =>
+    expect(window.location.search).toBe('?sort=updated%3Adesc'),
+  )
+  expect(header()).toHaveAttribute('aria-sort', 'descending')
+
+  await userEvent.click(button())
+  await waitFor(() => expect(firstName()).toBe('Item 042'))
+  expect(header()).toHaveAttribute('aria-sort', 'ascending')
+
+  await userEvent.click(button())
+  await waitFor(() => expect(window.location.search).toBe(''))
+  expect(header()).toHaveAttribute('aria-sort', 'none')
+  await waitFor(() => expect(firstName()).toBe('Item 001'))
 })

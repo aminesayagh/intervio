@@ -51,6 +51,11 @@ test('search, filters and sort', async () => {
     query({ sort: { by: 'name', direction: 'desc' } }),
   )
   expect(byName.items[0].name).toBe('Item 030')
+  const byQuantity = await source.list(
+    query({ sort: { by: 'quantity', direction: 'asc' } }),
+  )
+  expect(byQuantity.items[0].quantity).toBe(1)
+  expect(byQuantity.items.at(-1)!.quantity).toBeNull()
 })
 
 test('a missing or archived record is a 404, and a planned failure a 500 once', async () => {

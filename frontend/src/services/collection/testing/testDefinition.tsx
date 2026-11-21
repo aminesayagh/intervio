@@ -68,6 +68,7 @@ export function itemDefinition(
         id: 'quantity',
         label: 'columns.quantity',
         width: 110,
+        sort: 'asc',
         cell: (item) => item.quantity ?? <span className="text-muted">—</span>,
       },
       {

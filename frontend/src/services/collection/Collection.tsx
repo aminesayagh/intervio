@@ -49,7 +49,7 @@ export function Collection<T extends RowData, C = void>({
     key: definition.key,
     source: definition.source,
     context: context as C,
-    listing,
+    listing: state.query,
   })
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
@@ -200,8 +200,9 @@ function RecordTable<T extends RowData, C>({
   label: string
   scrollRef: RefObject<HTMLDivElement | null>
   more: More
-  sort: ListQuery['sort']
-  onSort: (sort: ListQuery['sort']) => void
+  /** The sort chosen, or null for the default order (no header marked). */
+  sort: ListQuery['sort'] | null
+  onSort: (sort: ListQuery['sort'] | null) => void
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = useMemo<ColumnDef<typeof features, T>[]>(
@@ -239,10 +240,10 @@ function RecordTable<T extends RowData, C>({
    */
   function sortBy(column: ColumnDefinition<T>) {
     const first = column.sort ?? 'asc'
-    if (sort.by !== column.id) onSort({ by: column.id, direction: first })
+    if (sort?.by !== column.id) onSort({ by: column.id, direction: first })
     else if (sort.direction === first)
       onSort({ by: column.id, direction: first === 'asc' ? 'desc' : 'asc' })
-    else onSort(definition.defaultSort)
+    else onSort(null)
   }
 
   return (
@@ -256,7 +257,7 @@ function RecordTable<T extends RowData, C>({
           <tr key={group.id} aria-rowindex={1}>
             {group.headers.map((header) => {
               const column = byId.get(header.column.id)!
-              const sorted = sort.by === column.id ? sort.direction : null
+              const sorted = sort?.by === column.id ? sort.direction : null
               return (
                 <th
                   key={header.id}

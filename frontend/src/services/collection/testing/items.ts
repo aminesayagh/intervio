@@ -61,6 +61,9 @@ export function itemSource(items = makeItems(300)) {
         ? item.name
         : by === 'status'
           ? item.status
-          : item.updatedAt,
+          : by === 'quantity'
+            ? // No quantity sorts after every quantity, smallest first.
+              (item.quantity ?? Number.MAX_SAFE_INTEGER)
+            : item.updatedAt,
   })
 }

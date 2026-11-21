@@ -138,7 +138,7 @@ Usage:
 | Library | Role | Already installed |
 |---|---|---|
 | **TanStack Query 5** | Loading, caching and refetching: `useInfiniteQuery` for the list, `useQuery` for one record, `useMutation` for create, edit and remove | Yes |
-| **TanStack Table 9** (`@tanstack/react-table`) | The table's headless model: columns, header groups, sorting state, column visibility. Built with `useTable({ features, columns, data })` and a stable `tableFeatures({ rowSortingFeature, columnVisibilityFeature })` defined once in the wrapper. Sorting happens on the server: the table's sorting state is controlled from the address, and no sorted row model is registered | To add |
+| **TanStack Table 9** (`@tanstack/react-table`) | The table's headless model: columns, header groups, sorting state, column visibility. Built with `useTable({ features, columns, data })` and a stable `tableFeatures({ rowSortingFeature, columnVisibilityFeature })` defined once in the wrapper. Sorting happens on the server: a sortable column's header changes the address directly, so TanStack Table's sorting feature isn't used (it would only mirror the address) | To add |
 | **TanStack Virtual 3** (`@tanstack/react-virtual`) | Draws only the visible cards or rows, measures them (`measureElement`), triggers the next page, and restores the scroll position after a refresh (`takeSnapshot`, `initialMeasurementsCache`, `initialOffset`) | To add |
 | **HeroUI 3** | The visual parts: chips, menus, buttons, fields, dialogs, the table's look. TanStack Table gives the model; the cells are drawn with the app's components | Yes |
 | **Motion** | The panel's slide | Yes |

@@ -9,5 +9,9 @@
     "list": "Les éléments n’ont pas pu être chargés.",
     "retry": "Réessayer",
     "more": "D’autres éléments n’ont pas pu être chargés."
-  }
+  },
+  "search": "Rechercher",
+  "clearFilters": "Effacer les filtres",
+  "narrowedCount": "{{shown}} sur {{all}}",
+  "sortBy": "Trier par {{column}}"
 }

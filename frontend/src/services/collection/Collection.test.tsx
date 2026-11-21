@@ -128,3 +128,100 @@ test('a failed next page keeps the loaded items and offers Retry', async () => {
     ).not.toBeInTheDocument(),
   )
 })
+
+const firstName = () =>
+  within(screen.getByRole('table')).getAllByRole('row')[1].querySelector('td')!
+    .textContent
+
+test('a search waits for typing to stop, then narrows the list and the address', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
+  )
+  await screen.findByText('42 items')
+  await userEvent.type(
+    screen.getByRole('searchbox', { name: 'Search' }),
+    'item 02',
+  )
+  expect(window.location.search).toBe('') // not yet: 250 ms after the last key
+  expect(await screen.findByText('10 of 42 items')).toBeInTheDocument()
+  expect(window.location.search).toBe('?q=item+02')
+  expect(firstName()).toBe('Item 020')
+})
+
+test('a filter menu narrows the list, shows its count, and Clear filters resets', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
+  )
+  await screen.findByText('30 items')
+  await userEvent.click(screen.getByRole('button', { name: 'Status' }))
+  await userEvent.click(
+    await screen.findByRole('menuitemcheckbox', { name: 'Valid' }),
+  )
+  await userEvent.keyboard('{Escape}')
+
+  expect(await screen.findByText('10 of 30 items')).toBeInTheDocument()
+  expect(window.location.search).toBe('?f.status=valid')
+  expect(screen.getByRole('button', { name: 'Status' })).toHaveTextContent(
+    'Status (1)',
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+  expect(await screen.findByText('30 items')).toBeInTheDocument()
+  expect(window.location.search).toBe('')
+})
+
+test('a search with no match shows its message, with Clear filters', async () => {
+  renderAt(
+    '/items?q=nothing',
+    <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
+  )
+  expect(
+    await screen.findByRole('heading', {
+      name: 'No records match your search',
+    }),
+  ).toBeInTheDocument()
+  await userEvent.click(
+    screen.getAllByRole('button', { name: 'Clear filters' })[0],
+  )
+  expect(await screen.findByText('5 items')).toBeInTheDocument()
+})
+
+test('a column header sorts through the server, then flips, and the address follows', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
+  )
+  await screen.findByText('42 items')
+  expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  )
+
+  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await waitFor(() => expect(window.location.search).toBe('?sort=name%3Aasc'))
+  expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  )
+  await waitFor(() => expect(firstName()).toBe('Item 001'))
+
+  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await waitFor(() => expect(firstName()).toBe('Item 042'))
+  expect(window.location.search).toBe('?sort=name%3Adesc')
+  // Columns without a sort have no button.
+  expect(
+    screen.queryByRole('button', { name: 'Sort by Owner' }),
+  ).not.toBeInTheDocument()
+})
+
+test('an address opens the list it describes', async () => {
+  renderAt(
+    '/items?q=item&f.status=draft&sort=name:desc',
+    <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
+  )
+  expect(await screen.findByText('10 of 30 items')).toBeInTheDocument()
+  expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('item')
+  expect(firstName()).toBe('Item 028')
+})

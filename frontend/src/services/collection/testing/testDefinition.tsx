@@ -2,7 +2,7 @@ import { addTranslations } from '../../i18n'
 import type { CollectionDefinition } from '../definition'
 import type { DataSource } from '../types'
 import { Avatar, Day, StatusChip } from './ItemParts'
-import { itemSource, type Item } from './items'
+import { itemSource, OWNERS, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 
@@ -24,12 +24,33 @@ export function itemDefinition(
     getId: (item) => item.id,
     source,
     defaultSort: { by: 'updated', direction: 'desc' },
+    filters: [
+      {
+        id: 'status',
+        label: 'columns.status',
+        options: (['draft', 'valid', 'outdated'] as const).map((status) => ({
+          id: status,
+          label: `status.${status}`,
+        })),
+      },
+      {
+        id: 'owner',
+        label: 'columns.owner',
+        options: OWNERS.map((owner) => ({ id: owner, label: owner })),
+      },
+    ],
     columns: [
-      { id: 'name', label: 'columns.name', cell: (item) => item.name },
+      {
+        id: 'name',
+        label: 'columns.name',
+        sort: 'asc',
+        cell: (item) => item.name,
+      },
       {
         id: 'status',
         label: 'columns.status',
         width: 140,
+        sort: 'asc',
         cell: (item) => <StatusChip status={item.status} />,
       },
       {
@@ -53,6 +74,7 @@ export function itemDefinition(
         id: 'updated',
         label: 'columns.updated',
         width: 140,
+        sort: 'desc',
         cell: (item) => <Day iso={item.updatedAt} />,
       },
     ],

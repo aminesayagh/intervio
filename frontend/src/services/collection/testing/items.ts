@@ -13,7 +13,12 @@ export type Item = {
 }
 
 const STATUSES: Item['status'][] = ['draft', 'valid', 'outdated']
-const OWNERS = ['Julie Moreau', 'Karim Benali', 'Sophie Martin', 'Omar Haddad']
+export const OWNERS = [
+  'Julie Moreau',
+  'Karim Benali',
+  'Sophie Martin',
+  'Omar Haddad',
+]
 
 /** n items with stable ids and names (Item 001…), so tests never depend on randomness. */
 export function makeItems(n: number): Item[] {

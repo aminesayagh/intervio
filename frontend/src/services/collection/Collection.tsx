@@ -5,14 +5,19 @@ import {
   type ColumnDef,
   type RowData,
 } from '@tanstack/react-table'
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
+import { Icon } from '../ui-kit'
 import { useCollectionQuery } from './collectionQuery'
 import type { CollectionDefinition, ColumnDefinition } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
+import { Toolbar } from './Toolbar'
+import type { ListQuery } from './types'
 import { useCollectionList } from './useCollectionList'
+import { isNarrowed, useCollectionState } from './useCollectionState'
 
 addTranslations('collection', { en, fr })
 
@@ -37,10 +42,9 @@ export function Collection<T extends RowData, C = void>({
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const listing = useMemo(
-    () => ({ search: '', filters: {}, sort: definition.defaultSort }),
-    [definition.defaultSort],
-  )
+  const state = useCollectionState(definition.key, definition.defaultSort)
+  const { listing } = state
+  const narrowed = isNarrowed(listing)
   const list = useCollectionQuery({
     key: definition.key,
     source: definition.source,
@@ -57,10 +61,33 @@ export function Collection<T extends RowData, C = void>({
     loadMore,
   }
 
+  // "12 of 42 items" needs the collection's whole total: one small cached request.
+  const all = useQuery({
+    queryKey: [definition.key, 'total', context ?? null],
+    queryFn: async () =>
+      (
+        await definition.source.list(
+          {
+            search: '',
+            filters: {},
+            sort: definition.defaultSort,
+            cursor: null,
+          },
+          context as C,
+        )
+      ).total,
+    enabled: narrowed,
+  })
+
   const count =
-    list.total !== undefined
-      ? t(definition.i18n.count, { count: list.total })
-      : t('collection:countUnknown', { count: list.items.length })
+    list.total === undefined
+      ? t('collection:countUnknown', { count: list.items.length })
+      : narrowed && all.data !== undefined
+        ? t('collection:narrowedCount', {
+            shown: list.total,
+            all: t(definition.i18n.count, { count: all.data }),
+          })
+        : t(definition.i18n.count, { count: list.total })
 
   return (
     <section
@@ -76,6 +103,17 @@ export function Collection<T extends RowData, C = void>({
         </span>
       </div>
 
+      {(narrowed || list.items.length > 0) && (
+        <Toolbar
+          namespace={definition.i18n.namespace}
+          filters={definition.filters ?? []}
+          listing={listing}
+          onSearch={state.setSearch}
+          onFilter={state.setFilter}
+          onClear={state.clear}
+        />
+      )}
+
       <div
         ref={scrollRef}
         className="scroll-quiet min-h-0 flex-1 overflow-y-auto [--scroll-quiet-top:2rem]"
@@ -87,6 +125,15 @@ export function Collection<T extends RowData, C = void>({
             <p>{t('collection:error.list')}</p>
             <Button variant="secondary" onPress={() => list.refetch()}>
               {t('collection:error.retry')}
+            </Button>
+          </div>
+        ) : list.items.length === 0 && narrowed ? (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <h2 className="text-lg font-medium">
+              {t('collection:noResults.title')}
+            </h2>
+            <Button variant="secondary" onPress={state.clear}>
+              {t('collection:noResults.clear')}
             </Button>
           </div>
         ) : list.items.length === 0 ? (
@@ -105,6 +152,8 @@ export function Collection<T extends RowData, C = void>({
               label={t(definition.i18n.title)}
               scrollRef={scrollRef}
               more={more}
+              sort={listing.sort}
+              onSort={state.setSort}
             />
             {list.isFetchingNextPage && <Placeholders rows={2} />}
             {list.isFetchNextPageError && !list.isFetchingNextPage && (
@@ -125,7 +174,10 @@ export function Collection<T extends RowData, C = void>({
   )
 }
 
-/** The table's features: none yet; sorting and column visibility come in steps 4 and 11. */
+/**
+ * The table's features: none. Sorting is done by the server from the address, so the
+ * headers change the address directly; column visibility comes in step 11.
+ */
 const features = tableFeatures({})
 
 /**
@@ -139,6 +191,8 @@ function RecordTable<T extends RowData, C>({
   label,
   scrollRef,
   more,
+  sort,
+  onSort,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -146,8 +200,10 @@ function RecordTable<T extends RowData, C>({
   label: string
   scrollRef: RefObject<HTMLDivElement | null>
   more: More
+  sort: ListQuery['sort']
+  onSort: (sort: ListQuery['sort']) => void
 }) {
-  const { t } = useTranslation(definition.i18n.namespace)
+  const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
       definition.columns.map((column: ColumnDefinition<T>) => ({
@@ -175,9 +231,17 @@ function RecordTable<T extends RowData, C>({
   const after = drawn.length
     ? virtualizer.getTotalSize() - drawn[drawn.length - 1].end
     : 0
-  const widths = new Map(
-    definition.columns.map((column) => [column.id, column.width]),
-  )
+  const byId = new Map(definition.columns.map((column) => [column.id, column]))
+
+  /** A column chosen again flips its direction; a new one starts with its own. */
+  function sortBy(column: ColumnDefinition<T>) {
+    if (sort.by === column.id)
+      onSort({
+        by: column.id,
+        direction: sort.direction === 'asc' ? 'desc' : 'asc',
+      })
+    else onSort({ by: column.id, direction: column.sort ?? 'asc' })
+  }
 
   return (
     <table
@@ -188,18 +252,54 @@ function RecordTable<T extends RowData, C>({
       <thead className="sticky top-0 z-10 bg-background">
         {table.getHeaderGroups().map((group) => (
           <tr key={group.id} aria-rowindex={1}>
-            {group.headers.map((header) => (
-              <th
-                key={header.id}
-                scope="col"
-                style={{ width: widths.get(header.column.id) }}
-                className="h-8 px-3 text-start align-middle text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
-              >
-                {header.isPlaceholder ? null : (
-                  <table.FlexRender header={header} />
-                )}
-              </th>
-            ))}
+            {group.headers.map((header) => {
+              const column = byId.get(header.column.id)!
+              const sorted = sort.by === column.id ? sort.direction : null
+              return (
+                <th
+                  key={header.id}
+                  scope="col"
+                  aria-sort={
+                    sorted === 'asc'
+                      ? 'ascending'
+                      : sorted === 'desc'
+                        ? 'descending'
+                        : column.sort
+                          ? 'none'
+                          : undefined
+                  }
+                  style={{ width: column.width }}
+                  className="h-8 px-3 text-start align-middle text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
+                >
+                  {header.isPlaceholder ? null : column.sort ? (
+                    <button
+                      type="button"
+                      aria-label={t('collection:sortBy', {
+                        column: t(column.label),
+                      })}
+                      onClick={() => sortBy(column)}
+                      className={`-mx-1 flex items-center gap-1 rounded-[var(--field-radius)] px-1 hover:text-foreground ${
+                        sorted ? 'text-foreground' : ''
+                      }`}
+                    >
+                      <table.FlexRender header={header} />
+                      <Icon
+                        name={
+                          sorted === 'asc'
+                            ? 'Arrow - Top-2'
+                            : sorted === 'desc'
+                              ? 'Arrow - Bottom-2'
+                              : 'Sort'
+                        }
+                        size={12}
+                      />
+                    </button>
+                  ) : (
+                    <table.FlexRender header={header} />
+                  )}
+                </th>
+              )
+            })}
           </tr>
         ))}
       </thead>

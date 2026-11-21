@@ -9,5 +9,9 @@
     "list": "Records could not be loaded.",
     "retry": "Retry",
     "more": "More records could not be loaded."
-  }
+  },
+  "search": "Search",
+  "clearFilters": "Clear filters",
+  "narrowedCount": "{{shown}} of {{all}}",
+  "sortBy": "Sort by {{column}}"
 }

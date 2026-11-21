@@ -1,4 +1,3 @@
-import { Button } from './parts'
 import {
   tableFeatures,
   useTable,
@@ -11,20 +10,33 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type KeyboardEvent,
   type RefObject,
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../http'
 import { addTranslations } from '../i18n'
-import { entryState, setSearchParams, useSearchParams } from '../navigation'
+import {
+  entryState,
+  navigate,
+  setSearchParams,
+  usePath,
+  useSearchParams,
+} from '../navigation'
 import { cn, Icon, Match, Show, Switch } from '../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import { cache, keys, useCollectionQuery } from './collectionQuery'
 import { EditableCell } from './EditableCell'
-import type { CollectionDefinition, ColumnDefinition } from './definition'
+import type {
+  ActionDefinition,
+  CollectionDefinition,
+  ColumnDefinition,
+} from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
+import { Button, ConfirmDialog, type MenuAction } from './parts'
+import { RecordPage } from './RecordPage'
 import { RecordPanel } from './RecordPanel'
 import { Toolbar } from './Toolbar'
 import type { Id, ListQuery } from './types'
@@ -48,9 +60,15 @@ type More = {
 export function Collection<T extends RowData, C = void>({
   definition,
   context,
+  basePath,
 }: {
   definition: CollectionDefinition<T, C>
   context?: C
+  /**
+   * The list's address (spec 12, 13); a record's full page is {basePath}/{id}.
+   * Defaults to /{definition.key}.
+   */
+  basePath?: string
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -110,7 +128,7 @@ export function Collection<T extends RowData, C = void>({
     },
     [panelMark],
   )
-  const close = useCallback(() => {
+  const doClose = useCallback(() => {
     if (entryState().panel === panelMark) window.history.back()
     else {
       const params = new URLSearchParams(window.location.search)
@@ -118,6 +136,91 @@ export function Collection<T extends RowData, C = void>({
       setSearchParams(params, { replace: true })
     }
   }, [panelMark])
+
+  // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
+  const [leaving, setLeaving] = useState(false)
+  const close = useCallback(() => {
+    const unsaved = (() => {
+      try {
+        return sessionStorage.getItem(
+          `intervio.collection.${key}.${openId}.description`,
+        )
+      } catch {
+        return null
+      }
+    })()
+    if (unsaved !== null) setLeaving(true)
+    else doClose()
+  }, [key, openId, doClose])
+
+  // More actions (spec 7.4): open full page, copy link, then the collection's actions.
+  const listPath = basePath ?? `/${key}`
+  const path = usePath()
+  const pageId = path.startsWith(`${listPath}/`)
+    ? decodeURIComponent(path.slice(listPath.length + 1))
+    : null
+  const [pending, setPending] = useState<{
+    action: ActionDefinition
+    record: T
+  } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const announce = useCallback((text: string) => {
+    setNotice(text)
+    setTimeout(() => setNotice(null), 2500)
+  }, [])
+  const allowedActions = useCallback(
+    (record: T) =>
+      (definition.actions ?? []).filter(
+        (action) =>
+          !rights ||
+          (rights(record, context as C).actions ?? []).includes(action.id),
+      ),
+    [definition.actions, rights, context],
+  )
+  const menuActions = useCallback(
+    (record: T, onPage: boolean): MenuAction[] => [
+      ...(onPage ? [] : [{ id: 'full', label: t('collection:actions.full') }]),
+      { id: 'copy', label: t('collection:actions.copy') },
+      ...allowedActions(record).map((action) => ({
+        id: action.id,
+        label: t(action.label),
+        danger: true,
+      })),
+    ],
+    [allowedActions, t],
+  )
+  const runMenu = useCallback(
+    (id: string, record: T) => {
+      const recordId = getId(record)
+      if (id === 'full') navigate(`${listPath}/${encodeURIComponent(recordId)}`)
+      else if (id === 'copy') {
+        const link = `${window.location.origin}${listPath}?open=${encodeURIComponent(recordId)}`
+        void navigator.clipboard
+          ?.writeText(link)
+          .then(() => announce(t('collection:actions.copied')))
+      } else {
+        const action = (definition.actions ?? []).find((a) => a.id === id)
+        if (action) setPending({ action, record })
+      }
+    },
+    [getId, listPath, announce, t, definition.actions],
+  )
+  async function confirmAction() {
+    if (!pending) return
+    const { action, record } = pending
+    setPending(null)
+    const recordId = getId(record)
+    try {
+      const run = action.id === 'archive' ? source.archive : source.remove
+      if (!run) throw new Error(`${key} cannot ${action.id}`)
+      await run(recordId, context as C)
+      cache.removed(queryClient, key, recordId, getId)
+      if (pageId) navigate(listPath, { replace: true })
+      else if (openId === recordId) doClose()
+    } catch {
+      announce(t('collection:actions.failed'))
+    }
+  }
   const unavailable = useCallback(
     (id: Id) =>
       cache.removed(queryClient, key, id, getId, { keepRecord: true }),
@@ -182,6 +285,62 @@ export function Collection<T extends RowData, C = void>({
             all: t(definition.i18n.count, { count: all.data }),
           })
         : t(definition.i18n.count, { count: list.total })
+
+  const dialogs = (
+    <>
+      <ConfirmDialog
+        open={pending !== null}
+        title={pending ? t(pending.action.confirm.title) : ''}
+        text={pending ? t(pending.action.confirm.text) : ''}
+        confirm={pending ? t(pending.action.confirm.button) : ''}
+        cancel={t('collection:actions.cancel')}
+        danger
+        onConfirm={() => void confirmAction()}
+        onCancel={() => setPending(null)}
+      />
+      <ConfirmDialog
+        open={leaving}
+        title={t('collection:description.unsavedTitle')}
+        text={t('collection:description.unsavedText')}
+        confirm={t('collection:description.leave')}
+        cancel={t('collection:description.keepEditing')}
+        onConfirm={() => {
+          setLeaving(false)
+          doClose()
+        }}
+        onCancel={() => setLeaving(false)}
+      />
+      <p aria-live="polite" className="sr-only">
+        {notice}
+      </p>
+      <Show when={notice}>
+        {(text) => (
+          <p className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-[var(--field-radius)] bg-foreground px-4 py-2 text-background shadow-md">
+            {text}
+          </p>
+        )}
+      </Show>
+    </>
+  )
+
+  if (pageId && definition.panel)
+    return (
+      <>
+        <RecordPage
+          key={pageId}
+          definition={definition}
+          panel={definition.panel}
+          context={context as C}
+          id={pageId}
+          listHref={`${listPath}?open=${encodeURIComponent(pageId)}`}
+          canEdit={canEdit}
+          save={save}
+          actions={(record) => menuActions(record, true)}
+          onAction={runMenu}
+        />
+        {dialogs}
+      </>
+    )
 
   return (
     <section
@@ -293,8 +452,11 @@ export function Collection<T extends RowData, C = void>({
           onUnavailable={unavailable}
           canEdit={canEdit}
           save={save}
+          actions={(record) => menuActions(record, false)}
+          onAction={runMenu}
         />
       )}
+      {dialogs}
     </section>
   )
 }

@@ -79,6 +79,18 @@ export type PanelDefinition<T> = {
  */
 export type Rights = {
   edit: string[]
+  /** The ids of the actions the person may run (archive, remove). */
+  actions?: string[]
+}
+
+/**
+ * An action in the panel's More actions menu (spec 7.4), run through the data source
+ * after a confirmation. The texts are translation keys in the collection's namespace.
+ */
+export type ActionDefinition = {
+  id: 'archive' | 'remove'
+  label: string
+  confirm: { title: string; text: string; button: string }
 }
 
 /** A filter menu (spec 4): its options are fixed, and several can be chosen. */
@@ -116,4 +128,6 @@ export type CollectionDefinition<T, C = void> = {
    * changed. The server checks every change again.
    */
   rights?: (record: T, context: C) => Rights
+  /** The actions of the More actions menu, after Open full page and Copy link. */
+  actions?: ActionDefinition[]
 }

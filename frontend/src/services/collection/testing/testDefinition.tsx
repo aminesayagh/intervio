@@ -16,6 +16,26 @@ export function itemDefinition(
 ): CollectionDefinition<Item> {
   return {
     rights,
+    actions: [
+      {
+        id: 'archive',
+        label: 'actions.archive',
+        confirm: {
+          title: 'actions.archiveTitle',
+          text: 'actions.archiveText',
+          button: 'actions.archive',
+        },
+      },
+      {
+        id: 'remove',
+        label: 'actions.remove',
+        confirm: {
+          title: 'actions.removeTitle',
+          text: 'actions.removeText',
+          button: 'actions.remove',
+        },
+      },
+    ],
     key,
     i18n: {
       namespace: 'test-items',

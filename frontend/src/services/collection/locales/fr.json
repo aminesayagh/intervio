@@ -44,6 +44,21 @@
     "saving": "Enregistrement…",
     "saved": "Enregistré",
     "failed": "Non enregistré",
-    "tooLong": "Cette description est trop longue : 20 000 caractères au maximum."
+    "tooLong": "Cette description est trop longue : 20 000 caractères au maximum.",
+    "unsavedTitle": "Quitter sans enregistrer ?",
+    "unsavedText": "Vos dernières modifications de la description ne sont pas enregistrées. Elles restent dans cet onglet jusqu’à votre retour.",
+    "leave": "Quitter quand même",
+    "keepEditing": "Continuer"
+  },
+  "actions": {
+    "more": "Plus d’actions",
+    "full": "Ouvrir en pleine page",
+    "copy": "Copier le lien",
+    "copied": "Lien copié",
+    "cancel": "Annuler",
+    "failed": "Cette action n’a pas pu être effectuée."
+  },
+  "page": {
+    "breadcrumb": "Fil d’Ariane"
   }
 }

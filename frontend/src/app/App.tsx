@@ -61,6 +61,11 @@ const devRoutes: Record<string, Route> = import.meta.env.DEV
 
 /** Addresses with an id: one page each, which reads the id from the address. */
 const prefixRoutes: [string, Route][] = [
+  // Development only: a test record's full page in the showcase.
+  ...Object.entries(devRoutes).map(([path, route]): [string, Route] => [
+    `${path}/`,
+    route,
+  ]),
   [
     COMPANY_SETTINGS_PREFIX,
     { page: CompanySettingsPage, access: 'user', board: true },

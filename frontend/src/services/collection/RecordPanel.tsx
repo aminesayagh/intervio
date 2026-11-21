@@ -1,19 +1,42 @@
-import { useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
+import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { ApiError } from '../http'
-import { cn, Icon, Match, Show, Switch } from '../ui-kit'
-import { keys } from './collectionQuery'
+import { Icon, Match, Show, Switch } from '../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from './definition'
-import { ChoiceCell } from './ChoiceCell'
-import { Description } from './Description'
-import { EditableCell } from './EditableCell'
-import { Button } from './parts'
+import { ActionMenu, Button, MenuPopover, type MenuAction } from './parts'
+import { RecordBody, RecordPlaceholders } from './RecordBody'
+import { isViewOnly, useRecord } from './recordQuery'
 import type { Id } from './types'
 
-/** A record removed, or that the person can no longer see (spec 7.2). */
-const isUnavailable = (error: unknown) =>
-  error instanceof ApiError && (error.status === 404 || error.status === 403)
+/** The More actions button and its menu (spec 7.4). */
+export function MoreActions({
+  actions,
+  onAction,
+}: {
+  actions: MenuAction[]
+  onAction: (id: string) => void
+}) {
+  const { t } = useTranslation('collection')
+  return (
+    <MenuTrigger>
+      <Button
+        look="ghost"
+        size="sm"
+        aria-label={t('actions.more')}
+        className="px-2"
+      >
+        <Icon name="More-1" size={16} />
+      </Button>
+      <MenuPopover minWidth={200}>
+        <ActionMenu
+          label={t('actions.more')}
+          actions={actions}
+          onAction={onAction}
+        />
+      </MenuPopover>
+    </MenuTrigger>
+  )
+}
 
 /**
  * The record panel, beside the list (spec 7): the record from the list shows at once,
@@ -30,6 +53,8 @@ export function RecordPanel<T, C>({
   onUnavailable,
   canEdit,
   save,
+  actions,
+  onAction,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
@@ -42,31 +67,19 @@ export function RecordPanel<T, C>({
   /** Whether the person may change a value (spec 7.7). */
   canEdit: (record: T, id: string) => boolean
   save: (record: T, patch: Partial<T>) => Promise<void>
+  /** The More actions menu's entries for a record. */
+  actions: (record: T) => MenuAction[]
+  onAction: (action: string, record: T) => void
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  const query = useQuery<T, Error, T, readonly unknown[]>({
-    queryKey: keys.record(definition.key, id),
-    queryFn: () => definition.source.one(id, context),
-    // A record is never a function, but TanStack can't know it of a generic type.
-    placeholderData: () => fromList as never,
-    retry: (failures, error) => !isUnavailable(error) && failures < 1,
+  const { query, record, unavailable } = useRecord({
+    definition,
+    context,
+    id,
+    fromList,
+    onUnavailable,
   })
-  const record = query.data
-  const unavailable = query.isError && isUnavailable(query.error)
-  const editable = [
-    ...(panel.titleEdit ? ['title'] : []),
-    ...panel.properties
-      .filter((property) => property.edit || property.choose)
-      .map((property) => property.id),
-    ...(panel.description ? ['description'] : []),
-  ]
-  const viewOnly =
-    record !== undefined && !editable.some((id) => canEdit(record, id))
-
-  // A removed record leaves the list too.
-  useEffect(() => {
-    if (unavailable) onUnavailable(id)
-  }, [unavailable, id, onUnavailable])
+  const shown = record !== undefined && !unavailable
 
   // Each record that opens takes the focus to its title (spec 10), once it shows.
   const focusTitle = useCallback(
@@ -82,23 +95,33 @@ export function RecordPanel<T, C>({
       className="scroll-quiet flex h-full w-[560px] shrink-0 flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
-        <Show as="span" when={record !== undefined && !unavailable}>
+        <Show as="span" when={shown}>
           {record !== undefined && panel.type(record)}
         </Show>
-        <Show as="span" when={record !== undefined && !unavailable && viewOnly}>
+        <Show as="span" when={shown && isViewOnly(panel, record as T, canEdit)}>
           <span className="text-xs text-muted">
             {t('collection:panel.viewOnly')}
           </span>
         </Show>
-        <Button
-          look="ghost"
-          size="sm"
-          aria-label={t('collection:panel.close')}
-          onPress={onClose}
-          className="ms-auto px-2"
-        >
-          <Icon name="Close" size={16} />
-        </Button>
+        <span className="ms-auto flex items-center gap-1">
+          <Show as="span" when={shown}>
+            {record !== undefined && (
+              <MoreActions
+                actions={actions(record)}
+                onAction={(action) => onAction(action, record)}
+              />
+            )}
+          </Show>
+          <Button
+            look="ghost"
+            size="sm"
+            aria-label={t('collection:panel.close')}
+            onPress={onClose}
+            className="px-2"
+          >
+            <Icon name="Close" size={16} />
+          </Button>
+        </span>
       </div>
 
       <Switch>
@@ -124,130 +147,25 @@ export function RecordPanel<T, C>({
           </div>
         </Match>
         <Match when={!record}>
-          <PanelPlaceholders label={t('collection:panel.loading')} />
+          <RecordPlaceholders label={t('collection:panel.loading')} />
         </Match>
         <Match when={record}>
-          {(shown) => (
-            <div className="flex flex-col gap-6 pt-2 pb-8">
-              <div>
-                <h2
-                  ref={focusTitle}
-                  aria-label={panel.title(shown)}
-                  tabIndex={-1}
-                  className="text-xl font-medium break-words outline-none"
-                >
-                  {panel.titleEdit && canEdit(shown, 'title') ? (
-                    <EditableCell
-                      record={shown}
-                      edit={panel.titleEdit}
-                      label={t('collection:panel.title')}
-                      namespace={definition.i18n.namespace}
-                      save={(patch) => save(shown, patch)}
-                      look="title"
-                    />
-                  ) : (
-                    panel.title(shown)
-                  )}
-                </h2>
-                <Show when={panel.subtitle}>
-                  {(subtitle) => (
-                    <p className="mt-1 text-xs text-muted">{subtitle(shown)}</p>
-                  )}
-                </Show>
-              </div>
-
-              <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
-                {panel.properties.map((property) => (
-                  <div key={property.id} className="contents">
-                    <dt className="text-muted">{t(property.label)}</dt>
-                    <dd className="min-w-0">
-                      {property.edit && canEdit(shown, property.id) ? (
-                        <EditableCell
-                          record={shown}
-                          edit={property.edit}
-                          label={t(property.label)}
-                          namespace={definition.i18n.namespace}
-                          save={(patch) => save(shown, patch)}
-                          look="panel"
-                        />
-                      ) : property.choose && canEdit(shown, property.id) ? (
-                        <ChoiceCell
-                          record={shown}
-                          choose={property.choose}
-                          render={property.value}
-                          label={t(property.label)}
-                          namespace={definition.i18n.namespace}
-                          save={(patch) => save(shown, patch)}
-                          look="panel"
-                        />
-                      ) : (
-                        property.value(shown)
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-
-              {panel.description && (
-                <Description
-                  key={id}
-                  value={panel.description.value(shown)}
-                  editable={canEdit(shown, 'description')}
-                  storageKey={`intervio.collection.${definition.key}.${id}.description`}
-                  save={(text) => save(shown, panel.description!.patch(text))}
-                />
-              )}
-
-              {panel.sections?.map((section) => {
-                const items = section.items(shown)
-                return (
-                  <section
-                    key={section.id}
-                    className="border-t border-border pt-4"
-                  >
-                    <h3 className="flex items-baseline gap-2 font-medium">
-                      {t(section.label)}
-                      <span className="text-xs font-normal text-muted">
-                        {items.length}
-                      </span>
-                    </h3>
-                    <ul className="mt-2 flex flex-col">
-                      {items.slice(0, 5).map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center gap-2 border-b border-border py-2"
-                        >
-                          <span className="min-w-0 flex-1 truncate">
-                            {item.label}
-                          </span>
-                          {item.kind}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )
-              })}
+          {(loaded) => (
+            <div className="pt-2 pb-8">
+              <RecordBody
+                definition={definition}
+                panel={panel}
+                id={id}
+                record={loaded}
+                canEdit={canEdit}
+                save={save}
+                focusTitle={focusTitle}
+                layout="panel"
+              />
             </div>
           )}
         </Match>
       </Switch>
     </aside>
-  )
-}
-
-/** Grey bars where the record's title and properties will be. */
-function PanelPlaceholders({ label }: { label: string }) {
-  const bar = 'block rounded-[var(--field-radius)] bg-default'
-  return (
-    <div role="status" aria-label={label} className="flex flex-col gap-3 pt-2">
-      <span className={cn(bar, 'h-6 w-64')} />
-      <span className={cn(bar, 'mb-4 h-3 w-40')} />
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className="flex gap-4">
-          <span className={cn(bar, 'h-4 w-28')} />
-          <span className={cn(bar, 'h-4 w-48')} />
-        </span>
-      ))}
-    </div>
   )
 }

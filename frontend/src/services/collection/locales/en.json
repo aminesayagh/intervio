@@ -44,6 +44,21 @@
     "saving": "Saving…",
     "saved": "Saved",
     "failed": "Not saved",
-    "tooLong": "This description is too long: 20,000 characters at most."
+    "tooLong": "This description is too long: 20,000 characters at most.",
+    "unsavedTitle": "Leave without saving?",
+    "unsavedText": "Your last changes to the description are not saved. They stay in this tab until you come back.",
+    "leave": "Leave anyway",
+    "keepEditing": "Keep editing"
+  },
+  "actions": {
+    "more": "More actions",
+    "full": "Open full page",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "cancel": "Cancel",
+    "failed": "This action could not be done."
+  },
+  "page": {
+    "breadcrumb": "Breadcrumb"
   }
 }

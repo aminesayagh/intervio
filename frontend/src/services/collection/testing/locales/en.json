@@ -24,5 +24,13 @@
   },
   "type": "Item",
   "updatedOn": "Updated {{date}}",
-  "linked": "Linked items"
+  "linked": "Linked items",
+  "actions": {
+    "archive": "Archive",
+    "archiveTitle": "Archive this item?",
+    "archiveText": "It leaves the list, and stays where it is already used.",
+    "remove": "Remove",
+    "removeTitle": "Remove this item?",
+    "removeText": "It is removed for good."
+  }
 }

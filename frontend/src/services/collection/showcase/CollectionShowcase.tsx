@@ -16,6 +16,7 @@ const empty = itemSource([])
 type RightsChoice = 'all' | 'status' | 'none'
 let rightsChoice: RightsChoice = 'all'
 const rights = () => ({
+  actions: rightsChoice === 'all' ? ['archive', 'remove'] : [],
   edit:
     rightsChoice === 'all'
       ? ['name', 'title', 'status', 'owner', 'quantity', 'description']
@@ -123,7 +124,11 @@ export default function CollectionShowcase() {
         </div>
       </details>
 
-      <Collection key={items} definition={definitions[items]} />
+      <Collection
+        key={items}
+        definition={definitions[items]}
+        basePath="/dev/collection"
+      />
     </>
   )
 }

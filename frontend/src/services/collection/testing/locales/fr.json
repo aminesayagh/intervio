@@ -24,5 +24,13 @@
   },
   "type": "Élément",
   "updatedOn": "Mis à jour le {{date}}",
-  "linked": "Éléments liés"
+  "linked": "Éléments liés",
+  "actions": {
+    "archive": "Archiver",
+    "archiveTitle": "Archiver cet élément ?",
+    "archiveText": "Il quitte la liste et reste là où il est déjà utilisé.",
+    "remove": "Supprimer",
+    "removeTitle": "Supprimer cet élément ?",
+    "removeText": "Il est supprimé définitivement."
+  }
 }

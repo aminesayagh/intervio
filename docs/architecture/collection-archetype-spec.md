@@ -552,6 +552,8 @@ const resources = restSource<Resource, { interventionId: Id }>({
 
 ## 13. The full page
 
+**Built so far (step 8):** the page is `{basePath}/{id}` (the `Collection` takes `basePath`, by default `/{definition.key}`). Until activity exists, the right column holds the linked records. Archive and Remove are the collection's actions (`definition.actions`), offered only when `rights.actions` lists them.
+
 - **Address:** `{basePath}/{id}`, for example `/resources/{id}` or `/interventions/{id}/resources/{resourceId}`.
 - **Breadcrumb:** it shows the context. Each step is a link; the last step is the record.
 - **Layout:** `RecordView` in two columns. Properties and sections on the left (8 columns), activity on the right (4 columns).

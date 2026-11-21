@@ -13,6 +13,9 @@
     "quantity": "Quantité",
     "updated": "Mis à jour"
   },
-  "status": { "draft": "Brouillon", "valid": "Valide", "outdated": "Obsolète" },
-  "type": "Élément"
+  "status": {
+    "draft": "Brouillon",
+    "valid": "Valide",
+    "outdated": "Obsolète"
+  }
 }

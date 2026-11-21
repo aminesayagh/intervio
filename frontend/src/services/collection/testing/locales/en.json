@@ -13,6 +13,9 @@
     "quantity": "Quantity",
     "updated": "Updated"
   },
-  "status": { "draft": "Draft", "valid": "Valid", "outdated": "Outdated" },
-  "type": "Item"
+  "status": {
+    "draft": "Draft",
+    "valid": "Valid",
+    "outdated": "Outdated"
+  }
 }

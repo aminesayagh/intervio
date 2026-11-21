@@ -683,5 +683,6 @@ The wrapper is built in small steps. Each step ends with something that can be *
 
 ## 16. Open points
 
+0. **Views other than the table.** The cards view is set aside from the first build (decided 2026-11-21, during step 3): the wrapper shows a table only. How to offer several views (cards and others) is designed later; until then, the rules about cards in this document are on hold.
 1. **Restoring after a refresh is limited to 5 pages** (150 records). Deeper than that, the list reopens at the top with the record still open in the panel. Is that acceptable?
 2. **Session storage is per browser tab.** A record opened in a new tab starts from its address only, with no panel history. That's proposed as acceptable.

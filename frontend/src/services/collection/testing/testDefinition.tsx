@@ -1,7 +1,7 @@
 import { addTranslations } from '../../i18n'
 import type { CollectionDefinition } from '../definition'
 import type { DataSource } from '../types'
-import { Avatar, Day, StatusChip, TypeChip } from './ItemParts'
+import { Avatar, Day, StatusChip } from './ItemParts'
 import { itemSource, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -24,13 +24,6 @@ export function itemDefinition(
     getId: (item) => item.id,
     source,
     defaultSort: { by: 'updated', direction: 'desc' },
-    card: (item) => ({
-      type: <TypeChip />,
-      title: item.name,
-      detail: item.owner,
-      status: <StatusChip status={item.status} />,
-      avatar: <Avatar name={item.owner} />,
-    }),
     columns: [
       { id: 'name', label: 'columns.name', cell: (item) => item.name },
       {

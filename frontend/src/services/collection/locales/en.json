@@ -1,10 +1,13 @@
 {
   "countUnknown": "{{count}}+ records",
-  "view": { "label": "View", "cards": "Cards", "table": "Table" },
   "loading": "Loading records",
   "noResults": {
     "title": "No records match your search",
     "clear": "Clear filters"
   },
-  "error": { "list": "Records could not be loaded.", "retry": "Retry" }
+  "error": {
+    "list": "Records could not be loaded.",
+    "retry": "Retry",
+    "more": "More records could not be loaded."
+  }
 }

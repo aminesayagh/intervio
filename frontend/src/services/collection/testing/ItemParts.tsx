@@ -3,15 +3,6 @@ import { useTranslation } from 'react-i18next'
 import type { Item } from './items'
 
 /** Small pieces the test collection's cards and cells are made of. */
-export function TypeChip() {
-  const { t } = useTranslation('test-items')
-  return (
-    <Chip size="sm" variant="soft" className="w-fit">
-      <Chip.Label>{t('type')}</Chip.Label>
-    </Chip>
-  )
-}
-
 export function StatusChip({ status }: { status: Item['status'] }) {
   const { t } = useTranslation('test-items')
   return (

@@ -44,6 +44,9 @@ export function useCollectionQuery<T, C>({
       source.list({ ...listing, cursor: pageParam }, context),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    // One quiet retry, then the list shows Retry (spec 8.1); never a loop.
+    retry: 1,
+    retryDelay: 400,
   })
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],

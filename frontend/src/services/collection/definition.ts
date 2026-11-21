@@ -10,15 +10,6 @@ export type ColumnDefinition<T> = {
   cell: (record: T) => ReactNode
 }
 
-/** What a card shows (spec 4): type chip, title, detail line, status, avatar. */
-export type CardContent = {
-  type?: ReactNode
-  title: string
-  detail?: ReactNode
-  status?: ReactNode
-  avatar?: ReactNode
-}
-
 /**
  * Everything specific to one kind of record (spec 4). The wrapper knows nothing else
  * about it. Later steps add the panel, rights, filters and creation.
@@ -36,6 +27,5 @@ export type CollectionDefinition<T, C = void> = {
   getId: (record: T) => Id
   source: DataSource<T, C>
   defaultSort: ListQuery['sort']
-  card: (record: T) => CardContent
   columns: ColumnDefinition<T>[]
 }

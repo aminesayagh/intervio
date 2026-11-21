@@ -1,25 +1,21 @@
-import { Chip } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import type { Item } from './items'
 
 /** Small pieces the test collection's cards and cells are made of. */
 export function StatusChip({ status }: { status: Item['status'] }) {
   const { t } = useTranslation('test-items')
+  const look =
+    status === 'valid'
+      ? 'bg-[var(--success-soft)] text-[var(--success-soft-foreground)]'
+      : status === 'outdated'
+        ? 'bg-[var(--warning-soft)] text-[var(--warning-soft-foreground)]'
+        : 'bg-default text-foreground'
   return (
-    <Chip
-      size="sm"
-      variant="soft"
-      color={
-        status === 'valid'
-          ? 'success'
-          : status === 'outdated'
-            ? 'warning'
-            : 'default'
-      }
-      className="w-fit shrink-0"
+    <span
+      className={`inline-flex h-5 w-fit shrink-0 items-center rounded-[var(--field-radius)] px-2 text-xs font-medium ${look}`}
     >
-      <Chip.Label>{t(`status.${status}`)}</Chip.Label>
-    </Chip>
+      {t(`status.${status}`)}
+    </span>
   )
 }
 

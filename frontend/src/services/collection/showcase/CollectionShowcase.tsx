@@ -1,8 +1,8 @@
-import { Button } from '@heroui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Segmented } from '../../ui-kit'
 import { Collection } from '../Collection'
+import { Button } from '../parts'
 import { itemSource } from '../testing/items'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -75,7 +75,7 @@ export default function CollectionShowcase() {
             ]}
           />
           <Button
-            variant="secondary"
+            look="secondary"
             onPress={() =>
               queryClient.resetQueries({ queryKey: [definitions[items].key] })
             }

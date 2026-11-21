@@ -1,4 +1,4 @@
-import { Button } from '@heroui/react'
+import { Button } from './parts'
 import {
   tableFeatures,
   useTable,
@@ -136,7 +136,7 @@ export function Collection<T extends RowData, C = void>({
         ) : list.isError && !list.data ? (
           <div role="alert" className="flex flex-col items-start gap-2 py-8">
             <p>{t('collection:error.list')}</p>
-            <Button variant="secondary" onPress={() => list.refetch()}>
+            <Button look="secondary" onPress={() => list.refetch()}>
               {t('collection:error.retry')}
             </Button>
           </div>
@@ -145,7 +145,7 @@ export function Collection<T extends RowData, C = void>({
             <h2 className="text-lg font-medium">
               {t('collection:noResults.title')}
             </h2>
-            <Button variant="secondary" onPress={state.clear}>
+            <Button look="secondary" onPress={state.clear}>
               {t('collection:noResults.clear')}
             </Button>
           </div>
@@ -176,7 +176,7 @@ export function Collection<T extends RowData, C = void>({
                 className="flex items-center gap-3 border-b border-border px-3 py-3"
               >
                 <span>{t('collection:error.more')}</span>
-                <Button size="sm" variant="secondary" onPress={loadMore}>
+                <Button size="sm" look="secondary" onPress={loadMore}>
                   {t('collection:error.retry')}
                 </Button>
               </div>

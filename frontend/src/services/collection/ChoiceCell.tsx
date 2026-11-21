@@ -1,7 +1,8 @@
-import { Dropdown, Label } from '@heroui/react'
 import { useState, type ReactNode } from 'react'
+import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import type { ChoiceEdit } from './definition'
+import { ChoiceMenu, MenuPopover } from './parts'
 
 /**
  * A table cell whose value is chosen from a list (a status): it shows the column's
@@ -46,36 +47,30 @@ export function ChoiceCell<T>({
 
   return (
     <>
-      <Dropdown>
-        <Dropdown.Trigger
+      <MenuTrigger>
+        <Button
           aria-label={`${label}: ${t(choose.options.find((o) => o.id === shown)?.label ?? shown)}`}
           aria-busy={pending ? true : undefined}
-          className="flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          className="flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground"
         >
           {render(
             shown === saved ? record : { ...record, ...choose.patch(shown) },
           )}
-        </Dropdown.Trigger>
-        <Dropdown.Popover placement="bottom start" className="min-w-[180px]">
-          <Dropdown.Menu
-            aria-label={label}
-            selectionMode="single"
-            selectedKeys={new Set([shown])}
-            onAction={(key) => pick(String(key))}
-          >
-            {choose.options.map((option) => (
-              <Dropdown.Item
-                key={option.id}
-                id={option.id}
-                textValue={t(option.label)}
-              >
-                <Label>{t(option.label)}</Label>
-                <Dropdown.ItemIndicator />
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown.Popover>
-      </Dropdown>
+        </Button>
+        <MenuPopover minWidth={180}>
+          <ChoiceMenu
+            label={label}
+            mode="single"
+            options={choose.options.map((option) => ({
+              id: option.id,
+              label: t(option.label),
+            }))}
+            selected={[shown]}
+            // Choosing the current value again would empty the choice: ignored.
+            onChange={(ids) => ids[0] && pick(ids[0])}
+          />
+        </MenuPopover>
+      </MenuTrigger>
       {error && (
         <p role="alert" className="truncate text-xs text-danger">
           {error}

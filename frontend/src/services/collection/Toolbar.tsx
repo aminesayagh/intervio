@@ -1,8 +1,9 @@
-import { Button, Dropdown, Label } from '@heroui/react'
 import { useRef, useState } from 'react'
+import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../ui-kit'
 import type { FilterDefinition } from './definition'
+import { Button, ChoiceMenu, MenuPopover } from './parts'
 import { isNarrowed, type Listing } from './useCollectionState'
 
 /** The delay between the last key typed and the search (spec 6.3). */
@@ -38,7 +39,7 @@ export function Toolbar({
         />
       ))}
       {isNarrowed(listing) && (
-        <Button size="sm" variant="ghost" onPress={onClear}>
+        <Button size="sm" look="ghost" onPress={onClear}>
           {t('clearFilters')}
         </Button>
       )}
@@ -107,36 +108,23 @@ function FilterMenu({
   const { t } = useTranslation(namespace)
   const label = t(filter.label)
   return (
-    <Dropdown>
-      <Button size="sm" variant="secondary" aria-label={label}>
+    <MenuTrigger>
+      <Button size="sm" aria-label={label}>
         {chosen.length ? `${label} (${chosen.length})` : label}
         <Icon name="Arrow - Bottom-1" size={14} />
       </Button>
-      <Dropdown.Popover placement="bottom start" className="min-w-[200px]">
-        <Dropdown.Menu
-          aria-label={label}
-          selectionMode="multiple"
-          selectedKeys={new Set(chosen)}
-          onSelectionChange={(keys) =>
-            onChange(
-              keys === 'all'
-                ? filter.options.map((option) => option.id)
-                : [...keys].map(String),
-            )
-          }
-        >
-          {filter.options.map((option) => (
-            <Dropdown.Item
-              key={option.id}
-              id={option.id}
-              textValue={t(option.label)}
-            >
-              <Label>{t(option.label)}</Label>
-              <Dropdown.ItemIndicator />
-            </Dropdown.Item>
-          ))}
-        </Dropdown.Menu>
-      </Dropdown.Popover>
-    </Dropdown>
+      <MenuPopover>
+        <ChoiceMenu
+          label={label}
+          mode="multiple"
+          options={filter.options.map((option) => ({
+            id: option.id,
+            label: t(option.label),
+          }))}
+          selected={chosen}
+          onChange={onChange}
+        />
+      </MenuPopover>
+    </MenuTrigger>
   )
 }

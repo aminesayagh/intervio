@@ -1,0 +1,18 @@
+{
+  "title": "Éléments de test",
+  "count_one": "{{count}} élément",
+  "count_other": "{{count}} éléments",
+  "empty": {
+    "title": "Aucun élément pour l’instant",
+    "text": "Ajoutez le premier pour le retrouver ici."
+  },
+  "columns": {
+    "name": "Nom",
+    "status": "Statut",
+    "owner": "Responsable",
+    "quantity": "Quantité",
+    "updated": "Mis à jour"
+  },
+  "status": { "draft": "Brouillon", "valid": "Valide", "outdated": "Obsolète" },
+  "type": "Élément"
+}

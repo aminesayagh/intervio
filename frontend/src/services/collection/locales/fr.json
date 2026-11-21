@@ -1,0 +1,13 @@
+{
+  "countUnknown": "{{count}}+ éléments",
+  "view": { "label": "Affichage", "cards": "Cartes", "table": "Tableau" },
+  "loading": "Chargement des éléments",
+  "noResults": {
+    "title": "Aucun élément ne correspond à votre recherche",
+    "clear": "Effacer les filtres"
+  },
+  "error": {
+    "list": "Les éléments n’ont pas pu être chargés.",
+    "retry": "Réessayer"
+  }
+}

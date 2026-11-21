@@ -1,0 +1,18 @@
+{
+  "title": "Items",
+  "count_one": "{{count}} item",
+  "count_other": "{{count}} items",
+  "empty": {
+    "title": "No items yet",
+    "text": "Add the first one to find it here later."
+  },
+  "columns": {
+    "name": "Name",
+    "status": "Status",
+    "owner": "Owner",
+    "quantity": "Quantity",
+    "updated": "Updated"
+  },
+  "status": { "draft": "Draft", "valid": "Valid", "outdated": "Outdated" },
+  "type": "Item"
+}

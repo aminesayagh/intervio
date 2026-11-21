@@ -17,5 +17,8 @@
     "draft": "Draft",
     "valid": "Valid",
     "outdated": "Outdated"
+  },
+  "errors": {
+    "nameRequired": "Enter a name."
   }
 }

@@ -35,9 +35,9 @@ test('the first page shows a header row and the first items, with the total', as
     .map((h) => h.textContent)
   expect(headers).toEqual(['Name', 'Status', 'Owner', 'Quantity', 'Updated'])
   expect(table).toHaveAttribute('aria-rowcount', '43')
-  expect(within(table).getByText('Item 001')).toBeInTheDocument()
+  expect(within(table).getByDisplayValue('Item 001')).toBeInTheDocument()
   // Only the visible rows are drawn, never a later page.
-  expect(screen.queryByText('Item 031')).not.toBeInTheDocument()
+  expect(screen.queryByDisplayValue('Item 031')).not.toBeInTheDocument()
 })
 
 test('placeholders show while the first page loads', async () => {
@@ -47,7 +47,7 @@ test('placeholders show while the first page loads', async () => {
   expect(
     screen.getByRole('status', { name: 'Loading records' }),
   ).toBeInTheDocument()
-  expect(await screen.findByText('Item 001')).toBeInTheDocument()
+  expect(await screen.findByDisplayValue('Item 001')).toBeInTheDocument()
   expect(
     screen.queryByRole('status', { name: 'Loading records' }),
   ).not.toBeInTheDocument()
@@ -129,9 +129,11 @@ test('a failed next page keeps the loaded items and offers Retry', async () => {
   )
 })
 
+/** The first row's name: an editable field, so its value. */
 const firstName = () =>
-  within(screen.getByRole('table')).getAllByRole('row')[1].querySelector('td')!
-    .textContent
+  within(screen.getByRole('table'))
+    .getAllByRole('row')[1]
+    .querySelector('input')!.value
 
 test('a search waits for typing to stop, then narrows the list and the address', async () => {
   renderAt(
@@ -275,4 +277,52 @@ test('the default column cycles the same way: chosen, reversed, then no sort', a
   await waitFor(() => expect(window.location.search).toBe(''))
   expect(header()).toHaveAttribute('aria-sort', 'none')
   await waitFor(() => expect(firstName()).toBe('Item 001'))
+})
+
+test('a name edited in its cell is saved when the cell is left', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  const field = await screen.findByDisplayValue('Item 001')
+  await userEvent.clear(field)
+  await userEvent.type(field, 'Hydraulic jack')
+  expect(source.items()[0].name).toBe('Item 001') // not while typing
+  await userEvent.tab()
+  await waitFor(() => expect(source.items()[0].name).toBe('Hydraulic jack'))
+  expect(field).toHaveValue('Hydraulic jack')
+})
+
+test('Enter saves, Escape puts the saved name back', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  const field = await screen.findByDisplayValue('Item 002')
+  await userEvent.type(field, ' A{Enter}')
+  await waitFor(() => expect(source.items()[1].name).toBe('Item 002 A'))
+
+  await userEvent.type(field, ' B{Escape}')
+  expect(field).toHaveValue('Item 002 A')
+  expect(source.items()[1].name).toBe('Item 002 A')
+})
+
+test('an empty name is refused with a message, and the name comes back', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  const field = await screen.findByDisplayValue('Item 003')
+  await userEvent.clear(field)
+  await userEvent.tab()
+  expect(await screen.findByRole('alert')).toHaveTextContent('Enter a name.')
+  expect(field).toHaveValue('Item 003')
+  expect(source.items()[2].name).toBe('Item 003')
+})
+
+test('a save the server refuses puts the name back, with a message', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  const field = await screen.findByDisplayValue('Item 004')
+  source.settings.failing = true
+  await userEvent.type(field, ' X')
+  await userEvent.tab()
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'This change could not be saved.',
+  )
+  expect(field).toHaveValue('Item 004')
 })

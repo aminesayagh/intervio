@@ -4,6 +4,7 @@ export type {
   CollectionDefinition,
   ColumnDefinition,
   FilterDefinition,
+  TextEdit,
 } from './definition'
 export { memorySource, type MemorySettings } from './memorySource'
 export { restSource, type RestOptions } from './restSource'

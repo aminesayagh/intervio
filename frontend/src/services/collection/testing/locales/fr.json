@@ -17,5 +17,8 @@
     "draft": "Brouillon",
     "valid": "Valide",
     "outdated": "Obsolète"
+  },
+  "errors": {
+    "nameRequired": "Saisissez un nom."
   }
 }

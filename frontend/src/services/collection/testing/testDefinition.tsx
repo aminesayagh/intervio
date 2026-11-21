@@ -45,6 +45,11 @@ export function itemDefinition(
         label: 'columns.name',
         sort: 'asc',
         cell: (item) => item.name,
+        edit: {
+          value: (item) => item.name,
+          validate: (text) => (text ? undefined : 'errors.nameRequired'),
+          patch: (name) => ({ name }),
+        },
       },
       {
         id: 'status',

@@ -13,6 +13,16 @@ export type ColumnDefinition<T> = {
    * direction it takes when first chosen (a date usually starts newest first).
    */
   sort?: SortDirection
+  /** Set when the column's text can be edited in its cell (spec 7.3.1). */
+  edit?: TextEdit<T>
+}
+
+/** How a column's text is edited in place: read it, check it, turn it into a change. */
+export type TextEdit<T> = {
+  value: (record: T) => string
+  /** A translation key (in the collection's namespace) when the text is refused. */
+  validate?: (text: string) => string | undefined
+  patch: (text: string) => Partial<T>
 }
 
 /** A filter menu (spec 4): its options are fixed, and several can be chosen. */

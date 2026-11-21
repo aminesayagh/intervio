@@ -263,7 +263,7 @@ On load, in this order:
 - **In the panel:** an editable value looks like plain text until the pointer is over it or it has the keyboard focus. It then shows a light field (grey background, thin border) and a pencil on the right. Clicking anywhere on that field starts editing. Read-only values (dates, "Added by…", computed values) never show it, and the pointer stays an arrow over them.
 - **In the table:**
   - every property that is shown and editable has **its own column**, built from its `PropertyDefinition`, and is edited **in its cell** with the rules of 7.3: a text value becomes a field (Enter or leaving saves, Escape cancels); a set of choices opens a menu that saves on choice;
-  - an editable cell shows the same light field under the pointer or focus;
+  - an editable cell looks exactly like the other cells: no field, no border, the same font and color; only the text cursor over it tells it can be edited. Leaving the cell saves (Enter too), Escape puts the saved value back, and a refused value comes back with a short message under the cell;
   - clicking an editable cell edits it; clicking anywhere else on the row (the name, a read-only cell, the empty space) opens the panel;
   - only one cell edits at a time, and saving updates the record everywhere (8.3).
 - **The grey line under a name** holds only read-only facts, such as a file's type and size. A value that can change never hides there, because it couldn't be edited from the table.

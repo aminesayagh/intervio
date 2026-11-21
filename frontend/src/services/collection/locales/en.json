@@ -8,7 +8,8 @@
   "error": {
     "list": "Records could not be loaded.",
     "retry": "Retry",
-    "more": "More records could not be loaded."
+    "more": "More records could not be loaded.",
+    "save": "This change could not be saved."
   },
   "search": "Search",
   "clearFilters": "Clear filters",

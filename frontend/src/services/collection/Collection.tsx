@@ -5,12 +5,13 @@ import {
   type ColumnDef,
   type RowData,
 } from '@tanstack/react-table'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { Icon } from '../ui-kit'
-import { useCollectionQuery } from './collectionQuery'
+import { cache, useCollectionQuery } from './collectionQuery'
+import { EditableCell } from './EditableCell'
 import type { CollectionDefinition, ColumnDefinition } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -51,6 +52,17 @@ export function Collection<T extends RowData, C = void>({
     context: context as C,
     listing: state.query,
   })
+  // Saves a change made in place, then shows the saved record everywhere (spec 8.3).
+  const queryClient = useQueryClient()
+  const { source, getId, key } = definition
+  const save = useCallback(
+    async (record: T, patch: Partial<T>) => {
+      if (!source.update) throw new Error(`${key} cannot be edited`)
+      const updated = await source.update(getId(record), patch, context as C)
+      cache.updated(queryClient, key, updated, getId)
+    },
+    [source, getId, key, context, queryClient],
+  )
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
   const more: More = {
@@ -154,6 +166,7 @@ export function Collection<T extends RowData, C = void>({
               more={more}
               sort={listing.sort}
               onSort={state.setSort}
+              save={save}
             />
             {list.isFetchingNextPage && <Placeholders rows={2} />}
             {list.isFetchNextPageError && !list.isFetchingNextPage && (
@@ -193,6 +206,7 @@ function RecordTable<T extends RowData, C>({
   more,
   sort,
   onSort,
+  save,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -203,6 +217,7 @@ function RecordTable<T extends RowData, C>({
   /** The sort chosen, or null for the default order (no header marked). */
   sort: ListQuery['sort'] | null
   onSort: (sort: ListQuery['sort'] | null) => void
+  save: (record: T, patch: Partial<T>) => Promise<void>
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = useMemo<ColumnDef<typeof features, T>[]>(
@@ -210,9 +225,20 @@ function RecordTable<T extends RowData, C>({
       definition.columns.map((column: ColumnDefinition<T>) => ({
         id: column.id,
         header: () => t(column.label),
-        cell: (info) => column.cell(info.row.original),
+        cell: (info) =>
+          column.edit ? (
+            <EditableCell
+              record={info.row.original}
+              edit={column.edit}
+              label={t(column.label)}
+              namespace={definition.i18n.namespace}
+              save={(patch) => save(info.row.original, patch)}
+            />
+          ) : (
+            column.cell(info.row.original)
+          ),
       })),
-    [definition.columns, t],
+    [definition.columns, definition.i18n.namespace, t, save],
   )
   const table = useTable({
     features,

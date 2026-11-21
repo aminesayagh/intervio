@@ -17,8 +17,14 @@ function subscribe(listener: () => void) {
 /** Marks the history entries this app pushed, so a caller can tell them from a visit's first page. */
 const OWN = 'intervio'
 
-export function navigate(to: string, { replace = false } = {}) {
-  const state = { [OWN]: true }
+export function navigate(
+  to: string,
+  {
+    replace = false,
+    state: extra = {},
+  }: { replace?: boolean; state?: Record<string, unknown> } = {},
+) {
+  const state = { ...extra, [OWN]: true }
   if (replace) window.history.replaceState(state, '', to)
   else window.history.pushState(state, '', to)
   listeners.forEach((listener) => listener())
@@ -30,14 +36,19 @@ export function navigate(to: string, { replace = false } = {}) {
  */
 export function setSearchParams(
   params: URLSearchParams | Record<string, string | null | undefined>,
-  { replace = false } = {},
+  options: { replace?: boolean; state?: Record<string, unknown> } = {},
 ) {
   const entries =
     params instanceof URLSearchParams ? [...params] : Object.entries(params)
   const search = new URLSearchParams()
   for (const [key, value] of entries) if (value) search.set(key, value)
   const query = search.toString()
-  navigate(window.location.pathname + (query ? `?${query}` : ''), { replace })
+  navigate(window.location.pathname + (query ? `?${query}` : ''), options)
+}
+
+/** The extra state the current history entry was pushed with (see navigate). */
+export function entryState(): Record<string, unknown> {
+  return (window.history.state as Record<string, unknown> | null) ?? {}
 }
 
 /** True when the current history entry was pushed by the app (so going back stays in the app). */

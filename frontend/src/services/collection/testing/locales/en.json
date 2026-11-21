@@ -20,5 +20,8 @@
   },
   "errors": {
     "nameRequired": "Enter a name."
-  }
+  },
+  "type": "Item",
+  "updatedOn": "Updated {{date}}",
+  "linked": "Linked items"
 }

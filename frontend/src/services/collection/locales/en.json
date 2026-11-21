@@ -14,5 +14,14 @@
   "search": "Search",
   "clearFilters": "Clear filters",
   "narrowedCount": "{{shown}} of {{all}}",
-  "sortBy": "Sort by {{column}}"
+  "sortBy": "Sort by {{column}}",
+  "panel": {
+    "label": "Record",
+    "close": "Close",
+    "unavailable": "This record is no longer available.",
+    "error": "This record could not be loaded.",
+    "loading": "Loading the record",
+    "open": "Open",
+    "openRecord": "Open {{name}}"
+  }
 }

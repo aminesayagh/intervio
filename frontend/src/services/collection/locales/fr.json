@@ -14,5 +14,14 @@
   "search": "Rechercher",
   "clearFilters": "Effacer les filtres",
   "narrowedCount": "{{shown}} sur {{all}}",
-  "sortBy": "Trier par {{column}}"
+  "sortBy": "Trier par {{column}}",
+  "panel": {
+    "label": "Élément",
+    "close": "Fermer",
+    "unavailable": "Cet élément n’est plus disponible.",
+    "error": "Cet élément n’a pas pu être chargé.",
+    "loading": "Chargement de l’élément",
+    "open": "Ouvrir",
+    "openRecord": "Ouvrir {{name}}"
+  }
 }

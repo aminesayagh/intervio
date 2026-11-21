@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
+import { Show } from '../ui-kit'
 import type { ChoiceEdit } from './definition'
 import { ChoiceMenu, MenuPopover } from './parts'
 
@@ -71,11 +72,13 @@ export function ChoiceCell<T>({
           />
         </MenuPopover>
       </MenuTrigger>
-      {error && (
-        <p role="alert" className="truncate text-xs text-danger">
-          {error}
-        </p>
-      )}
+      <Show when={error}>
+        {(message) => (
+          <p role="alert" className="truncate text-xs text-danger">
+            {message}
+          </p>
+        )}
+      </Show>
     </>
   )
 }

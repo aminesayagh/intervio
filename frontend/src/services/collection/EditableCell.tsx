@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Show } from '../ui-kit'
 import type { TextEdit } from './definition'
 
 /**
@@ -86,11 +87,13 @@ export function EditableCell<T>({
         }}
         className="w-full cursor-text truncate bg-transparent p-0 outline-none"
       />
-      {error && (
-        <p role="alert" className="truncate text-xs text-danger">
-          {error}
-        </p>
-      )}
+      <Show when={error}>
+        {(message) => (
+          <p role="alert" className="truncate text-xs text-danger">
+            {message}
+          </p>
+        )}
+      </Show>
     </>
   )
 }

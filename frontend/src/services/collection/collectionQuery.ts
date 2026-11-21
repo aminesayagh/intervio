@@ -114,6 +114,8 @@ export const cache = {
     key: string,
     id: Id,
     getId: (record: T) => Id,
+    /** Keep the record's own query (the panel showing it says it is unavailable). */
+    { keepRecord = false } = {},
   ) {
     client.setQueriesData<Pages<T>>({ queryKey: keys.lists(key) }, (data) => {
       if (!data) return data
@@ -127,7 +129,7 @@ export const cache = {
       }))
       return withTotal({ ...data, pages }, -1)
     })
-    client.removeQueries({ queryKey: keys.record(key, id) })
+    if (!keepRecord) client.removeQueries({ queryKey: keys.record(key, id) })
   },
 
   /** Reloads the loaded lists in the background, so a changed sort position shows. */

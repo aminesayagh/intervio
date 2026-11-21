@@ -1,7 +1,7 @@
 import { addTranslations } from '../../i18n'
 import type { CollectionDefinition } from '../definition'
 import type { DataSource } from '../types'
-import { Avatar, Day, StatusChip } from './ItemParts'
+import { Avatar, Day, StatusChip, TypeChip, UpdatedOn } from './ItemParts'
 import { itemSource, OWNERS, STATUSES, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -24,6 +24,50 @@ export function itemDefinition(
     getId: (item) => item.id,
     source,
     defaultSort: { by: 'updated', direction: 'desc' },
+    panel: {
+      type: () => <TypeChip />,
+      title: (item) => item.name,
+      subtitle: (item) => <UpdatedOn iso={item.updatedAt} />,
+      properties: [
+        {
+          id: 'status',
+          label: 'columns.status',
+          value: (item) => <StatusChip status={item.status} />,
+        },
+        {
+          id: 'owner',
+          label: 'columns.owner',
+          value: (item) => (
+            <span className="flex items-center gap-2">
+              <Avatar name={item.owner} />
+              {item.owner}
+            </span>
+          ),
+        },
+        {
+          id: 'quantity',
+          label: 'columns.quantity',
+          value: (item) => item.quantity ?? '—',
+        },
+        {
+          id: 'updated',
+          label: 'columns.updated',
+          value: (item) => <Day iso={item.updatedAt} />,
+        },
+      ],
+      sections: [
+        {
+          id: 'linked',
+          label: 'linked',
+          items: (item) =>
+            item.linkedTo.map((id) => ({
+              id,
+              label: `Item ${id.slice(-3)}`,
+              kind: <TypeChip />,
+            })),
+        },
+      ],
+    },
     filters: [
       {
         id: 'status',

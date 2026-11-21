@@ -5,6 +5,9 @@ export type {
   CollectionDefinition,
   ColumnDefinition,
   FilterDefinition,
+  PanelDefinition,
+  PropertyDefinition,
+  SectionDefinition,
   TextEdit,
 } from './definition'
 export { memorySource, type MemorySettings } from './memorySource'

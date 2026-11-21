@@ -13,10 +13,10 @@ importers:
         version: 5.3.0
       '@heroui/react':
         specifier: ^3.2.7
-        version: 3.2.7(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-aria/utils@3.34.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-spectrum/provider@3.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-aria@3.53.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.5)
+        version: 3.2.7(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-aria/utils@3.34.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-spectrum/provider@3.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-aria@3.53.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
       '@heroui/styles':
         specifier: ^3.2.7
-        version: 3.2.7(tailwindcss@4.3.5)
+        version: 3.2.7(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
       '@tanstack/react-query':
         specifier: ^5.108.0
         version: 5.108.0(@types/react@19.3.0)(react@19.3.1)
@@ -26,6 +26,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.14.26
         version: 3.14.26(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
       i18next:
         specifier: ^27.1.5
         version: 27.1.5(typescript@6.0.3)
@@ -53,6 +56,9 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
+      tailwind-merge:
+        specifier: ^3.7.1
+        version: 3.7.1
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -2089,6 +2095,9 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
+  tailwind-merge@3.7.1:
+    resolution: {integrity: sha512-v7y4BV4FUlO8exj/4M5UXKeoowDiuugVUg3tkMNIyOUCOHy5xp8+5aWQeXCtZ2491sUV1YPsVeM9EveZ6/xuZQ==}
+
   tailwind-variants@3.3.1:
     resolution: {integrity: sha512-4pAvwUtM4HKBiRZftncAbpn6V9Hhwoa5Fl7O2u5zbp7Z5Cvu+/o/6+176WY3WCEES209543quG8zFIcXCsc5Jw==}
     engines: {node: '>=16.9.x', pnpm: '>=7.x'}
@@ -2576,9 +2585,9 @@ snapshots:
 
   '@fontsource/manrope@5.3.0': {}
 
-  '@heroui/react@3.2.7(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-aria/utils@3.34.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-spectrum/provider@3.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-aria@3.53.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.5)':
+  '@heroui/react@3.2.7(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-aria/utils@3.34.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@react-spectrum/provider@3.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-aria@3.53.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwind-merge@3.7.1)(tailwindcss@4.3.5)':
     dependencies:
-      '@heroui/styles': 3.2.7(tailwindcss@4.3.5)
+      '@heroui/styles': 3.2.7(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
       '@internationalized/date': 3.12.4
       '@radix-ui/react-avatar': 1.3.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@react-aria/ssr': 3.10.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2591,7 +2600,7 @@ snapshots:
       react-aria: 3.53.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-aria-components: 1.22.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-dom: 19.3.1(react@19.3.1)
-      tailwind-variants: 3.3.1(tailwindcss@4.3.5)
+      tailwind-variants: 3.3.1(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
       tailwindcss: 4.3.5
     transitivePeerDependencies:
       - '@react-spectrum/provider'
@@ -2599,9 +2608,9 @@ snapshots:
       - '@types/react-dom'
       - tailwind-merge
 
-  '@heroui/styles@3.2.7(tailwindcss@4.3.5)':
+  '@heroui/styles@3.2.7(tailwind-merge@3.7.1)(tailwindcss@4.3.5)':
     dependencies:
-      tailwind-variants: 3.3.1(tailwindcss@4.3.5)
+      tailwind-variants: 3.3.1(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
       tailwindcss: 4.3.5
       tw-animate-css: 1.4.0
     transitivePeerDependencies:
@@ -4508,8 +4517,11 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tailwind-variants@3.3.1(tailwindcss@4.3.5):
+  tailwind-merge@3.7.1: {}
+
+  tailwind-variants@3.3.1(tailwind-merge@3.7.1)(tailwindcss@4.3.5):
     optionalDependencies:
+      tailwind-merge: 3.7.1
       tailwindcss: 4.3.5
 
   tailwindcss@4.3.5: {}

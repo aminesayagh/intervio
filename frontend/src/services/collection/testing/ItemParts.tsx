@@ -44,3 +44,27 @@ export function Day({ iso }: { iso: string }) {
     </>
   )
 }
+
+/** The record's kind, in the panel's top bar. */
+export function TypeChip() {
+  const { t } = useTranslation('test-items')
+  return (
+    <span className="inline-flex h-5 items-center rounded-[var(--field-radius)] bg-default px-2 text-xs font-medium">
+      {t('type')}
+    </span>
+  )
+}
+
+/** "Updated Nov 21, 2026", under the panel's title. */
+export function UpdatedOn({ iso }: { iso: string }) {
+  const { t, i18n } = useTranslation('test-items')
+  return (
+    <>
+      {t('updatedOn', {
+        date: new Intl.DateTimeFormat(i18n.language, {
+          dateStyle: 'medium',
+        }).format(new Date(iso)),
+      })}
+    </>
+  )
+}

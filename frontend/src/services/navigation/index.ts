@@ -1,5 +1,6 @@
 export { Link } from './Link'
 export {
+  entryState,
   isOwnEntry,
   navigate,
   setSearchParams,

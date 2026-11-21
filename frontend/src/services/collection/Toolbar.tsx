@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { Icon } from '../ui-kit'
+import { Icon, Show } from '../ui-kit'
 import type { FilterDefinition } from './definition'
 import { Button, ChoiceMenu, MenuPopover } from './parts'
 import { isNarrowed, type Listing } from './useCollectionState'
@@ -38,11 +38,11 @@ export function Toolbar({
           onChange={(values) => onFilter(filter.id, values)}
         />
       ))}
-      {isNarrowed(listing) && (
+      <Show when={isNarrowed(listing)}>
         <Button size="sm" look="ghost" onPress={onClear}>
           {t('clearFilters')}
         </Button>
-      )}
+      </Show>
     </div>
   )
 }

@@ -35,6 +35,33 @@ export type TextEdit<T> = {
   patch: (text: string) => Partial<T>
 }
 
+/** One row of the panel's properties: a label, and the record's value (spec 7). */
+export type PropertyDefinition<T> = {
+  id: string
+  /** Translation key of the label. */
+  label: string
+  value: (record: T) => ReactNode
+}
+
+/** A section of linked records in the panel; it shows its first five (spec 7, 12.1). */
+export type SectionDefinition<T> = {
+  id: string
+  /** Translation key of the title. */
+  label: string
+  items: (record: T) => { id: string; label: string; kind?: ReactNode }[]
+}
+
+/** What the record panel shows (spec 7). */
+export type PanelDefinition<T> = {
+  /** The chip in the top bar: the record's kind. */
+  type: (record: T) => ReactNode
+  title: (record: T) => string
+  /** The line under the title, such as who added the record and when. */
+  subtitle?: (record: T) => ReactNode
+  properties: PropertyDefinition<T>[]
+  sections?: SectionDefinition<T>[]
+}
+
 /** A filter menu (spec 4): its options are fixed, and several can be chosen. */
 export type FilterDefinition = {
   id: string
@@ -63,4 +90,6 @@ export type CollectionDefinition<T, C = void> = {
   defaultSort: ListQuery['sort']
   columns: ColumnDefinition<T>[]
   filters?: FilterDefinition[]
+  /** Set when a record opens in the panel beside the list. */
+  panel?: PanelDefinition<T>
 }

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, expect, test } from 'vitest'
 import {
+  entryState,
   isOwnEntry,
   navigate,
   setSearchParams,
@@ -40,4 +41,10 @@ test('the hooks re-render on navigation', () => {
   }))
   act(() => navigate('/resources?open=abc'))
   expect(result.current).toEqual({ path: '/resources', open: 'abc' })
+})
+
+test('an entry can carry extra state, read back with entryState', () => {
+  setSearchParams({ open: '7' }, { state: { panel: 'items' } })
+  expect(entryState().panel).toBe('items')
+  expect(isOwnEntry()).toBe(true)
 })

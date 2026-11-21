@@ -20,5 +20,8 @@
   },
   "errors": {
     "nameRequired": "Saisissez un nom."
-  }
+  },
+  "type": "Élément",
+  "updatedOn": "Mis à jour le {{date}}",
+  "linked": "Éléments liés"
 }

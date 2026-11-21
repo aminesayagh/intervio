@@ -6,18 +6,27 @@ import {
   type RowData,
 } from '@tanstack/react-table'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo, useRef, type RefObject } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type KeyboardEvent,
+  type RefObject,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
-import { Icon } from '../ui-kit'
+import { entryState, setSearchParams, useSearchParams } from '../navigation'
+import { cn, Icon, Match, Show, Switch } from '../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import { cache, useCollectionQuery } from './collectionQuery'
 import { EditableCell } from './EditableCell'
 import type { CollectionDefinition, ColumnDefinition } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
+import { RecordPanel } from './RecordPanel'
 import { Toolbar } from './Toolbar'
-import type { ListQuery } from './types'
+import type { Id, ListQuery } from './types'
 import { useCollectionList } from './useCollectionList'
 import { isNarrowed, useCollectionState } from './useCollectionState'
 
@@ -64,6 +73,58 @@ export function Collection<T extends RowData, C = void>({
     },
     [source, getId, key, context, queryClient],
   )
+  // The open record (spec 6.3, 7.1): its id is in the address (?open=).
+  const openId = useSearchParams().get('open')
+  const panelMark = `panel:${key}`
+  const open = useCallback(
+    (id: Id) => {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('open') === id) return
+      const wasOpen = params.has('open')
+      params.set('open', id)
+      // Opening pushes an entry (Back closes); switching records replaces it.
+      setSearchParams(params, {
+        replace: wasOpen,
+        state: wasOpen ? entryState() : { panel: panelMark },
+      })
+    },
+    [panelMark],
+  )
+  const close = useCallback(() => {
+    if (entryState().panel === panelMark) window.history.back()
+    else {
+      const params = new URLSearchParams(window.location.search)
+      params.delete('open')
+      setSearchParams(params, { replace: true })
+    }
+  }, [panelMark])
+  const unavailable = useCallback(
+    (id: Id) =>
+      cache.removed(queryClient, key, id, getId, { keepRecord: true }),
+    [queryClient, key, getId],
+  )
+  const panelOpen = Boolean(definition.panel && openId)
+
+  /** With the panel open, ↑ and ↓ open the previous or next record; Escape closes it. */
+  function onKeyDown(event: KeyboardEvent) {
+    if (!panelOpen || event.defaultPrevented) return
+    const target = event.target as HTMLElement
+    if (target.closest('input, textarea, [role="menu"], [role="dialog"]'))
+      return
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      close()
+      return
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    const index = list.items.findIndex((item) => getId(item) === openId)
+    const next = list.items[index + (event.key === 'ArrowDown' ? 1 : -1)]
+    if (next) {
+      event.preventDefault()
+      open(getId(next))
+    }
+  }
+
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
   const more: More = {
@@ -105,85 +166,112 @@ export function Collection<T extends RowData, C = void>({
   return (
     <section
       aria-labelledby={`${definition.key}-title`}
-      className="flex h-[calc(100dvh-5.5rem)] min-h-[360px] flex-col gap-4 lg:h-[calc(100dvh-3rem)]"
+      onKeyDown={onKeyDown}
+      className="flex h-[calc(100dvh-5.5rem)] min-h-[360px] lg:h-[calc(100dvh-3rem)]"
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h1 id={`${definition.key}-title`} className="text-xl font-medium">
-          {t(definition.i18n.title)}
-        </h1>
-        <span aria-live="polite" className="text-muted">
-          {list.data ? count : null}
-        </span>
-      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-4 pe-6">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h1 id={`${definition.key}-title`} className="text-xl font-medium">
+            {t(definition.i18n.title)}
+          </h1>
+          <span aria-live="polite" className="text-muted">
+            {list.data ? count : null}
+          </span>
+        </div>
 
-      {(narrowed || list.items.length > 0) && (
-        <Toolbar
-          namespace={definition.i18n.namespace}
-          filters={definition.filters ?? []}
-          listing={listing}
-          onSearch={state.setSearch}
-          onFilter={state.setFilter}
-          onClear={state.clear}
-        />
-      )}
+        {(narrowed || list.items.length > 0) && (
+          <Toolbar
+            namespace={definition.i18n.namespace}
+            filters={definition.filters ?? []}
+            listing={listing}
+            onSearch={state.setSearch}
+            onFilter={state.setFilter}
+            onClear={state.clear}
+          />
+        )}
 
-      <div
-        ref={scrollRef}
-        className="scroll-quiet min-h-0 flex-1 overflow-y-auto [--scroll-quiet-top:2rem]"
-      >
-        {list.isPending ? (
-          <Placeholders />
-        ) : list.isError && !list.data ? (
-          <div role="alert" className="flex flex-col items-start gap-2 py-8">
-            <p>{t('collection:error.list')}</p>
-            <Button look="secondary" onPress={() => list.refetch()}>
-              {t('collection:error.retry')}
-            </Button>
-          </div>
-        ) : list.items.length === 0 && narrowed ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <h2 className="text-lg font-medium">
-              {t('collection:noResults.title')}
-            </h2>
-            <Button look="secondary" onPress={state.clear}>
-              {t('collection:noResults.clear')}
-            </Button>
-          </div>
-        ) : list.items.length === 0 ? (
-          <div className="flex flex-col items-center gap-1 py-16 text-center">
-            <h2 className="text-lg font-medium">
-              {t(definition.i18n.empty.title)}
-            </h2>
-            <p className="text-muted">{t(definition.i18n.empty.text)}</p>
-          </div>
-        ) : (
-          <>
-            <RecordTable
-              definition={definition}
-              items={list.items}
-              total={list.total}
-              label={t(definition.i18n.title)}
-              scrollRef={scrollRef}
-              more={more}
-              sort={listing.sort}
-              onSort={state.setSort}
-              save={save}
-            />
-            {list.isFetchingNextPage && <Placeholders rows={2} />}
-            {list.isFetchNextPageError && !list.isFetchingNextPage && (
+        <div
+          ref={scrollRef}
+          className="scroll-quiet min-h-0 flex-1 overflow-y-auto [--scroll-quiet-top:2rem]"
+        >
+          <Switch>
+            <Match when={list.isPending}>
+              <Placeholders />
+            </Match>
+            <Match when={list.isError && !list.data}>
               <div
                 role="alert"
-                className="flex items-center gap-3 border-b border-border px-3 py-3"
+                className="flex flex-col items-start gap-2 py-8"
               >
-                <span>{t('collection:error.more')}</span>
-                <Button size="sm" look="secondary" onPress={loadMore}>
+                <p>{t('collection:error.list')}</p>
+                <Button look="secondary" onPress={() => list.refetch()}>
                   {t('collection:error.retry')}
                 </Button>
               </div>
-            )}
-          </>
-        )}
+            </Match>
+            <Match when={list.items.length === 0 && narrowed}>
+              <div className="flex flex-col items-center gap-3 py-16 text-center">
+                <h2 className="text-lg font-medium">
+                  {t('collection:noResults.title')}
+                </h2>
+                <Button look="secondary" onPress={state.clear}>
+                  {t('collection:noResults.clear')}
+                </Button>
+              </div>
+            </Match>
+            <Match when={list.items.length === 0}>
+              <div className="flex flex-col items-center gap-1 py-16 text-center">
+                <h2 className="text-lg font-medium">
+                  {t(definition.i18n.empty.title)}
+                </h2>
+                <p className="text-muted">{t(definition.i18n.empty.text)}</p>
+              </div>
+            </Match>
+            <Match when={list.items.length > 0}>
+              <RecordTable
+                definition={definition}
+                items={list.items}
+                total={list.total}
+                label={t(definition.i18n.title)}
+                scrollRef={scrollRef}
+                more={more}
+                sort={listing.sort}
+                onSort={state.setSort}
+                save={save}
+                openId={definition.panel ? openId : null}
+                onOpen={definition.panel ? open : undefined}
+              />
+            </Match>
+          </Switch>
+          <Show when={list.isFetchingNextPage}>
+            <Placeholders rows={2} />
+          </Show>
+          <Show when={list.isFetchNextPageError && !list.isFetchingNextPage}>
+            <div
+              role="alert"
+              className="flex items-center gap-3 border-b border-border px-3 py-3"
+            >
+              <span>{t('collection:error.more')}</span>
+              <Button size="sm" look="secondary" onPress={loadMore}>
+                {t('collection:error.retry')}
+              </Button>
+            </div>
+          </Show>
+        </div>
       </div>
+
+      {definition.panel && openId && (
+        <RecordPanel
+          key={definition.key}
+          definition={definition}
+          panel={definition.panel}
+          context={context as C}
+          id={openId}
+          fromList={list.items.find((item) => getId(item) === openId)}
+          onClose={close}
+          onUnavailable={unavailable}
+        />
+      )}
     </section>
   )
 }
@@ -208,6 +296,8 @@ function RecordTable<T extends RowData, C>({
   sort,
   onSort,
   save,
+  openId,
+  onOpen,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -219,36 +309,44 @@ function RecordTable<T extends RowData, C>({
   sort: ListQuery['sort'] | null
   onSort: (sort: ListQuery['sort'] | null) => void
   save: (record: T, patch: Partial<T>) => Promise<void>
+  /** The record open in the panel: its row is marked. */
+  openId: Id | null
+  /** Set when a row opens its record in the panel. */
+  onOpen?: (id: Id) => void
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
-      definition.columns.map((column: ColumnDefinition<T>) => ({
-        id: column.id,
-        header: () => t(column.label),
-        cell: (info) =>
-          column.edit ? (
-            <EditableCell
-              record={info.row.original}
-              edit={column.edit}
-              label={t(column.label)}
-              namespace={definition.i18n.namespace}
-              save={(patch) => save(info.row.original, patch)}
-            />
-          ) : column.choose ? (
-            <ChoiceCell
-              record={info.row.original}
-              choose={column.choose}
-              render={column.cell}
-              label={t(column.label)}
-              namespace={definition.i18n.namespace}
-              save={(patch) => save(info.row.original, patch)}
-            />
-          ) : (
-            column.cell(info.row.original)
-          ),
-      })),
-    [definition.columns, definition.i18n.namespace, t, save],
+      // ponytail: beside the panel the table keeps its first two columns; step 11
+      // replaces this with the collection's column priorities and the list's width.
+      (openId ? definition.columns.slice(0, 2) : definition.columns).map(
+        (column: ColumnDefinition<T>) => ({
+          id: column.id,
+          header: () => t(column.label),
+          cell: (info) =>
+            column.edit ? (
+              <EditableCell
+                record={info.row.original}
+                edit={column.edit}
+                label={t(column.label)}
+                namespace={definition.i18n.namespace}
+                save={(patch) => save(info.row.original, patch)}
+              />
+            ) : column.choose ? (
+              <ChoiceCell
+                record={info.row.original}
+                choose={column.choose}
+                render={column.cell}
+                label={t(column.label)}
+                namespace={definition.i18n.namespace}
+                save={(patch) => save(info.row.original, patch)}
+              />
+            ) : (
+              column.cell(info.row.original)
+            ),
+        }),
+      ),
+    [definition.columns, definition.i18n.namespace, t, save, openId],
   )
   const table = useTable({
     features,
@@ -269,6 +367,12 @@ function RecordTable<T extends RowData, C>({
     ? virtualizer.getTotalSize() - drawn[drawn.length - 1].end
     : 0
   const byId = new Map(definition.columns.map((column) => [column.id, column]))
+
+  // The open record's row stays in view (after ↑ / ↓, or a link).
+  const openIndex = openId ? rows.findIndex((row) => row.id === openId) : -1
+  useEffect(() => {
+    if (openIndex >= 0) virtualizer.scrollToIndex(openIndex, { align: 'auto' })
+  }, [openIndex, virtualizer])
 
   /**
    * Three clicks on a header: its first direction, then reversed, then back to the
@@ -317,9 +421,10 @@ function RecordTable<T extends RowData, C>({
                         column: t(column.label),
                       })}
                       onClick={() => sortBy(column)}
-                      className={`-mx-1 flex items-center gap-1 rounded-[var(--field-radius)] px-1 hover:text-foreground ${
-                        sorted ? 'text-foreground' : ''
-                      }`}
+                      className={cn(
+                        '-mx-1 flex items-center gap-1 rounded-[var(--field-radius)] px-1 hover:text-foreground',
+                        sorted && 'text-foreground',
+                      )}
                     >
                       <table.FlexRender header={header} />
                       <Icon
@@ -356,11 +461,51 @@ function RecordTable<T extends RowData, C>({
               data-index={virtual.index}
               ref={virtualizer.measureElement}
               aria-rowindex={virtual.index + 2}
-              className="border-b border-border"
+              aria-current={row.id === openId ? 'true' : undefined}
+              tabIndex={onOpen ? 0 : undefined}
+              onClick={(event) => {
+                // An editable cell edits; anywhere else on the row opens the record.
+                const target = event.target as HTMLElement
+                if (!onOpen || target.closest('input, button')) return
+                onOpen(row.id)
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.key === 'Enter' &&
+                  event.target === event.currentTarget
+                )
+                  onOpen?.(row.id)
+              }}
+              className={cn(
+                'group border-b border-border outline-none',
+                onOpen && 'cursor-pointer focus-visible:bg-default',
+                row.id === openId &&
+                  'bg-default shadow-[inset_3px_0_0_var(--foreground)]',
+              )}
             >
-              {row.getAllCells().map((cell) => (
+              {row.getAllCells().map((cell, index) => (
                 <td key={cell.id} className="truncate px-3 py-3 align-middle">
-                  <table.FlexRender cell={cell} />
+                  {index === 0 && onOpen ? (
+                    <span className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1">
+                        <table.FlexRender cell={cell} />
+                      </span>
+                      {/* Shown on the row under the pointer or the focus: opens the record. */}
+                      <button
+                        type="button"
+                        aria-label={t('collection:panel.openRecord', {
+                          name: definition.panel?.title(row.original) ?? '',
+                        })}
+                        onClick={() => onOpen(row.id)}
+                        className="flex shrink-0 items-center gap-1 rounded-[var(--field-radius)] bg-surface px-2 py-0.5 text-xs text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                      >
+                        {t('collection:panel.open')}
+                        <Icon name="Arrow - Right-1" size={12} />
+                      </button>
+                    </span>
+                  ) : (
+                    <table.FlexRender cell={cell} />
+                  )}
                 </td>
               ))}
             </tr>
@@ -387,9 +532,9 @@ function Placeholders({ rows = 6 }: { rows?: number }) {
           key={i}
           className="flex items-center gap-4 border-b border-border px-3 py-4"
         >
-          <span className={`${bar} h-4 w-48`} />
-          <span className={`${bar} h-4 w-20`} />
-          <span className={`${bar} h-4 w-28`} />
+          <span className={cn(bar, 'h-4 w-48')} />
+          <span className={cn(bar, 'h-4 w-20')} />
+          <span className={cn(bar, 'h-4 w-28')} />
         </div>
       ))}
     </div>

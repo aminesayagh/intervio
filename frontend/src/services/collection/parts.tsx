@@ -8,7 +8,7 @@ import {
   type Key,
   type Selection,
 } from 'react-aria-components'
-import { Icon } from '../ui-kit'
+import { cn, Icon } from '../ui-kit'
 
 /**
  * The collection's building blocks: React Aria Components (accessible, unstyled),
@@ -39,9 +39,14 @@ export function Button({
   return (
     <AriaButton
       {...props}
-      className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--field-radius)] font-medium ${
-        size === 'sm' ? 'h-8 px-3' : 'h-9 px-4'
-      } ${buttonLook[look]} ${focusRing} data-[disabled]:cursor-default data-[disabled]:opacity-50 ${className}`}
+      className={cn(
+        'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--field-radius)] font-medium',
+        size === 'sm' ? 'h-8 px-3' : 'h-9 px-4',
+        buttonLook[look],
+        focusRing,
+        'data-[disabled]:cursor-default data-[disabled]:opacity-50',
+        className,
+      )}
     />
   )
 }

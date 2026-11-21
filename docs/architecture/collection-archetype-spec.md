@@ -209,6 +209,7 @@ When the address has no list parameters (for example, the user clicks "Resources
 
 - Typing a search, changing a filter or a sort: the address is **replaced**, not pushed. The search waits 250 ms after the last key.
 - Opening a record, following a linked record, opening the creation form: the address is **pushed**.
+- Switching from one open record to another (a row, ↑ / ↓) **replaces** the entry, so × and the browser's Back button both close the panel instead of stepping back through every record seen.
 - Closing the panel with × or Escape:
   - if the current history entry was pushed by the collection, it goes **back** one entry;
   - otherwise, for example on a shared link, it **replaces** the address without `open`.
@@ -231,7 +232,7 @@ On load, in this order:
 ### 7.1 Opening and history
 
 - **Opening:**
-  - clicking a card or a row opens its record;
+  - clicking a row (anywhere but an editable cell), pressing Enter on it, or its **Open** button opens its record. The Open button sits at the end of the row's first cell and shows on the row under the pointer or the focus, since editable cells leave little else to click;
   - clicking the open record again does nothing;
   - opening another record replaces the panel's content.
 - **A linked record** opens in the same panel. The panel history gains an entry, and the top bar shows "‹ {previous record's name}". If the linked record has its own page (`opensAsPage`), the app navigates there instead.

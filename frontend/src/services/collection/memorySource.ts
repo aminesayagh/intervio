@@ -12,7 +12,13 @@ type Options<T> = {
 }
 
 /** Knobs the showcase page turns to see the loading and error states. */
-export type MemorySettings = { latencyMs: number; failNext: boolean }
+export type MemorySettings = {
+  latencyMs: number
+  /** The next request fails once (tests). */
+  failNext: boolean
+  /** Every request fails until this is turned off (the showcase: the app retries a failed request). */
+  failing: boolean
+}
 
 /**
  * A data source kept in memory: the test collection's backend, for the tests and the
@@ -25,13 +31,17 @@ export function memorySource<T extends { id: Id }>(
 ): DataSource<T> & { settings: MemorySettings; items: () => T[] } {
   let items = [...initial]
   const archived = new Set<Id>()
-  const settings: MemorySettings = { latencyMs: 0, failNext: false }
+  const settings: MemorySettings = {
+    latencyMs: 0,
+    failNext: false,
+    failing: false,
+  }
   const pageSize = options.pageSize ?? 30
 
   async function answer<R>(work: () => R): Promise<R> {
     if (settings.latencyMs)
       await new Promise((done) => setTimeout(done, settings.latencyMs))
-    if (settings.failNext) {
+    if (settings.failNext || settings.failing) {
       settings.failNext = false
       throw new ApiError(500, 'ERROR_UNKNOWN')
     }

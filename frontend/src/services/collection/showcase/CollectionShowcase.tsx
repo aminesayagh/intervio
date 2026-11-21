@@ -1,7 +1,8 @@
 import { Button } from '@heroui/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Segmented } from '../../ui-kit'
+import { useCollectionQuery } from '../collectionQuery'
 import { itemSource } from '../testing/items'
 
 // ponytail: a developer's page, never built into production (spec 17.1), so its few
@@ -12,6 +13,12 @@ const source = itemSource()
 
 type Latency = '0' | '300' | '1500'
 
+const LISTING = {
+  search: '',
+  filters: {},
+  sort: { by: 'updated', direction: 'desc' as const },
+}
+
 /**
  * /dev/collection: the wrapper with 300 fake items, where each delivery step is seen
  * before any real collection uses it. The knobs make the data slow or failing.
@@ -19,16 +26,12 @@ type Latency = '0' | '300' | '1500'
 export default function CollectionShowcase() {
   const queryClient = useQueryClient()
   const [latency, setLatency] = useState<Latency>('0')
-  const first = useQuery({
-    queryKey: ['showcase', 'first-page'],
-    queryFn: () =>
-      source.list({
-        search: '',
-        filters: {},
-        sort: { by: 'updated', direction: 'desc' },
-        cursor: null,
-      }),
-    retry: false,
+  const [failing, setFailing] = useState(false)
+  const list = useCollectionQuery({
+    key: 'showcase',
+    source,
+    context: undefined,
+    listing: LISTING,
   })
 
   function chooseLatency(value: Latency) {
@@ -57,12 +60,18 @@ export default function CollectionShowcase() {
             { value: '1500', label: '1.5 s' },
           ]}
         />
-        <Button
-          variant="secondary"
-          onPress={() => (source.settings.failNext = true)}
-        >
-          Fail the next request
-        </Button>
+        <Segmented
+          label="Requests"
+          value={failing ? 'fail' : 'answer'}
+          onChange={(value) => {
+            setFailing(value === 'fail')
+            source.settings.failing = value === 'fail'
+          }}
+          options={[
+            { value: 'answer', label: 'Answer' },
+            { value: 'fail', label: 'Fail' },
+          ]}
+        />
         <Button
           variant="secondary"
           onPress={() =>
@@ -73,14 +82,36 @@ export default function CollectionShowcase() {
         </Button>
       </section>
 
-      {/* Step 0 only checks the wiring; the wrapper replaces this from step 2. */}
-      <section aria-live="polite" className="text-muted">
-        {first.isPending && 'Loading…'}
-        {first.isError && 'The request failed. Reload to try again.'}
-        {first.data &&
-          !first.isError &&
-          `${first.data.total} items, first page of ${first.data.items.length}, ` +
-            `${first.data.nextCursor ? 'more pages to load' : 'no more pages'}.`}
+      {/* Steps 0 and 1 check the data layer; the wrapper replaces this from step 2. */}
+      <section aria-live="polite" className="flex flex-col items-start gap-2">
+        {list.isPending && <p className="text-muted">Loading…</p>}
+        {list.isError && !list.data && (
+          <p className="text-muted">The request failed. Reload to try again.</p>
+        )}
+        {list.data && (
+          <>
+            <p>
+              {list.items.length} of {list.total} items loaded
+              {list.isFetchingNextPage && ', loading the next page…'}
+              {list.isFetchNextPageError &&
+                ', the next page failed: set Requests to Answer, then Load more.'}
+            </p>
+            <ol className="text-muted">
+              {list.items.slice(-3).map((item) => (
+                <li key={item.id}>
+                  {item.name}, {item.status}, {item.owner}
+                </li>
+              ))}
+            </ol>
+            <Button
+              variant="secondary"
+              isDisabled={!list.hasNextPage || list.isFetchingNextPage}
+              onPress={() => list.fetchNextPage()}
+            >
+              Load more
+            </Button>
+          </>
+        )}
       </section>
     </div>
   )

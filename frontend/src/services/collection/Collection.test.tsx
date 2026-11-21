@@ -225,3 +225,20 @@ test('an address opens the list it describes', async () => {
   expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('item')
   expect(firstName()).toBe('Item 028')
 })
+
+test('the search field keeps a trailing space while the search is trimmed', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
+  )
+  await screen.findByText('42 items')
+  const field = screen.getByRole('searchbox', { name: 'Search' })
+  await userEvent.type(field, 'item 02 ')
+  expect(await screen.findByText('10 of 42 items')).toBeInTheDocument()
+  expect(window.location.search).toBe('?q=item+02')
+  expect(field).toHaveValue('item 02 ')
+
+  // A change from elsewhere still reaches the field.
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+  await waitFor(() => expect(field).toHaveValue(''))
+})

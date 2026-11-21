@@ -47,8 +47,9 @@ export function Toolbar({
 }
 
 /**
- * Shows the address's search, except while the person is typing: what they type
- * is searched SEARCH_DELAY after the last key.
+ * Keeps exactly what the person typed (a trailing space stays), and searches it,
+ * trimmed, SEARCH_DELAY after the last key. It takes the address's search only when
+ * that changes from elsewhere: Clear filters, a link, the tab's last list.
  */
 function SearchField({
   value,
@@ -58,16 +59,20 @@ function SearchField({
   onSearch: (search: string) => void
 }) {
   const { t } = useTranslation('collection')
-  const [draft, setDraft] = useState<string | null>(null)
+  const [text, setText] = useState(value)
+  const [seen, setSeen] = useState(value)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
+  // The address changed: follow it, unless it is just the trimmed text typed here.
+  if (value !== seen) {
+    setSeen(value)
+    if (value !== text.trim()) setText(value)
+  }
+
   function type(next: string) {
-    setDraft(next)
+    setText(next)
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => {
-      onSearch(next)
-      setDraft(null)
-    }, SEARCH_DELAY)
+    timer.current = setTimeout(() => onSearch(next.trim()), SEARCH_DELAY)
   }
 
   return (
@@ -79,7 +84,7 @@ function SearchField({
         type="search"
         aria-label={t('search')}
         placeholder={t('search')}
-        value={draft ?? value}
+        value={text}
         onChange={(event) => type(event.target.value)}
         className="h-9 w-full rounded-[var(--field-radius)] border border-border bg-surface ps-9 pe-3 outline-none focus-visible:border-foreground"
       />

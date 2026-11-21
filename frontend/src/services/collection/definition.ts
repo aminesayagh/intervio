@@ -65,6 +65,11 @@ export type PanelDefinition<T> = {
   /** The line under the title, such as who added the record and when. */
   subtitle?: (record: T) => ReactNode
   properties: PropertyDefinition<T>[]
+  /** The record's Markdown description, under the properties (right id: "description"). */
+  description?: {
+    value: (record: T) => string
+    patch: (text: string) => Partial<T>
+  }
   sections?: SectionDefinition<T>[]
 }
 

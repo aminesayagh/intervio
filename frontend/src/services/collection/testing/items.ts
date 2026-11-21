@@ -30,7 +30,7 @@ export function makeItems(n: number): Item[] {
       status: STATUSES[index % STATUSES.length],
       owner: OWNERS[index % OWNERS.length],
       quantity: index % 4 === 0 ? null : (index % 9) + 1,
-      description: `## Item ${number}\n\nA test item.`,
+      description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
       linkedTo: index > 0 ? [makeId(1)] : [],
       // One day apart, newest first, from a fixed date.
       updatedAt: new Date(

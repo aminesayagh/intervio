@@ -6,6 +6,7 @@ import { cn, Icon, Match, Show, Switch } from '../ui-kit'
 import { keys } from './collectionQuery'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { ChoiceCell } from './ChoiceCell'
+import { Description } from './Description'
 import { EditableCell } from './EditableCell'
 import { Button } from './parts'
 import type { Id } from './types'
@@ -57,6 +58,7 @@ export function RecordPanel<T, C>({
     ...panel.properties
       .filter((property) => property.edit || property.choose)
       .map((property) => property.id),
+    ...(panel.description ? ['description'] : []),
   ]
   const viewOnly =
     record !== undefined && !editable.some((id) => canEdit(record, id))
@@ -185,6 +187,16 @@ export function RecordPanel<T, C>({
                   </div>
                 ))}
               </dl>
+
+              {panel.description && (
+                <Description
+                  key={id}
+                  value={panel.description.value(shown)}
+                  editable={canEdit(shown, 'description')}
+                  storageKey={`intervio.collection.${definition.key}.${id}.description`}
+                  save={(text) => save(shown, panel.description!.patch(text))}
+                />
+              )}
 
               {panel.sections?.map((section) => {
                 const items = section.items(shown)

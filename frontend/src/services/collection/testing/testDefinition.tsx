@@ -84,6 +84,10 @@ export function itemDefinition(
           value: (item) => <Day iso={item.updatedAt} />,
         },
       ],
+      description: {
+        value: (item) => item.description,
+        patch: (description) => ({ description }),
+      },
       sections: [
         {
           id: 'linked',

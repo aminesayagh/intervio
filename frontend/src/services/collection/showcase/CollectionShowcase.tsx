@@ -18,7 +18,7 @@ let rightsChoice: RightsChoice = 'all'
 const rights = () => ({
   edit:
     rightsChoice === 'all'
-      ? ['name', 'title', 'status', 'owner', 'quantity']
+      ? ['name', 'title', 'status', 'owner', 'quantity', 'description']
       : rightsChoice === 'status'
         ? ['status']
         : [],

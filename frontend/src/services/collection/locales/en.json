@@ -26,5 +26,24 @@
     "openRecord": "Open {{name}}",
     "viewOnly": "View only",
     "title": "Title"
+  },
+  "description": {
+    "label": "Description",
+    "edit": "Edit the description",
+    "add": "Add a description",
+    "write": "Write",
+    "preview": "Preview",
+    "empty": "Nothing to preview yet.",
+    "bold": "Bold",
+    "italic": "Italic",
+    "heading": "Heading",
+    "list": "List",
+    "numbered": "Numbered list",
+    "link": "Link",
+    "linkText": "link text",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "failed": "Not saved",
+    "tooLong": "This description is too long: 20,000 characters at most."
   }
 }

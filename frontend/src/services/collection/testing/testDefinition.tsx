@@ -12,8 +12,10 @@ addTranslations('test-items', { en, fr })
 export function itemDefinition(
   source: DataSource<Item> = itemSource(),
   key = 'test-items',
+  rights?: CollectionDefinition<Item>['rights'],
 ): CollectionDefinition<Item> {
   return {
+    rights,
     key,
     i18n: {
       namespace: 'test-items',
@@ -27,12 +29,25 @@ export function itemDefinition(
     panel: {
       type: () => <TypeChip />,
       title: (item) => item.name,
+      titleEdit: {
+        value: (item) => item.name,
+        validate: (text) => (text ? undefined : 'errors.nameRequired'),
+        patch: (name) => ({ name }),
+      },
       subtitle: (item) => <UpdatedOn iso={item.updatedAt} />,
       properties: [
         {
           id: 'status',
           label: 'columns.status',
           value: (item) => <StatusChip status={item.status} />,
+          choose: {
+            options: STATUSES.map((status) => ({
+              id: status,
+              label: `status.${status}`,
+            })),
+            value: (item) => item.status,
+            patch: (status) => ({ status: status as Item['status'] }),
+          },
         },
         {
           id: 'owner',
@@ -43,11 +58,25 @@ export function itemDefinition(
               {item.owner}
             </span>
           ),
+          choose: {
+            options: OWNERS.map((owner) => ({ id: owner, label: owner })),
+            value: (item) => item.owner,
+            patch: (owner) => ({ owner }),
+          },
         },
         {
           id: 'quantity',
           label: 'columns.quantity',
           value: (item) => item.quantity ?? '—',
+          edit: {
+            value: (item) =>
+              item.quantity === null ? '' : String(item.quantity),
+            validate: (text) =>
+              /^\d+$/.test(text) && Number(text) > 0
+                ? undefined
+                : 'errors.quantity',
+            patch: (text) => ({ quantity: Number(text) }),
+          },
         },
         {
           id: 'updated',

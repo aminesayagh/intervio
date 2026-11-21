@@ -347,6 +347,8 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 7.7 View and edit, value by value
 
+**Built so far (step 6):** `rights(record, context)` returns `{ edit }`, the ids of the columns, properties and `title` the person may change; without a `rights` function, every editable value can be changed. `add` and `actions` join it with the steps that build sections' "+ Link or add" (12) and more actions (8).
+
 - **Where rights come from:**
   - `definition.rights(record, user, context)` returns what this person may change on this record: which properties (and `title`, `description`), which sections may get "+ Link or add", and which actions are allowed;
   - the rule is the collection's own, from the person's role and responsibility. For example, a resource provider may change a booking's status but not its slots, and a colleague on the team may edit an intervention's documents;

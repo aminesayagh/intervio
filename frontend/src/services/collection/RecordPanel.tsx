@@ -5,6 +5,8 @@ import { ApiError } from '../http'
 import { cn, Icon, Match, Show, Switch } from '../ui-kit'
 import { keys } from './collectionQuery'
 import type { CollectionDefinition, PanelDefinition } from './definition'
+import { ChoiceCell } from './ChoiceCell'
+import { EditableCell } from './EditableCell'
 import { Button } from './parts'
 import type { Id } from './types'
 
@@ -25,6 +27,8 @@ export function RecordPanel<T, C>({
   fromList,
   onClose,
   onUnavailable,
+  canEdit,
+  save,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
@@ -34,6 +38,9 @@ export function RecordPanel<T, C>({
   fromList: T | undefined
   onClose: () => void
   onUnavailable: (id: Id) => void
+  /** Whether the person may change a value (spec 7.7). */
+  canEdit: (record: T, id: string) => boolean
+  save: (record: T, patch: Partial<T>) => Promise<void>
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const query = useQuery<T, Error, T, readonly unknown[]>({
@@ -45,6 +52,14 @@ export function RecordPanel<T, C>({
   })
   const record = query.data
   const unavailable = query.isError && isUnavailable(query.error)
+  const editable = [
+    ...(panel.titleEdit ? ['title'] : []),
+    ...panel.properties
+      .filter((property) => property.edit || property.choose)
+      .map((property) => property.id),
+  ]
+  const viewOnly =
+    record !== undefined && !editable.some((id) => canEdit(record, id))
 
   // A removed record leaves the list too.
   useEffect(() => {
@@ -67,6 +82,11 @@ export function RecordPanel<T, C>({
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
         <Show as="span" when={record !== undefined && !unavailable}>
           {record !== undefined && panel.type(record)}
+        </Show>
+        <Show as="span" when={record !== undefined && !unavailable && viewOnly}>
+          <span className="text-xs text-muted">
+            {t('collection:panel.viewOnly')}
+          </span>
         </Show>
         <Button
           look="ghost"
@@ -110,10 +130,22 @@ export function RecordPanel<T, C>({
               <div>
                 <h2
                   ref={focusTitle}
+                  aria-label={panel.title(shown)}
                   tabIndex={-1}
                   className="text-xl font-medium break-words outline-none"
                 >
-                  {panel.title(shown)}
+                  {panel.titleEdit && canEdit(shown, 'title') ? (
+                    <EditableCell
+                      record={shown}
+                      edit={panel.titleEdit}
+                      label={t('collection:panel.title')}
+                      namespace={definition.i18n.namespace}
+                      save={(patch) => save(shown, patch)}
+                      look="title"
+                    />
+                  ) : (
+                    panel.title(shown)
+                  )}
                 </h2>
                 <Show when={panel.subtitle}>
                   {(subtitle) => (
@@ -126,7 +158,30 @@ export function RecordPanel<T, C>({
                 {panel.properties.map((property) => (
                   <div key={property.id} className="contents">
                     <dt className="text-muted">{t(property.label)}</dt>
-                    <dd className="min-w-0">{property.value(shown)}</dd>
+                    <dd className="min-w-0">
+                      {property.edit && canEdit(shown, property.id) ? (
+                        <EditableCell
+                          record={shown}
+                          edit={property.edit}
+                          label={t(property.label)}
+                          namespace={definition.i18n.namespace}
+                          save={(patch) => save(shown, patch)}
+                          look="panel"
+                        />
+                      ) : property.choose && canEdit(shown, property.id) ? (
+                        <ChoiceCell
+                          record={shown}
+                          choose={property.choose}
+                          render={property.value}
+                          label={t(property.label)}
+                          namespace={definition.i18n.namespace}
+                          save={(patch) => save(shown, patch)}
+                          look="panel"
+                        />
+                      ) : (
+                        property.value(shown)
+                      )}
+                    </dd>
                   </div>
                 ))}
               </dl>

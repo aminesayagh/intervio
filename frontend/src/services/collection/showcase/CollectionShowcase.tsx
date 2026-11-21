@@ -12,9 +12,20 @@ import { itemDefinition } from '../testing/testDefinition'
 /** One source each for the page's lifetime, so the switches below stay set. */
 const full = itemSource()
 const empty = itemSource([])
+/** What the fake person may change, set by the Rights switch (read at each render). */
+type RightsChoice = 'all' | 'status' | 'none'
+let rightsChoice: RightsChoice = 'all'
+const rights = () => ({
+  edit:
+    rightsChoice === 'all'
+      ? ['name', 'title', 'status', 'owner', 'quantity']
+      : rightsChoice === 'status'
+        ? ['status']
+        : [],
+})
 const definitions = {
-  full: itemDefinition(full, 'showcase-items'),
-  empty: itemDefinition(empty, 'showcase-empty'),
+  full: itemDefinition(full, 'showcase-items', rights),
+  empty: itemDefinition(empty, 'showcase-empty', rights),
 }
 
 type Latency = '0' | '300' | '1500'
@@ -28,6 +39,8 @@ export default function CollectionShowcase() {
   const [latency, setLatency] = useState<Latency>('0')
   const [failing, setFailing] = useState(false)
   const [items, setItems] = useState<'full' | 'empty'>('full')
+  const [allowed, setAllowed] = useState<RightsChoice>(rightsChoice)
+  const [refusing, setRefusing] = useState(false)
 
   function set(change: Partial<{ latency: Latency; failing: boolean }>) {
     for (const source of [full, empty]) {
@@ -72,6 +85,31 @@ export default function CollectionShowcase() {
             options={[
               { value: 'answer', label: 'Answer' },
               { value: 'fail', label: 'Fail' },
+            ]}
+          />
+          <Segmented
+            label="Rights"
+            value={allowed}
+            onChange={(value) => {
+              rightsChoice = value
+              setAllowed(value)
+            }}
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'status', label: 'Status only' },
+              { value: 'none', label: 'None' },
+            ]}
+          />
+          <Segmented
+            label="Changes"
+            value={refusing ? 'refuse' : 'accept'}
+            onChange={(value) => {
+              full.settings.forbidden = value === 'refuse'
+              setRefusing(value === 'refuse')
+            }}
+            options={[
+              { value: 'accept', label: 'Accepted' },
+              { value: 'refuse', label: 'Refused (403)' },
             ]}
           />
           <Button

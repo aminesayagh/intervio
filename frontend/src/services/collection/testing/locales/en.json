@@ -19,7 +19,8 @@
     "outdated": "Outdated"
   },
   "errors": {
-    "nameRequired": "Enter a name."
+    "nameRequired": "Enter a name.",
+    "quantity": "Enter a quantity of at least 1."
   },
   "type": "Item",
   "updatedOn": "Updated {{date}}",

@@ -15,11 +15,12 @@ import {
   type RefObject,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ApiError } from '../http'
 import { addTranslations } from '../i18n'
 import { entryState, setSearchParams, useSearchParams } from '../navigation'
 import { cn, Icon, Match, Show, Switch } from '../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
-import { cache, useCollectionQuery } from './collectionQuery'
+import { cache, keys, useCollectionQuery } from './collectionQuery'
 import { EditableCell } from './EditableCell'
 import type { CollectionDefinition, ColumnDefinition } from './definition'
 import en from './locales/en.json'
@@ -68,10 +69,29 @@ export function Collection<T extends RowData, C = void>({
   const save = useCallback(
     async (record: T, patch: Partial<T>) => {
       if (!source.update) throw new Error(`${key} cannot be edited`)
-      const updated = await source.update(getId(record), patch, context as C)
-      cache.updated(queryClient, key, updated, getId)
+      try {
+        const updated = await source.update(getId(record), patch, context as C)
+        cache.updated(queryClient, key, updated, getId)
+      } catch (refusal) {
+        // No right any more: reload the record and the lists, so their rights are current.
+        if (refusal instanceof ApiError && refusal.status === 403) {
+          void queryClient.invalidateQueries({
+            queryKey: keys.record(key, getId(record)),
+          })
+          void cache.refresh(queryClient, key)
+        }
+        throw refusal
+      }
     },
     [source, getId, key, context, queryClient],
+  )
+
+  /** Whether the person may change a value of a record (spec 7.7). */
+  const { rights } = definition
+  const canEdit = useCallback(
+    (record: T, id: string) =>
+      !rights || rights(record, context as C).edit.includes(id),
+    [rights, context],
   )
   // The open record (spec 6.3, 7.1): its id is in the address (?open=).
   const openId = useSearchParams().get('open')
@@ -238,6 +258,7 @@ export function Collection<T extends RowData, C = void>({
                 sort={listing.sort}
                 onSort={state.setSort}
                 save={save}
+                canEdit={canEdit}
                 openId={definition.panel ? openId : null}
                 onOpen={definition.panel ? open : undefined}
               />
@@ -270,6 +291,8 @@ export function Collection<T extends RowData, C = void>({
           fromList={list.items.find((item) => getId(item) === openId)}
           onClose={close}
           onUnavailable={unavailable}
+          canEdit={canEdit}
+          save={save}
         />
       )}
     </section>
@@ -296,6 +319,7 @@ function RecordTable<T extends RowData, C>({
   sort,
   onSort,
   save,
+  canEdit,
   openId,
   onOpen,
 }: {
@@ -309,6 +333,7 @@ function RecordTable<T extends RowData, C>({
   sort: ListQuery['sort'] | null
   onSort: (sort: ListQuery['sort'] | null) => void
   save: (record: T, patch: Partial<T>) => Promise<void>
+  canEdit: (record: T, id: string) => boolean
   /** The record open in the panel: its row is marked. */
   openId: Id | null
   /** Set when a row opens its record in the panel. */
@@ -324,7 +349,7 @@ function RecordTable<T extends RowData, C>({
           id: column.id,
           header: () => t(column.label),
           cell: (info) =>
-            column.edit ? (
+            column.edit && canEdit(info.row.original, column.id) ? (
               <EditableCell
                 record={info.row.original}
                 edit={column.edit}
@@ -332,7 +357,7 @@ function RecordTable<T extends RowData, C>({
                 namespace={definition.i18n.namespace}
                 save={(patch) => save(info.row.original, patch)}
               />
-            ) : column.choose ? (
+            ) : column.choose && canEdit(info.row.original, column.id) ? (
               <ChoiceCell
                 record={info.row.original}
                 choose={column.choose}
@@ -346,7 +371,7 @@ function RecordTable<T extends RowData, C>({
             ),
         }),
       ),
-    [definition.columns, definition.i18n.namespace, t, save, openId],
+    [definition.columns, definition.i18n.namespace, t, save, canEdit, openId],
   )
   const table = useTable({
     features,

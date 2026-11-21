@@ -7,6 +7,7 @@ export type {
   FilterDefinition,
   PanelDefinition,
   PropertyDefinition,
+  Rights,
   SectionDefinition,
   TextEdit,
 } from './definition'

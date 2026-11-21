@@ -41,6 +41,10 @@ export type PropertyDefinition<T> = {
   /** Translation key of the label. */
   label: string
   value: (record: T) => ReactNode
+  /** Set when the value's text can be edited in place (when the rights allow it). */
+  edit?: TextEdit<T>
+  /** Set when the value is chosen from a list in place (when the rights allow it). */
+  choose?: ChoiceEdit<T>
 }
 
 /** A section of linked records in the panel; it shows its first five (spec 7, 12.1). */
@@ -56,10 +60,20 @@ export type PanelDefinition<T> = {
   /** The chip in the top bar: the record's kind. */
   type: (record: T) => ReactNode
   title: (record: T) => string
+  /** Set when the title can be edited in place (right id: "title"). */
+  titleEdit?: TextEdit<T>
   /** The line under the title, such as who added the record and when. */
   subtitle?: (record: T) => ReactNode
   properties: PropertyDefinition<T>[]
   sections?: SectionDefinition<T>[]
+}
+
+/**
+ * What one person may change on one record (spec 7.7): the ids of the columns and
+ * properties (and "title") they may edit. A value not listed shows as plain text.
+ */
+export type Rights = {
+  edit: string[]
 }
 
 /** A filter menu (spec 4): its options are fixed, and several can be chosen. */
@@ -92,4 +106,9 @@ export type CollectionDefinition<T, C = void> = {
   filters?: FilterDefinition[]
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>
+  /**
+   * What the person may change on a record. Without it, every editable value can be
+   * changed. The server checks every change again.
+   */
+  rights?: (record: T, context: C) => Rights
 }

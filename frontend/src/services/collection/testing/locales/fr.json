@@ -19,7 +19,8 @@
     "outdated": "Obsolète"
   },
   "errors": {
-    "nameRequired": "Saisissez un nom."
+    "nameRequired": "Saisissez un nom.",
+    "quantity": "Saisissez une quantité d’au moins 1."
   },
   "type": "Élément",
   "updatedOn": "Mis à jour le {{date}}",

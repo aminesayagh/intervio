@@ -18,6 +18,8 @@ export type MemorySettings = {
   failNext: boolean
   /** Every request fails until this is turned off (the showcase: the app retries a failed request). */
   failing: boolean
+  /** Changes are refused as no longer allowed (403), until this is turned off. */
+  forbidden: boolean
 }
 
 /**
@@ -35,6 +37,7 @@ export function memorySource<T extends { id: Id }>(
     latencyMs: 0,
     failNext: false,
     failing: false,
+    forbidden: false,
   }
   const pageSize = options.pageSize ?? 30
 
@@ -111,6 +114,7 @@ export function memorySource<T extends { id: Id }>(
       }),
     update: (id, patch) =>
       answer(() => {
+        if (settings.forbidden) throw new ApiError(403, 'ERROR_FORBIDDEN')
         const updated = { ...find(id), ...patch, id }
         items = items.map((item) => (item.id === id ? updated : item))
         return updated

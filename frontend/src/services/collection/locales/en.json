@@ -9,7 +9,8 @@
     "list": "Records could not be loaded.",
     "retry": "Retry",
     "more": "More records could not be loaded.",
-    "save": "This change could not be saved."
+    "save": "This change could not be saved.",
+    "forbidden": "You can no longer change this."
   },
   "search": "Search",
   "clearFilters": "Clear filters",
@@ -22,6 +23,8 @@
     "error": "This record could not be loaded.",
     "loading": "Loading the record",
     "open": "Open",
-    "openRecord": "Open {{name}}"
+    "openRecord": "Open {{name}}",
+    "viewOnly": "View only",
+    "title": "Title"
   }
 }

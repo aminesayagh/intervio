@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { Show } from '../ui-kit'
+import { cn, Show } from '../ui-kit'
 import type { ChoiceEdit } from './definition'
+import { refusalMessage } from './refusal'
 import { ChoiceMenu, MenuPopover } from './parts'
 
 /**
@@ -18,6 +19,7 @@ export function ChoiceCell<T>({
   label,
   namespace,
   save,
+  look = 'cell',
 }: {
   record: T
   choose: ChoiceEdit<T>
@@ -26,6 +28,8 @@ export function ChoiceCell<T>({
   label: string
   namespace: string
   save: (patch: Partial<T>) => Promise<void>
+  /** In the panel, a light background shows under the pointer or focus. */
+  look?: 'cell' | 'panel'
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = choose.value(record)
@@ -39,8 +43,8 @@ export function ChoiceCell<T>({
     setError(null)
     try {
       await save(choose.patch(id))
-    } catch {
-      setError(t('collection:error.save'))
+    } catch (refusal) {
+      setError(t(refusalMessage(refusal)))
     } finally {
       setPending(null)
     }
@@ -52,7 +56,11 @@ export function ChoiceCell<T>({
         <Button
           aria-label={`${label}: ${t(choose.options.find((o) => o.id === shown)?.label ?? shown)}`}
           aria-busy={pending ? true : undefined}
-          className="flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground"
+          className={cn(
+            'flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground',
+            look === 'panel' &&
+              '-mx-2 px-2 py-1 data-[hovered]:bg-default data-[pressed]:bg-default',
+          )}
         >
           {render(
             shown === saved ? record : { ...record, ...choose.patch(shown) },

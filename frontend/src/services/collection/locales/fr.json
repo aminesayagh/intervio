@@ -9,7 +9,8 @@
     "list": "Les éléments n’ont pas pu être chargés.",
     "retry": "Réessayer",
     "more": "D’autres éléments n’ont pas pu être chargés.",
-    "save": "Cette modification n’a pas pu être enregistrée."
+    "save": "Cette modification n’a pas pu être enregistrée.",
+    "forbidden": "Vous ne pouvez plus modifier cette valeur."
   },
   "search": "Rechercher",
   "clearFilters": "Effacer les filtres",
@@ -22,6 +23,8 @@
     "error": "Cet élément n’a pas pu être chargé.",
     "loading": "Chargement de l’élément",
     "open": "Ouvrir",
-    "openRecord": "Ouvrir {{name}}"
+    "openRecord": "Ouvrir {{name}}",
+    "viewOnly": "Lecture seule",
+    "title": "Titre"
   }
 }

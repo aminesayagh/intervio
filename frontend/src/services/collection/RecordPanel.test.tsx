@@ -32,7 +32,9 @@ test('Open shows the record beside the list, marks its row, and adds it to the a
   expect(within(aside).getByText('Karim Benali')).toBeInTheDocument()
   expect(within(aside).getByText('Linked items')).toBeInTheDocument()
   expect(window.location.search).toBe(`?open=${id(2)}`)
-  const row = screen.getByDisplayValue('Item 002').closest('tr')!
+  const row = within(screen.getByRole('table'))
+    .getByDisplayValue('Item 002')
+    .closest('tr')!
   expect(row).toHaveAttribute('aria-current', 'true')
 })
 
@@ -113,4 +115,89 @@ test('clicking an editable name edits it instead of opening the record', async (
   await userEvent.click(await screen.findByDisplayValue('Item 007'))
   expect(panel()).not.toBeInTheDocument()
   expect(window.location.search).toBe('')
+})
+
+async function openFirst(rights?: Parameters<typeof itemDefinition>[2]) {
+  const source = itemSource(makeItems(5))
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(source, 'test-items', rights)} />,
+  )
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Open Item 001' }),
+  )
+  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  return { source, aside }
+}
+
+test('the panel edits the title in place, and the list follows', async () => {
+  const { source, aside } = await openFirst()
+  const title = within(aside).getByRole('textbox', { name: 'Title' })
+  await userEvent.clear(title)
+  await userEvent.type(title, 'Hydraulic jack{Enter}')
+  await waitFor(() => expect(source.items()[0].name).toBe('Hydraulic jack'))
+  expect(
+    within(screen.getByRole('table')).getByDisplayValue('Hydraulic jack'),
+  ).toBeInTheDocument()
+})
+
+test('the panel chooses a status, and refuses a wrong quantity with its message', async () => {
+  const { source, aside } = await openFirst()
+  await userEvent.click(
+    within(aside).getByRole('button', { name: 'Status: Draft' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Valid' }),
+  )
+  await waitFor(() => expect(source.items()[0].status).toBe('valid'))
+
+  // Item 001 has no quantity: type a wrong one.
+  const quantity = within(aside).getByRole('textbox', { name: 'Quantity' })
+  await userEvent.type(quantity, 'zero{Enter}')
+  expect(await within(aside).findByRole('alert')).toHaveTextContent(
+    'Enter a quantity of at least 1.',
+  )
+  expect(source.items()[0].quantity).toBeNull()
+})
+
+test('rights decide value by value, in the table and the panel', async () => {
+  const { aside } = await openFirst(() => ({ edit: ['status'] }))
+  const table = screen.getByRole('table')
+  expect(within(table).queryByRole('textbox')).not.toBeInTheDocument() // names read only
+  expect(
+    within(table).getAllByRole('button', { name: /^Status:/ }).length,
+  ).toBeGreaterThan(0)
+  expect(
+    within(table).queryByRole('button', { name: /^Owner:/ }),
+  ).not.toBeInTheDocument()
+
+  expect(within(aside).queryByRole('textbox')).not.toBeInTheDocument() // title, quantity
+  expect(
+    within(aside).getByRole('button', { name: 'Status: Draft' }),
+  ).toBeInTheDocument()
+  expect(within(aside).queryByText('View only')).not.toBeInTheDocument()
+})
+
+test('with no right at all, the panel says View only and edits nothing', async () => {
+  const { aside } = await openFirst(() => ({ edit: [] }))
+  expect(within(aside).getByText('View only')).toBeInTheDocument()
+  expect(within(aside).queryByRole('textbox')).not.toBeInTheDocument()
+  expect(
+    within(aside).queryByRole('button', { name: /^Status:/ }),
+  ).not.toBeInTheDocument()
+})
+
+test('a change refused as no longer allowed says so, and the value comes back', async () => {
+  const { source, aside } = await openFirst()
+  source.settings.forbidden = true
+  await userEvent.type(
+    within(aside).getByRole('textbox', { name: 'Title' }),
+    ' X{Enter}',
+  )
+  expect(await within(aside).findByRole('alert')).toHaveTextContent(
+    'You can no longer change this.',
+  )
+  expect(within(aside).getByRole('textbox', { name: 'Title' })).toHaveValue(
+    'Item 001',
+  )
 })

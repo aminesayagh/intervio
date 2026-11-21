@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Show } from '../ui-kit'
+import { cn, Icon, Show } from '../ui-kit'
 import type { TextEdit } from './definition'
+import { refusalMessage } from './refusal'
 
 /**
  * A table cell whose text is edited in place (spec 7.3.1). It looks exactly like the
@@ -15,12 +16,18 @@ export function EditableCell<T>({
   label,
   namespace,
   save,
+  look = 'cell',
 }: {
   record: T
   edit: TextEdit<T>
   label: string
   namespace: string
   save: (patch: Partial<T>) => Promise<void>
+  /**
+   * cell: in the table, looks like plain text (only the cursor tells). panel and
+   * title: in the panel, a light field and a pencil show under the pointer or focus.
+   */
+  look?: 'cell' | 'panel' | 'title'
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = edit.value(record)
@@ -56,37 +63,55 @@ export function EditableCell<T>({
     setError(null)
     try {
       await save(edit.patch(next))
-    } catch {
-      setError(t('collection:error.save'))
+    } catch (refusal) {
+      setError(t(refusalMessage(refusal)))
       setText(saved)
     } finally {
       setSaving(false)
     }
   }
 
+  const input = (
+    <input
+      aria-label={label}
+      aria-invalid={error ? true : undefined}
+      aria-busy={saving || undefined}
+      value={text}
+      onChange={(event) => {
+        setText(event.target.value)
+        setError(null)
+      }}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') event.currentTarget.blur()
+        if (event.key === 'Escape') {
+          cancelling.current = true
+          setText(saved)
+          setError(null)
+          event.currentTarget.blur()
+        }
+      }}
+      className={cn(
+        'w-full cursor-text truncate bg-transparent p-0 outline-none',
+        look !== 'cell' &&
+          '-mx-2 rounded-[var(--field-radius)] px-2 py-1 pe-8 hover:bg-default focus:bg-default',
+        look === 'title' && 'text-xl font-medium',
+      )}
+    />
+  )
+
   return (
     <>
-      <input
-        aria-label={label}
-        aria-invalid={error ? true : undefined}
-        aria-busy={saving || undefined}
-        value={text}
-        onChange={(event) => {
-          setText(event.target.value)
-          setError(null)
-        }}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur()
-          if (event.key === 'Escape') {
-            cancelling.current = true
-            setText(saved)
-            setError(null)
-            event.currentTarget.blur()
-          }
-        }}
-        className="w-full cursor-text truncate bg-transparent p-0 outline-none"
-      />
+      {look === 'cell' ? (
+        input
+      ) : (
+        <span className="group/edit relative flex items-center">
+          {input}
+          <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
+            <Icon name="Edit" size={14} />
+          </span>
+        </span>
+      )}
       <Show when={error}>
         {(message) => (
           <p role="alert" className="truncate text-xs text-danger">

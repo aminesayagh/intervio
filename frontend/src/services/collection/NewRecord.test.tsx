@@ -85,7 +85,9 @@ test('closing an untouched new record just closes; with input, it asks first', a
   expect(screen.queryByRole('alertdialog')).toBeNull()
 
   aside = await startNew()
-  await userEvent.click(within(aside).getByRole('button', { name: 'Status: Draft' }))
+  await userEvent.click(
+    within(aside).getByRole('button', { name: 'Status: Draft' }),
+  )
   await userEvent.click(
     await screen.findByRole('menuitemradio', { name: 'Valid' }),
   )
@@ -95,4 +97,21 @@ test('closing an untouched new record just closes; with input, it asks first', a
   })
   await userEvent.click(within(dialog).getByRole('button', { name: 'Discard' }))
   await waitFor(() => expect(window.location.search).not.toContain('new=1'))
+})
+
+test('a refresh keeps what was typed in a new record', async () => {
+  renderAt(
+    '/items?new=1',
+    <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
+    {
+      'intervio.collection.test-items.new': JSON.stringify({
+        name: '',
+        status: 'outdated',
+      }),
+    },
+  )
+  const aside = await screen.findByRole('complementary', { name: '+ Add item' })
+  expect(
+    within(aside).getByRole('button', { name: 'Status: Outdated' }),
+  ).toBeInTheDocument()
 })

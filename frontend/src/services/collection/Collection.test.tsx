@@ -380,3 +380,34 @@ test('an owner is chosen from its cell, and saved at once', async () => {
   )
   await waitFor(() => expect(source.items()[0].owner).toBe('Omar Haddad'))
 })
+
+test('a refresh reloads the pages seen and lands at the same place', async () => {
+  const { container } = renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(300)))} />,
+    {
+      'intervio.collection.test-items.scroll': JSON.stringify({
+        address: '',
+        offset: 6000,
+        pages: 3,
+      }),
+    },
+  )
+  const area = () => container.querySelector<HTMLElement>('.overflow-y-auto')!
+  // Three pages of 30 rows of 152 px reach past 6000 px.
+  await waitFor(() => expect(area().scrollTop).toBe(6000))
+  expect(screen.queryByDisplayValue('Item 001')).not.toBeInTheDocument()
+})
+
+test('coming back from the sidebar reopens the record open last', async () => {
+  const id = makeItems(3)[2].id
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
+    { 'intervio.collection.test-items.list': `f.status=draft&open=${id}` },
+  )
+  expect(
+    await screen.findByRole('complementary', { name: 'Item 003' }),
+  ).toBeInTheDocument()
+  expect(window.location.search).toBe(`?f.status=draft&open=${id}`)
+})

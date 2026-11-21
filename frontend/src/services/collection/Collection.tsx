@@ -43,7 +43,11 @@ import { newRecordKey } from './recordQuery'
 import { Toolbar } from './Toolbar'
 import type { Id, ListQuery } from './types'
 import { useCollectionList } from './useCollectionList'
-import { isNarrowed, useCollectionState } from './useCollectionState'
+import {
+  isNarrowed,
+  useCollectionState,
+  writeListing,
+} from './useCollectionState'
 
 addTranslations('collection', { en, fr })
 
@@ -51,6 +55,9 @@ addTranslations('collection', { en, fr })
 type More = {
   canLoadMore: boolean
   loadMore: () => void
+  hasMore: boolean
+  pages: number
+  memory: { key: string; address: string }
 }
 
 /**
@@ -335,6 +342,11 @@ export function Collection<T extends RowData, C = void>({
   }
 
   const { fetchNextPage } = list
+  const listAddress = writeListing(new URLSearchParams(), listing).toString()
+  const scrollMemory = useMemo(
+    () => ({ key: `intervio.collection.${key}.scroll`, address: listAddress }),
+    [key, listAddress],
+  )
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
   const more: More = {
     canLoadMore:
@@ -342,6 +354,9 @@ export function Collection<T extends RowData, C = void>({
       !list.isFetchingNextPage &&
       !list.isFetchNextPageError,
     loadMore,
+    hasMore: list.hasNextPage && !list.isFetchNextPageError,
+    pages: list.data?.pages.length ?? 0,
+    memory: scrollMemory,
   }
 
   // "12 of 42 items" needs the collection's whole total: one small cached request.

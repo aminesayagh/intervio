@@ -47,7 +47,7 @@ export function NewRecord<T, C>({
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const storageKey = newRecordKey(definition.key)
   const [draft, setDraft] = useState<Partial<T>>(
-    () => read<T>(storageKey) ?? defaults,
+    () => ({ ...defaults, ...read<T>(storageKey) }),
   )
   const [error, setError] = useState<string | null>(null)
   const creating = useRef(false)

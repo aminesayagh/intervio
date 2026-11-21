@@ -407,6 +407,8 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 8.4 Scroll position
 
+**Built so far (step 10):** one session key per collection (`intervio.collection.<key>.scroll`) holds the list address, the offset and the pages loaded; it is used only when the address matches. The offset is set on the scroll element directly, with no measurement snapshot, so a list of uneven rows can land a row or so off. The tab's list memory (6.2) includes `open`. Panel history waits for step 12, which brings it.
+
 - When the user leaves the list or the page unloads, the virtualizer's `takeSnapshot()` and `scrollOffset` are kept in session storage with the number of loaded pages (section 6.1).
 - On return, the pages are reloaded (up to 5), then the virtualizer starts with `initialMeasurementsCache` and `initialOffset`, so the list lands at the same place without measuring everything again.
 

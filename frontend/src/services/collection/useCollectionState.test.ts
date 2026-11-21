@@ -91,6 +91,20 @@ test('the tab remembers the list it shows, even one opened from an address', () 
   window.history.replaceState(null, '', '/items?q=valve&sort=name:asc&open=7')
   renderHook(() => useCollectionState('items', defaultSort))
   expect(sessionStorage.getItem('intervio.collection.items.list')).toBe(
-    'q=valve&sort=name%3Aasc',
+    'q=valve&sort=name%3Aasc&open=7',
   )
+})
+
+test('coming back on a bare address reopens the record open last', () => {
+  sessionStorage.setItem('intervio.collection.items.list', 'q=valve&open=7')
+  window.history.replaceState(null, '', '/items')
+  renderHook(() => useCollectionState('items', defaultSort))
+  expect(window.location.search).toBe('?q=valve&open=7')
+})
+
+test('an address naming a record keeps it, and still takes back the list', () => {
+  sessionStorage.setItem('intervio.collection.items.list', 'q=valve&open=7')
+  window.history.replaceState(null, '', '/items?open=9')
+  renderHook(() => useCollectionState('items', defaultSort))
+  expect(window.location.search).toBe('?open=9&q=valve')
 })

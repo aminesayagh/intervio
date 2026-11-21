@@ -6,11 +6,18 @@ import type { ReactElement } from 'react'
  * Renders a component at an address (spec 15.2): a fresh query cache with retries off,
  * and empty storage, so every test starts from the same place.
  */
-export function renderAt(url: string, ui: ReactElement) {
+export function renderAt(
+  url: string,
+  ui: ReactElement,
+  /** What the tab held before, as after a refresh. */
+  session: Record<string, string> = {},
+) {
   window.history.replaceState(null, '', url)
   try {
     sessionStorage.clear()
     localStorage.clear()
+    for (const [key, value] of Object.entries(session))
+      sessionStorage.setItem(key, value)
   } catch {
     // storage blocked: nothing to clear
   }

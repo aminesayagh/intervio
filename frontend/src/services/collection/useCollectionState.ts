@@ -91,13 +91,19 @@ export function useCollectionState(key: string, defaultSort: Sort) {
     if ([...current.keys()].some(isListParam)) return
     const saved = read(() => sessionStorage, tabKey)
     const lastSort = parseSort(read(() => localStorage, sortKey))
+    const savedParams = new URLSearchParams(saved ?? '')
     const restored = saved
-      ? readListing(new URLSearchParams(saved))
+      ? readListing(savedParams)
       : lastSort
         ? { search: '', filters: {}, sort: lastSort }
         : null
-    if (restored)
-      setSearchParams(writeListing(current, restored), { replace: true })
+    if (!restored) return
+    const next = writeListing(current, restored)
+    // The record open last comes back too, unless the address names one (or a new one).
+    const open = savedParams.get('open')
+    if (open && !current.has('open') && !current.has('new'))
+      next.set('open', open)
+    setSearchParams(next, { replace: true })
     // Only when the collection opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -109,7 +115,7 @@ export function useCollectionState(key: string, defaultSort: Sort) {
       () => sessionStorage,
       tabKey,
       new URLSearchParams(
-        [...list].filter(([name]) => isListParam(name)),
+        [...list].filter(([name]) => isListParam(name) || name === 'open'),
       ).toString(),
     )
   }, [address, tabKey])

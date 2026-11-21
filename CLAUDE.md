@@ -11,6 +11,7 @@ The current documents are in `docs/architecture/`; the schema and wireframes are
 | `delivery-order.md` | Table dependency levels and the order of feature slices |
 | `deferred-features.md` | Features kept out of the core for later |
 | `authentication-spec.md` | Build specification for authentication: only what was decided, plus open points |
+| `collection-archetype-spec.md` | Build specification for the list-and-record-panel wrapper every collection screen uses |
 
 Keep only the latest version of each document: update it in place, do not create `-v2` copies.
 

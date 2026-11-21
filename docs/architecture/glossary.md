@@ -15,6 +15,7 @@ Mark each row in the **Decision** column: keep the current term, take the propos
 | External candidate | **Bidder** | Someone who submits an offer and is competing for the contract. | |
 | External maintainer (after contract) | **Contractor** | Once the offer is awarded, the bidder becomes the contractor. | |
 | Staff | **Client staff** | Makes clear they belong to the client's side, not the contractor's. | |
+| Client staff, on the client's own screens | **Colleague** (the group: **team**) | Seen by the client, "client staff" reads as the staff of the client's own clients. The client invites colleagues to the intervention's team; "client staff" stays the term in these documents and on contractor screens. | Taken (2026-11-21) |
 | Responsible staff member (for a resource) | **Resource provider** | Describes the job: they provide and take back the resource. | |
 | Tracking staff member (for a metric) | **Witness** | In acceptance testing, the client's representative who observes and records the results is the witness. | |
 

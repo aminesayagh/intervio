@@ -22,13 +22,14 @@ A table's level is one more than the highest level among the tables it **must** 
 | **4** | milestones | offers |
 | **4** | reports | offers |
 | **4** | messages | chats |
-| **5** | requests | milestones, resources, users (sender) |
+| **5** | requests | milestones, users (sender) |
 | **5** | acceptance_criteria | milestones |
 | **5** | change_requests | milestones |
 | **6** | test_items | acceptance_criteria |
 | **6** | test_results | acceptance_criteria, users (witness) |
-| **6** | bookings | requests, users (provider) |
-| **7** | booking_slots | bookings |
+| **6** | request_resources | requests, resources |
+| **7** | bookings | request_resources, users (provider) |
+| **8** | booking_slots | bookings |
 
 ### Optional links that close a loop
 
@@ -53,7 +54,7 @@ Each slice is delivered from start to finish: tables, rules, screens and notific
 | 2 | **Invitations and notifications** | invitations, notifications | Client board 3, 4 · Plan board 1, 2 | Bidders and client staff receive, confirm or decline invitations, and see the specifications. |
 | 3 | **Offers and milestones** | offers, milestones | Client board 5 · 6, 7 (without criteria), 10, 11, 12 | Bidders build milestones, submit before the shared deadline, withdraw, or miss it. |
 | 4 | **Acceptance criteria** | acceptance_criteria, test_items | 7, 8 | Each milestone carries performance criteria and acceptance tests. |
-| 5 | **Resource requests and RFIs** | requests | 4, 5, 9 | Bidders request resources per milestone and submit RFIs on the preparation milestone. |
+| 5 | **Resource requests and RFIs** | requests, request_resources | 4, 5, 9 | Bidders request resources per milestone and submit RFIs on the preparation milestone. |
 | 6 | **Review, clarification and award** | — (statuses only) | 13–19, 24 | The client approves or rejects items, sets clarification deadlines, awards and confirms the launch. |
 | 7 | **Bookings and witnesses** | bookings, booking_slots | 20–23, 26–31 | The client books slots and assigns providers and witnesses; providers confirm, hand over and get equipment back. |
 | 8 | **Execution and test results** | test_results | 25, 32–34, 37 | Witnesses record results; criteria become met or overdue; the client signs off milestones. |

@@ -119,6 +119,10 @@ html {
 .scroll-quiet::-webkit-scrollbar-corner {
   background: transparent;
 }
+/* An area with a pinned header sets --scroll-quiet-top, so the bar starts under it. */
+.scroll-quiet::-webkit-scrollbar-track {
+  margin-top: var(--scroll-quiet-top, 0px);
+}
 .scroll-quiet::-webkit-scrollbar-button {
   display: none;
 }

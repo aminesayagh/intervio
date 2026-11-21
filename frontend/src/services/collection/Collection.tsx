@@ -78,7 +78,7 @@ export function Collection<T extends RowData, C = void>({
 
       <div
         ref={scrollRef}
-        className="scroll-quiet min-h-0 flex-1 overflow-y-auto"
+        className="scroll-quiet min-h-0 flex-1 overflow-y-auto [--scroll-quiet-top:2rem]"
       >
         {list.isPending ? (
           <Placeholders />
@@ -193,7 +193,7 @@ function RecordTable<T extends RowData, C>({
                 key={header.id}
                 scope="col"
                 style={{ width: widths.get(header.column.id) }}
-                className="px-3 py-2 text-start text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
+                className="h-8 px-3 text-start align-middle text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
               >
                 {header.isPlaceholder ? null : (
                   <table.FlexRender header={header} />

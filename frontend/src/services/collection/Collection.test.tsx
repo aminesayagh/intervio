@@ -326,3 +326,57 @@ test('a save the server refuses puts the name back, with a message', async () =>
   )
   expect(field).toHaveValue('Item 004')
 })
+
+test('a status is chosen from its chip, and saved at once', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await screen.findByText('5 items')
+  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  await userEvent.click(
+    within(rows[1]).getByRole('button', { name: 'Status: Draft' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Outdated' }),
+  )
+
+  await waitFor(() => expect(source.items()[0].status).toBe('outdated'))
+  expect(
+    within(rows[1]).getByRole('button', { name: 'Status: Outdated' }),
+  ).toBeInTheDocument()
+})
+
+test('a status the server refuses goes back, with a message', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await screen.findByText('5 items')
+  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  source.settings.failing = true
+  await userEvent.click(
+    within(rows[2]).getByRole('button', { name: 'Status: Valid' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Draft' }),
+  )
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'This change could not be saved.',
+  )
+  expect(
+    within(rows[2]).getByRole('button', { name: 'Status: Valid' }),
+  ).toBeInTheDocument()
+  expect(source.items()[1].status).toBe('valid')
+})
+
+test('an owner is chosen from its cell, and saved at once', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await screen.findByText('5 items')
+  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  await userEvent.click(
+    within(rows[1]).getByRole('button', { name: 'Owner: Julie Moreau' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Omar Haddad' }),
+  )
+  await waitFor(() => expect(source.items()[0].owner).toBe('Omar Haddad'))
+})

@@ -12,7 +12,7 @@ export type Item = {
   updatedAt: string // ISO date
 }
 
-const STATUSES: Item['status'][] = ['draft', 'valid', 'outdated']
+export const STATUSES: Item['status'][] = ['draft', 'valid', 'outdated']
 export const OWNERS = [
   'Julie Moreau',
   'Karim Benali',

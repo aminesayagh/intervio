@@ -10,6 +10,7 @@ import { useCallback, useMemo, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { Icon } from '../ui-kit'
+import { ChoiceCell } from './ChoiceCell'
 import { cache, useCollectionQuery } from './collectionQuery'
 import { EditableCell } from './EditableCell'
 import type { CollectionDefinition, ColumnDefinition } from './definition'
@@ -230,6 +231,15 @@ function RecordTable<T extends RowData, C>({
             <EditableCell
               record={info.row.original}
               edit={column.edit}
+              label={t(column.label)}
+              namespace={definition.i18n.namespace}
+              save={(patch) => save(info.row.original, patch)}
+            />
+          ) : column.choose ? (
+            <ChoiceCell
+              record={info.row.original}
+              choose={column.choose}
+              render={column.cell}
               label={t(column.label)}
               namespace={definition.i18n.namespace}
               save={(patch) => save(info.row.original, patch)}

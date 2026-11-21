@@ -1,6 +1,7 @@
 export { Collection } from './Collection'
 export { cache, keys, useCollectionQuery } from './collectionQuery'
 export type {
+  ChoiceEdit,
   CollectionDefinition,
   ColumnDefinition,
   FilterDefinition,

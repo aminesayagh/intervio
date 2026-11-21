@@ -2,7 +2,7 @@ import { addTranslations } from '../../i18n'
 import type { CollectionDefinition } from '../definition'
 import type { DataSource } from '../types'
 import { Avatar, Day, StatusChip } from './ItemParts'
-import { itemSource, OWNERS, type Item } from './items'
+import { itemSource, OWNERS, STATUSES, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 
@@ -28,7 +28,7 @@ export function itemDefinition(
       {
         id: 'status',
         label: 'columns.status',
-        options: (['draft', 'valid', 'outdated'] as const).map((status) => ({
+        options: STATUSES.map((status) => ({
           id: status,
           label: `status.${status}`,
         })),
@@ -57,11 +57,24 @@ export function itemDefinition(
         width: 140,
         sort: 'asc',
         cell: (item) => <StatusChip status={item.status} />,
+        choose: {
+          options: STATUSES.map((status) => ({
+            id: status,
+            label: `status.${status}`,
+          })),
+          value: (item) => item.status,
+          patch: (status) => ({ status: status as Item['status'] }),
+        },
       },
       {
         id: 'owner',
         label: 'columns.owner',
         width: 200,
+        choose: {
+          options: OWNERS.map((owner) => ({ id: owner, label: owner })),
+          value: (item) => item.owner,
+          patch: (owner) => ({ owner }),
+        },
         cell: (item) => (
           <span className="flex items-center gap-2">
             <Avatar name={item.owner} />

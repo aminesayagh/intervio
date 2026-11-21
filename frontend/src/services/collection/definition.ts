@@ -15,6 +15,16 @@ export type ColumnDefinition<T> = {
   sort?: SortDirection
   /** Set when the column's text can be edited in its cell (spec 7.3.1). */
   edit?: TextEdit<T>
+  /** Set when the column's value is chosen from a list in its cell (a status). */
+  choose?: ChoiceEdit<T>
+}
+
+/** How a column's value is chosen in place: the choices, the current one, the change. */
+export type ChoiceEdit<T> = {
+  /** Each choice's id, and its label as a translation key. */
+  options: { id: string; label: string }[]
+  value: (record: T) => string
+  patch: (id: string) => Partial<T>
 }
 
 /** How a column's text is edited in place: read it, check it, turn it into a change. */

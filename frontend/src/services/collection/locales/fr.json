@@ -60,5 +60,14 @@
   },
   "page": {
     "breadcrumb": "Fil d’Ariane"
+  },
+  "create": {
+    "notSaved": "Pas encore enregistré",
+    "name": "Nom",
+    "created": "Élément créé",
+    "undo": "Annuler",
+    "discardTitle": "Abandonner ce nouvel élément ?",
+    "discardText": "Il n’a pas encore été créé : ce que vous avez saisi sera perdu.",
+    "discard": "Abandonner"
   }
 }

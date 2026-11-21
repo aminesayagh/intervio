@@ -32,5 +32,8 @@
     "remove": "Supprimer",
     "removeTitle": "Supprimer cet élément ?",
     "removeText": "Il est supprimé définitivement."
+  },
+  "create": {
+    "add": "+ Ajouter un élément"
   }
 }

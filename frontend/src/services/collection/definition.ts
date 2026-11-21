@@ -100,6 +100,11 @@ export type FilterDefinition = {
   label: string
   /** Each option's id goes to the address and the data source; its label is a translation key. */
   options: { id: string; label: string }[]
+  /**
+   * How one chosen value becomes part of a new record (spec 7.5): a list filtered on
+   * one value creates records with that value, so they belong to the list.
+   */
+  patch?: (value: string) => Partial<unknown>
 }
 
 /**
@@ -130,4 +135,15 @@ export type CollectionDefinition<T, C = void> = {
   rights?: (record: T, context: C) => Rights
   /** The actions of the More actions menu, after Open full page and Copy link. */
   actions?: ActionDefinition[]
+  /**
+   * Set when records can be created (spec 7.5): "+ Add" opens a new record in the
+   * panel with these defaults, created as soon as it is ready.
+   */
+  create?: {
+    /** "+ Add …" and "New …": translation keys in the collection's namespace. */
+    add: string
+    defaults: (context: C) => Partial<T>
+    /** True when the new record has what it needs to be created (its name, often). */
+    ready: (draft: Partial<T>) => boolean
+  }
 }

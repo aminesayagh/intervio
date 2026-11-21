@@ -25,12 +25,14 @@ const focusRing =
   'outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground'
 
 const buttonLook = {
+  primary:
+    'bg-[var(--color-primary)] text-[var(--color-text)] shadow-[0_4px_12px_color-mix(in_oklab,var(--color-primary)_35%,transparent)] data-[hovered]:bg-[var(--color-primary-hover)]',
   secondary:
     'bg-default text-foreground data-[hovered]:bg-[color-mix(in_srgb,var(--default)_80%,var(--foreground))]',
   ghost: 'text-foreground data-[hovered]:bg-default',
 }
 
-/** A button: secondary (grey) or ghost (no background until hovered). */
+/** A button: primary (the main action, yellow), secondary (grey) or ghost. */
 export function Button({
   look = 'secondary',
   size = 'md',

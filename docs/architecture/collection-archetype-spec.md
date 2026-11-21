@@ -289,6 +289,8 @@ On load, in this order:
 
 ### 7.5 Creating
 
+**Built so far (step 9):** `definition.create` gives `add` (the button's text), `defaults(context)` and `ready(draft)`; a filter with a `patch` and exactly one value chosen adds that value. The new record is `?new=1`; its input waits in the tab (`intervio.collection.<key>.new`) until it is created or discarded.
+
 There is no creation form: a new record is the normal record view, created as soon as it can stand on its own (decision 125).
 
 - **Opening:**

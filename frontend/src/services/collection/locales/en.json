@@ -60,5 +60,14 @@
   },
   "page": {
     "breadcrumb": "Breadcrumb"
+  },
+  "create": {
+    "notSaved": "Not saved yet",
+    "name": "Name",
+    "created": "Record created",
+    "undo": "Undo",
+    "discardTitle": "Discard this new record?",
+    "discardText": "It has not been created yet, so what you typed will be lost.",
+    "discard": "Discard"
   }
 }

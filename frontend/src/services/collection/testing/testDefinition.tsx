@@ -16,6 +16,19 @@ export function itemDefinition(
 ): CollectionDefinition<Item> {
   return {
     rights,
+    create: {
+      add: 'create.add',
+      defaults: () => ({
+        name: '',
+        status: 'draft',
+        owner: OWNERS[0],
+        quantity: null,
+        description: '',
+        linkedTo: [],
+        updatedAt: new Date().toISOString(),
+      }),
+      ready: (draft) => Boolean(draft.name?.trim()),
+    },
     actions: [
       {
         id: 'archive',
@@ -129,11 +142,13 @@ export function itemDefinition(
           id: status,
           label: `status.${status}`,
         })),
+        patch: (status) => ({ status }),
       },
       {
         id: 'owner',
         label: 'columns.owner',
         options: OWNERS.map((owner) => ({ id: owner, label: owner })),
+        patch: (owner) => ({ owner }),
       },
     ],
     columns: [

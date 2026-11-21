@@ -17,6 +17,8 @@ export function EditableCell<T>({
   namespace,
   save,
   look = 'cell',
+  placeholder,
+  autoFocus,
 }: {
   record: T
   edit: TextEdit<T>
@@ -28,6 +30,8 @@ export function EditableCell<T>({
    * title: in the panel, a light field and a pencil show under the pointer or focus.
    */
   look?: 'cell' | 'panel' | 'title'
+  placeholder?: string
+  autoFocus?: boolean
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = edit.value(record)
@@ -74,6 +78,8 @@ export function EditableCell<T>({
   const input = (
     <input
       aria-label={label}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
       aria-invalid={error ? true : undefined}
       aria-busy={saving || undefined}
       value={text}

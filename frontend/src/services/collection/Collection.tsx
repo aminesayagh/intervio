@@ -37,7 +37,9 @@ import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { Button, ConfirmDialog, type MenuAction } from './parts'
 import { RecordPage } from './RecordPage'
+import { NewRecord } from './NewRecord'
 import { RecordPanel } from './RecordPanel'
+import { newRecordKey } from './recordQuery'
 import { Toolbar } from './Toolbar'
 import type { Id, ListQuery } from './types'
 import { useCollectionList } from './useCollectionList'
@@ -137,6 +139,27 @@ export function Collection<T extends RowData, C = void>({
     }
   }, [panelMark])
 
+  // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
+  const isNew = useSearchParams().get('new') === '1'
+  const [discarding, setDiscarding] = useState(false)
+  const hasDraft = useCallback(() => {
+    try {
+      return sessionStorage.getItem(newRecordKey(key)) !== null
+    } catch {
+      return false
+    }
+  }, [key])
+  const startNew = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    const wasOpen = params.has('open') || params.has('new')
+    params.delete('open')
+    params.set('new', '1')
+    setSearchParams(params, {
+      replace: wasOpen,
+      state: wasOpen ? entryState() : { panel: panelMark },
+    })
+  }, [panelMark])
+
   // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
   const [leaving, setLeaving] = useState(false)
   const close = useCallback(() => {
@@ -150,8 +173,9 @@ export function Collection<T extends RowData, C = void>({
       }
     })()
     if (unsaved !== null) setLeaving(true)
+    else if (isNew && hasDraft()) setDiscarding(true)
     else doClose()
-  }, [key, openId, doClose])
+  }, [key, openId, doClose, isNew, hasDraft])
 
   // More actions (spec 7.4): open full page, copy link, then the collection's actions.
   const listPath = basePath ?? `/${key}`
@@ -163,11 +187,22 @@ export function Collection<T extends RowData, C = void>({
     action: ActionDefinition
     record: T
   } | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const announce = useCallback((text: string) => {
-    setNotice(text)
-    setTimeout(() => setNotice(null), 2500)
-  }, [])
+  const [notice, setNotice] = useState<{
+    text: string
+    action?: { label: string; run: () => void }
+  } | null>(null)
+  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const announce = useCallback(
+    (text: string, action?: { label: string; run: () => void }) => {
+      setNotice({ text, action })
+      clearTimeout(noticeTimer.current)
+      noticeTimer.current = setTimeout(
+        () => setNotice(null),
+        action ? 5000 : 2500,
+      )
+    },
+    [],
+  )
   const allowedActions = useCallback(
     (record: T) =>
       (definition.actions ?? []).filter(
@@ -221,12 +256,62 @@ export function Collection<T extends RowData, C = void>({
       announce(t('collection:actions.failed'))
     }
   }
+  const newDefaults = useCallback((): Partial<T> => {
+    const values = {
+      ...definition.create?.defaults(context as C),
+    } as Partial<T>
+    for (const filter of definition.filters ?? []) {
+      const chosen = listing.filters[filter.id] ?? []
+      if (chosen.length === 1 && filter.patch)
+        Object.assign(values, filter.patch(chosen[0]))
+    }
+    return values
+  }, [definition.create, definition.filters, listing.filters, context])
+  const createRecord = useCallback(
+    async (draft: Partial<T>) => {
+      if (!source.create) throw new Error(`${key} cannot be created`)
+      const created = await source.create(draft, context as C)
+      const createdId = getId(created)
+      cache.created(queryClient, keys.list(key, context, state.query), created)
+      const params = new URLSearchParams(window.location.search)
+      params.delete('new')
+      params.set('open', createdId)
+      setSearchParams(params, { replace: true, state: entryState() })
+      announce(t('collection:create.created'), {
+        label: t('collection:create.undo'),
+        run: () => {
+          void source.remove?.(createdId, context as C).then(() => {
+            cache.removed(queryClient, key, createdId, getId)
+            if (
+              new URLSearchParams(window.location.search).get('open') ===
+              createdId
+            )
+              doClose()
+          })
+        },
+      })
+    },
+    [
+      source,
+      key,
+      context,
+      getId,
+      queryClient,
+      state.query,
+      announce,
+      t,
+      doClose,
+    ],
+  )
   const unavailable = useCallback(
     (id: Id) =>
       cache.removed(queryClient, key, id, getId, { keepRecord: true }),
     [queryClient, key, getId],
   )
-  const panelOpen = Boolean(definition.panel && openId)
+  const panelOpen = Boolean(definition.panel && (openId || isNew))
+  const canCreate = Boolean(
+    definition.create && definition.panel && source.create,
+  )
 
   /** With the panel open, ↑ and ↓ open the previous or next record; Escape closes it. */
   function onKeyDown(event: KeyboardEvent) {
@@ -239,7 +324,8 @@ export function Collection<T extends RowData, C = void>({
       close()
       return
     }
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    if (!openId || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'))
+      return
     const index = list.items.findIndex((item) => getId(item) === openId)
     const next = list.items[index + (event.key === 'ArrowDown' ? 1 : -1)]
     if (next) {
@@ -311,15 +397,47 @@ export function Collection<T extends RowData, C = void>({
         onCancel={() => setLeaving(false)}
       />
       <p aria-live="polite" className="sr-only">
-        {notice}
+        {notice?.text}
       </p>
       <Show when={notice}>
-        {(text) => (
-          <p className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-[var(--field-radius)] bg-foreground px-4 py-2 text-background shadow-md">
-            {text}
-          </p>
+        {(shown) => (
+          <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-[var(--field-radius)] bg-foreground px-4 py-2 text-background shadow-md">
+            <span>{shown.text}</span>
+            <Show as="span" when={shown.action}>
+              {(action) => (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotice(null)
+                    action.run()
+                  }}
+                  className="font-medium underline underline-offset-2"
+                >
+                  {action.label}
+                </button>
+              )}
+            </Show>
+          </div>
         )}
       </Show>
+      <ConfirmDialog
+        open={discarding}
+        title={t('collection:create.discardTitle')}
+        text={t('collection:create.discardText')}
+        confirm={t('collection:create.discard')}
+        cancel={t('collection:description.keepEditing')}
+        danger
+        onConfirm={() => {
+          setDiscarding(false)
+          try {
+            sessionStorage.removeItem(newRecordKey(key))
+          } catch {
+            // storage blocked: nothing kept
+          }
+          doClose()
+        }}
+        onCancel={() => setDiscarding(false)}
+      />
     </>
   )
 
@@ -356,6 +474,11 @@ export function Collection<T extends RowData, C = void>({
           <span aria-live="polite" className="text-muted">
             {list.data ? count : null}
           </span>
+          <Show as="span" when={canCreate} className="ms-auto">
+            <Button look="primary" onPress={startNew}>
+              {definition.create ? t(definition.create.add) : null}
+            </Button>
+          </Show>
         </div>
 
         {(narrowed || list.items.length > 0) && (
@@ -404,6 +527,11 @@ export function Collection<T extends RowData, C = void>({
                   {t(definition.i18n.empty.title)}
                 </h2>
                 <p className="text-muted">{t(definition.i18n.empty.text)}</p>
+                <Show when={canCreate} className="mt-3">
+                  <Button look="primary" onPress={startNew}>
+                    {definition.create ? t(definition.create.add) : null}
+                  </Button>
+                </Show>
               </div>
             </Match>
             <Match when={list.items.length > 0}>
@@ -440,6 +568,16 @@ export function Collection<T extends RowData, C = void>({
         </div>
       </div>
 
+      {definition.panel && isNew && !openId && (
+        <NewRecord
+          key="new"
+          definition={definition}
+          panel={definition.panel}
+          defaults={newDefaults()}
+          onCreated={createRecord}
+          onClose={close}
+        />
+      )}
       {definition.panel && openId && (
         <RecordPanel
           key={definition.key}

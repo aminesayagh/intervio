@@ -55,3 +55,6 @@ export function isViewOnly<T>(
   ]
   return !editable.some((id) => canEdit(record, id))
 }
+
+/** Where the tab keeps a new record's input (spec 6.1); its presence means "typed". */
+export const newRecordKey = (key: string) => `intervio.collection.${key}.new`

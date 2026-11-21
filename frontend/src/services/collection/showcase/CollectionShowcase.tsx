@@ -39,10 +39,11 @@ export default function CollectionShowcase() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <details className="rounded-[var(--field-radius)] border border-dashed border-border p-3">
+    <>
+      {/* Floating in a corner, so the page itself never scrolls: only the list does. */}
+      <details className="fixed right-4 bottom-4 z-20 max-w-[calc(100vw-2rem)] rounded-[var(--field-radius)] border border-dashed border-border bg-background p-3 shadow-md">
         <summary className="cursor-pointer text-muted">
-          Collection showcase (development only): switches
+          Showcase switches (development only)
         </summary>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <Segmented
@@ -85,6 +86,6 @@ export default function CollectionShowcase() {
       </details>
 
       <Collection key={items} definition={definitions[items]} />
-    </div>
+    </>
   )
 }

@@ -76,7 +76,10 @@ export function Collection<T extends RowData, C = void>({
         </span>
       </div>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="scroll-quiet min-h-0 flex-1 overflow-y-auto"
+      >
         {list.isPending ? (
           <Placeholders />
         ) : list.isError && !list.data ? (

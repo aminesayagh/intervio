@@ -21,7 +21,8 @@
     "notes": "Notes",
     "location": "Location",
     "icon": "Icon",
-    "avatar": "Picture"
+    "avatar": "Picture",
+    "files": "Files"
   },
   "status": {
     "draft": "Draft",

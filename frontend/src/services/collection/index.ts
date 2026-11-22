@@ -13,6 +13,7 @@ export type {
   AvatarField,
   CheckboxField,
   FieldDefinition,
+  FileField,
   IconField,
   LinkField,
   MultiSelectField,

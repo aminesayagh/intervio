@@ -95,6 +95,12 @@
     "remove": "Retirer",
     "pictureType": "Ce fichier n’est pas une image ({{types}}).",
     "pictureSize": "L’image dépasse {{size}} Mo.",
-    "uploadFailed": "Le fichier n’a pas pu être téléversé."
+    "uploadFailed": "Le fichier n’a pas pu être téléversé.",
+    "files_one": "{{count}} fichier",
+    "files_other": "{{count}} fichiers",
+    "addFiles": "+ Ajouter des fichiers",
+    "removeFile": "Retirer {{name}}",
+    "fileType": "{{name}} n’est pas un document accepté ici.",
+    "fileSize": "{{name}} dépasse {{size}} Mo."
   }
 }

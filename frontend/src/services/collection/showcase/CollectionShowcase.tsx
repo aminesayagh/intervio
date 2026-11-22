@@ -34,6 +34,7 @@ const rights = () => ({
           'location',
           'icon',
           'avatar',
+          'files',
           'description',
         ]
       : rightsChoice === 'status'

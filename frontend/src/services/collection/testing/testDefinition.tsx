@@ -1,10 +1,12 @@
 import { addTranslations } from '../../i18n'
 import { AvatarImage } from '../values/AvatarCell'
+import { FileCount, FileList } from '../values/FileCell'
 import { memorySrc, memoryUpload } from './memoryFiles'
 import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
   AvatarField,
+  FileField,
   CheckboxField,
   IconField,
   RichTextField,
@@ -104,6 +106,13 @@ const avatar: AvatarField<Item> = {
 const avatarOf = (item: Item) => (
   <AvatarImage edit={avatar} file={item.avatar} look="cell" />
 )
+const files: FileField<Item> = {
+  type: 'file',
+  value: (item) => item.files,
+  patch: (files) => ({ files }),
+  upload: memoryUpload,
+  src: memorySrc,
+}
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -137,6 +146,7 @@ export function itemDefinition(
         location: '',
         icon: null,
         avatar: null,
+        files: [],
         description: '',
         linkedTo: [],
         updatedAt: new Date().toISOString(),
@@ -265,6 +275,12 @@ export function itemDefinition(
           field: avatar,
         },
         {
+          id: 'files',
+          label: 'columns.files',
+          value: (item) => <FileList files={item.files} src={memorySrc} />,
+          field: files,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -320,6 +336,7 @@ export function itemDefinition(
       'location',
       'icon',
       'avatar',
+      'files',
     ],
     columns: [
       {
@@ -426,6 +443,13 @@ export function itemDefinition(
         width: 80,
         cell: avatarOf,
         field: avatar,
+      },
+      {
+        id: 'files',
+        label: 'columns.files',
+        width: 110,
+        cell: (item) => <FileCount files={item.files} />,
+        field: files,
       },
       {
         id: 'updated',

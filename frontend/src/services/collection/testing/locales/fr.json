@@ -21,7 +21,8 @@
     "notes": "Notes",
     "location": "Adresse",
     "icon": "Icône",
-    "avatar": "Image"
+    "avatar": "Image",
+    "files": "Fichiers"
   },
   "status": {
     "draft": "Brouillon",

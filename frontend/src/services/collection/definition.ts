@@ -113,6 +113,22 @@ export type AvatarField<T> = {
   shape?: 'round' | 'square'
 }
 
+/**
+ * Files attached to the record (decision 133): listed in the panel, counted in the
+ * table. Where files go is the collection's choice, through its `upload`.
+ */
+export type FileField<T> = {
+  type: 'file'
+  value: (record: T) => StoredFile[]
+  patch: (files: StoredFile[]) => Partial<T>
+  upload: (file: File) => Promise<StoredFile>
+  /** The address that opens a file. */
+  src: (file: StoredFile) => string
+  /** Accepted types (default: documents, as the files service) and size (default 10 MB). */
+  extensions?: string[]
+  maxMb?: number
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -142,6 +158,7 @@ export type FieldDefinition<T> =
   | CheckboxField<T>
   | IconField<T>
   | AvatarField<T>
+  | FileField<T>
   | LinkField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */

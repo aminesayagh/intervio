@@ -16,6 +16,7 @@ export type Item = {
   location: string
   icon: string | null // a Lucide name
   avatar: StoredFile | null
+  files: StoredFile[]
   tags: string[]
   due: string | null // '2026-12-01'
   description: string // Markdown
@@ -48,6 +49,21 @@ export function makeItems(n: number): Item[] {
       website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
       email: index % 5 === 4 ? '' : `item${number}@example.com`,
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      // None, one or two files, in turn.
+      files: [
+        {
+          id: `plan-${number}`,
+          name: `plan-${number}.pdf`,
+          contentType: 'application/pdf',
+          sizeBytes: 245_760,
+        },
+        {
+          id: `list-${number}`,
+          name: `checklist-${number}.xlsx`,
+          contentType: 'application/vnd.ms-excel',
+          sizeBytes: 49_152,
+        },
+      ].slice(0, index % 3),
       avatar:
         index % 3 === 0
           ? {

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../ui-kit'
-import type { TextEdit } from '../definition'
+import type { TextField } from '../definition'
 
 /**
  * A table cell whose text is edited in place (spec 7.3.1). It looks exactly like the
@@ -21,7 +21,7 @@ export function EditableCell<T>({
   onInvalid,
 }: {
   record: T
-  edit: TextEdit<T>
+  edit: TextField<T>
   label: string
   namespace: string
   save: (patch: Partial<T>) => Promise<void>

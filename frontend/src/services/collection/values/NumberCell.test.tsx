@@ -64,6 +64,7 @@ test('a float shows its decimals, and a step adds its smallest unit', async () =
     <NumberCell
       record={{ price: 2.5 as number | null }}
       edit={{
+        type: 'number',
         value: (r) => r.price,
         patch: (price) => ({ price }),
         decimals: 2,

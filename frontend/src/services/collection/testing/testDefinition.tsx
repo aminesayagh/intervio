@@ -1,5 +1,10 @@
 import { addTranslations } from '../../i18n'
-import type { CollectionDefinition, NumberEdit } from '../definition'
+import type {
+  CollectionDefinition,
+  NumberField,
+  SelectField,
+  TextField,
+} from '../definition'
 import type { DataSource } from '../types'
 import { Avatar, Day, StatusChip, TypeChip, UpdatedOn } from './ItemParts'
 import { itemSource, OWNERS, STATUSES, type Item } from './items'
@@ -8,14 +13,37 @@ import fr from './locales/fr.json'
 
 addTranslations('test-items', { en, fr })
 
-/** The test collection's definition (spec 15.2): the wrapper is tested and shown with it. */
+/** The fields, shared by the table and the panel (spec 7.3.0). */
+const name: TextField<Item> = {
+  type: 'text',
+  value: (item) => item.name,
+  validate: (text) => (text ? undefined : 'errors.nameRequired'),
+  patch: (name) => ({ name }),
+}
+const status: SelectField<Item> = {
+  type: 'select',
+  options: STATUSES.map((status) => ({
+    id: status,
+    label: `status.${status}`,
+  })),
+  value: (item) => item.status,
+  patch: (status) => ({ status: status as Item['status'] }),
+}
+const owner: SelectField<Item> = {
+  type: 'select',
+  options: OWNERS.map((owner) => ({ id: owner, label: owner })),
+  value: (item) => item.owner,
+  patch: (owner) => ({ owner }),
+}
 /** The quantity: a whole number of at least 1, or none. */
-const quantity: NumberEdit<Item> = {
+const quantity: NumberField<Item> = {
+  type: 'number',
   value: (item) => item.quantity,
   patch: (quantity) => ({ quantity }),
   min: 1,
 }
 
+/** The test collection's definition (spec 15.2): the wrapper is tested and shown with it. */
 export function itemDefinition(
   source: DataSource<Item> = itemSource(),
   key = 'test-items',
@@ -69,25 +97,14 @@ export function itemDefinition(
     panel: {
       type: () => <TypeChip />,
       title: (item) => item.name,
-      titleEdit: {
-        value: (item) => item.name,
-        validate: (text) => (text ? undefined : 'errors.nameRequired'),
-        patch: (name) => ({ name }),
-      },
+      titleEdit: name,
       subtitle: (item) => <UpdatedOn iso={item.updatedAt} />,
       properties: [
         {
           id: 'status',
           label: 'columns.status',
           value: (item) => <StatusChip status={item.status} />,
-          choose: {
-            options: STATUSES.map((status) => ({
-              id: status,
-              label: `status.${status}`,
-            })),
-            value: (item) => item.status,
-            patch: (status) => ({ status: status as Item['status'] }),
-          },
+          field: status,
         },
         {
           id: 'owner',
@@ -98,17 +115,13 @@ export function itemDefinition(
               {item.owner}
             </span>
           ),
-          choose: {
-            options: OWNERS.map((owner) => ({ id: owner, label: owner })),
-            value: (item) => item.owner,
-            patch: (owner) => ({ owner }),
-          },
+          field: owner,
         },
         {
           id: 'quantity',
           label: 'columns.quantity',
           value: (item) => item.quantity ?? '—',
-          number: quantity,
+          field: quantity,
         },
         {
           id: 'updated',
@@ -157,11 +170,7 @@ export function itemDefinition(
         label: 'columns.name',
         sort: 'asc',
         cell: (item) => item.name,
-        edit: {
-          value: (item) => item.name,
-          validate: (text) => (text ? undefined : 'errors.nameRequired'),
-          patch: (name) => ({ name }),
-        },
+        field: name,
       },
       {
         id: 'status',
@@ -169,24 +178,13 @@ export function itemDefinition(
         width: 140,
         sort: 'asc',
         cell: (item) => <StatusChip status={item.status} />,
-        choose: {
-          options: STATUSES.map((status) => ({
-            id: status,
-            label: `status.${status}`,
-          })),
-          value: (item) => item.status,
-          patch: (status) => ({ status: status as Item['status'] }),
-        },
+        field: status,
       },
       {
         id: 'owner',
         label: 'columns.owner',
         width: 200,
-        choose: {
-          options: OWNERS.map((owner) => ({ id: owner, label: owner })),
-          value: (item) => item.owner,
-          patch: (owner) => ({ owner }),
-        },
+        field: owner,
         cell: (item) => (
           <span className="flex items-center gap-2">
             <Avatar name={item.owner} />
@@ -200,7 +198,7 @@ export function itemDefinition(
         width: 110,
         sort: 'asc',
         cell: (item) => item.quantity ?? <span className="text-muted">—</span>,
-        number: quantity,
+        field: quantity,
       },
       {
         id: 'updated',

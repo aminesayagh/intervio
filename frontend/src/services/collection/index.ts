@@ -2,8 +2,6 @@ export { Collection } from './Collection'
 export { cache, keys, useCollectionQuery } from './data/collectionQuery'
 export type {
   ActionDefinition,
-  ChoiceEdit,
-  NumberEdit,
   CollectionDefinition,
   ColumnDefinition,
   FilterDefinition,
@@ -11,7 +9,10 @@ export type {
   PropertyDefinition,
   Rights,
   SectionDefinition,
-  TextEdit,
+  FieldDefinition,
+  NumberField,
+  SelectField,
+  TextField,
 } from './definition'
 export { memorySource, type MemorySettings } from './data/memorySource'
 export { restSource, type RestOptions } from './data/restSource'

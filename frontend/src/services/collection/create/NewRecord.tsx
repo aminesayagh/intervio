@@ -132,16 +132,14 @@ export function NewRecord<T, C>({
 
         <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
           {panel.properties
-            .filter(
-              (property) => property.edit || property.number || property.choose,
-            )
+            .filter((property) => property.field)
             .map((property) => (
               <div key={property.id} className="contents">
                 <dt className="text-muted">{t(property.label)}</dt>
                 <dd className="min-w-0">
                   <ValueField
                     record={record}
-                    target={property}
+                    field={property.field}
                     allowed
                     read={property.value}
                     label={t(property.label)}

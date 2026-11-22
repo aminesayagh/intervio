@@ -84,7 +84,7 @@ export function RecordBody<T, C>({
               <dd className="min-w-0">
                 <ValueField
                   record={shown}
-                  target={property}
+                  field={property.field}
                   allowed={canEdit(shown, property.id)}
                   read={property.value}
                   label={t(property.label)}

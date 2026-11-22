@@ -861,7 +861,7 @@ function RecordTable<T extends RowData, C>({
           cell: (info) => (
             <ValueField
               record={info.row.original}
-              target={column}
+              field={column.field}
               allowed={canEdit(info.row.original, column.id)}
               read={column.cell}
               label={t(column.label)}

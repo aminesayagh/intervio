@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { Button, Input, NumberField } from 'react-aria-components'
+import {
+  Button,
+  Input,
+  NumberField as AriaNumberField,
+} from 'react-aria-components'
 import { cn, Icon } from '../../ui-kit'
-import type { NumberEdit } from '../definition'
+import type { NumberField } from '../definition'
 
 /**
  * A number edited in place (spec 7.3): React Aria's NumberField formats it for the
@@ -19,7 +23,7 @@ export function NumberCell<T>({
   look = 'cell',
 }: {
   record: T
-  edit: NumberEdit<T>
+  edit: NumberField<T>
   label: string
   save: (patch: Partial<T>) => Promise<void>
   look?: 'cell' | 'panel'
@@ -45,7 +49,7 @@ export function NumberCell<T>({
   const step =
     'flex h-[11px] w-4 cursor-pointer items-center justify-center rounded-[2px] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-1 data-[focus-visible]:outline-foreground data-[disabled]:cursor-default data-[disabled]:opacity-40'
   return (
-    <NumberField
+    <AriaNumberField
       aria-label={label}
       value={shown ?? NaN}
       onChange={(value) => void commit(value)}
@@ -86,6 +90,6 @@ export function NumberCell<T>({
           <Icon name="lucide/chevron-down" size={10} />
         </Button>
       </span>
-    </NumberField>
+    </AriaNumberField>
   )
 }

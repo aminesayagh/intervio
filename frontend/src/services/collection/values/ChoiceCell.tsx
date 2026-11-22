@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../ui-kit'
-import type { ChoiceEdit } from '../definition'
+import type { SelectField } from '../definition'
 import { ChoiceMenu, MenuPopover } from '../parts'
 
 /**
@@ -21,7 +21,7 @@ export function ChoiceCell<T>({
   look = 'cell',
 }: {
   record: T
-  choose: ChoiceEdit<T>
+  choose: SelectField<T>
   /** The column's display, for a record (with the chosen value while it saves). */
   render: (record: T) => ReactNode
   label: string

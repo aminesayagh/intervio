@@ -258,6 +258,29 @@ On load, in this order:
 - **Only one value at a time:** opening another field first cancels the open one if it is unchanged, and asks otherwise.
 - **After a save,** the record is updated in every loaded page and in the panel (section 8.3).
 
+### 7.3.0 Field types
+
+Decision 133. A column or a property says how its value shows and is edited with one `field`, whose `type` is one of:
+
+| Type | Read view | Editor | Built on |
+|---|---|---|---|
+| `text` | the text | in place, saved when left | — |
+| `richText` | formatted Markdown; the table shows the first line | panel: the Markdown editor (7.6); table: opens the record | react-markdown |
+| `number` | formatted, with `decimals` | number field with steppers | React Aria NumberField |
+| `select` | its chip | menu, saved on choice | React Aria Menu |
+| `multiSelect` | chips (the table: the first ones, then "+n") | menu with checkmarks, saved when it closes | React Aria Menu |
+| `date` | the date in the user's language | date field and calendar; optional time | React Aria DatePicker |
+| `checkbox` | a checkbox | saved on click | React Aria Checkbox |
+| `url` | the link (its domain), in a new tab | text field, checked as a web address | — |
+| `email` | a `mailto:` link | text field, checked as an email address | — |
+| `phone` | a `tel:` link | text field: digits, spaces, a leading + | — |
+| `location` | the address, with a link to open it in a map | text field | — |
+| `avatar` | the uploaded picture | upload or replace, through the files service | files service |
+| `icon` | the icon | a grid of Lucide icons in a popover, with search | Lucide files |
+| `file` | table: the count; panel: the list with type and size | panel: add (drop or browse) and remove; table: opens the record | files service |
+
+Every type follows the same rules: read view only without the right; saved when left, chosen or toggled; a refused change goes back and is reported (7.8).
+
 ### 7.3.1 Showing what can be edited
 
 - **In the panel:** an editable value looks like plain text until the pointer is over it or it has the keyboard focus. It then shows a light field (grey background), with no icon. Clicking anywhere on that field starts editing. Read-only values (dates, "Added by…", computed values) never show it, and the pointer stays an arrow over them.

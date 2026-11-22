@@ -1,26 +1,9 @@
 import type { ReactNode } from 'react'
 import { cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
-import type { ChoiceEdit, NumberEdit, TextEdit } from '../definition'
+import type { FieldDefinition } from '../definition'
 import { EditableCell } from './EditableCell'
 import { NumberCell } from './NumberCell'
-
-/** How a value shows (spec 7.7): a text field, a menu, or plain text without the right. */
-type Editor = 'edit' | 'number' | 'choose' | 'read'
-
-const editorOf = (
-  target: { edit?: unknown; number?: unknown; choose?: unknown },
-  allowed: boolean,
-): Editor =>
-  !allowed
-    ? 'read'
-    : target.edit
-      ? 'edit'
-      : target.number
-        ? 'number'
-        : target.choose
-          ? 'choose'
-          : 'read'
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -29,7 +12,7 @@ const editorOf = (
  */
 export function ValueField<T>({
   record,
-  target,
+  field,
   allowed,
   read,
   label,
@@ -39,7 +22,8 @@ export function ValueField<T>({
   onInvalid,
 }: {
   record: T
-  target: { edit?: TextEdit<T>; number?: NumberEdit<T>; choose?: ChoiceEdit<T> }
+  /** How it is edited; without it (or without the right), it is read only. */
+  field?: FieldDefinition<T>
   /** The person may change this value. */
   allowed: boolean
   /** The value as plain display (also the menu's button content). */
@@ -55,39 +39,42 @@ export function ValueField<T>({
     <Variant
       as="span"
       className={cn('block min-w-0', look === 'cell' && 'truncate')}
-      value={editorOf(target, allowed)}
+      value={allowed && field ? field.type : 'read'}
       views={{
-        edit: () => (
-          <EditableCell
-            record={record}
-            edit={target.edit!}
-            label={label}
-            namespace={namespace}
-            save={save}
-            look={look}
-            onInvalid={onInvalid}
-          />
-        ),
-        number: () => (
-          <NumberCell
-            record={record}
-            edit={target.number!}
-            label={label}
-            save={save}
-            look={look}
-          />
-        ),
-        choose: () => (
-          <ChoiceCell
-            record={record}
-            choose={target.choose!}
-            render={read}
-            label={label}
-            namespace={namespace}
-            save={save}
-            look={look}
-          />
-        ),
+        text: () =>
+          field?.type === 'text' && (
+            <EditableCell
+              record={record}
+              edit={field}
+              label={label}
+              namespace={namespace}
+              save={save}
+              look={look}
+              onInvalid={onInvalid}
+            />
+          ),
+        number: () =>
+          field?.type === 'number' && (
+            <NumberCell
+              record={record}
+              edit={field}
+              label={label}
+              save={save}
+              look={look}
+            />
+          ),
+        select: () =>
+          field?.type === 'select' && (
+            <ChoiceCell
+              record={record}
+              choose={field}
+              render={read}
+              label={label}
+              namespace={namespace}
+              save={save}
+              look={look}
+            />
+          ),
         read: () => read(record),
       }}
     />

@@ -13,24 +13,22 @@ export type ColumnDefinition<T> = {
    * direction it takes when first chosen (a date usually starts newest first).
    */
   sort?: SortDirection
-  /** Set when the column's text can be edited in its cell (spec 7.3.1). */
-  edit?: TextEdit<T>
-  /** Set when the column's value is chosen from a list in its cell (a status). */
-  choose?: ChoiceEdit<T>
-  /** Set when the column's number is edited in its cell, with steppers. */
-  number?: NumberEdit<T>
+  /** How the value is edited in its cell (spec 7.3.0); without it, it is read only. */
+  field?: FieldDefinition<T>
 }
 
-/** How a column's value is chosen in place: the choices, the current one, the change. */
-export type ChoiceEdit<T> = {
-  /** Each choice's id, and its label as a translation key. */
-  options: { id: string; label: string }[]
+/** A text edited in place: read it, check it, turn it into a change. */
+export type TextField<T> = {
+  type: 'text'
   value: (record: T) => string
-  patch: (id: string) => Partial<T>
+  /** A translation key (in the collection's namespace) when the text is refused. */
+  validate?: (text: string) => string | undefined
+  patch: (text: string) => Partial<T>
 }
 
-/** How a number is edited in place: read it, its decimals and limits, the change. */
-export type NumberEdit<T> = {
+/** A number edited in place, with steppers: its decimals and limits. */
+export type NumberField<T> = {
+  type: 'number'
   /** null: no value (the field is empty). */
   value: (record: T) => number | null
   patch: (value: number | null) => Partial<T>
@@ -42,13 +40,17 @@ export type NumberEdit<T> = {
   step?: number
 }
 
-/** How a column's text is edited in place: read it, check it, turn it into a change. */
-export type TextEdit<T> = {
+/** One value chosen from a list (a status): the choices, the current one, the change. */
+export type SelectField<T> = {
+  type: 'select'
+  /** Each choice's id, and its label as a translation key. */
+  options: { id: string; label: string }[]
   value: (record: T) => string
-  /** A translation key (in the collection's namespace) when the text is refused. */
-  validate?: (text: string) => string | undefined
-  patch: (text: string) => Partial<T>
+  patch: (id: string) => Partial<T>
 }
+
+/** How a value shows and is edited, by its type (spec 7.3.0, decision 133). */
+export type FieldDefinition<T> = TextField<T> | NumberField<T> | SelectField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */
 export type PropertyDefinition<T> = {
@@ -56,12 +58,8 @@ export type PropertyDefinition<T> = {
   /** Translation key of the label. */
   label: string
   value: (record: T) => ReactNode
-  /** Set when the value's text can be edited in place (when the rights allow it). */
-  edit?: TextEdit<T>
-  /** Set when the value is chosen from a list in place (when the rights allow it). */
-  choose?: ChoiceEdit<T>
-  /** Set when the value is a number edited in place, with steppers. */
-  number?: NumberEdit<T>
+  /** How the value is edited in place, when the rights allow it (spec 7.3.0). */
+  field?: FieldDefinition<T>
 }
 
 /** A section of linked records in the panel; it shows its first five (spec 7, 12.1). */
@@ -78,7 +76,7 @@ export type PanelDefinition<T> = {
   type: (record: T) => ReactNode
   title: (record: T) => string
   /** Set when the title can be edited in place (right id: "title"). */
-  titleEdit?: TextEdit<T>
+  titleEdit?: TextField<T>
   /** The line under the title, such as who added the record and when. */
   subtitle?: (record: T) => ReactNode
   properties: PropertyDefinition<T>[]

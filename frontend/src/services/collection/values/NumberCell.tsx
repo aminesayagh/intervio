@@ -56,14 +56,19 @@ export function NumberCell<T>({
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
       }}
-      className="group/number relative flex min-w-0 items-center"
+      className={cn(
+        'group/number relative flex min-w-0 items-center',
+        // In the panel the field is as wide as its number (the browser's
+        // field-sizing), never the whole row.
+        look === 'panel' && '-ms-2 w-fit max-w-full',
+      )}
     >
       <Input
         placeholder="—"
         className={cn(
           'w-full min-w-0 cursor-text bg-transparent p-0 pe-6 tabular-nums outline-none placeholder:text-muted',
           look === 'panel' &&
-            '-mx-2 rounded-[var(--field-radius)] px-2 py-1 pe-8 hover:bg-default focus:bg-default',
+            'w-auto min-w-14 rounded-[var(--field-radius)] px-2 py-1 pe-6 [field-sizing:content] hover:bg-default focus:bg-default',
         )}
       />
       <span

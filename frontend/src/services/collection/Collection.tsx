@@ -3,6 +3,8 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  memo,
+  useDeferredValue,
   useMemo,
   useRef,
   useState,
@@ -822,7 +824,16 @@ export function Collection<T, C = void>({
     }
     return fitting.join(',')
   })()
-  const shownColumns = useMemo(() => shownKey.split(','), [shownKey])
+  // Columns that come back (the panel closes) are added in the next render, so the
+  // panel leaves first; both in one render were over 200 ms in a production build.
+  // Columns that no longer fit leave at once: the narrower table would lay them out
+  // for nothing.
+  const deferredKey = useDeferredValue(shownKey)
+  const columnsKey =
+    shownKey.split(',').length < deferredKey.split(',').length
+      ? shownKey
+      : deferredKey
+  const shownColumns = useMemo(() => columnsKey.split(','), [columnsKey])
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
 
@@ -1367,7 +1378,7 @@ type SaveShared<T> = (
 ) => Promise<void>
 
 /** One value in its cell: its field when the person may change it, else its display. */
-function CellValue<T, C>({
+function CellValueOf<T, C>({
   definition,
   column,
   record,
@@ -1443,6 +1454,13 @@ function CellValue<T, C>({
     </span>
   )
 }
+
+/**
+ * Rendered again only when its own props change: when the panel opens or closes, the
+ * table's columns change and every row is built again, but the values already shown
+ * stay as they are.
+ */
+const CellValue = memo(CellValueOf) as typeof CellValueOf
 
 /** Grey rows where records will be: six on the first load, two while more load. */
 function Placeholders({ rows = 6 }: { rows?: number }) {

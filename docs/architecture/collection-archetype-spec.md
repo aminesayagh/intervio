@@ -3,7 +3,7 @@
 **Date:** 2026-11-21  
 **Purpose:** Everything decided for the list-and-record-panel archetype, so it can be built once as a generic wrapper and reused by every collection screen.  
 **Frontend:** React 19, TanStack Query 5, React Aria Components (through `ui-kit/aria`), Motion, i18next, the app's History-API router (`services/navigation`). Libraries and their roles: section 5.
-**Sources:** decisions 109–131 in `use-cases.md`; screens 27–52 on `docs/Intervio.excalidraw` (area "List and record panel"), and 53–61 (area "Messages").
+**Sources:** decisions 109–136 in `use-cases.md`; screens 27–59 on `docs/Intervio.excalidraw` (area "List and record panel"), and 60–68 (area "Messages").
 
 Anything not written here is **not decided**. Open points are listed in section 16.
 
@@ -23,7 +23,6 @@ Anything not written here is **not decided**. Open points are listed in section 
 
 **Out of scope (not decided, not built)**
 
-- Selecting several records and acting on them at once.
 - Choosing, reordering or resizing columns; saved views.
 - Live updates pushed by the server.
 - Favorites, sharing and the activity feed themselves. The panel has their places; each feature fills them when it is built.
@@ -304,7 +303,7 @@ Every type follows the same rules: read view only without the right; saved when 
 
 ### 7.8 Messages
 
-Decision 132; screens 53 to 61. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
+Decision 132; screens 60 to 68. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
 
 - **A message** has a text, a tone (error or confirmation), an optional action (Retry, Undo), a **scope** and an optional **key**.
   - The scope is the interaction it belongs to: a record (`{collection}:record:{id}`) or the collection (`{collection}`). Leaving it removes its messages: opening another record, closing the panel, opening the full page, leaving the collection.
@@ -451,7 +450,7 @@ There is no creation form: a new record is the normal record view, created as so
 - **After creating:** add the record to the first loaded page, and add 1 to the total.
 - **After editing:** replace the record in every loaded page, and in its own query `[key, 'one', id]`.
 - **After archiving or removing:** take the record out of every loaded page, subtract 1 from the total, and close the panel.
-- **After any of these,** refetch the list's pages in the background, so a change of sort position appears.
+- **After any of these,** refetch the list's pages in the background. An edited record keeps its place (section 8.6): the new order shows when the list is sorted again.
 
 ### 8.4 Scroll position
 
@@ -462,7 +461,26 @@ There is no creation form: a new record is the normal record view, created as so
 - When the user leaves the list or the page unloads, the virtualizer's `takeSnapshot()` and `scrollOffset` are kept in session storage with the number of loaded pages (section 6.1).
 - On return, the pages are reloaded (up to 5), then the virtualizer starts with `initialMeasurementsCache` and `initialOffset`, so the list lands at the same place without measuring everything again.
 
-## 9. Layout by screen width
+### 8.5 Selecting several records
+
+Decision 134; screens 53 to 56.
+
+- **Checkboxes:** React Aria's row selection (`selectionMode="multiple"`, `selectionBehavior="toggle"`), a checkbox at the start of each row and in the header. A press on the row still opens the record; only the checkbox selects.
+- **Select all:** the header checkbox selects the loaded rows. Records loaded later are not added.
+- **The bar:** while rows are selected, a bar floats at the bottom of the table: "3 selected", then each action allowed on at least one selected record (spec 7.4 `actions`, checked with `rights`), then a button that clears the selection. Escape clears it too.
+- **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
+- **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
+- **Changes of view:** a new search, filter or sort clears the selection.
+- **Changing several at once** (decision 135; screens 57, 58): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The editor says "Applies to 3 records". Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
+
+### 8.6 A changed record keeps its place
+
+Decision 136; screens 58, 59.
+
+- **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
+- **The line:** while a record is out of order, a line beside the filters says "Changed records keep their place." with **Sort now**.
+- **Sorted again** when the person presses Sort now, changes the sort, search or filters, clears the selection, opens another record, or reloads the page.
+
 
 `useLayoutMode` reads `matchMedia`: `wide` at 1440 px and more, `medium` from 1024 to 1439 px, `narrow` below 1024 px.
 

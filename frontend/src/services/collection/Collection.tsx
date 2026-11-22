@@ -1,9 +1,3 @@
-import {
-  tableFeatures,
-  useTable,
-  type ColumnDef,
-  type RowData,
-} from '@tanstack/react-table'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   useCallback,
@@ -29,14 +23,24 @@ import {
 } from '../navigation'
 import {
   Button,
+  Cell,
   cn,
+  Column,
   ConfirmDialog,
   foldSidebar,
   Icon,
   Match,
-  type MenuAction,
+  Row,
+  RowCollection,
   Show,
   Switch,
+  Table,
+  TableBody,
+  TableHeader,
+  TableLayout,
+  TableLoadMoreItem,
+  type MenuAction,
+  Virtualizer,
 } from '../ui-kit'
 import { cache, keys, useCollectionQuery } from './data/collectionQuery'
 import type {
@@ -60,13 +64,8 @@ import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import { Toolbar } from './list/Toolbar'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
-import { useCollectionList } from './list/useCollectionList'
 import { ValueField } from './values/ValueField'
-import {
-  isNarrowed,
-  useCollectionState,
-  writeListing,
-} from './list/useCollectionState'
+import { isNarrowed, useCollectionState } from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
 
@@ -74,9 +73,9 @@ addTranslations('collection', { en, fr })
 type More = {
   canLoadMore: boolean
   loadMore: () => void
+  /** The next page is loading. */
+  loading: boolean
   hasMore: boolean
-  pages: number
-  memory: { key: string; address: string }
 }
 
 /**
@@ -85,7 +84,7 @@ type More = {
  * It knows nothing about the records; the definition says how to fetch and show them.
  * It fills the screen's height, and only its list scrolls (spec 8.1).
  */
-export function Collection<T extends RowData, C = void>({
+export function Collection<T, C = void>({
   definition,
   context,
   basePath,
@@ -462,11 +461,6 @@ export function Collection<T extends RowData, C = void>({
   }
 
   const { fetchNextPage } = list
-  const listAddress = writeListing(new URLSearchParams(), listing).toString()
-  const scrollMemory = useMemo(
-    () => ({ key: `intervio.collection.${key}.scroll`, address: listAddress }),
-    [key, listAddress],
-  )
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
   const more: More = {
     canLoadMore:
@@ -474,9 +468,8 @@ export function Collection<T extends RowData, C = void>({
       !list.isFetchingNextPage &&
       !list.isFetchNextPageError,
     loadMore,
+    loading: list.isFetchingNextPage,
     hasMore: list.hasNextPage && !list.isFetchNextPageError,
-    pages: list.data?.pages.length ?? 0,
-    memory: scrollMemory,
   }
 
   // "12 of 42 items" needs the collection's whole total: one small cached request.
@@ -566,11 +559,25 @@ export function Collection<T extends RowData, C = void>({
     definition.columnPriority ?? definition.columns.map((column) => column.id)
   // The same ids keep the same array, so the table's columns (and the fields being
   // edited in them) are not rebuilt on every render.
-  const shownKey = (
-    space
-      ? priority.slice(0, Math.max(1, Math.floor(listWidth / PANEL.column)))
-      : priority
-  ).join(',')
+  // In priority order, while their widths fit (a column without one takes at least
+  // PANEL.column); the first always shows. So every column shown is in view.
+  const shownKey = (() => {
+    if (!space) return priority.join(',')
+    const widths = new Map(
+      definition.columns.map((column) => [
+        column.id,
+        column.width ?? PANEL.column,
+      ]),
+    )
+    const fitting: string[] = []
+    let used = 0
+    for (const id of priority) {
+      used += widths.get(id) ?? PANEL.column
+      if (fitting.length > 0 && used > listWidth) break
+      fitting.push(id)
+    }
+    return fitting.join(',')
+  })()
   const shownColumns = useMemo(() => shownKey.split(','), [shownKey])
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
@@ -681,11 +688,10 @@ export function Collection<T extends RowData, C = void>({
           />
         </Show>
 
-        <div
-          ref={scrollRef}
-          className="scroll-quiet min-h-0 flex-1 overflow-y-auto [--scroll-quiet-top:2rem]"
-        >
-          <Switch>
+        {/* The table scrolls itself (React Aria's virtualized table). */}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Its wrapper passes the height on, so the table can scroll inside it. */}
+          <Switch className="flex min-h-0 flex-1 flex-col">
             <Match when={list.isPending}>
               <Placeholders />
             </Match>
@@ -727,7 +733,6 @@ export function Collection<T extends RowData, C = void>({
               <RecordTable
                 definition={definition}
                 items={list.items}
-                total={list.total}
                 label={t(definition.i18n.title)}
                 scrollRef={scrollRef}
                 more={more}
@@ -742,9 +747,6 @@ export function Collection<T extends RowData, C = void>({
               />
             </Match>
           </Switch>
-          <Show when={list.isFetchingNextPage}>
-            <Placeholders rows={2} />
-          </Show>
           <Show when={list.isFetchNextPageError && !list.isFetchingNextPage}>
             <div
               role="alert"
@@ -821,19 +823,14 @@ export function Collection<T extends RowData, C = void>({
 }
 
 /**
- * The table's features: none. Sorting is done by the server from the address, so the
- * headers change the address directly; the columns that fit are chosen before.
+ * The table (spec 8): React Aria's Table, virtualized (only the rows in view are in
+ * the page), with the next page loaded near the end. A row opens its record
+ * (`onRowAction`); a sortable header sorts through the address; the columns are the
+ * ones that fit, by priority.
  */
-const features = tableFeatures({})
-
-/**
- * The table, on TanStack Table's model. Only the drawn rows are in the page; an empty
- * row above and below them keeps the table's real height, so it stays a real table.
- */
-function RecordTable<T extends RowData, C>({
+function RecordTable<T, C>({
   definition,
   items,
-  total,
   label,
   scrollRef,
   more,
@@ -848,7 +845,6 @@ function RecordTable<T extends RowData, C>({
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
-  total: number | undefined
   label: string
   scrollRef: RefObject<HTMLDivElement | null>
   more: More
@@ -866,217 +862,170 @@ function RecordTable<T extends RowData, C>({
   shown: string[]
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  const columns = useMemo<ColumnDef<typeof features, T>[]>(
-    () =>
-      definition.columns
-        .filter((column) => shown.includes(column.id))
-        .map((column: ColumnDefinition<T>) => ({
-          id: column.id,
-          header: () => t(column.label),
-          cell: (info) => (
-            <ValueField
-              record={info.row.original}
-              field={column.field}
-              allowed={canEdit(info.row.original, column.id)}
-              read={column.cell}
-              label={t(column.label)}
-              namespace={definition.i18n.namespace}
-              save={(patch) =>
-                save(info.row.original, patch, { label: t(column.label) })
-              }
-              onInvalid={(reason) =>
-                report(info.row.original, t(column.label), reason)
-              }
-              look="cell"
-            />
-          ),
-        })),
-    [
-      definition.columns,
-      definition.i18n.namespace,
-      t,
-      save,
-      report,
-      canEdit,
-      shown,
-    ],
+  const columns = definition.columns.filter((column) =>
+    shown.includes(column.id),
   )
-  const table = useTable({
-    features,
-    columns,
-    data: items,
-    getRowId: (record) => definition.getId(record),
-  })
-  const rows = table.getRowModel().rows
-  const virtualizer = useCollectionList({
-    scrollRef,
-    count: rows.length,
-    estimateSize: 49,
-    ...more,
-  })
-  const drawn = virtualizer.getVirtualItems()
-  const before = drawn[0]?.start ?? 0
-  const after = drawn.length
-    ? virtualizer.getTotalSize() - drawn[drawn.length - 1].end
-    : 0
-  const byId = new Map(definition.columns.map((column) => [column.id, column]))
 
   // The open record's row stays in view (after ↑ / ↓, or a link).
-  const openIndex = openId ? rows.findIndex((row) => row.id === openId) : -1
   useEffect(() => {
-    if (openIndex >= 0) virtualizer.scrollToIndex(openIndex, { align: 'auto' })
-  }, [openIndex, virtualizer])
+    if (!openId) return
+    scrollRef.current
+      ?.querySelector(`[data-key="${CSS.escape(openId)}"]`)
+      ?.scrollIntoView?.({ block: 'nearest' })
+  }, [openId, scrollRef])
 
   /**
-   * Three clicks on a header: its first direction, then reversed, then back to the
+   * Three presses on a header: its first direction, then reversed, then back to the
    * collection's default order (which removes the sort from the address).
    */
-  function sortBy(column: ColumnDefinition<T>) {
+  function sortBy(id: string) {
+    const column = definition.columns.find((c) => c.id === id)
+    if (!column) return
     const first = column.sort ?? 'asc'
-    if (sort?.by !== column.id) onSort({ by: column.id, direction: first })
+    if (sort?.by !== id) onSort({ by: id, direction: first })
     else if (sort.direction === first)
-      onSort({ by: column.id, direction: first === 'asc' ? 'desc' : 'asc' })
+      onSort({ by: id, direction: first === 'asc' ? 'desc' : 'asc' })
     else onSort(null)
   }
 
   return (
-    <table
-      aria-label={label}
-      aria-rowcount={(total ?? items.length) + 1}
-      className="w-full table-fixed border-collapse text-start"
+    <Virtualizer
+      layout={TableLayout}
+      layoutOptions={{ rowHeight: 43, headingHeight: 32, loaderHeight: 43 }}
     >
-      <thead className="sticky top-0 z-10 bg-background">
-        {table.getHeaderGroups().map((group) => (
-          <tr key={group.id} aria-rowindex={1}>
-            {group.headers.map((header) => {
-              const column = byId.get(header.column.id)!
-              const sorted = sort?.by === column.id ? sort.direction : null
-              return (
-                <th
-                  key={header.id}
-                  scope="col"
-                  aria-sort={
-                    sorted === 'asc'
-                      ? 'ascending'
-                      : sorted === 'desc'
-                        ? 'descending'
-                        : column.sort
-                          ? 'none'
-                          : undefined
-                  }
-                  style={{ width: column.width }}
-                  className="h-8 px-3 text-start align-middle text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
-                >
-                  <Show
-                    as="span"
-                    when={column.sort}
-                    fallback={<table.FlexRender header={header} />}
-                  >
-                    <button
-                      type="button"
-                      aria-label={t('collection:sortBy', {
-                        column: t(column.label),
-                      })}
-                      onClick={() => sortBy(column)}
-                      className={cn(
-                        '-mx-1 flex items-center gap-1 rounded-[var(--field-radius)] px-1 hover:text-foreground',
-                        sorted && 'text-foreground',
-                      )}
-                    >
-                      <table.FlexRender header={header} />
-                      <Icon
-                        name={
-                          sorted === 'asc'
-                            ? 'lucide/arrow-up'
-                            : sorted === 'desc'
-                              ? 'lucide/arrow-down'
-                              : 'lucide/arrow-up-down'
-                        }
-                        size={12}
-                      />
-                    </button>
-                  </Show>
-                </th>
-              )
-            })}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {before > 0 && (
-          <tr aria-hidden style={{ height: before }}>
-            <td colSpan={columns.length} />
-          </tr>
-        )}
-        {drawn.map((virtual) => {
-          const row = rows[virtual.index]
-          return (
-            <tr
-              key={row.id}
-              data-index={virtual.index}
-              ref={virtualizer.measureElement}
-              aria-rowindex={virtual.index + 2}
-              aria-current={row.id === openId ? 'true' : undefined}
-              tabIndex={onOpen ? 0 : undefined}
-              onClick={(event) => {
-                // An editable cell edits; anywhere else on the row opens the record.
-                const target = event.target as HTMLElement
-                if (!onOpen || target.closest('input, button, a')) return
-                onOpen(row.id)
-              }}
-              onKeyDown={(event) => {
-                if (
-                  event.key === 'Enter' &&
-                  event.target === event.currentTarget
-                )
-                  onOpen?.(row.id)
-              }}
-              className={cn(
-                'group border-b border-border outline-none',
-                onOpen && 'cursor-pointer focus-visible:bg-default',
-                row.id === openId &&
-                  'bg-default shadow-[inset_3px_0_0_var(--foreground)]',
-              )}
+      <Table
+        ref={scrollRef}
+        aria-label={label}
+        sortDescriptor={
+          sort
+            ? {
+                column: sort.by,
+                direction:
+                  sort.direction === 'asc' ? 'ascending' : 'descending',
+              }
+            : undefined
+        }
+        onSortChange={(descriptor) => sortBy(String(descriptor.column))}
+        onRowAction={onOpen ? (key) => onOpen(String(key)) : undefined}
+      >
+        <TableHeader columns={columns}>
+          {(column) => (
+            <Column
+              id={column.id}
+              isRowHeader={column.id === columns[0]?.id}
+              allowsSorting={Boolean(column.sort)}
+              width={column.width ?? '1fr'}
             >
-              {row.getAllCells().map((cell, index) => (
-                <td key={cell.id} className="truncate px-3 py-3 align-middle">
-                  <Show
-                    as="span"
-                    className="block min-w-0 truncate"
-                    when={index === 0 && onOpen}
-                    fallback={<table.FlexRender cell={cell} />}
-                  >
-                    {(openRecord) => (
-                      <span className="flex items-center gap-2">
-                        <span className="min-w-0 flex-1">
-                          <table.FlexRender cell={cell} />
-                        </span>
-                        {/* Shown on the row under the pointer or the focus: opens the record. */}
-                        <button
-                          type="button"
-                          aria-label={t('collection:panel.openRecord', {
-                            name: definition.panel?.title(row.original) ?? '',
-                          })}
-                          onClick={() => openRecord(row.id)}
-                          className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
-                        >
-                          <Icon name="lucide/chevron-right" size={16} />
-                        </button>
-                      </span>
-                    )}
-                  </Show>
-                </td>
-              ))}
-            </tr>
-          )
-        })}
-        {after > 0 && (
-          <tr aria-hidden style={{ height: after }}>
-            <td colSpan={columns.length} />
-          </tr>
-        )}
-      </tbody>
-    </table>
+              {t(column.label)}
+            </Column>
+          )}
+        </TableHeader>
+        <TableBody>
+          <RowCollection
+            items={items}
+            // React Aria keeps the rows it built: what they show besides the record.
+            dependencies={[columns, openId, canEdit, save, report, onOpen]}
+          >
+            {(record) => {
+              const id = definition.getId(record)
+              return (
+                <Row
+                  id={id}
+                  columns={columns}
+                  current={id === openId}
+                  onAction={onOpen ? () => onOpen(id) : undefined}
+                >
+                  {(column) => (
+                    <Cell>
+                      <Show
+                        as="span"
+                        className="block min-w-0 truncate"
+                        when={column.id === columns[0]?.id && onOpen}
+                        fallback={
+                          <CellValue
+                            definition={definition}
+                            column={column}
+                            record={record}
+                            save={save}
+                            report={report}
+                            canEdit={canEdit}
+                          />
+                        }
+                      >
+                        {(openRecord) => (
+                          <span className="flex items-center gap-2">
+                            <span className="min-w-0 flex-1">
+                              <CellValue
+                                definition={definition}
+                                column={column}
+                                record={record}
+                                save={save}
+                                report={report}
+                                canEdit={canEdit}
+                              />
+                            </span>
+                            {/* Shown on the row under the pointer or the focus: opens the record. */}
+                            <button
+                              type="button"
+                              aria-label={t('collection:panel.openRecord', {
+                                name: definition.panel?.title(record) ?? '',
+                              })}
+                              onClick={() => openRecord(id)}
+                              className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                            >
+                              <Icon name="lucide/chevron-right" size={16} />
+                            </button>
+                          </span>
+                        )}
+                      </Show>
+                    </Cell>
+                  )}
+                </Row>
+              )
+            }}
+          </RowCollection>
+          {/* Always here (a wrapper would hide it from React Aria's collection); it
+              asks for a page only when there is one to load. */}
+          <TableLoadMoreItem
+            onLoadMore={() => more.canLoadMore && more.loadMore()}
+            isLoading={more.loading}
+            label={t('collection:loading')}
+          />
+        </TableBody>
+      </Table>
+    </Virtualizer>
+  )
+}
+
+/** One value in its cell: its field when the person may change it, else its display. */
+function CellValue<T, C>({
+  definition,
+  column,
+  record,
+  save,
+  report,
+  canEdit,
+}: {
+  definition: CollectionDefinition<T, C>
+  column: ColumnDefinition<T>
+  record: T
+  save: SaveChange<T>
+  report: ReportInvalid<T>
+  canEdit: (record: T, id: string) => boolean
+}) {
+  const { t } = useTranslation([definition.i18n.namespace, 'collection'])
+  return (
+    <ValueField
+      record={record}
+      field={column.field}
+      allowed={canEdit(record, column.id)}
+      read={column.cell}
+      label={t(column.label)}
+      namespace={definition.i18n.namespace}
+      save={(patch) => save(record, patch, { label: t(column.label) })}
+      onInvalid={(reason) => report(record, t(column.label), reason)}
+      look="cell"
+    />
   )
 }
 

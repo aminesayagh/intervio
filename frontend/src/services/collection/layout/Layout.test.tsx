@@ -46,7 +46,7 @@ async function openPanel(width = 1600) {
 const divider = () =>
   screen.getByRole('separator', { name: 'Resize the panel' })
 const headers = () =>
-  within(screen.getByRole('table'))
+  within(screen.getByRole('grid'))
     .getAllByRole('columnheader')
     .map((header) => header.textContent)
 
@@ -97,7 +97,7 @@ test('the table shows fewer columns as the panel grows, keeping the name', async
   await userEvent.keyboard('{End}')
   expect(headers()).toEqual(['Name', 'Status'])
   await userEvent.click(screen.getByRole('button', { name: 'Close' }))
-  await waitFor(() => expect(headers()).toHaveLength(6))
+  await waitFor(() => expect(headers()).toHaveLength(7))
 })
 
 test('at medium width the sidebar folds while a panel is open', async () => {

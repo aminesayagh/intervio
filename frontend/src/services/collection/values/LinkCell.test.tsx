@@ -9,7 +9,7 @@ import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
 // A wide list, so the website, email and phone columns fit in the table.
-beforeAll(() => stubElementSizes({ width: 2400, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -22,9 +22,9 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 }
 const row = async (n: number) =>
   within(
-    (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
-      n - 1
-    ] as HTMLElement,
+    (await screen.findByRole('grid')).querySelectorAll(
+      '[role="row"][data-key]',
+    )[n - 1] as HTMLElement,
   )
 
 test('a web address typed without https:// is saved with it, and opens in a new tab', async () => {

@@ -9,7 +9,7 @@ import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
 // A wide list, so the Files column fits in the table.
-beforeAll(() => stubElementSizes({ width: 3000, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -31,10 +31,10 @@ const document = (name: string) =>
 
 test('the table shows the count, and clicking it opens the record', async () => {
   show()
-  const table = await screen.findByRole('table')
+  const table = await screen.findByRole('grid')
   // Item 003 has two files.
   const third = within(
-    table.querySelectorAll('tbody tr[data-index]')[2] as HTMLElement,
+    table.querySelectorAll('[role="row"][data-key]')[2] as HTMLElement,
   )
   await userEvent.click(third.getByText('2 files'))
   expect(

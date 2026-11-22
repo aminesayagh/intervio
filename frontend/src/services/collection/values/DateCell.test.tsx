@@ -18,7 +18,7 @@ import { itemDefinition } from '../testing/testDefinition'
 import { DateCell } from './DateCell'
 
 // A wide list, so the Due column fits in the table.
-beforeAll(() => stubElementSizes({ width: 2400, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -33,7 +33,7 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 const due = (scope: HTMLElement) =>
   within(within(scope).getByRole('group', { name: 'Due' }))
 const row = async (n: number) =>
-  (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
+  (await screen.findByRole('grid')).querySelectorAll('[role="row"][data-key]')[
     n - 1
   ] as HTMLElement
 

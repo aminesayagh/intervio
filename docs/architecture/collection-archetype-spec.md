@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-21  
 **Purpose:** Everything decided for the list-and-record-panel archetype, so it can be built once as a generic wrapper and reused by every collection screen.  
-**Frontend:** React 19, TanStack Query 5, TanStack Table 9, TanStack Virtual 3, HeroUI 3, Motion, i18next, the app's History-API router (`services/navigation`). Libraries and their roles: section 5.1.  
+**Frontend:** React 19, TanStack Query 5, React Aria Components (through `ui-kit/aria`), Motion, i18next, the app's History-API router (`services/navigation`). Libraries and their roles: section 5.
 **Sources:** decisions 109–131 in `use-cases.md`; screens 27–52 on `docs/Intervio.excalidraw` (area "List and record panel"), and 53–61 (area "Messages").
 
 Anything not written here is **not decided**. Open points are listed in section 16.
@@ -139,13 +139,12 @@ Usage:
 | Library | Role | Already installed |
 |---|---|---|
 | **TanStack Query 5** | Loading, caching and refetching: `useInfiniteQuery` for the list, `useQuery` for one record, `useMutation` for create, edit and remove | Yes |
-| **TanStack Table 9** (`@tanstack/react-table`) | The table's headless model: columns, header groups, sorting state, column visibility. Built with `useTable({ features, columns, data })` and a stable `tableFeatures({ rowSortingFeature, columnVisibilityFeature })` defined once in the wrapper. Sorting happens on the server: a sortable column's header changes the address directly, so TanStack Table's sorting feature isn't used (it would only mirror the address) | To add |
-| **TanStack Virtual 3** (`@tanstack/react-virtual`) | Draws only the visible cards or rows, measures them (`measureElement`), triggers the next page, and restores the scroll position after a refresh (`takeSnapshot`, `initialMeasurementsCache`, `initialOffset`) | To add |
-| **HeroUI 3** | The visual parts: chips, menus, buttons, fields, dialogs, the table's look. TanStack Table gives the model; the cells are drawn with the app's components | Yes |
+| **React Aria `Table`** (`ui-kit/aria/Table`) | The table itself: a grid with arrow-key navigation, row actions (`onRowAction` opens the record), sorting (`sortDescriptor`), virtualization (`Virtualizer` with `TableLayout`, 43 px rows) and infinite loading (`TableLoadMoreItem`). Editable cells keep their keys and focus through a stand-in for `keyboardNavigationBehavior="tab"` (documented, not yet in react-aria-components 1.22.1), marked in `ui-kit/aria/Table.tsx` to be replaced by that prop | Yes |
+| **React Aria Components** | The visual parts' behavior (menus, fields, dialogs, the table), each styled once in `ui-kit/aria` with the theme tokens | Yes |
 | **Motion** | The panel's slide | Yes |
 | **react-markdown 10** with **remark-gfm 4** | Shows the description formatted, with GitHub-style lists, check lists and tables; raw HTML is not rendered | To add |
 
-TanStack Table and Virtual are headless: they hold logic, not styles. The look stays the app's (CLAUDE.md, visual identity).
+React Aria is unstyled: it holds behavior and accessibility, not styles. The look stays the app's (CLAUDE.md, visual identity).
 
 ### 5.2 Parts
 
@@ -428,7 +427,7 @@ There is no creation form: a new record is the normal record view, created as so
   - first page parameter `null`;
   - next page parameter `lastPage.nextCursor`.
 - **Page size:** 30 records.
-- **Drawing:** the list is virtualized with `useVirtualizer`, so only the visible cards or rows, plus a few around them, are in the page.
+- **Drawing:** the list is virtualized by React Aria's `Virtualizer` with `TableLayout`: only the rows (and the columns) in view are in the page.
   - Rows are measured with `measureElement`, because a row's height depends on its content.
   - Cards use the virtualizer's `lanes` (one lane per column: 3, or 2 while the panel is open).
   - The table keeps its header in place, and rows scroll under it.
@@ -455,6 +454,8 @@ There is no creation form: a new record is the normal record view, created as so
 - **After any of these,** refetch the list's pages in the background, so a change of sort position appears.
 
 ### 8.4 Scroll position
+
+**Set aside (2026-11-22):** the scroll memory built in step 10 was removed when the table moved to React Aria's virtualized Table; how to remember the position is to be decided again. The tab still remembers the search, filters, sort and open record (6.2).
 
 **Built so far (step 10):** one session key per collection (`intervio.collection.<key>.scroll`) holds the list address, the offset and the pages loaded; it is used only when the address matches. The offset is set on the scroll element directly, with no measurement snapshot, so a list of uneven rows can land a row or so off. The tab's list memory (6.2) includes `open`. Panel history waits for step 12, which brings it.
 

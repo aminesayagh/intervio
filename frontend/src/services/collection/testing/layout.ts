@@ -53,6 +53,13 @@ export function stubElementSizes({
     element.hasAttribute('data-index')
       ? { width, height: itemHeight }
       : { width, height }
+  // React Aria's virtualizer also caps what it draws at the window's size: the
+  // window is as large as the area simulated here.
+  for (const [property, value] of [
+    ['innerWidth', width],
+    ['innerHeight', height],
+  ] as const)
+    Object.defineProperty(window, property, { configurable: true, value })
   Element.prototype.getBoundingClientRect = function () {
     const { width: w, height: h } = size(this)
     return {
@@ -81,4 +88,9 @@ export function stubElementSizes({
         return size(this).width
       },
     })
+}
+
+/** The list was scrolled to its end: React Aria's load-more item sees it (test-setup.ts). */
+export function reachListEnd() {
+  ;(globalThis as { reachListEnd?: () => void }).reachListEnd?.()
 }

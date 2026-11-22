@@ -22,7 +22,7 @@ async function quantityOf(row: number) {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
-  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  const rows = within(screen.getByRole('grid')).getAllByRole('row')
   return {
     source,
     field: within(rows[row]).getByRole('textbox', { name: 'Quantity' }),

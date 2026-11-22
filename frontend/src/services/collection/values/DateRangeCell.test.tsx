@@ -9,7 +9,7 @@ import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
 // A wide list, so the Planned column fits in the table.
-beforeAll(() => stubElementSizes({ width: 3000, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -21,7 +21,7 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
   return source
 }
 const row = async (n: number) =>
-  (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
+  (await screen.findByRole('grid')).querySelectorAll('[role="row"][data-key]')[
     n - 1
   ] as HTMLElement
 /** Inside the Planned field. */

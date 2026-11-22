@@ -113,7 +113,7 @@ test('Open full page shows the record as the main view, with a breadcrumb back',
   await waitFor(() => expect(window.location.pathname).toBe(`/items/${id(2)}`))
   const crumbs = await screen.findByRole('navigation', { name: 'Breadcrumb' })
   expect(within(crumbs).getByText('Item 002')).toBeInTheDocument()
-  expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  expect(screen.queryByRole('grid')).not.toBeInTheDocument()
   // The page's menu has no Open full page.
   await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
   expect(screen.queryByRole('menuitem', { name: 'Open full page' })).toBeNull()

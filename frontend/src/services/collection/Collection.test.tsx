@@ -1,11 +1,11 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { cleanup, fireEvent } from '@testing-library/react'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '../i18n'
 import { Collection } from './Collection'
 import { itemSource, makeItems } from './testing/items'
-import { stubElementSizes } from './testing/layout'
+import { reachListEnd, stubElementSizes } from './testing/layout'
 import { renderAt } from './testing/render'
 import { itemDefinition } from './testing/testDefinition'
 
@@ -15,11 +15,17 @@ beforeAll(() =>
 )
 afterEach(cleanup)
 
-/** The list's scroll area, scrolled to its end. */
-function scrollToEnd(container: HTMLElement) {
-  const area = container.querySelector<HTMLElement>('.overflow-y-auto')!
-  area.scrollTop = 100_000
-  fireEvent.scroll(area)
+/**
+ * The list scrolled to its end: the virtualized table draws its last rows and its
+ * load-more item, which then sees the end (React Aria's IntersectionObserver).
+ */
+function scrollToEnd() {
+  const grid = screen.getByRole('grid')
+  act(() => {
+    grid.scrollTop = 1_000_000
+    fireEvent.scroll(grid)
+  })
+  act(() => reachListEnd())
 }
 
 test('the first page shows a header row and the first items, with the total', async () => {
@@ -29,19 +35,22 @@ test('the first page shows a header row and the first items, with the total', as
   )
   expect(await screen.findByText('42 items')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Items' })).toBeInTheDocument()
-  const table = screen.getByRole('table', { name: 'Items' })
+  const table = screen.getByRole('grid', { name: 'Items' })
   const headers = within(table)
     .getAllByRole('columnheader')
     .map((h) => h.textContent)
+  // The columns that fit 1128 px by their widths, in the definition's order.
   expect(headers).toEqual([
     'Name',
     'Status',
     'Owner',
     'Quantity',
     'Active',
+    'Tags',
     'Updated',
   ])
-  expect(table).toHaveAttribute('aria-rowcount', '43')
+  // React Aria counts the rows loaded (the first page of 30, and the header).
+  expect(table).toHaveAttribute('aria-rowcount', '31')
   expect(within(table).getByDisplayValue('Item 001')).toBeInTheDocument()
   // Only the visible rows are drawn, never a later page.
   expect(screen.queryByDisplayValue('Item 031')).not.toBeInTheDocument()
@@ -95,32 +104,26 @@ test('scrolling near the end loads the next page once, until the end', async () 
     calls += 1
     return list(query)
   }
-  const { container } = renderAt(
-    '/items',
-    <Collection definition={itemDefinition(source)} />,
-  )
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('75 items')
   expect(calls).toBe(1)
 
-  scrollToEnd(container)
+  scrollToEnd()
   await waitFor(() => expect(calls).toBe(2))
-  scrollToEnd(container)
+  scrollToEnd()
   await waitFor(() => expect(calls).toBe(3))
   // The last page is loaded: scrolling again asks for nothing more.
-  scrollToEnd(container)
+  scrollToEnd()
   await new Promise((done) => setTimeout(done, 50))
   expect(calls).toBe(3)
 })
 
 test('a failed next page keeps the loaded items and offers Retry', async () => {
   const source = itemSource(makeItems(75))
-  const { container } = renderAt(
-    '/items',
-    <Collection definition={itemDefinition(source)} />,
-  )
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('75 items')
   source.settings.failing = true
-  scrollToEnd(container)
+  scrollToEnd()
   expect(
     await screen.findByText('More records could not be loaded.', undefined, {
       timeout: 3000,
@@ -138,7 +141,7 @@ test('a failed next page keeps the loaded items and offers Retry', async () => {
 
 /** The first row's name: an editable field, so its value. */
 const firstName = () =>
-  within(screen.getByRole('table'))
+  within(screen.getByRole('grid'))
     .getAllByRole('row')[1]
     .querySelector('input')!.value
 
@@ -208,7 +211,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
     'none',
   )
 
-  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
   await waitFor(() => expect(window.location.search).toBe('?sort=name%3Aasc'))
   expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveAttribute(
     'aria-sort',
@@ -216,21 +219,21 @@ test('a column header sorts, then reverses, then goes back to the default order'
   )
   await waitFor(() => expect(firstName()).toBe('Item 001'))
 
-  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
   await waitFor(() => expect(firstName()).toBe('Item 042'))
   expect(window.location.search).toBe('?sort=name%3Adesc')
 
   // A third click goes back to the default order, and the sort leaves the address.
-  await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
+  await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
   await waitFor(() => expect(window.location.search).toBe(''))
   expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
     'aria-sort',
     'none',
   )
-  // Columns without a sort have no button.
+  // Columns without a sort don't offer one.
   expect(
-    screen.queryByRole('button', { name: 'Sort by Owner' }),
-  ).not.toBeInTheDocument()
+    screen.getByRole('columnheader', { name: /Owner/ }),
+  ).not.toHaveAttribute('aria-sort')
 })
 
 test('an address opens the list it describes', async () => {
@@ -267,7 +270,7 @@ test('the default column cycles the same way: chosen, reversed, then no sort', a
   )
   await screen.findByText('42 items')
   const header = () => screen.getByRole('columnheader', { name: /Updated/ })
-  const button = () => screen.getByRole('button', { name: 'Sort by Updated' })
+  const button = () => screen.getByRole('columnheader', { name: /Updated/ })
   expect(header()).toHaveAttribute('aria-sort', 'none')
 
   await userEvent.click(button())
@@ -351,7 +354,7 @@ test('a status is chosen from its chip, and saved at once', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
-  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  const rows = within(screen.getByRole('grid')).getAllByRole('row')
   await userEvent.click(
     within(rows[1]).getByRole('button', { name: 'Status: Draft' }),
   )
@@ -369,7 +372,7 @@ test('a status the server refuses goes back, with a message', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
-  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  const rows = within(screen.getByRole('grid')).getAllByRole('row')
   source.settings.failing = true
   await userEvent.click(
     within(rows[2]).getByRole('button', { name: 'Status: Valid' }),
@@ -391,7 +394,7 @@ test('an owner is chosen from its cell, and saved at once', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
-  const rows = within(screen.getByRole('table')).getAllByRole('row')
+  const rows = within(screen.getByRole('grid')).getAllByRole('row')
   await userEvent.click(
     within(rows[1]).getByRole('button', { name: 'Owner: Julie Moreau' }),
   )
@@ -399,24 +402,6 @@ test('an owner is chosen from its cell, and saved at once', async () => {
     await screen.findByRole('menuitemradio', { name: 'Omar Haddad' }),
   )
   await waitFor(() => expect(source.items()[0].owner).toBe('Omar Haddad'))
-})
-
-test('a refresh reloads the pages seen and lands at the same place', async () => {
-  const { container } = renderAt(
-    '/items',
-    <Collection definition={itemDefinition(itemSource(makeItems(300)))} />,
-    {
-      'intervio.collection.test-items.scroll': JSON.stringify({
-        address: '',
-        offset: 6000,
-        pages: 3,
-      }),
-    },
-  )
-  const area = () => container.querySelector<HTMLElement>('.overflow-y-auto')!
-  // Three pages of 30 rows of 152 px reach past 6000 px.
-  await waitFor(() => expect(area().scrollTop).toBe(6000))
-  expect(screen.queryByDisplayValue('Item 001')).not.toBeInTheDocument()
 })
 
 test('coming back from the sidebar reopens the record open last', async () => {

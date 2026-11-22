@@ -10,7 +10,7 @@ import { itemDefinition } from '../testing/testDefinition'
 import { firstLine } from './markdown'
 
 // A wide list, so the Notes column fits in the table.
-beforeAll(() => stubElementSizes({ width: 2400, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -24,9 +24,9 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 
 test('the table shows the first line, and clicking it opens the record', async () => {
   show()
-  const table = await screen.findByRole('table')
+  const table = await screen.findByRole('grid')
   const first = within(
-    table.querySelectorAll('tbody tr[data-index]')[1] as HTMLElement,
+    table.querySelectorAll('[role="row"][data-key]')[1] as HTMLElement,
   )
   // "## Inspection" without its heading mark.
   await userEvent.click(first.getByText('Inspection'))

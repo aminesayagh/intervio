@@ -32,10 +32,10 @@ test('Open shows the record beside the list, marks its row, and adds it to the a
   expect(within(aside).getByText('Karim Benali')).toBeInTheDocument()
   expect(within(aside).getByText('Linked items')).toBeInTheDocument()
   expect(window.location.search).toBe(`?open=${id(2)}`)
-  const row = within(screen.getByRole('table'))
+  const row = within(screen.getByRole('grid'))
     .getByDisplayValue('Item 002')
-    .closest('tr')!
-  expect(row).toHaveAttribute('aria-current', 'true')
+    .closest('[role="row"]')!
+  expect(row).toHaveAttribute('data-current', 'true')
 })
 
 test('switching records replaces the entry, so × and Back both close', async () => {
@@ -137,7 +137,7 @@ test('the panel edits the title in place, and the list follows', async () => {
   await userEvent.type(title, 'Hydraulic jack{Enter}')
   await waitFor(() => expect(source.items()[0].name).toBe('Hydraulic jack'))
   expect(
-    within(screen.getByRole('table')).getByDisplayValue('Hydraulic jack'),
+    within(screen.getByRole('grid')).getByDisplayValue('Hydraulic jack'),
   ).toBeInTheDocument()
 })
 
@@ -159,7 +159,7 @@ test('the panel chooses a status, and edits the quantity as a number', async () 
 
 test('rights decide value by value, in the table and the panel', async () => {
   const { aside } = await openFirst(() => ({ edit: ['status'] }))
-  const table = screen.getByRole('table')
+  const table = screen.getByRole('grid')
   expect(within(table).queryByRole('textbox')).not.toBeInTheDocument() // names read only
   expect(
     within(table).getAllByRole('button', { name: /^Status:/ }).length,

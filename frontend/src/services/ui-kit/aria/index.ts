@@ -21,3 +21,18 @@ export { NumberInput } from './NumberField'
 export { fieldLook, fieldMargin, focusRing, type FieldLook } from './styles'
 export { Tab, TabList, TabPanel, Tabs } from './Tabs'
 export { TextInput } from './TextField'
+export {
+  Cell,
+  Column,
+  ResizableTableContainer,
+  Row,
+  RowCollection,
+  Table,
+  TableBody,
+  TableHeader,
+  TableLayout,
+  TableLoadMoreItem,
+  Virtualizer,
+  type Selection,
+  type SortDescriptor,
+} from './Table'

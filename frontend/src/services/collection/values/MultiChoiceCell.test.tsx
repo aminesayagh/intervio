@@ -16,7 +16,7 @@ import { itemDefinition } from '../testing/testDefinition'
 import { ChipList } from './ChipList'
 
 // A wide list, so the Tags column fits in the table.
-beforeAll(() => stubElementSizes({ width: 2400, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 function show(rights?: Parameters<typeof itemDefinition>[2]) {
@@ -29,9 +29,9 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 }
 const row = async (n: number) =>
   within(
-    (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
-      n - 1
-    ] as HTMLElement,
+    (await screen.findByRole('grid')).querySelectorAll(
+      '[role="row"][data-key]',
+    )[n - 1] as HTMLElement,
   )
 const check = async (name: string) =>
   userEvent.click(await screen.findByRole('menuitemcheckbox', { name }))

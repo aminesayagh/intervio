@@ -21,9 +21,9 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 }
 const row = async (n: number) =>
   within(
-    (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
-      n - 1
-    ] as HTMLElement,
+    (await screen.findByRole('grid')).querySelectorAll(
+      '[role="row"][data-key]',
+    )[n - 1] as HTMLElement,
   )
 
 test('a checkbox in the table saves on click', async () => {

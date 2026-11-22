@@ -112,7 +112,7 @@ export function EditableCell<T>({
           <span className="group/edit relative flex items-center">
             {input}
             <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
-              <Icon name="Edit" size={14} />
+              <Icon name="lucide/pencil" size={14} />
             </span>
           </span>
         ),

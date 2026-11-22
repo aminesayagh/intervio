@@ -116,7 +116,9 @@ export function ChoiceMenu({
           {({ isSelected }) => (
             <>
               <span className="flex size-4 shrink-0 items-center justify-center">
-                {isSelected && <Icon name="Check" size={14} />}
+                <Show as="span" when={isSelected} className="flex">
+                  <Icon name="lucide/check" size={14} />
+                </Show>
               </span>
               {option.label}
             </>
@@ -253,7 +255,7 @@ export function PanelClose({
           onPress={onClose}
           className="px-2"
         >
-          <Icon name="Close" size={16} />
+          <Icon name="lucide/x" size={16} />
         </Button>
       }
     >

@@ -79,7 +79,7 @@ function SearchField({
   return (
     <label className="relative flex w-[320px] max-w-full items-center">
       <span className="pointer-events-none absolute start-3 flex text-muted">
-        <Icon name="Search" size={16} />
+        <Icon name="lucide/search" size={16} />
       </span>
       <input
         type="search"
@@ -111,7 +111,7 @@ function FilterMenu({
     <MenuTrigger>
       <Button size="sm" aria-label={label}>
         {chosen.length ? `${label} (${chosen.length})` : label}
-        <Icon name="Arrow - Bottom-1" size={14} />
+        <Icon name="lucide/chevron-down" size={14} />
       </Button>
       <MenuPopover>
         <ChoiceMenu

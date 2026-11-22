@@ -93,7 +93,7 @@ export function Description({
               <MarkdownView text={value} />
             </Show>
             <span className="pointer-events-none absolute end-2 top-1.5 flex text-muted opacity-0 group-hover/edit:opacity-100 group-focus-visible/edit:opacity-100">
-              <Icon name="Edit" size={14} />
+              <Icon name="lucide/pencil" size={14} />
             </span>
           </div>
         </Match>

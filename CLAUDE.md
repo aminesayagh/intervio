@@ -30,7 +30,7 @@ Keep only the latest version of each document: update it in place, do not create
 - Compact interface to show more information: 14 px base (`html { font-size: 87.5% }`), page text at the label size (`text-sm`), tight spacing.
 - Main action buttons (`.button--primary`) have a soft shadow in the primary color; fields have only a faint one.
 - Every text field shows a placeholder: sample name, sample work email, and dots (••••) for passwords.
-- **Icons come only from the Intervio set** in `frontend/public/icons/`: use `<Icon name="Eye" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon library.
+- **Icons come only from `frontend/public/icons/`,** shown with `<Icon name="…" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. The app uses the Intervio set (`<Icon name="Eye" />`); **the collection uses the simplest Lucide icons** (https://lucide.dev/icons/), copied as SVG files into `public/icons/lucide/` with their ISC license beside them (`<Icon name="lucide/x" />`); to add one, copy its file from `lucide-static` at the same version. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon package.
 - **Country flags** are images, not icons: SVGs from flag-icons (MIT, licence beside them) copied into `frontend/public/flags/<code>.svg` and shown as a 16 × 12 `<img>` beside the country name.
 - The wireframes stay grayscale; this identity applies to the built app only.
 

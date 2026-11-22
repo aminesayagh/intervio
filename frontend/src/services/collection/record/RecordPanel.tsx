@@ -31,7 +31,7 @@ export function MoreActions({
         aria-label={t('actions.more')}
         className="px-2"
       >
-        <Icon name="More-1" size={16} />
+        <Icon name="lucide/ellipsis" size={16} />
       </Button>
       <MenuPopover minWidth={200}>
         <ActionMenu

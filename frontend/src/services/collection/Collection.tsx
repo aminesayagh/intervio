@@ -967,10 +967,10 @@ function RecordTable<T extends RowData, C>({
                       <Icon
                         name={
                           sorted === 'asc'
-                            ? 'Arrow - Top-2'
+                            ? 'lucide/arrow-up'
                             : sorted === 'desc'
-                              ? 'Arrow - Bottom-2'
-                              : 'Sort'
+                              ? 'lucide/arrow-down'
+                              : 'lucide/arrow-up-down'
                         }
                         size={12}
                       />
@@ -1041,7 +1041,7 @@ function RecordTable<T extends RowData, C>({
                           className="flex shrink-0 items-center gap-1 rounded-[var(--field-radius)] bg-surface px-2 py-0.5 text-xs text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
                         >
                           {t('collection:panel.open')}
-                          <Icon name="Arrow - Right-1" size={12} />
+                          <Icon name="lucide/arrow-right" size={12} />
                         </button>
                       </span>
                     )}

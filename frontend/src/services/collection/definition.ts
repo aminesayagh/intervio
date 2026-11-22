@@ -78,6 +78,16 @@ export type RichTextField<T> = {
   patch: (markdown: string) => Partial<T>
 }
 
+/** An icon chosen from a grid of Lucide icons. */
+export type IconField<T> = {
+  type: 'icon'
+  /** A Lucide name ("wrench"), or null. */
+  value: (record: T) => string | null
+  patch: (name: string | null) => Partial<T>
+  /** The icons offered; the archetype's maintenance set by default. */
+  options?: string[]
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -105,6 +115,7 @@ export type FieldDefinition<T> =
   | MultiSelectField<T>
   | DateField<T>
   | CheckboxField<T>
+  | IconField<T>
   | LinkField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */

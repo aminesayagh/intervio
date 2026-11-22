@@ -19,7 +19,8 @@
     "tags": "Étiquettes",
     "due": "Échéance",
     "notes": "Notes",
-    "location": "Adresse"
+    "location": "Adresse",
+    "icon": "Icône"
   },
   "status": {
     "draft": "Brouillon",

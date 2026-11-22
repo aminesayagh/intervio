@@ -6,6 +6,7 @@
 export { Button, FieldButton } from './Button'
 export { Checkbox } from './Checkbox'
 export { DatePicker } from './DatePicker'
+export { IconPicker } from './IconPicker'
 export { ConfirmDialog } from './Dialog'
 export {
   ActionMenu,

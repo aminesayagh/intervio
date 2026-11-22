@@ -19,7 +19,8 @@
     "tags": "Tags",
     "due": "Due",
     "notes": "Notes",
-    "location": "Location"
+    "location": "Location",
+    "icon": "Icon"
   },
   "status": {
     "draft": "Draft",

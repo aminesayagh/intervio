@@ -12,6 +12,7 @@ export type {
   SectionDefinition,
   CheckboxField,
   FieldDefinition,
+  IconField,
   LinkField,
   MultiSelectField,
   NumberField,
@@ -24,3 +25,4 @@ export { restSource, type RestOptions } from './data/restSource'
 export type { DataSource, Id, ListQuery, Page, SortDirection } from './types'
 export { ChipList } from './values/ChipList'
 export { firstLine } from './values/markdown'
+export { ICON_CHOICES } from './values/iconChoices'

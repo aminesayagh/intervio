@@ -5,6 +5,7 @@ import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
 import { CheckboxCell } from './CheckboxCell'
 import { DateCell } from './DateCell'
+import { IconCell } from './IconCell'
 import { LinkCell, LinkValue } from './LinkCell'
 import { firstLine } from './markdown'
 import { MultiChoiceCell } from './MultiChoiceCell'
@@ -137,6 +138,16 @@ export function ValueField<T>({
                 <span className="text-muted">—</span>
               )}
             </span>
+          ),
+        icon: () =>
+          field?.type === 'icon' && (
+            <IconCell
+              record={record}
+              edit={field}
+              label={label}
+              save={save}
+              look={look}
+            />
           ),
         checkbox: () =>
           field?.type === 'checkbox' && (

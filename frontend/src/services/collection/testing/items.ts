@@ -1,4 +1,5 @@
 import { memorySource } from '../data/memorySource'
+import { ICON_CHOICES } from '../values/iconChoices'
 
 /** The test collection's record (spec 15.2): one of each property kind the wrapper must handle. */
 export type Item = {
@@ -12,6 +13,7 @@ export type Item = {
   email: string
   phone: string
   location: string
+  icon: string | null // a Lucide name
   tags: string[]
   due: string | null // '2026-12-01'
   description: string // Markdown
@@ -44,6 +46,7 @@ export function makeItems(n: number): Item[] {
       website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
       email: index % 5 === 4 ? '' : `item${number}@example.com`,
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      icon: index % 7 === 3 ? null : ICON_CHOICES[index % ICON_CHOICES.length],
       location:
         index % 5 === 4
           ? ''

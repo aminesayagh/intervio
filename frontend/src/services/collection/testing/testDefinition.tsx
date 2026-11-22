@@ -1,7 +1,9 @@
 import { addTranslations } from '../../i18n'
+import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
   CheckboxField,
+  IconField,
   RichTextField,
   DateField,
   MultiSelectField,
@@ -78,6 +80,17 @@ const notes: RichTextField<Item> = {
 }
 const notesLine = (item: Item) =>
   firstLine(item.notes) || <span className="text-muted">—</span>
+const icon: IconField<Item> = {
+  type: 'icon',
+  value: (item) => item.icon,
+  patch: (icon) => ({ icon }),
+}
+const iconOf = (item: Item) =>
+  item.icon ? (
+    <Icon name={`lucide/${item.icon}`} size={16} />
+  ) : (
+    <span className="text-muted">—</span>
+  )
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -109,6 +122,7 @@ export function itemDefinition(
         email: '',
         phone: '',
         location: '',
+        icon: null,
         description: '',
         linkedTo: [],
         updatedAt: new Date().toISOString(),
@@ -223,6 +237,12 @@ export function itemDefinition(
           field: location,
         },
         {
+          id: 'icon',
+          label: 'columns.icon',
+          value: iconOf,
+          field: icon,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -276,6 +296,7 @@ export function itemDefinition(
       'email',
       'phone',
       'location',
+      'icon',
     ],
     columns: [
       {
@@ -368,6 +389,13 @@ export function itemDefinition(
         width: 260,
         cell: (item) => item.location,
         field: location,
+      },
+      {
+        id: 'icon',
+        label: 'columns.icon',
+        width: 80,
+        cell: iconOf,
+        field: icon,
       },
       {
         id: 'updated',

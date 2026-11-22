@@ -636,7 +636,7 @@ export function Collection<T extends RowData, C = void>({
           narrowPanel && 'hidden',
         )}
       >
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
           <h1 id={`${definition.key}-title`} className="text-xl font-medium">
             {t(definition.i18n.title)}
           </h1>
@@ -1038,7 +1038,7 @@ function RecordTable<T extends RowData, C>({
                             name: definition.panel?.title(row.original) ?? '',
                           })}
                           onClick={() => openRecord(row.id)}
-                          className="flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                          className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
                         >
                           <Icon name="lucide/chevron-right" size={16} />
                         </button>

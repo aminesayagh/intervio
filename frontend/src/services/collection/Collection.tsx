@@ -645,13 +645,14 @@ export function Collection<T extends RowData, C = void>({
       ref={sectionRef}
       aria-labelledby={`${definition.key}-title`}
       onKeyDown={onKeyDown}
-      // The list and the panel reach the window's bottom and right edges: the layout's
-      // padding on those sides is cancelled (it only left a dead strip there).
-      className="relative -me-4 -mb-4 flex h-[calc(100dvh-4.5rem)] min-h-[360px] overflow-hidden lg:-me-6 lg:-mb-6 lg:h-[calc(100dvh-1.5rem)]"
+      // The list and the panel take the window's full height and reach its right edge:
+      // the layout's padding on the top, right and bottom is cancelled, and each of
+      // them has its own top spacing (the list here, the panel in its top bar).
+      className="relative -mt-4 -me-4 -mb-4 flex h-[calc(100dvh-3.5rem)] min-h-[360px] overflow-hidden lg:-mt-6 lg:-me-6 lg:-mb-6 lg:h-dvh"
     >
       <div
         className={cn(
-          'flex min-w-0 flex-1 flex-col gap-4 pe-6',
+          'flex min-w-0 flex-1 flex-col gap-4 pe-6 pt-4 lg:pt-6',
           narrowPanel && 'hidden',
         )}
       >

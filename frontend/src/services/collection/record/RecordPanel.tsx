@@ -110,7 +110,7 @@ export function RecordPanel<T, C>({
       aria-label={record ? panel.title(record) : t('collection:panel.label')}
       className="scroll-quiet relative flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
-      <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
+      <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 bg-background pt-4 lg:h-[4.5rem] lg:pt-6">
         <Show as="span" when={visible}>
           {(loaded) => panel.type(loaded)}
         </Show>

@@ -619,7 +619,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
     - a "‹" at the top;
     - the view's name written vertically ("{collection title} · {open record}");
     - the whole strip is one button that returns to that view.
-  - Returning to a view takes it and every view after it off the stack, then restores it exactly (address, scroll, panel).
+  - Returning to a view takes it and every view after it off the stack, then restores its address: search, filters, sort and open record (panel). The scroll position is not restored until scroll memory is designed again (8.4); the list starts at the top (2026-11-22).
   - The browser's Back button does the same, one level at a time.
   - **At most 2 strips show.** With more levels, the first strip stands for all the older ones and opens a menu listing them, newest first.
   - **Removing the scope chip** leaves the plain collection, and the strips stay.
@@ -629,7 +629,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
   - below 1024 px there are no strips, and "‹" goes up one level.
 - **Tests (added to 15.4):**
   - "Show all" opens the scoped list with its chip;
-  - a strip returns to the previous view with its scroll and panel;
+  - a strip returns to the previous view with its search, filters, sort and panel;
   - the browser's Back button does the same;
   - a third level folds the older views into the first strip's menu;
   - removing the chip keeps the strips;

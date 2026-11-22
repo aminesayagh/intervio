@@ -57,7 +57,7 @@ test('opening another record takes the previous record’s notifications away', 
     within(aside).getByRole('textbox', { name: 'Title' }),
     ' X{Enter}',
   )
-  const text = 'You can no longer change the name of Item 001.'
+  const text = 'You can no longer change “Name” on Item 001.'
   expect(await screen.findByText(text)).toBeInTheDocument()
   await open('Item 003')
   await waitFor(() => expect(screen.queryByText(text)).toBeNull())

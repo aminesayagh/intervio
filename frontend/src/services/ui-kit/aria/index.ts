@@ -4,6 +4,7 @@
  * never react-aria-components directly.
  */
 export { Button, FieldButton } from './Button'
+export { Checkbox } from './Checkbox'
 export { ConfirmDialog } from './Dialog'
 export {
   ActionMenu,

@@ -49,8 +49,16 @@ export type SelectField<T> = {
   patch: (id: string) => Partial<T>
 }
 
+/** A yes-or-no value, saved on each click. */
+export type CheckboxField<T> = {
+  type: 'checkbox'
+  value: (record: T) => boolean
+  patch: (value: boolean) => Partial<T>
+}
+
 /** How a value shows and is edited, by its type (spec 7.3.0, decision 133). */
-export type FieldDefinition<T> = TextField<T> | NumberField<T> | SelectField<T>
+export type FieldDefinition<T> =
+  TextField<T> | NumberField<T> | SelectField<T> | CheckboxField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */
 export type PropertyDefinition<T> = {

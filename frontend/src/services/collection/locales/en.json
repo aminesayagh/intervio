@@ -25,7 +25,7 @@
     "title": "Title",
     "resize": "Resize the panel",
     "back": "Back to {{name}}",
-    "name": "name"
+    "name": "Name"
   },
   "description": {
     "label": "Description",
@@ -68,9 +68,9 @@
   },
   "message": {
     "putBack": "{{reason}} It was put back.",
-    "forbidden": "You can no longer change the {{field}} of {{name}}.",
+    "forbidden": "You can no longer change “{{field}}” on {{name}}.",
     "removed": "{{name}} is no longer available. The list was refreshed.",
-    "notSaved": "The {{field}} of {{name}} couldn't be saved.",
+    "notSaved": "“{{field}}” couldn't be saved for {{name}}.",
     "retry": "Retry",
     "notCreated": "The record couldn't be created.",
     "archiveFailed": "{{name}} couldn't be archived.",

@@ -33,7 +33,14 @@ test('the first page shows a header row and the first items, with the total', as
   const headers = within(table)
     .getAllByRole('columnheader')
     .map((h) => h.textContent)
-  expect(headers).toEqual(['Name', 'Status', 'Owner', 'Quantity', 'Updated'])
+  expect(headers).toEqual([
+    'Name',
+    'Status',
+    'Owner',
+    'Quantity',
+    'Active',
+    'Updated',
+  ])
   expect(table).toHaveAttribute('aria-rowcount', '43')
   expect(within(table).getByDisplayValue('Item 001')).toBeInTheDocument()
   // Only the visible rows are drawn, never a later page.
@@ -325,7 +332,7 @@ test('a save the server refuses puts the name back, with a message', async () =>
   await userEvent.type(field, ' X')
   await userEvent.tab()
   expect(
-    await screen.findByText("The name of Item 004 couldn't be saved."),
+    await screen.findByText("“Name” couldn't be saved for Item 004."),
   ).toBeInTheDocument()
   expect(field).toHaveValue('Item 004')
 
@@ -335,7 +342,7 @@ test('a save the server refuses puts the name back, with a message', async () =>
   await waitFor(() => expect(source.items()[3].name).toBe('Item 004 X'))
   await waitFor(() =>
     expect(
-      screen.queryByText("The name of Item 004 couldn't be saved."),
+      screen.queryByText("“Name” couldn't be saved for Item 004."),
     ).toBeNull(),
   )
 })
@@ -372,7 +379,7 @@ test('a status the server refuses goes back, with a message', async () => {
   )
 
   expect(
-    await screen.findByText("The status of Item 002 couldn't be saved."),
+    await screen.findByText("“Status” couldn't be saved for Item 002."),
   ).toBeInTheDocument()
   expect(
     within(rows[2]).getByRole('button', { name: 'Status: Valid' }),

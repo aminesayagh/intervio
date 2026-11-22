@@ -11,7 +11,8 @@
     "status": "Statut",
     "owner": "Responsable",
     "quantity": "Quantité",
-    "updated": "Mis à jour"
+    "updated": "Mis à jour",
+    "active": "Actif"
   },
   "status": {
     "draft": "Brouillon",

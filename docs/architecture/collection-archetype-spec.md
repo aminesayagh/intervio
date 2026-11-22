@@ -317,9 +317,9 @@ Decision 132; screens 53 to 61. The **notifications service** (`services/notific
 | Case | Message | Scope |
 |---|---|---|
 | Invalid value on leaving the field | "{validation text} It was put back." | record |
-| `403` on a save | "You can no longer change the {field} of {name}." | record |
+| `403` on a save | "You can no longer change “{field}” on {name}." | record |
 | `404` on a save | "{name} is no longer available. The list was refreshed." (lists refresh, panel closes) | collection |
-| Other failed save | "The {field} of {name} couldn't be saved." · Retry | record |
+| Other failed save | "“{field}” couldn't be saved for {name}." · Retry | record |
 | Creation failed | "The record couldn't be created." · Retry (what was typed stays) | new record |
 | Archive or Remove failed | "{name} couldn't be archived / removed." · Retry | collection |
 | Undo failed | "{name} couldn't be removed." | collection |

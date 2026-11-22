@@ -11,7 +11,8 @@
     "status": "Status",
     "owner": "Owner",
     "quantity": "Quantity",
-    "updated": "Updated"
+    "updated": "Updated",
+    "active": "Active"
   },
   "status": {
     "draft": "Draft",

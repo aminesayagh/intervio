@@ -97,7 +97,7 @@ test('the table shows fewer columns as the panel grows, keeping the name', async
   await userEvent.keyboard('{End}')
   expect(headers()).toEqual(['Name', 'Status'])
   await userEvent.click(screen.getByRole('button', { name: 'Close' }))
-  await waitFor(() => expect(headers()).toHaveLength(5))
+  await waitFor(() => expect(headers()).toHaveLength(6))
 })
 
 test('at medium width the sidebar folds while a panel is open', async () => {

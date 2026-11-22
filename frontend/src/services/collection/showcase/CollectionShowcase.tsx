@@ -18,7 +18,15 @@ const rights = () => ({
   actions: rightsChoice === 'all' ? ['archive', 'remove'] : [],
   edit:
     rightsChoice === 'all'
-      ? ['name', 'title', 'status', 'owner', 'quantity', 'description']
+      ? [
+          'name',
+          'title',
+          'status',
+          'owner',
+          'quantity',
+          'active',
+          'description',
+        ]
       : rightsChoice === 'status'
         ? ['status']
         : [],

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import { cn, Variant } from '../../ui-kit'
+import { Checkbox, cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import type { FieldDefinition } from '../definition'
 import { EditableCell } from './EditableCell'
+import { CheckboxCell } from './CheckboxCell'
 import { NumberCell } from './NumberCell'
 
 /**
@@ -39,7 +40,13 @@ export function ValueField<T>({
     <Variant
       as="span"
       className={cn('block min-w-0', look === 'cell' && 'truncate')}
-      value={allowed && field ? field.type : 'read'}
+      value={
+        allowed && field
+          ? field.type
+          : field?.type === 'checkbox'
+            ? 'checkboxRead'
+            : 'read'
+      }
       views={{
         text: () =>
           field?.type === 'text' && (
@@ -73,6 +80,24 @@ export function ValueField<T>({
               namespace={namespace}
               save={save}
               look={look}
+            />
+          ),
+        checkbox: () =>
+          field?.type === 'checkbox' && (
+            <CheckboxCell
+              record={record}
+              edit={field}
+              label={label}
+              save={save}
+            />
+          ),
+        // Without the right, a yes-or-no value is still a checkbox, read only.
+        checkboxRead: () =>
+          field?.type === 'checkbox' && (
+            <Checkbox
+              aria-label={label}
+              isReadOnly
+              isSelected={field.value(record)}
             />
           ),
         read: () => read(record),

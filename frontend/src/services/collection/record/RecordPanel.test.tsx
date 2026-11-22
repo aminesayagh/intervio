@@ -192,7 +192,7 @@ test('a change refused as no longer allowed says so, and the value comes back', 
     ' X{Enter}',
   )
   expect(
-    await screen.findByText('You can no longer change the name of Item 001.'),
+    await screen.findByText('You can no longer change “Name” on Item 001.'),
   ).toBeInTheDocument()
   expect(within(aside).getByRole('textbox', { name: 'Title' })).toHaveValue(
     'Item 001',

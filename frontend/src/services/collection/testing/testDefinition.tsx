@@ -1,5 +1,6 @@
 import { addTranslations } from '../../i18n'
 import type {
+  CheckboxField,
   CollectionDefinition,
   NumberField,
   SelectField,
@@ -34,6 +35,11 @@ const owner: SelectField<Item> = {
   options: OWNERS.map((owner) => ({ id: owner, label: owner })),
   value: (item) => item.owner,
   patch: (owner) => ({ owner }),
+}
+const active: CheckboxField<Item> = {
+  type: 'checkbox',
+  value: (item) => item.active,
+  patch: (active) => ({ active }),
 }
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
@@ -124,6 +130,12 @@ export function itemDefinition(
           field: quantity,
         },
         {
+          id: 'active',
+          label: 'columns.active',
+          value: (item) => (item.active ? 'Yes' : 'No'),
+          field: active,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -163,7 +175,14 @@ export function itemDefinition(
         patch: (owner) => ({ owner }),
       },
     ],
-    columnPriority: ['name', 'status', 'updated', 'owner', 'quantity'],
+    columnPriority: [
+      'name',
+      'status',
+      'updated',
+      'owner',
+      'quantity',
+      'active',
+    ],
     columns: [
       {
         id: 'name',
@@ -199,6 +218,13 @@ export function itemDefinition(
         sort: 'asc',
         cell: (item) => item.quantity ?? <span className="text-muted">—</span>,
         field: quantity,
+      },
+      {
+        id: 'active',
+        label: 'columns.active',
+        width: 90,
+        cell: (item) => (item.active ? 'Yes' : 'No'),
+        field: active,
       },
       {
         id: 'updated',

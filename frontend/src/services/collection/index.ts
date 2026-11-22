@@ -9,6 +9,7 @@ export type {
   PropertyDefinition,
   Rights,
   SectionDefinition,
+  CheckboxField,
   FieldDefinition,
   NumberField,
   SelectField,

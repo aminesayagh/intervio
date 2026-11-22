@@ -25,7 +25,7 @@
     "title": "Titre",
     "resize": "Redimensionner le panneau",
     "back": "Retour à {{name}}",
-    "name": "nom"
+    "name": "Nom"
   },
   "description": {
     "label": "Description",
@@ -68,9 +68,9 @@
   },
   "message": {
     "putBack": "{{reason}} La valeur précédente a été rétablie.",
-    "forbidden": "Vous ne pouvez plus modifier « {{field}} » de {{name}}.",
+    "forbidden": "Vous ne pouvez plus modifier « {{field}} » sur {{name}}.",
     "removed": "{{name}} n’est plus disponible. La liste a été actualisée.",
-    "notSaved": "« {{field}} » de {{name}} n’a pas pu être enregistré.",
+    "notSaved": "« {{field}} » n’a pas pu être enregistré pour {{name}}.",
     "retry": "Réessayer",
     "notCreated": "L’élément n’a pas pu être créé.",
     "archiveFailed": "{{name}} n’a pas pu être archivé.",

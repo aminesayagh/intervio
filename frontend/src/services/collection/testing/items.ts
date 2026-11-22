@@ -7,6 +7,7 @@ export type Item = {
   status: 'draft' | 'valid' | 'outdated'
   owner: string
   quantity: number | null // null: the property doesn't apply
+  active: boolean
   description: string // Markdown
   linkedTo: string[] // ids of other items (for drilling down)
   updatedAt: string // ISO date
@@ -30,6 +31,7 @@ export function makeItems(n: number): Item[] {
       status: STATUSES[index % STATUSES.length],
       owner: OWNERS[index % OWNERS.length],
       quantity: index % 4 === 0 ? null : (index % 9) + 1,
+      active: index % 3 !== 2,
       description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
       linkedTo: index > 0 ? [makeId(1)] : [],
       // One day apart, newest first, from a fixed date.

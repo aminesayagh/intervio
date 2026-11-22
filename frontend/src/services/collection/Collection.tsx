@@ -190,7 +190,7 @@ export function Collection<T extends RowData, C = void>({
       if (!source.update) throw new Error(`${key} cannot be edited`)
       const id = getId(record)
       const valueKey = field && `${key}:${id}:${field.label}`
-      const words = { field: field?.label.toLowerCase(), name: nameOf(record) }
+      const words = { field: field?.label, name: nameOf(record) }
       try {
         const updated = await source.update(id, patch, context as C)
         cache.updated(queryClient, key, updated, getId)

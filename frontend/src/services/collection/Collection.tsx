@@ -65,6 +65,7 @@ import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
+import { isShared, SharedNote } from './selection/sharedEdit'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './values/ValueField'
 import { isNarrowed, useCollectionState } from './list/useCollectionState'
@@ -451,6 +452,79 @@ export function Collection<T, C = void>({
       },
       scope: key,
     })
+  }
+  /**
+   * A shared value changed on a selected row (decision 135): saved on every selected
+   * record the person may change, one at a time. Afterwards one message says on how
+   * many, with Undo (each record gets its own previous value back); records that
+   * failed keep their value and stay selected, with Retry. A failure on the row
+   * edited is rethrown, so its field puts its value back.
+   */
+  async function saveOnSelection(
+    column: ColumnDefinition<T>,
+    edited: T,
+    patch: Partial<T>,
+    label: string,
+    records: T[] = selectedRecords,
+  ) {
+    const field = column.field as {
+      value: (record: T) => unknown
+      patch: (value: never) => Partial<T>
+    }
+    const targets = records.filter((record) => canEdit(record, column.id))
+    const failed: T[] = []
+    const changed: { record: T; before: Partial<T> }[] = []
+    for (const record of targets) {
+      const before = field.patch(field.value(record) as never)
+      try {
+        await save(record, patch)
+        changed.push({ record, before })
+      } catch {
+        failed.push(record)
+      }
+    }
+    const what = countOf(records.length)
+    const messageKey = `${key}:shared:${column.id}`
+    if (failed.length > 0) {
+      setSelected(new Set(failed.map(getId)))
+      notify({
+        tone: 'error',
+        text: t('collection:selection.notChanged', {
+          field: label,
+          what: countOf(failed.length),
+        }),
+        action: {
+          label: t('collection:message.retry'),
+          run: () =>
+            void saveOnSelection(column, edited, patch, label, failed).catch(
+              () => {},
+            ),
+        },
+        scope: key,
+        key: messageKey,
+      })
+    } else
+      notify({
+        tone: 'confirm',
+        text:
+          changed.length === records.length
+            ? t('collection:selection.changed', { field: label, what })
+            : t('collection:selection.changedSome', {
+                field: label,
+                count: changed.length,
+                what,
+              }),
+        action: {
+          label: t('collection:message.undo'),
+          run: () => {
+            for (const { record, before } of changed)
+              void save(record, before, { label }).catch(() => {})
+          },
+        },
+        scope: key,
+        key: messageKey,
+      })
+    if (failed.includes(edited)) throw new Error('not saved')
   }
   function confirmBulk() {
     if (!bulk) return
@@ -882,7 +956,14 @@ export function Collection<T, C = void>({
                 onOpen={definition.panel ? open : undefined}
                 selection={
                   selectable
-                    ? { keys: selected, onChange: setSelected }
+                    ? {
+                        keys: selected,
+                        onChange: setSelected,
+                        save: saveOnSelection,
+                        note: t('collection:selection.appliesTo', {
+                          what: countOf(selectedRecords.length),
+                        }),
+                      }
                     : undefined
                 }
               />
@@ -1006,6 +1087,15 @@ function RecordTable<T, C>({
   selection?: {
     keys: ReadonlySet<Id>
     onChange: (keys: ReadonlySet<Id>) => void
+    /** Saves a shared value on every selected record (decision 135). */
+    save: (
+      column: ColumnDefinition<T>,
+      record: T,
+      patch: Partial<T>,
+      label: string,
+    ) => Promise<void>
+    /** "Applies to 3 items", shown by the editor of a shared value. */
+    note: string
   }
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
@@ -1110,6 +1200,7 @@ function RecordTable<T, C>({
                             save={save}
                             report={report}
                             canEdit={canEdit}
+                            selection={selection}
                           />
                         }
                       >
@@ -1123,6 +1214,7 @@ function RecordTable<T, C>({
                                 save={save}
                                 report={report}
                                 canEdit={canEdit}
+                                selection={selection}
                               />
                             </span>
                             {/* Shown on the row under the pointer or the focus: opens the record. */}
@@ -1166,6 +1258,7 @@ function CellValue<T, C>({
   save,
   report,
   canEdit,
+  selection,
 }: {
   definition: CollectionDefinition<T, C>
   column: ColumnDefinition<T>
@@ -1173,20 +1266,45 @@ function CellValue<T, C>({
   save: SaveChange<T>
   report: ReportInvalid<T>
   canEdit: (record: T, id: string) => boolean
+  selection?: {
+    keys: ReadonlySet<Id>
+    save: (
+      column: ColumnDefinition<T>,
+      record: T,
+      patch: Partial<T>,
+      label: string,
+    ) => Promise<void>
+    note: string
+  }
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
+  const label = t(column.label)
+  // A shared value of a selected row, with others selected: it changes them all.
+  const shared =
+    selection &&
+    selection.keys.size > 1 &&
+    selection.keys.has(definition.getId(record)) &&
+    isShared(column)
+      ? selection
+      : undefined
   return (
-    <ValueField
-      record={record}
-      field={column.field}
-      allowed={canEdit(record, column.id)}
-      read={column.cell}
-      label={t(column.label)}
-      namespace={definition.i18n.namespace}
-      save={(patch) => save(record, patch, { label: t(column.label) })}
-      onInvalid={(reason) => report(record, t(column.label), reason)}
-      look="cell"
-    />
+    <SharedNote value={shared ? shared.note : null}>
+      <ValueField
+        record={record}
+        field={column.field}
+        allowed={canEdit(record, column.id)}
+        read={column.cell}
+        label={t(column.label)}
+        namespace={definition.i18n.namespace}
+        save={(patch) =>
+          shared
+            ? shared.save(column, record, patch, label)
+            : save(record, patch, { label })
+        }
+        onInvalid={(reason) => report(record, label, reason)}
+        look="cell"
+      />
+    </SharedNote>
   )
 }
 

@@ -124,6 +124,10 @@
     "removeLeftOutMore_one": "Vous ne pouvez pas supprimer {{name}} et 1 autre, qui restent dans la liste.",
     "removeLeftOutMore_other": "Vous ne pouvez pas supprimer {{name}} et {{count}} autres, qui restent dans la liste.",
     "removeButton": "Supprimer {{what}}",
-    "removeFailed": "La suppression a échoué pour {{what}}."
+    "removeFailed": "La suppression a échoué pour {{what}}.",
+    "appliesTo": "S’applique à {{what}}",
+    "changed": "« {{field}} » modifié sur {{what}}.",
+    "changedSome": "« {{field}} » modifié sur {{count}} sur {{what}}.",
+    "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}."
   }
 }

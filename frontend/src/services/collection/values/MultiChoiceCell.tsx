@@ -1,6 +1,13 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChoiceMenu, FieldButton, MenuPopover, MenuTrigger } from '../../ui-kit'
+import {
+  ChoiceMenu,
+  FieldButton,
+  MenuPopover,
+  MenuTrigger,
+  Show,
+} from '../../ui-kit'
+import { useSharedNote } from '../selection/sharedEdit'
 import type { MultiSelectField } from '../definition'
 
 const same = (a: string[], b: string[]) =>
@@ -30,6 +37,7 @@ export function MultiChoiceCell<T>({
   save: (patch: Partial<T>) => Promise<void>
   look?: 'cell' | 'panel'
 }) {
+  const note = useSharedNote()
   const { t } = useTranslation([namespace, 'collection'])
   const saved = choose.value(record)
   // While the menu is open, and until the save ends: the chosen values.
@@ -70,6 +78,9 @@ export function MultiChoiceCell<T>({
         {render({ ...record, ...choose.patch(shown) })}
       </FieldButton>
       <MenuPopover minWidth={200}>
+        <Show when={note} className="px-3 pt-2 pb-1 text-xs text-muted">
+          {note}
+        </Show>
         <ChoiceMenu
           label={label}
           mode="multiple"

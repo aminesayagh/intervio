@@ -1,6 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChoiceMenu, FieldButton, MenuPopover, MenuTrigger } from '../../ui-kit'
+import {
+  ChoiceMenu,
+  FieldButton,
+  MenuPopover,
+  MenuTrigger,
+  Show,
+} from '../../ui-kit'
+import { useSharedNote } from '../selection/sharedEdit'
 import type { SelectField } from '../definition'
 
 /**
@@ -28,6 +35,7 @@ export function ChoiceCell<T>({
   /** In the panel, a light background shows under the pointer or focus. */
   look?: 'cell' | 'panel'
 }) {
+  const note = useSharedNote()
   const { t } = useTranslation([namespace, 'collection'])
   const saved = choose.value(record)
   const [pending, setPending] = useState<string | null>(null)
@@ -57,6 +65,9 @@ export function ChoiceCell<T>({
         )}
       </FieldButton>
       <MenuPopover minWidth={180}>
+        <Show when={note} className="px-3 pt-2 pb-1 text-xs text-muted">
+          {note}
+        </Show>
         <ChoiceMenu
           label={label}
           mode="single"

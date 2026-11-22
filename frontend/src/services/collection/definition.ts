@@ -15,6 +15,11 @@ export type ColumnDefinition<T> = {
   sort?: SortDirection
   /** How the value is edited in its cell (spec 7.3.0); without it, it is read only. */
   field?: FieldDefinition<T>
+  /**
+   * false keeps a shareable value (a number, a date, a choice) on the one record
+   * edited, even when several are selected (spec 8.5).
+   */
+  bulk?: boolean
 }
 
 /** A text edited in place: read it, check it, turn it into a change. */

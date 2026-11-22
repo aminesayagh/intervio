@@ -18,8 +18,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
-    // Interface tests (a calendar, many fields) are heavy in jsdom when they run in
-    // parallel: 15 s each, not the 5 s default, so a busy machine doesn't fail them.
-    testTimeout: 15_000,
+    // Interface tests (a calendar, many fields, the virtualized table) are heavy in
+    // jsdom when they run in parallel: 30 s each, not the 5 s default, so a busy
+    // machine doesn't fail them.
+    testTimeout: 30_000,
   },
 })

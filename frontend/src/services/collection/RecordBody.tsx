@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { cn, Show } from '../ui-kit'
-import { ChoiceCell } from './ChoiceCell'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { Description } from './Description'
 import { EditableCell } from './EditableCell'
 import type { Id } from './types'
+import { ValueField } from './ValueField'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -46,18 +46,22 @@ export function RecordBody<T, C>({
             tabIndex={-1}
             className="text-xl font-medium break-words outline-none"
           >
-            {panel.titleEdit && canEdit(shown, 'title') ? (
-              <EditableCell
-                record={shown}
-                edit={panel.titleEdit}
-                label={t('collection:panel.title')}
-                namespace={definition.i18n.namespace}
-                save={(patch) => save(shown, patch)}
-                look="title"
-              />
-            ) : (
-              panel.title(shown)
-            )}
+            <Show
+              as="span"
+              when={canEdit(shown, 'title') && panel.titleEdit}
+              fallback={panel.title(shown)}
+            >
+              {(edit) => (
+                <EditableCell
+                  record={shown}
+                  edit={edit}
+                  label={t('collection:panel.title')}
+                  namespace={definition.i18n.namespace}
+                  save={(patch) => save(shown, patch)}
+                  look="title"
+                />
+              )}
+            </Show>
           </h2>
           <Show when={panel.subtitle}>
             {(subtitle) => (
@@ -71,76 +75,43 @@ export function RecordBody<T, C>({
             <div key={property.id} className="contents">
               <dt className="text-muted">{t(property.label)}</dt>
               <dd className="min-w-0">
-                {property.edit && canEdit(shown, property.id) ? (
-                  <EditableCell
-                    record={shown}
-                    edit={property.edit}
-                    label={t(property.label)}
-                    namespace={definition.i18n.namespace}
-                    save={(patch) => save(shown, patch)}
-                    look="panel"
-                  />
-                ) : property.choose && canEdit(shown, property.id) ? (
-                  <ChoiceCell
-                    record={shown}
-                    choose={property.choose}
-                    render={property.value}
-                    label={t(property.label)}
-                    namespace={definition.i18n.namespace}
-                    save={(patch) => save(shown, patch)}
-                    look="panel"
-                  />
-                ) : (
-                  property.value(shown)
-                )}
+                <ValueField
+                  record={shown}
+                  target={property}
+                  allowed={canEdit(shown, property.id)}
+                  read={property.value}
+                  label={t(property.label)}
+                  namespace={definition.i18n.namespace}
+                  save={(patch) => save(shown, patch)}
+                  look="panel"
+                />
               </dd>
             </div>
           ))}
         </dl>
 
-        {panel.description && (
-          <Description
-            key={id}
-            value={panel.description.value(shown)}
-            editable={canEdit(shown, 'description')}
-            storageKey={`intervio.collection.${definition.key}.${id}.description`}
-            save={(text) => save(shown, panel.description!.patch(text))}
-          />
-        )}
+        <Show when={panel.description}>
+          {(description) => (
+            <Description
+              key={id}
+              value={description.value(shown)}
+              editable={canEdit(shown, 'description')}
+              storageKey={`intervio.collection.${definition.key}.${id}.description`}
+              save={(text) => save(shown, description.patch(text))}
+            />
+          )}
+        </Show>
 
-        {(layout === 'panel' ? panel.sections : undefined)?.map((section) => {
-          const items = section.items(shown)
-          return (
-            <section key={section.id} className="border-t border-border pt-4">
-              <h3 className="flex items-baseline gap-2 font-medium">
-                {t(section.label)}
-                <span className="text-xs font-normal text-muted">
-                  {items.length}
-                </span>
-              </h3>
-              <ul className="mt-2 flex flex-col">
-                {items.slice(0, 5).map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-2 border-b border-border py-2"
-                  >
-                    <span className="min-w-0 flex-1 truncate">
-                      {item.label}
-                    </span>
-                    {item.kind}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        })}
+        <Show when={layout === 'panel'} className="flex flex-col gap-6">
+          <Sections definition={definition} panel={panel} record={shown} />
+        </Show>
       </div>
 
-      {layout === 'page' && (
+      <Show when={layout === 'page'}>
         <aside className="flex flex-col gap-6">
           <Sections definition={definition} panel={panel} record={shown} />
         </aside>
-      )}
+      </Show>
     </div>
   )
 }

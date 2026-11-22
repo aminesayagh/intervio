@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn, Icon, Show } from '../ui-kit'
+import { cn, Icon, Variant } from '../ui-kit'
 import type { TextEdit } from './definition'
+import { FieldError } from './parts'
 import { refusalMessage } from './refusal'
 
 /**
@@ -108,23 +109,24 @@ export function EditableCell<T>({
 
   return (
     <>
-      {look === 'cell' ? (
-        input
-      ) : (
-        <span className="group/edit relative flex items-center">
-          {input}
-          <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
-            <Icon name="Edit" size={14} />
-          </span>
-        </span>
-      )}
-      <Show when={error}>
-        {(message) => (
-          <p role="alert" className="truncate text-xs text-danger">
-            {message}
-          </p>
-        )}
-      </Show>
+      <Variant
+        as="span"
+        className="block min-w-0"
+        value={look === 'cell' ? 'plain' : 'framed'}
+        views={{
+          plain: () => input,
+          // In the panel: a pencil under the pointer or the focus.
+          framed: () => (
+            <span className="group/edit relative flex items-center">
+              {input}
+              <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
+                <Icon name="Edit" size={14} />
+              </span>
+            </span>
+          ),
+        }}
+      />
+      <FieldError message={error} />
     </>
   )
 }

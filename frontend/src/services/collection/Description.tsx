@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn, Icon, Match, Show, Switch } from '../ui-kit'
-import { Button } from './parts'
+import { Button, ErrorText } from './parts'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6). */
@@ -262,10 +262,10 @@ function Editor({
       >
         <Switch>
           <Match when={tooLong}>
-            <span className="text-danger">{t('description.tooLong')}</span>
+            <ErrorText>{t('description.tooLong')}</ErrorText>
           </Match>
           <Match when={autosave.status === 'failed'}>
-            <span className="flex items-center gap-2 text-danger">
+            <ErrorText className="flex items-center gap-2">
               {t('description.failed')}
               <Button
                 look="ghost"
@@ -274,7 +274,7 @@ function Editor({
               >
                 {t('error.retry')}
               </Button>
-            </span>
+            </ErrorText>
           </Match>
           <Match when={autosave.status === 'saving'}>
             <span>{t('description.saving')}</span>

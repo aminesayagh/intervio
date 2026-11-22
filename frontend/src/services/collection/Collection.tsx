@@ -27,9 +27,7 @@ import {
   useSearchParams,
 } from '../navigation'
 import { cn, foldSidebar, Icon, Match, Show, Switch } from '../ui-kit'
-import { ChoiceCell } from './ChoiceCell'
 import { cache, keys, useCollectionQuery } from './collectionQuery'
-import { EditableCell } from './EditableCell'
 import type {
   ActionDefinition,
   CollectionDefinition,
@@ -53,6 +51,7 @@ import { newRecordKey } from './recordQuery'
 import { Toolbar } from './Toolbar'
 import type { Id, ListQuery } from './types'
 import { useCollectionList } from './useCollectionList'
+import { ValueField } from './ValueField'
 import {
   isNarrowed,
   useCollectionState,
@@ -575,7 +574,7 @@ export function Collection<T extends RowData, C = void>({
           </Show>
         </div>
 
-        {(narrowed || list.items.length > 0) && (
+        <Show when={narrowed || list.items.length > 0}>
           <Toolbar
             namespace={definition.i18n.namespace}
             filters={definition.filters ?? []}
@@ -584,7 +583,7 @@ export function Collection<T extends RowData, C = void>({
             onFilter={state.setFilter}
             onClear={state.clear}
           />
-        )}
+        </Show>
 
         <div
           ref={scrollRef}
@@ -684,34 +683,38 @@ export function Collection<T extends RowData, C = void>({
               'flex-1 [&>aside]:border-0 [&>aside]:ps-0 [&>aside]:pe-0',
           )}
         >
-          {definition.panel && isNew && !openId && (
-            <NewRecord
-              back={back}
-              key="new"
-              definition={definition}
-              panel={definition.panel}
-              defaults={newDefaults()}
-              onCreated={createRecord}
-              onClose={close}
-            />
-          )}
-          {definition.panel && openId && (
-            <RecordPanel
-              key={definition.key}
-              back={back}
-              definition={definition}
-              panel={definition.panel}
-              context={context as C}
-              id={openId}
-              fromList={list.items.find((item) => getId(item) === openId)}
-              onClose={close}
-              onUnavailable={unavailable}
-              canEdit={canEdit}
-              save={save}
-              actions={(record) => menuActions(record, false)}
-              onAction={runMenu}
-            />
-          )}
+          <Switch className="h-full">
+            <Match when={isNew && !openId}>
+              <NewRecord
+                back={back}
+                key="new"
+                definition={definition}
+                panel={definition.panel!}
+                defaults={newDefaults()}
+                onCreated={createRecord}
+                onClose={close}
+              />
+            </Match>
+            <Match when={openId}>
+              {(id) => (
+                <RecordPanel
+                  key={definition.key}
+                  back={back}
+                  definition={definition}
+                  panel={definition.panel!}
+                  context={context as C}
+                  id={id}
+                  fromList={list.items.find((item) => getId(item) === id)}
+                  onClose={close}
+                  onUnavailable={unavailable}
+                  canEdit={canEdit}
+                  save={save}
+                  actions={(record) => menuActions(record, false)}
+                  onAction={runMenu}
+                />
+              )}
+            </Match>
+          </Switch>
         </motion.div>
       )}
       {dialogs}
@@ -770,27 +773,18 @@ function RecordTable<T extends RowData, C>({
         .map((column: ColumnDefinition<T>) => ({
           id: column.id,
           header: () => t(column.label),
-          cell: (info) =>
-            column.edit && canEdit(info.row.original, column.id) ? (
-              <EditableCell
-                record={info.row.original}
-                edit={column.edit}
-                label={t(column.label)}
-                namespace={definition.i18n.namespace}
-                save={(patch) => save(info.row.original, patch)}
-              />
-            ) : column.choose && canEdit(info.row.original, column.id) ? (
-              <ChoiceCell
-                record={info.row.original}
-                choose={column.choose}
-                render={column.cell}
-                label={t(column.label)}
-                namespace={definition.i18n.namespace}
-                save={(patch) => save(info.row.original, patch)}
-              />
-            ) : (
-              column.cell(info.row.original)
-            ),
+          cell: (info) => (
+            <ValueField
+              record={info.row.original}
+              target={column}
+              allowed={canEdit(info.row.original, column.id)}
+              read={column.cell}
+              label={t(column.label)}
+              namespace={definition.i18n.namespace}
+              save={(patch) => save(info.row.original, patch)}
+              look="cell"
+            />
+          ),
         })),
     [definition.columns, definition.i18n.namespace, t, save, canEdit, shown],
   )
@@ -860,7 +854,11 @@ function RecordTable<T extends RowData, C>({
                   style={{ width: column.width }}
                   className="h-8 px-3 text-start align-middle text-xs font-normal text-muted shadow-[inset_0_-1px_0_var(--foreground)]"
                 >
-                  {header.isPlaceholder ? null : column.sort ? (
+                  <Show
+                    as="span"
+                    when={column.sort}
+                    fallback={<table.FlexRender header={header} />}
+                  >
                     <button
                       type="button"
                       aria-label={t('collection:sortBy', {
@@ -884,9 +882,7 @@ function RecordTable<T extends RowData, C>({
                         size={12}
                       />
                     </button>
-                  ) : (
-                    <table.FlexRender header={header} />
-                  )}
+                  </Show>
                 </th>
               )
             })}
@@ -931,27 +927,32 @@ function RecordTable<T extends RowData, C>({
             >
               {row.getAllCells().map((cell, index) => (
                 <td key={cell.id} className="truncate px-3 py-3 align-middle">
-                  {index === 0 && onOpen ? (
-                    <span className="flex items-center gap-2">
-                      <span className="min-w-0 flex-1">
-                        <table.FlexRender cell={cell} />
+                  <Show
+                    as="span"
+                    className="block min-w-0 truncate"
+                    when={index === 0 && onOpen}
+                    fallback={<table.FlexRender cell={cell} />}
+                  >
+                    {(openRecord) => (
+                      <span className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1">
+                          <table.FlexRender cell={cell} />
+                        </span>
+                        {/* Shown on the row under the pointer or the focus: opens the record. */}
+                        <button
+                          type="button"
+                          aria-label={t('collection:panel.openRecord', {
+                            name: definition.panel?.title(row.original) ?? '',
+                          })}
+                          onClick={() => openRecord(row.id)}
+                          className="flex shrink-0 items-center gap-1 rounded-[var(--field-radius)] bg-surface px-2 py-0.5 text-xs text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                        >
+                          {t('collection:panel.open')}
+                          <Icon name="Arrow - Right-1" size={12} />
+                        </button>
                       </span>
-                      {/* Shown on the row under the pointer or the focus: opens the record. */}
-                      <button
-                        type="button"
-                        aria-label={t('collection:panel.openRecord', {
-                          name: definition.panel?.title(row.original) ?? '',
-                        })}
-                        onClick={() => onOpen(row.id)}
-                        className="flex shrink-0 items-center gap-1 rounded-[var(--field-radius)] bg-surface px-2 py-0.5 text-xs text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
-                      >
-                        {t('collection:panel.open')}
-                        <Icon name="Arrow - Right-1" size={12} />
-                      </button>
-                    </span>
-                  ) : (
-                    <table.FlexRender cell={cell} />
-                  )}
+                    )}
+                  </Show>
                 </td>
               ))}
             </tr>

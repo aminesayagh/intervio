@@ -13,7 +13,7 @@ import {
   type Key,
   type Selection,
 } from 'react-aria-components'
-import { cn, Icon } from '../ui-kit'
+import { cn, Icon, Show } from '../ui-kit'
 
 /**
  * The collection's building blocks: React Aria Components (accessible, unstyled),
@@ -240,25 +240,67 @@ export function PanelClose({
   label: string
   onClose: () => void
 }) {
-  return back ? (
-    <Button
-      look="ghost"
-      size="sm"
-      aria-label={backLabel}
-      onPress={onClose}
-      className="order-first -ms-2 px-2"
+  return (
+    <Show
+      as="span"
+      when={back}
+      className={cn('flex', back && 'order-first')}
+      fallback={
+        <Button
+          look="ghost"
+          size="sm"
+          aria-label={label}
+          onPress={onClose}
+          className="px-2"
+        >
+          <Icon name="Close" size={16} />
+        </Button>
+      }
     >
-      <span aria-hidden>‹</span> {back}
-    </Button>
-  ) : (
-    <Button
-      look="ghost"
-      size="sm"
-      aria-label={label}
-      onPress={onClose}
-      className="px-2"
-    >
-      <Icon name="Close" size={16} />
-    </Button>
+      {(name) => (
+        <Button
+          look="ghost"
+          size="sm"
+          aria-label={backLabel}
+          onPress={onClose}
+          className="-ms-2 px-2"
+        >
+          <span aria-hidden>‹</span> {name}
+        </Button>
+      )}
+    </Show>
+  )
+}
+
+/** The text of an error: red, small, announced to screen readers. */
+export function ErrorText({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <p role="alert" className={cn('truncate text-xs text-danger', className)}>
+      {children}
+    </p>
+  )
+}
+
+/**
+ * The error under a field the person edits (a value refused, a save that failed):
+ * the same look, fade and announcement on every editable value.
+ */
+export function FieldError({
+  message,
+  className,
+}: {
+  message: string | null | undefined
+  className?: string
+}) {
+  return (
+    <Show when={message}>
+      {(text) => <ErrorText className={className}>{text}</ErrorText>}
+    </Show>
   )
 }

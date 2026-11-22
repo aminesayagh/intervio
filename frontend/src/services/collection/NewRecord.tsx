@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Show } from '../ui-kit'
-import { ChoiceCell } from './ChoiceCell'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { EditableCell } from './EditableCell'
-import { PanelClose } from './parts'
+import { FieldError, PanelClose } from './parts'
 import { newRecordKey } from './recordQuery'
 import { refusalMessage } from './refusal'
+import { ValueField } from './ValueField'
 
 function read<T>(key: string): Partial<T> | null {
   try {
@@ -96,26 +96,22 @@ export function NewRecord<T, C>({
       <div className="flex flex-col gap-6 pt-2 pb-8">
         <div>
           <h2 className="text-xl font-medium">
-            {panel.titleEdit && (
-              <EditableCell
-                record={record}
-                edit={panel.titleEdit}
-                label={t('collection:panel.title')}
-                namespace={definition.i18n.namespace}
-                save={change}
-                look="title"
-                placeholder={t('collection:create.name')}
-                autoFocus
-              />
-            )}
+            <Show as="span" when={panel.titleEdit}>
+              {(edit) => (
+                <EditableCell
+                  record={record}
+                  edit={edit}
+                  label={t('collection:panel.title')}
+                  namespace={definition.i18n.namespace}
+                  save={change}
+                  look="title"
+                  placeholder={t('collection:create.name')}
+                  autoFocus
+                />
+              )}
+            </Show>
           </h2>
-          <Show when={error}>
-            {(message) => (
-              <p role="alert" className="mt-1 text-xs text-danger">
-                {message}
-              </p>
-            )}
-          </Show>
+          <FieldError message={error} className="mt-1" />
         </div>
 
         <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
@@ -125,26 +121,16 @@ export function NewRecord<T, C>({
               <div key={property.id} className="contents">
                 <dt className="text-muted">{t(property.label)}</dt>
                 <dd className="min-w-0">
-                  {property.edit ? (
-                    <EditableCell
-                      record={record}
-                      edit={property.edit}
-                      label={t(property.label)}
-                      namespace={definition.i18n.namespace}
-                      save={change}
-                      look="panel"
-                    />
-                  ) : (
-                    <ChoiceCell
-                      record={record}
-                      choose={property.choose!}
-                      render={property.value}
-                      label={t(property.label)}
-                      namespace={definition.i18n.namespace}
-                      save={change}
-                      look="panel"
-                    />
-                  )}
+                  <ValueField
+                    record={record}
+                    target={property}
+                    allowed
+                    read={property.value}
+                    label={t(property.label)}
+                    namespace={definition.i18n.namespace}
+                    save={change}
+                    look="panel"
+                  />
                 </dd>
               </div>
             ))}

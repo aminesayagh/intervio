@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { cn, Show } from '../ui-kit'
+import { cn } from '../ui-kit'
 import type { ChoiceEdit } from './definition'
 import { refusalMessage } from './refusal'
-import { ChoiceMenu, MenuPopover } from './parts'
+import { ChoiceMenu, FieldError, MenuPopover } from './parts'
 
 /**
  * A table cell whose value is chosen from a list (a status): it shows the column's
@@ -80,13 +80,7 @@ export function ChoiceCell<T>({
           />
         </MenuPopover>
       </MenuTrigger>
-      <Show when={error}>
-        {(message) => (
-          <p role="alert" className="truncate text-xs text-danger">
-            {message}
-          </p>
-        )}
-      </Show>
+      <FieldError message={error} />
     </>
   )
 }

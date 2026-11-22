@@ -6,8 +6,11 @@ import {
   type ReactNode,
 } from 'react'
 
+/** The value once it made the content show: never empty, false, 0 or ''. */
+type Truthy<W> = Exclude<W, null | undefined | false | 0 | ''>
+
 /** Content, or a function of the value that made it show (narrowed, never empty). */
-type Content<W> = ReactNode | ((value: NonNullable<W>) => ReactNode)
+type Content<W> = ReactNode | ((value: Truthy<W>) => ReactNode)
 
 type Box = {
   /** The element around the content: a span inside a line of text, a div otherwise. */
@@ -16,7 +19,7 @@ type Box = {
 }
 
 const render = <W,>(content: Content<W>, value: W) =>
-  typeof content === 'function' ? content(value as NonNullable<W>) : content
+  typeof content === 'function' ? content(value as Truthy<W>) : content
 
 /**
  * Fades content in and out quickly when it appears or changes, instead of a brusque
@@ -98,6 +101,45 @@ export function Switch({
       : fallback
   return (
     <Appear id={content == null || content === false ? null : index} {...box}>
+      {content}
+    </Appear>
+  )
+}
+
+/**
+ * Shows the view for the current option of a value, like a `switch (value)` with one
+ * `case` per option: `<Variant value={kind} views={{ edit: () => <Field />, read: () =>
+ * <Text /> }} />`. Each option is its own animation key, so when the option changes
+ * the old view fades out before the new one fades in (the same fade as Show). Views
+ * are functions, so only the chosen one is built; an option without a view shows the
+ * fallback.
+ *
+ * Show: one condition. Switch and Match: if, else if, else. Variant: one value, one
+ * view per option.
+ */
+export function Variant<K extends string>({
+  value,
+  views,
+  fallback = null,
+  ...box
+}: Box & {
+  value: K
+  views: Partial<Record<K, () => ReactNode>>
+  fallback?: ReactNode
+}) {
+  const view = views[value]
+  const content = view ? view() : fallback
+  return (
+    <Appear
+      id={
+        content == null || content === false
+          ? null
+          : view
+            ? value
+            : '\0fallback'
+      }
+      {...box}
+    >
       {content}
     </Appear>
   )

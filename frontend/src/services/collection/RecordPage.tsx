@@ -36,7 +36,9 @@ export function RecordPage<T, C>({
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const { query, record, unavailable } = useRecord({ definition, context, id })
-  const shown = record !== undefined && !unavailable
+  /** The record, once it can show (loaded, not removed). */
+  const visible = unavailable ? undefined : record
+  const shown = visible !== undefined
 
   return (
     <article className="flex flex-col gap-4">
@@ -50,23 +52,28 @@ export function RecordPage<T, C>({
               {t(definition.i18n.title)}
             </Link>
           </li>
-          <Show as="span" when={shown}>
-            <li
-              aria-current="page"
-              className="flex items-center gap-1.5 text-foreground"
+          <li aria-current="page" className="text-foreground">
+            <Show
+              as="span"
+              when={visible}
+              className="flex items-center gap-1.5"
             >
-              <span aria-hidden className="text-muted">
-                ›
-              </span>
-              {record !== undefined && panel.title(record)}
-            </li>
-          </Show>
+              {(loaded) => (
+                <>
+                  <span aria-hidden className="text-muted">
+                    ›
+                  </span>
+                  {panel.title(loaded)}
+                </>
+              )}
+            </Show>
+          </li>
         </ol>
       </nav>
 
       <div className="flex h-8 items-center gap-2">
-        <Show as="span" when={shown}>
-          {record !== undefined && panel.type(record)}
+        <Show as="span" when={visible}>
+          {(loaded) => panel.type(loaded)}
         </Show>
         <Show as="span" when={shown && isViewOnly(panel, record as T, canEdit)}>
           <span className="text-xs text-muted">
@@ -74,11 +81,11 @@ export function RecordPage<T, C>({
           </span>
         </Show>
         <span className="ms-auto">
-          <Show as="span" when={shown}>
-            {record !== undefined && (
+          <Show as="span" when={visible}>
+            {(loaded) => (
               <MoreActions
-                actions={actions(record)}
-                onAction={(action) => onAction(action, record)}
+                actions={actions(loaded)}
+                onAction={(action) => onAction(action, loaded)}
               />
             )}
           </Show>

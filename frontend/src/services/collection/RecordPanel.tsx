@@ -88,7 +88,9 @@ export function RecordPanel<T, C>({
     fromList,
     onUnavailable,
   })
-  const shown = record !== undefined && !unavailable
+  /** The record, once it can show (loaded, not removed). */
+  const visible = unavailable ? undefined : record
+  const shown = visible !== undefined
 
   // Each record that opens takes the focus to its title (spec 10), once it shows.
   const focusTitle = useCallback(
@@ -104,8 +106,8 @@ export function RecordPanel<T, C>({
       className="scroll-quiet flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
-        <Show as="span" when={shown}>
-          {record !== undefined && panel.type(record)}
+        <Show as="span" when={visible}>
+          {(loaded) => panel.type(loaded)}
         </Show>
         <Show as="span" when={shown && isViewOnly(panel, record as T, canEdit)}>
           <span className="text-xs text-muted">
@@ -113,26 +115,28 @@ export function RecordPanel<T, C>({
           </span>
         </Show>
         <span className="ms-auto flex items-center gap-1">
-          <Show as="span" when={shown}>
-            {record !== undefined && (
+          <Show as="span" when={visible}>
+            {(loaded) => (
               <MoreActions
-                actions={actions(record)}
-                onAction={(action) => onAction(action, record)}
+                actions={actions(loaded)}
+                onAction={(action) => onAction(action, loaded)}
               />
             )}
           </Show>
-          {!back && (
+          <Show as="span" when={!back}>
             <PanelClose label={t('collection:panel.close')} onClose={onClose} />
-          )}
+          </Show>
         </span>
-        {back && (
-          <PanelClose
-            back={back}
-            backLabel={back && t('collection:panel.back', { name: back })}
-            label={t('collection:panel.close')}
-            onClose={onClose}
-          />
-        )}
+        <Show as="span" when={back} className="order-first">
+          {(name) => (
+            <PanelClose
+              back={name}
+              backLabel={t('collection:panel.back', { name })}
+              label={t('collection:panel.close')}
+              onClose={onClose}
+            />
+          )}
+        </Show>
       </div>
 
       <Switch>

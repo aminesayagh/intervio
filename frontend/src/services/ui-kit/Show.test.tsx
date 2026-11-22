@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import { cn } from './cn'
-import { Match, Show, Switch } from './Show'
+import { Match, Show, Switch, Variant } from './Show'
 
 afterEach(cleanup)
 
@@ -38,6 +38,23 @@ test('Switch shows the first case that holds, or the fallback', async () => {
   expect(await screen.findByText('Failed')).toBeInTheDocument()
   rerender(view('done'))
   expect(await screen.findByText('Shown')).toBeInTheDocument()
+})
+
+test('Variant shows the view for the current option, or the fallback', async () => {
+  const view = (kind: 'edit' | 'read' | 'none') => (
+    <Variant
+      value={kind}
+      views={{ edit: () => <p>Field</p>, read: () => <p>Text</p> }}
+      fallback={<p>Nothing</p>}
+    />
+  )
+  const { rerender } = render(view('edit'))
+  expect(screen.getByText('Field')).toBeInTheDocument()
+  rerender(view('read'))
+  expect(await screen.findByText('Text')).toBeInTheDocument()
+  expect(screen.queryByText('Field')).not.toBeInTheDocument()
+  rerender(view('none'))
+  expect(await screen.findByText('Nothing')).toBeInTheDocument()
 })
 
 test('cn joins conditions and lets the later Tailwind class win', () => {

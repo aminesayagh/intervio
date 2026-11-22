@@ -1,10 +1,17 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import reactScan from '@react-scan/vite-plugin-react-scan'
 import { defineConfig } from 'vite'
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Outlines each component as it re-renders, with a toolbar of the slowest renders:
+    // in `make dev` only, never in the build or the tests.
+    mode === 'development' && reactScan(),
+  ],
   server: {
     // Backend requests, and the Google sign-in round trip, go to Spring Boot in development.
     proxy: {
@@ -23,4 +30,4 @@ export default defineConfig({
     // machine doesn't fail them.
     testTimeout: 30_000,
   },
-})
+}))

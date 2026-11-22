@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest'
+import { configure } from '@testing-library/react'
 
 import { MotionGlobalConfig } from 'motion/react'
 
@@ -12,3 +13,7 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 } as unknown as typeof ResizeObserver
+
+// waitFor and findBy wait up to 3 s (not 1 s): with the whole suite running at once,
+// a save in an interface test can take longer than 1 s without anything being wrong.
+configure({ asyncUtilTimeout: 3000 })

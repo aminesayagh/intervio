@@ -20,7 +20,8 @@
     "due": "Due",
     "notes": "Notes",
     "location": "Location",
-    "icon": "Icon"
+    "icon": "Icon",
+    "avatar": "Picture"
   },
   "status": {
     "draft": "Draft",

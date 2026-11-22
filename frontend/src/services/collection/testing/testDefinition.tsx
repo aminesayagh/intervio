@@ -1,7 +1,10 @@
 import { addTranslations } from '../../i18n'
+import { AvatarImage } from '../values/AvatarCell'
+import { memorySrc, memoryUpload } from './memoryFiles'
 import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
+  AvatarField,
   CheckboxField,
   IconField,
   RichTextField,
@@ -91,6 +94,16 @@ const iconOf = (item: Item) =>
   ) : (
     <span className="text-muted">—</span>
   )
+const avatar: AvatarField<Item> = {
+  type: 'avatar',
+  value: (item) => item.avatar,
+  patch: (avatar) => ({ avatar }),
+  upload: memoryUpload,
+  src: memorySrc,
+}
+const avatarOf = (item: Item) => (
+  <AvatarImage edit={avatar} file={item.avatar} look="cell" />
+)
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -123,6 +136,7 @@ export function itemDefinition(
         phone: '',
         location: '',
         icon: null,
+        avatar: null,
         description: '',
         linkedTo: [],
         updatedAt: new Date().toISOString(),
@@ -243,6 +257,14 @@ export function itemDefinition(
           field: icon,
         },
         {
+          id: 'avatar',
+          label: 'columns.avatar',
+          value: (item) => (
+            <AvatarImage edit={avatar} file={item.avatar} look="panel" />
+          ),
+          field: avatar,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -297,6 +319,7 @@ export function itemDefinition(
       'phone',
       'location',
       'icon',
+      'avatar',
     ],
     columns: [
       {
@@ -396,6 +419,13 @@ export function itemDefinition(
         width: 80,
         cell: iconOf,
         field: icon,
+      },
+      {
+        id: 'avatar',
+        label: 'columns.avatar',
+        width: 80,
+        cell: avatarOf,
+        field: avatar,
       },
       {
         id: 'updated',

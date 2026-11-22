@@ -88,6 +88,13 @@
     "open": "Ouvrir {{value}}",
     "more_one": "+{{count}}",
     "more_other": "+{{count}}",
-    "none": "Aucun"
+    "none": "Aucun",
+    "upload": "Téléverser {{label}}",
+    "uploadShort": "Téléverser",
+    "replace": "Remplacer",
+    "remove": "Retirer",
+    "pictureType": "Ce fichier n’est pas une image ({{types}}).",
+    "pictureSize": "L’image dépasse {{size}} Mo.",
+    "uploadFailed": "Le fichier n’a pas pu être téléversé."
   }
 }

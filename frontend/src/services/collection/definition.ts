@@ -88,6 +88,31 @@ export type IconField<T> = {
   options?: string[]
 }
 
+/** A file once uploaded: what the record keeps of it. */
+export type StoredFile = {
+  id: string
+  name: string
+  contentType: string
+  sizeBytes: number
+}
+
+/**
+ * A picture uploaded for the record (decision 133). Where files go is the
+ * collection's choice: its `upload` (the files service, or memory in tests).
+ */
+export type AvatarField<T> = {
+  type: 'avatar'
+  value: (record: T) => StoredFile | null
+  patch: (file: StoredFile | null) => Partial<T>
+  upload: (file: File) => Promise<StoredFile>
+  /** The address that shows the picture. */
+  src: (file: StoredFile) => string
+  /** Accepted types (default png, jpg, jpeg) and size (default 2 MB). */
+  extensions?: string[]
+  maxMb?: number
+  shape?: 'round' | 'square'
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -116,6 +141,7 @@ export type FieldDefinition<T> =
   | DateField<T>
   | CheckboxField<T>
   | IconField<T>
+  | AvatarField<T>
   | LinkField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */

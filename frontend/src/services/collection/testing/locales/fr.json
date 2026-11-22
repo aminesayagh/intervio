@@ -20,7 +20,8 @@
     "due": "Échéance",
     "notes": "Notes",
     "location": "Adresse",
-    "icon": "Icône"
+    "icon": "Icône",
+    "avatar": "Image"
   },
   "status": {
     "draft": "Brouillon",

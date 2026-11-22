@@ -3,6 +3,7 @@ import { Checkbox, cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
+import { AvatarCell } from './AvatarCell'
 import { CheckboxCell } from './CheckboxCell'
 import { DateCell } from './DateCell'
 import { IconCell } from './IconCell'
@@ -147,6 +148,17 @@ export function ValueField<T>({
               label={label}
               save={save}
               look={look}
+            />
+          ),
+        avatar: () =>
+          field?.type === 'avatar' && (
+            <AvatarCell
+              record={record}
+              edit={field}
+              label={label}
+              save={save}
+              look={look}
+              onInvalid={onInvalid}
             />
           ),
         checkbox: () =>

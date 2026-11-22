@@ -88,6 +88,13 @@
     "open": "Open {{value}}",
     "more_one": "+{{count}}",
     "more_other": "+{{count}}",
-    "none": "None"
+    "none": "None",
+    "upload": "Upload {{label}}",
+    "uploadShort": "Upload",
+    "replace": "Replace",
+    "remove": "Remove",
+    "pictureType": "That file isn't a picture ({{types}}).",
+    "pictureSize": "The picture is over {{size}} MB.",
+    "uploadFailed": "The file couldn't be uploaded."
   }
 }

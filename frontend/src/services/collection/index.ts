@@ -10,6 +10,7 @@ export type {
   PropertyDefinition,
   Rights,
   SectionDefinition,
+  AvatarField,
   CheckboxField,
   FieldDefinition,
   IconField,
@@ -18,6 +19,7 @@ export type {
   NumberField,
   RichTextField,
   SelectField,
+  StoredFile,
   TextField,
 } from './definition'
 export { memorySource, type MemorySettings } from './data/memorySource'

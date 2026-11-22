@@ -1,4 +1,5 @@
 import { memorySource } from '../data/memorySource'
+import type { StoredFile } from '../definition'
 import { ICON_CHOICES } from '../values/iconChoices'
 
 /** The test collection's record (spec 15.2): one of each property kind the wrapper must handle. */
@@ -14,6 +15,7 @@ export type Item = {
   phone: string
   location: string
   icon: string | null // a Lucide name
+  avatar: StoredFile | null
   tags: string[]
   due: string | null // '2026-12-01'
   description: string // Markdown
@@ -46,6 +48,15 @@ export function makeItems(n: number): Item[] {
       website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
       email: index % 5 === 4 ? '' : `item${number}@example.com`,
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      avatar:
+        index % 3 === 0
+          ? {
+              id: `sample-${number}`,
+              name: `IT${number}.png`,
+              contentType: 'image/png',
+              sizeBytes: 20_480,
+            }
+          : null,
       icon: index % 7 === 3 ? null : ICON_CHOICES[index % ICON_CHOICES.length],
       location:
         index % 5 === 4

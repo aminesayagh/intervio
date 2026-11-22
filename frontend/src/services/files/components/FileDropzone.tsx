@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { accept, checkFile, type FilePurpose } from './purposes'
+import { accept, checkFile, type FilePurpose } from '../purposes'
 
 type Props = {
   purpose: FilePurpose

@@ -1,10 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { setLanguage, type Language } from '../i18n'
-import { Link } from '../navigation'
-import { Icon } from './Icon'
-import { applyTheme, initialTheme, type Theme } from './theme'
+import { setLanguage, type Language } from '../../i18n'
+import { Link } from '../../navigation'
+import { Icon } from '../Icon'
+import { applyTheme, initialTheme, type Theme } from '../theme'
 
 /** Public screens (accounts, onboarding): header, then a centered column (grid columns 5–8). */
 export function PublicLayout({ children }: { children: ReactNode }) {

@@ -1,2 +1,9 @@
 export { Link } from './Link'
-export { navigate, usePath, useSearchParams } from './router'
+export {
+  entryState,
+  isOwnEntry,
+  navigate,
+  setSearchParams,
+  usePath,
+  useSearchParams,
+} from './router'

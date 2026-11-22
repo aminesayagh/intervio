@@ -1,7 +1,7 @@
 import { Drawer } from '@heroui/react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fileUrl } from './api'
+import { fileUrl } from '../api'
 
 export type PreviewFile = {
   id: string

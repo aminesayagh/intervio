@@ -19,6 +19,10 @@ Keep only the latest version of each document: update it in place, do not create
 
 - **Public identifiers are UUID v7.** Every entity served outside the backend (API responses, URLs, ids sent by the frontend) is identified by its `uuid` column, generated as UUID v7 (`@UuidGenerator(algorithm = UuidVersion7Strategy.class)`). The integer `id` is internal only: never in a response, a URL or a request. Secrets (email-link tokens) and storage keys stay random, not v7.
 - **No user-facing text from the backend.** Errors are sent as `{"code": "ERROR_..."}` (upper case, `ERROR_` prefix, for example `ERROR_AUTH_FAIL`). The frontend maps each key to the translated message (English and French). Emails are the only text the backend writes.
+- **Inside a service, files sit in subfolders by use case** (for example `collection/record/`, `collection/values/`, `ui-kit/forms/`, `files/components/`), each test next to the code it checks. The service root keeps only its entry point (`index.ts`, which other services import), its main component and the types and pieces shared by its subfolders.
+- **React Aria components come only from `services/ui-kit/aria`,** where each one gets Intervio's defaults once (looks, sizes, focus ring, menu text size) and is exported from `ui-kit`. Other services never import `react-aria-components` directly; a component not yet there is added there first.
+- **Changing views go through the ui-kit's animated components, never `cond && <X/>` or a ternary in JSX:** `Show` for one condition (with `fallback` for an else), `Switch` + `Match` for if / else if / else, `Variant` for one view per option of a value. They share one short fade, and none with reduced motion. The exception is where a wrapper element would be invalid HTML (rows directly in `<tbody>`, items directly in `<ol>`/`<ul>`): put the `Show` inside the row or item.
+- **A refused or failed action is a notification** (`notify()` from `services/notifications`), never text under a field, so every screen reports errors the same way. That service is the only toast provider: no screen calls a toast library directly or renders another toaster, and a component from another library that wants to notify is wired to `notify` through its callback, with its own toaster turned off. Give it the scope of the interaction (a record, a collection) so it leaves when that interaction ends. Only a status line about what is on screen (the description's "Not saved") uses `ErrorText`.
 
 ## Visual identity (the built app)
 
@@ -27,7 +31,7 @@ Keep only the latest version of each document: update it in place, do not create
 - Compact interface to show more information: 14 px base (`html { font-size: 87.5% }`), page text at the label size (`text-sm`), tight spacing.
 - Main action buttons (`.button--primary`) have a soft shadow in the primary color; fields have only a faint one.
 - Every text field shows a placeholder: sample name, sample work email, and dots (••••) for passwords.
-- **Icons come only from the Intervio set** in `frontend/public/icons/`: use `<Icon name="Eye" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon library.
+- **Icons come only from `frontend/public/icons/`,** shown with `<Icon name="…" />` from `services/ui-kit` (file name without `.svg`). It takes the current text color, so it follows light and dark mode. The app uses the Intervio set (`<Icon name="Eye" />`); **the collection uses the simplest Lucide icons** (https://lucide.dev/icons/), copied as SVG files into `public/icons/lucide/` with their ISC license beside them (`<Icon name="lucide/x" />`); to add one, copy its file from `lucide-static` at the same version. Multicolor brand icons (such as `google.svg`) are plain `<img>`. Never draw icons inline or add an icon package.
 - **Country flags** are images, not icons: SVGs from flag-icons (MIT, licence beside them) copied into `frontend/public/flags/<code>.svg` and shown as a 16 × 12 `<img>` beside the country name.
 - The wireframes stay grayscale; this identity applies to the built app only.
 
@@ -60,7 +64,9 @@ Keep only the latest version of each document: update it in place, do not create
 - **Visible grid:** the 12 columns are drawn as very light gray bands on a locked layer behind each screen.
 - **Header:** every public screen (accounts, onboarding) starts with a 64 px header: the logo ("Intervio", size 20) on the left at the margin, and on the right the language switcher (EN / FR, size 14, active language in black) and the light and dark mode switch (a half-filled circle).
 - **Signed-in screens:** full width, no centered content area. A 264 px sidebar on the left (16 px inner padding, light gray right border) replaces the header. The body grid has 12 columns of 72 px, 24 px gutters and 24 px margins.
-- **Areas on the board:** once an area is finished, its screens are grouped in one box with the area's title (size 28) at the top left, 80 px padding, and a single Excalidraw group so the area moves as one. Screens are numbered in sequence across areas.
+- **Rows by flow:** inside an area, each row holds one use case or flow (for example the empty states, on the list and on the record), with the row's title (size 20) and a thin light gray line above its screens; screen titles are labels (size 16). A row holds up to 8 screens and wraps onto a second line only beyond 8. Screens are numbered in reading order.
+- **Areas on the board:** once an area is finished, its screens sit in one box with the area's title (size 28) at the top left and 80 px padding. Screens are numbered in sequence across areas.
+- **No Excalidraw groups.** Never group elements (no screen or area groups): the user edits and reviews element by element, and groups get in the way.
 
 ### Text on screens
 - **Minimal.** Only what the user needs to complete the next step: titles, labels, buttons, short helper or error text.

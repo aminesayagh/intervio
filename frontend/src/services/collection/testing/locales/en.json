@@ -1,0 +1,56 @@
+{
+  "title": "Items",
+  "count_one": "{{count}} item",
+  "count_other": "{{count}} items",
+  "empty": {
+    "title": "No items yet",
+    "text": "Add the first one to find it here later."
+  },
+  "columns": {
+    "name": "Name",
+    "status": "Status",
+    "owner": "Owner",
+    "quantity": "Quantity",
+    "updated": "Updated",
+    "active": "Active",
+    "website": "Website",
+    "email": "Email",
+    "phone": "Phone",
+    "tags": "Tags",
+    "due": "Due",
+    "notes": "Notes",
+    "location": "Location",
+    "icon": "Icon",
+    "avatar": "Picture",
+    "files": "Files",
+    "planned": "Planned"
+  },
+  "status": {
+    "draft": "Draft",
+    "valid": "Valid",
+    "outdated": "Outdated"
+  },
+  "errors": {
+    "nameRequired": "The name can't be empty."
+  },
+  "type": "Item",
+  "updatedOn": "Updated {{date}}",
+  "linked": "Linked items",
+  "actions": {
+    "archive": "Archive",
+    "archiveTitle": "Archive this item?",
+    "archiveText": "It leaves the list, and stays where it is already used.",
+    "remove": "Remove",
+    "removeTitle": "Remove this item?",
+    "removeText": "It is removed for good."
+  },
+  "create": {
+    "add": "+ Add item"
+  },
+  "tags": {
+    "electrical": "Electrical",
+    "mechanical": "Mechanical",
+    "safety": "Safety",
+    "hydraulic": "Hydraulic"
+  }
+}

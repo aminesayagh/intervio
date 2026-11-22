@@ -1,13 +1,13 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FormError, Icon } from '../ui-kit'
+import { FormError, Icon } from '../../ui-kit'
 import {
   formatSize,
   uploadErrorKey,
   uploadFile,
   type UploadedFile,
-} from './api'
-import { accept, checkFile, FILE_PURPOSES } from './purposes'
+} from '../api'
+import { accept, checkFile, FILE_PURPOSES } from '../purposes'
 
 /**
  * Drop or choose several documents: each is uploaded at once (purpose document) and listed with

@@ -98,3 +98,37 @@ html {
       color-mix(in oklab, var(--color-primary) 50%, transparent);
   }
 }
+
+/*
+ * A quiet scrollbar for areas that scroll inside a page (a collection's list):
+ * thin, in the text's secondary color, without the arrow buttons Chrome draws on Windows.
+ * Chrome and Safari use the -webkit- rules; other browsers the standard properties.
+ */
+.scroll-quiet::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-quiet::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+  border-radius: 3px;
+}
+.scroll-quiet::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+.scroll-quiet::-webkit-scrollbar-track,
+.scroll-quiet::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* An area with a pinned header sets --scroll-quiet-top, so the bar starts under it. */
+.scroll-quiet::-webkit-scrollbar-track {
+  margin-top: var(--scroll-quiet-top, 0px);
+}
+.scroll-quiet::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
+  }
+}

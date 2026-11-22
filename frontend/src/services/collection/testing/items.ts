@@ -1,0 +1,143 @@
+import { memorySource } from '../data/memorySource'
+import type { StoredFile } from '../definition'
+import { ICON_CHOICES } from '../values/iconChoices'
+
+/** The test collection's record (spec 15.2): one of each property kind the wrapper must handle. */
+export type Item = {
+  id: string
+  name: string
+  status: 'draft' | 'valid' | 'outdated'
+  owner: string
+  quantity: number | null // null: the property doesn't apply
+  active: boolean
+  website: string // '' when none
+  email: string
+  phone: string
+  location: string
+  icon: string | null // a Lucide name
+  avatar: StoredFile | null
+  files: StoredFile[]
+  tags: string[]
+  due: string | null // '2026-12-01'
+  planned: { start: string; end: string } | null
+  description: string // Markdown
+  notes: string // Markdown
+  linkedTo: string[] // ids of other items (for drilling down)
+  updatedAt: string // ISO date
+}
+
+export const TAGS = ['electrical', 'mechanical', 'safety', 'hydraulic']
+
+export const STATUSES: Item['status'][] = ['draft', 'valid', 'outdated']
+export const OWNERS = [
+  'Julie Moreau',
+  'Karim Benali',
+  'Sophie Martin',
+  'Omar Haddad',
+]
+
+/** n items with stable ids and names (Item 001…), so tests never depend on randomness. */
+export function makeItems(n: number): Item[] {
+  return Array.from({ length: n }, (_, index) => {
+    const number = String(index + 1).padStart(3, '0')
+    return {
+      id: `00000000-0000-7000-8000-${String(index + 1).padStart(12, '0')}`,
+      name: `Item ${number}`,
+      status: STATUSES[index % STATUSES.length],
+      owner: OWNERS[index % OWNERS.length],
+      quantity: index % 4 === 0 ? null : (index % 9) + 1,
+      active: index % 3 !== 2,
+      website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
+      email: index % 5 === 4 ? '' : `item${number}@example.com`,
+      phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      // None, one or two files, in turn.
+      files: [
+        {
+          id: `plan-${number}`,
+          name: `plan-${number}.pdf`,
+          contentType: 'application/pdf',
+          sizeBytes: 245_760,
+        },
+        {
+          id: `list-${number}`,
+          name: `checklist-${number}.xlsx`,
+          contentType: 'application/vnd.ms-excel',
+          sizeBytes: 49_152,
+        },
+      ].slice(0, index % 3),
+      avatar:
+        index % 3 === 0
+          ? {
+              id: `sample-${number}`,
+              name: `IT${number}.png`,
+              contentType: 'image/png',
+              sizeBytes: 20_480,
+            }
+          : null,
+      icon: index % 7 === 3 ? null : ICON_CHOICES[index % ICON_CHOICES.length],
+      location:
+        index % 5 === 4
+          ? ''
+          : `${index + 1} rue de la Paix, 75002 Paris, France`,
+      // None, one, two or three tags, in turn.
+      tags: TAGS.slice(index % 4, (index % 4) + (index % 4)),
+      // Five days from 1 December 2026 onwards, a day apart; every fourth has none.
+      planned:
+        index % 4 === 3
+          ? null
+          : {
+              start: new Date(Date.UTC(2026, 11, 1) + index * 86_400_000)
+                .toISOString()
+                .slice(0, 10),
+              end: new Date(Date.UTC(2026, 11, 5) + index * 86_400_000)
+                .toISOString()
+                .slice(0, 10),
+            },
+      // From 1 December 2026, a day apart; every sixth has none.
+      due:
+        index % 6 === 5
+          ? null
+          : new Date(Date.UTC(2026, 11, 1) + index * 86_400_000)
+              .toISOString()
+              .slice(0, 10),
+      description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
+      notes:
+        index % 7 === 6
+          ? ''
+          : `## Inspection\n\nSeals **replaced** on Item ${number}.`,
+      linkedTo: index > 0 ? [makeId(1)] : [],
+      // One day apart, newest first, from a fixed date.
+      updatedAt: new Date(
+        Date.UTC(2026, 10, 21) - index * 86_400_000,
+      ).toISOString(),
+    }
+  })
+}
+
+function makeId(n: number) {
+  return `00000000-0000-7000-8000-${String(n).padStart(12, '0')}`
+}
+
+/** The in-memory backend of the test collection. */
+export function itemSource(items = makeItems(300)) {
+  return memorySource(items, {
+    searchText: (item) => `${item.name} ${item.description}`,
+    filterValue: (item, filterId) =>
+      filterId === 'status'
+        ? item.status
+        : filterId === 'owner'
+          ? item.owner
+          : filterId === 'linkedTo'
+            ? item.linkedTo
+            : undefined,
+    sortValue: (item, by) =>
+      by === 'name'
+        ? item.name
+        : by === 'status'
+          ? item.status
+          : by === 'quantity'
+            ? // No quantity sorts after every quantity, smallest first.
+              (item.quantity ?? Number.MAX_SAFE_INTEGER)
+            : item.updatedAt,
+  })
+}

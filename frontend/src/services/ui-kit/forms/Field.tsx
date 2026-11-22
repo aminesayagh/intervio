@@ -9,7 +9,7 @@ import {
 } from '@heroui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Icon } from './Icon'
+import { Icon } from '../Icon'
 
 type Props = {
   name: string

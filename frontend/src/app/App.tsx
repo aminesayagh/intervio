@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useEffect, useState, type ComponentType } from 'react'
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
 import { authRoutes, useCurrentUser, type Access } from '../services/auth'
 import {
   CLIENT_BOARD_HOME,
@@ -22,6 +22,7 @@ import {
   InterventionPage,
 } from '../services/core/interventions'
 import { navigate, usePath } from '../services/navigation'
+import { Notifications } from '../services/notifications'
 import { PublicLayout } from '../services/ui-kit'
 
 type Route = { page: ComponentType; access: Access; board?: boolean }
@@ -43,8 +44,29 @@ const routes: Record<string, Route> = {
   ),
 }
 
+/**
+ * Development only: the collection wrapper's showcase (collection-archetype-spec.md 17.1).
+ * Loaded through import() inside the DEV check, so production builds leave it out.
+ */
+const devRoutes: Record<string, Route> = import.meta.env.DEV
+  ? {
+      '/dev/collection': {
+        page: lazy(
+          () => import('../services/collection/showcase/CollectionShowcase'),
+        ),
+        access: 'user',
+        board: true,
+      },
+    }
+  : {}
+
 /** Addresses with an id: one page each, which reads the id from the address. */
 const prefixRoutes: [string, Route][] = [
+  // Development only: a test record's full page in the showcase.
+  ...Object.entries(devRoutes).map(([path, route]): [string, Route] => [
+    `${path}/`,
+    route,
+  ]),
   [
     COMPANY_SETTINGS_PREFIX,
     { page: CompanySettingsPage, access: 'user', board: true },
@@ -69,6 +91,7 @@ function Router() {
   const { data: company, isPending: companyPending } = useCompany(!!user)
   const route =
     routes[path] ??
+    devRoutes[path] ??
     prefixRoutes.find(([prefix]) => path.startsWith(prefix))?.[1]
   const isPending = userPending || (!!user && companyPending)
 
@@ -93,7 +116,9 @@ function Router() {
   const Layout = route.board ? ClientBoardLayout : PublicLayout
   return (
     <Layout>
-      <Page />
+      <Suspense fallback={null}>
+        <Page />
+      </Suspense>
     </Layout>
   )
 }
@@ -103,6 +128,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
+      <Notifications />
     </QueryClientProvider>
   )
 }

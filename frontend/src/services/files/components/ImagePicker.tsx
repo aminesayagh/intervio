@@ -1,9 +1,9 @@
 import { Button } from '@heroui/react'
 import { useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FormError } from '../ui-kit'
-import { uploadErrorKey, uploadFile } from './api'
-import { accept, checkFile, FILE_PURPOSES, type FilePurpose } from './purposes'
+import { FormError } from '../../ui-kit'
+import { uploadErrorKey, uploadFile } from '../api'
+import { accept, checkFile, FILE_PURPOSES, type FilePurpose } from '../purposes'
 
 type Props = {
   purpose: FilePurpose

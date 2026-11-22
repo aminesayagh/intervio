@@ -1,0 +1,56 @@
+{
+  "title": "Éléments de test",
+  "count_one": "{{count}} élément",
+  "count_other": "{{count}} éléments",
+  "empty": {
+    "title": "Aucun élément pour l’instant",
+    "text": "Ajoutez le premier pour le retrouver ici."
+  },
+  "columns": {
+    "name": "Nom",
+    "status": "Statut",
+    "owner": "Responsable",
+    "quantity": "Quantité",
+    "updated": "Mis à jour",
+    "active": "Actif",
+    "website": "Site web",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "tags": "Étiquettes",
+    "due": "Échéance",
+    "notes": "Notes",
+    "location": "Adresse",
+    "icon": "Icône",
+    "avatar": "Image",
+    "files": "Fichiers",
+    "planned": "Prévu"
+  },
+  "status": {
+    "draft": "Brouillon",
+    "valid": "Valide",
+    "outdated": "Obsolète"
+  },
+  "errors": {
+    "nameRequired": "Le nom ne peut pas être vide."
+  },
+  "type": "Élément",
+  "updatedOn": "Mis à jour le {{date}}",
+  "linked": "Éléments liés",
+  "actions": {
+    "archive": "Archiver",
+    "archiveTitle": "Archiver cet élément ?",
+    "archiveText": "Il quitte la liste et reste là où il est déjà utilisé.",
+    "remove": "Supprimer",
+    "removeTitle": "Supprimer cet élément ?",
+    "removeText": "Il est supprimé définitivement."
+  },
+  "create": {
+    "add": "+ Ajouter un élément"
+  },
+  "tags": {
+    "electrical": "Électrique",
+    "mechanical": "Mécanique",
+    "safety": "Sécurité",
+    "hydraulic": "Hydraulique"
+  }
+}

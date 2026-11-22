@@ -1,12 +1,17 @@
-/** Error sent by the backend: an HTTP status and an `ERROR_...` key the UI translates. */
+/**
+ * Error sent by the backend: an HTTP status, an `ERROR_...` key the UI translates, and,
+ * for a refused value, the field it concerns.
+ */
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  readonly field?: string
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, field?: string) {
     super(code)
     this.status = status
     this.code = code
+    this.field = field
   }
 }
 
@@ -52,7 +57,11 @@ export async function api<T = void>(
   const text = await response.text()
   const data = text ? JSON.parse(text) : undefined
   if (!response.ok) {
-    throw new ApiError(response.status, data?.code ?? 'ERROR_UNKNOWN')
+    throw new ApiError(
+      response.status,
+      data?.code ?? 'ERROR_UNKNOWN',
+      data?.field,
+    )
   }
   return data as T
 }

@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react'
 
 /**
- * An icon from the Intervio set in public/icons, by file name without ".svg"
- * (for example "Eye" or "Arrow - Left"). The file gives the shape; the color is the
+ * An icon from public/icons, by file name without ".svg": the Intervio set (for
+ * example "Eye" or "Arrow - Left") or, for the collection, Lucide ("lucide/x"). The file gives the shape; the color is the
  * current text color, so icons follow light and dark mode.
  * Multicolor brand icons (Google) are used as plain <img> instead.
  */
@@ -15,7 +15,8 @@ export function Icon({
   size?: number
   className?: string
 }) {
-  const url = `url("/icons/${encodeURIComponent(name)}.svg")`
+  // A folder in the name ("lucide/x") stays a folder.
+  const url = `url("/icons/${name.split('/').map(encodeURIComponent).join('/')}.svg")`
   const style: CSSProperties = {
     width: size,
     height: size,

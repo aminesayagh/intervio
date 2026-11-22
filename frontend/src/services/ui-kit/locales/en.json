@@ -12,5 +12,11 @@
   "password": {
     "show": "Show password",
     "hide": "Hide password"
+  },
+  "icons": {
+    "search": "Search icons",
+    "none": "None",
+    "empty": "No icons match.",
+    "remove": "Remove the icon"
   }
 }

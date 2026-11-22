@@ -12,5 +12,11 @@
   "password": {
     "show": "Afficher le mot de passe",
     "hide": "Masquer le mot de passe"
+  },
+  "icons": {
+    "search": "Chercher une icône",
+    "none": "Aucune",
+    "empty": "Aucune icône ne correspond.",
+    "remove": "Retirer l’icône"
   }
 }

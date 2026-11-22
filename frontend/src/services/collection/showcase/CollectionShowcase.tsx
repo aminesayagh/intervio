@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Segmented } from '../../ui-kit'
+import { Button, Segmented } from '../../ui-kit'
 import { Collection } from '../Collection'
-import { Button } from '../parts'
 import { itemSource } from '../testing/items'
 import { itemDefinition } from '../testing/testDefinition'
 

@@ -1,9 +1,14 @@
 import { useRef, useState } from 'react'
-import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { Icon, Show } from '../../ui-kit'
+import {
+  Button,
+  ChoiceMenu,
+  Icon,
+  MenuPopover,
+  MenuTrigger,
+  Show,
+} from '../../ui-kit'
 import type { FilterDefinition } from '../definition'
-import { Button, ChoiceMenu, MenuPopover } from '../parts'
 import { isNarrowed, type Listing } from './useCollectionState'
 
 /** The delay between the last key typed and the search (spec 6.3). */

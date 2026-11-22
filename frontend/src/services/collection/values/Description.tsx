@@ -1,10 +1,19 @@
 import { useCallback, useRef, useState, type KeyboardEvent } from 'react'
-import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { cn, Match, Show, Switch } from '../../ui-kit'
-import { Button, ErrorText } from '../parts'
+import {
+  Button,
+  cn,
+  Match,
+  Show,
+  Switch,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+} from '../../ui-kit'
+import { ErrorText } from '../parts'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6). */
@@ -204,13 +213,9 @@ function Editor({
     <div className="flex flex-col gap-1">
       <Tabs>
         <div className="flex items-center gap-2 border-b border-border">
-          <TabList aria-label={t('description.label')} className="flex gap-4">
+          <TabList aria-label={t('description.label')}>
             {(['write', 'preview'] as const).map((id) => (
-              <Tab
-                key={id}
-                id={id}
-                className="-mb-px cursor-pointer border-b-2 border-transparent py-1.5 text-muted outline-none data-[focus-visible]:text-foreground data-[selected]:border-foreground data-[selected]:text-foreground"
-              >
+              <Tab key={id} id={id}>
                 {t(`description.${id}`)}
               </Tab>
             ))}
@@ -230,7 +235,7 @@ function Editor({
             ))}
           </div>
         </div>
-        <TabPanel id="write" className="outline-none">
+        <TabPanel id="write">
           <textarea
             ref={placeField}
             autoFocus
@@ -244,7 +249,7 @@ function Editor({
             className="mt-2 w-full resize-none rounded-[var(--field-radius)] border border-border bg-surface px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
           />
         </TabPanel>
-        <TabPanel id="preview" className="pt-2 outline-none">
+        <TabPanel id="preview" className="pt-2">
           <Show
             when={text}
             fallback={<p className="text-muted">{t('description.empty')}</p>}

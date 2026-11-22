@@ -1,15 +1,18 @@
 import { useCallback } from 'react'
-import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { Icon, Match, Show, Switch } from '../../ui-kit'
-import type { CollectionDefinition, PanelDefinition } from '../definition'
 import {
   ActionMenu,
   Button,
+  Icon,
+  Match,
   MenuPopover,
-  PanelClose,
+  MenuTrigger,
+  Show,
+  Switch,
   type MenuAction,
-} from '../parts'
+} from '../../ui-kit'
+import type { CollectionDefinition, PanelDefinition } from '../definition'
+import { PanelClose } from '../parts'
 import { RecordBody, RecordPlaceholders } from './RecordBody'
 import { isViewOnly, useRecord } from './recordQuery'
 import type { Id, ReportInvalid, SaveChange } from '../types'

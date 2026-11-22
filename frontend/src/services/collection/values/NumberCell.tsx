@@ -1,10 +1,5 @@
 import { useState } from 'react'
-import {
-  Button,
-  Input,
-  NumberField as AriaNumberField,
-} from 'react-aria-components'
-import { cn, Icon } from '../../ui-kit'
+import { NumberInput } from '../../ui-kit'
 import type { NumberField } from '../definition'
 
 /**
@@ -46,11 +41,10 @@ export function NumberCell<T>({
     }
   }
 
-  const step =
-    'flex h-[11px] w-4 cursor-pointer items-center justify-center rounded-[2px] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-1 data-[focus-visible]:outline-foreground data-[disabled]:cursor-default data-[disabled]:opacity-40'
   return (
-    <AriaNumberField
+    <NumberInput
       aria-label={label}
+      look={look}
       value={shown ?? NaN}
       onChange={(value) => void commit(value)}
       minValue={edit.min}
@@ -60,36 +54,6 @@ export function NumberCell<T>({
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
       }}
-      className={cn(
-        'group/number relative flex min-w-0 items-center',
-        // In the panel the field is as wide as its number (the browser's
-        // field-sizing), never the whole row.
-        look === 'panel' && '-ms-2 w-fit max-w-full',
-      )}
-    >
-      <Input
-        placeholder="—"
-        className={cn(
-          'w-full min-w-0 cursor-text bg-transparent p-0 pe-6 tabular-nums outline-none placeholder:text-muted',
-          look === 'panel' &&
-            'w-auto min-w-14 rounded-[var(--field-radius)] px-2 py-1 pe-6 [field-sizing:content] hover:bg-default focus:bg-default',
-        )}
-      />
-      <span
-        className={cn(
-          'absolute end-0 flex flex-col gap-px',
-          look === 'cell' &&
-            'opacity-0 group-focus-within/number:opacity-100 group-hover/number:opacity-100',
-          look === 'panel' && 'end-1',
-        )}
-      >
-        <Button slot="increment" className={step}>
-          <Icon name="lucide/chevron-up" size={10} />
-        </Button>
-        <Button slot="decrement" className={step}>
-          <Icon name="lucide/chevron-down" size={10} />
-        </Button>
-      </span>
-    </AriaNumberField>
+    />
   )
 }

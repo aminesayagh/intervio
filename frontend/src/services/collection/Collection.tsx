@@ -27,7 +27,17 @@ import {
   usePath,
   useSearchParams,
 } from '../navigation'
-import { cn, foldSidebar, Icon, Match, Show, Switch } from '../ui-kit'
+import {
+  Button,
+  cn,
+  ConfirmDialog,
+  foldSidebar,
+  Icon,
+  Match,
+  type MenuAction,
+  Show,
+  Switch,
+} from '../ui-kit'
 import { cache, keys, useCollectionQuery } from './data/collectionQuery'
 import type {
   ActionDefinition,
@@ -36,7 +46,6 @@ import type {
 } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
-import { Button, ConfirmDialog, type MenuAction } from './parts'
 import { RecordPage } from './record/RecordPage'
 import {
   clampPanel,

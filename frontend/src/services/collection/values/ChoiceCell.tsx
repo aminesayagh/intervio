@@ -1,9 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { cn } from '../../ui-kit'
+import { ChoiceMenu, FieldButton, MenuPopover, MenuTrigger } from '../../ui-kit'
 import type { SelectField } from '../definition'
-import { ChoiceMenu, MenuPopover } from '../parts'
 
 /**
  * A table cell whose value is chosen from a list (a status): it shows the column's
@@ -49,19 +47,15 @@ export function ChoiceCell<T>({
 
   return (
     <MenuTrigger>
-      <Button
+      <FieldButton
+        look={look}
         aria-label={`${label}: ${t(choose.options.find((o) => o.id === shown)?.label ?? shown)}`}
         aria-busy={pending ? true : undefined}
-        className={cn(
-          'flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground',
-          look === 'panel' &&
-            '-mx-2 px-2 py-1 data-[hovered]:bg-default data-[pressed]:bg-default',
-        )}
       >
         {render(
           shown === saved ? record : { ...record, ...choose.patch(shown) },
         )}
-      </Button>
+      </FieldButton>
       <MenuPopover minWidth={180}>
         <ChoiceMenu
           label={label}

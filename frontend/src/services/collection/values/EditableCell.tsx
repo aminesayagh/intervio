@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn } from '../../ui-kit'
+import { TextInput } from '../../ui-kit'
 import type { TextField } from '../definition'
 
 /**
@@ -74,31 +74,25 @@ export function EditableCell<T>({
     }
   }
 
-  const input = (
-    <input
+  return (
+    <TextInput
       aria-label={label}
+      look={look}
       placeholder={placeholder}
       autoFocus={autoFocus}
-      aria-busy={saving || undefined}
+      busy={saving}
       value={text}
-      onChange={(event) => setText(event.target.value)}
+      onChange={setText}
       onBlur={commit}
       onKeyDown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur()
+        const input = event.target as HTMLInputElement
+        if (event.key === 'Enter') input.blur()
         if (event.key === 'Escape') {
           cancelling.current = true
           setText(saved)
-          event.currentTarget.blur()
+          input.blur()
         }
       }}
-      className={cn(
-        'w-full cursor-text truncate bg-transparent p-0 outline-none',
-        look !== 'cell' &&
-          '-mx-2 rounded-[var(--field-radius)] px-2 py-1 hover:bg-default focus:bg-default',
-        look === 'title' && 'text-xl font-medium',
-      )}
     />
   )
-
-  return input
 }

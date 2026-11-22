@@ -3,7 +3,7 @@ import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { cn, Icon, Match, Show, Switch } from '../../ui-kit'
+import { cn, Match, Show, Switch } from '../../ui-kit'
 import { Button, ErrorText } from '../parts'
 import { useAutosave } from './useAutosave'
 
@@ -84,7 +84,7 @@ export function Description({
             onKeyDown={(event) => {
               if (event.key === 'Enter') setEditing(true)
             }}
-            className="group/edit relative -mx-2 cursor-text rounded-[var(--field-radius)] px-2 py-1 pe-8 outline-none hover:bg-default focus-visible:bg-default"
+            className="-mx-2 cursor-text rounded-[var(--field-radius)] px-2 py-1 outline-none hover:bg-default focus-visible:bg-default"
           >
             <Show
               when={value}
@@ -92,9 +92,6 @@ export function Description({
             >
               <MarkdownView text={value} />
             </Show>
-            <span className="pointer-events-none absolute end-2 top-1.5 flex text-muted opacity-0 group-hover/edit:opacity-100 group-focus-visible/edit:opacity-100">
-              <Icon name="lucide/pencil" size={14} />
-            </span>
           </div>
         </Match>
         <Match when={true}>

@@ -259,7 +259,7 @@ On load, in this order:
 
 ### 7.3.1 Showing what can be edited
 
-- **In the panel:** an editable value looks like plain text until the pointer is over it or it has the keyboard focus. It then shows a light field (grey background, thin border) and a pencil on the right. Clicking anywhere on that field starts editing. Read-only values (dates, "Added by…", computed values) never show it, and the pointer stays an arrow over them.
+- **In the panel:** an editable value looks like plain text until the pointer is over it or it has the keyboard focus. It then shows a light field (grey background), with no icon. Clicking anywhere on that field starts editing. Read-only values (dates, "Added by…", computed values) never show it, and the pointer stays an arrow over them.
 - **In the table:**
   - every property that is shown and editable has **its own column**, built from its `PropertyDefinition`, and is edited **in its cell** with the rules of 7.3: a text value becomes a field (Enter or leaving saves, Escape cancels); a set of choices opens a menu that saves on choice;
   - an editable cell looks exactly like the other cells: no field, no border, the same font and color; only the text cursor over it tells it can be edited. Leaving the cell saves (Enter too), Escape puts the saved value back, and a refused value comes back with a short message under the cell;

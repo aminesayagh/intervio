@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn, Icon, Variant } from '../../ui-kit'
+import { cn } from '../../ui-kit'
 import type { TextEdit } from '../definition'
 
 /**
@@ -27,7 +27,7 @@ export function EditableCell<T>({
   save: (patch: Partial<T>) => Promise<void>
   /**
    * cell: in the table, looks like plain text (only the cursor tells). panel and
-   * title: in the panel, a light field and a pencil show under the pointer or focus.
+   * title: in the panel, a light field shows under the pointer or focus.
    */
   look?: 'cell' | 'panel' | 'title'
   placeholder?: string
@@ -94,29 +94,11 @@ export function EditableCell<T>({
       className={cn(
         'w-full cursor-text truncate bg-transparent p-0 outline-none',
         look !== 'cell' &&
-          '-mx-2 rounded-[var(--field-radius)] px-2 py-1 pe-8 hover:bg-default focus:bg-default',
+          '-mx-2 rounded-[var(--field-radius)] px-2 py-1 hover:bg-default focus:bg-default',
         look === 'title' && 'text-xl font-medium',
       )}
     />
   )
 
-  return (
-    <Variant
-      as="span"
-      className="block min-w-0"
-      value={look === 'cell' ? 'plain' : 'framed'}
-      views={{
-        plain: () => input,
-        // In the panel: a pencil under the pointer or the focus.
-        framed: () => (
-          <span className="group/edit relative flex items-center">
-            {input}
-            <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
-              <Icon name="lucide/pencil" size={14} />
-            </span>
-          </span>
-        ),
-      }}
-    />
-  )
+  return input
 }

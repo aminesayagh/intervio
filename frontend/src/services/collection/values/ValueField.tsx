@@ -6,6 +6,7 @@ import { EditableCell } from './EditableCell'
 import { CheckboxCell } from './CheckboxCell'
 import { DateCell } from './DateCell'
 import { LinkCell, LinkValue } from './LinkCell'
+import { firstLine } from './markdown'
 import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
 
@@ -124,6 +125,15 @@ export function ValueField<T>({
               save={save}
               look={look}
             />
+          ),
+        // A rich text is edited in the panel; in the table its first line opens the record.
+        richText: () =>
+          field?.type === 'richText' && (
+            <span className="block truncate">
+              {firstLine(field.value(record)) || (
+                <span className="text-muted">—</span>
+              )}
+            </span>
           ),
         checkbox: () =>
           field?.type === 'checkbox' && (

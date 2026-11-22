@@ -61,24 +61,29 @@ export function Description({
   editable,
   storageKey,
   save,
+  label,
 }: {
   value: string
   editable: boolean
+  /** Its name, when it is not the description (a rich text value, spec 7.3.0). */
+  label?: string
   /** Where the tab keeps text not saved yet (spec 6.1). */
   storageKey: string
   save: (text: string) => Promise<void>
 }) {
   const { t } = useTranslation('collection')
   const [editing, setEditing] = useState(false)
+  const name = label ?? t('description.label')
 
   if (!value && !editable) return null
   return (
     <section>
-      <h3 className="mb-1 text-muted">{t('description.label')}</h3>
+      <h3 className="mb-1 text-muted">{name}</h3>
       <Switch>
         <Match when={editing}>
           <Editor
             initial={value}
+            label={name}
             storageKey={storageKey}
             save={save}
             onLeave={() => setEditing(false)}
@@ -88,7 +93,11 @@ export function Description({
           <div
             role="button"
             tabIndex={0}
-            aria-label={t('description.edit')}
+            aria-label={
+              label
+                ? t('description.editLabel', { label })
+                : t('description.edit')
+            }
             onClick={() => setEditing(true)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') setEditing(true)
@@ -133,7 +142,9 @@ function Editor({
   storageKey,
   save,
   onLeave,
+  label,
 }: {
+  label: string
   initial: string
   storageKey: string
   save: (text: string) => Promise<void>
@@ -213,7 +224,7 @@ function Editor({
     <div className="flex flex-col gap-1">
       <Tabs>
         <div className="flex items-center gap-2 border-b border-border">
-          <TabList aria-label={t('description.label')}>
+          <TabList aria-label={label}>
             {(['write', 'preview'] as const).map((id) => (
               <Tab key={id} id={id}>
                 {t(`description.${id}`)}
@@ -239,7 +250,7 @@ function Editor({
           <textarea
             ref={placeField}
             autoFocus
-            aria-label={t('description.label')}
+            aria-label={label}
             aria-invalid={tooLong || undefined}
             value={text}
             rows={Math.max(4, text.split('\n').length + 1)}

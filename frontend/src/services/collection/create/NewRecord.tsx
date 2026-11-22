@@ -132,7 +132,10 @@ export function NewRecord<T, C>({
 
         <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
           {panel.properties
-            .filter((property) => property.field)
+            .filter(
+              (property) =>
+                property.field && property.field.type !== 'richText',
+            )
             .map((property) => (
               <div key={property.id} className="contents">
                 <dt className="text-muted">{t(property.label)}</dt>

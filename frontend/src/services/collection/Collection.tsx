@@ -273,8 +273,11 @@ export function Collection<T extends RowData, C = void>({
   const close = useCallback(() => {
     const unsaved = (() => {
       try {
-        return sessionStorage.getItem(
-          `intervio.collection.${key}.${openId}.description`,
+        // The description and every rich text value keep unsaved text here.
+        const prefix = `intervio.collection.${key}.${openId}.`
+        return (
+          Object.keys(sessionStorage).find((name) => name.startsWith(prefix)) ??
+          null
         )
       } catch {
         return null

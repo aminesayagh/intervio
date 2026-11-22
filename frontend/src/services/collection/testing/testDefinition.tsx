@@ -1,6 +1,8 @@
 import { addTranslations } from '../../i18n'
+import { firstLine } from '../values/markdown'
 import type {
   CheckboxField,
+  RichTextField,
   DateField,
   MultiSelectField,
   LinkField,
@@ -68,6 +70,13 @@ const due: DateField<Item> = {
 }
 const dueDay = (item: Item) =>
   item.due ? <Day iso={item.due} /> : <span className="text-muted">—</span>
+const notes: RichTextField<Item> = {
+  type: 'richText',
+  value: (item) => item.notes,
+  patch: (notes) => ({ notes }),
+}
+const notesLine = (item: Item) =>
+  firstLine(item.notes) || <span className="text-muted">—</span>
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -94,6 +103,7 @@ export function itemDefinition(
         active: true,
         tags: [],
         due: null,
+        notes: '',
         website: '',
         email: '',
         phone: '',
@@ -181,6 +191,12 @@ export function itemDefinition(
           field: due,
         },
         {
+          id: 'notes',
+          label: 'columns.notes',
+          value: notesLine,
+          field: notes,
+        },
+        {
           id: 'website',
           label: 'columns.website',
           value: (item) => item.website,
@@ -247,6 +263,7 @@ export function itemDefinition(
       'active',
       'tags',
       'due',
+      'notes',
       'website',
       'email',
       'phone',
@@ -307,6 +324,13 @@ export function itemDefinition(
         width: 150,
         cell: dueDay,
         field: due,
+      },
+      {
+        id: 'notes',
+        label: 'columns.notes',
+        width: 240,
+        cell: notesLine,
+        field: notes,
       },
       {
         id: 'website',

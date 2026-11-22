@@ -17,7 +17,8 @@
     "email": "E-mail",
     "phone": "Téléphone",
     "tags": "Étiquettes",
-    "due": "Échéance"
+    "due": "Échéance",
+    "notes": "Notes"
   },
   "status": {
     "draft": "Brouillon",

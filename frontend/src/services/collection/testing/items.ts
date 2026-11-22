@@ -14,6 +14,7 @@ export type Item = {
   tags: string[]
   due: string | null // '2026-12-01'
   description: string // Markdown
+  notes: string // Markdown
   linkedTo: string[] // ids of other items (for drilling down)
   updatedAt: string // ISO date
 }
@@ -52,6 +53,10 @@ export function makeItems(n: number): Item[] {
               .toISOString()
               .slice(0, 10),
       description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
+      notes:
+        index % 7 === 6
+          ? ''
+          : `## Inspection\n\nSeals **replaced** on Item ${number}.`,
       linkedTo: index > 0 ? [makeId(1)] : [],
       // One day apart, newest first, from a fixed date.
       updatedAt: new Date(

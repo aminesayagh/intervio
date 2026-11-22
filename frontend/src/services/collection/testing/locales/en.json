@@ -17,7 +17,8 @@
     "email": "Email",
     "phone": "Phone",
     "tags": "Tags",
-    "due": "Due"
+    "due": "Due",
+    "notes": "Notes"
   },
   "status": {
     "draft": "Draft",

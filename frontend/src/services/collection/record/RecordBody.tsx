@@ -78,28 +78,30 @@ export function RecordBody<T, C>({
         </div>
 
         <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
-          {panel.properties.map((property) => (
-            <div key={property.id} className="contents">
-              <dt className="text-muted">{t(property.label)}</dt>
-              <dd className="min-w-0">
-                <ValueField
-                  record={shown}
-                  field={property.field}
-                  allowed={canEdit(shown, property.id)}
-                  read={property.value}
-                  label={t(property.label)}
-                  namespace={definition.i18n.namespace}
-                  save={(patch) =>
-                    save(shown, patch, { label: t(property.label) })
-                  }
-                  onInvalid={(reason) =>
-                    report(shown, t(property.label), reason)
-                  }
-                  look="panel"
-                />
-              </dd>
-            </div>
-          ))}
+          {panel.properties
+            .filter((property) => property.field?.type !== 'richText')
+            .map((property) => (
+              <div key={property.id} className="contents">
+                <dt className="text-muted">{t(property.label)}</dt>
+                <dd className="min-w-0">
+                  <ValueField
+                    record={shown}
+                    field={property.field}
+                    allowed={canEdit(shown, property.id)}
+                    read={property.value}
+                    label={t(property.label)}
+                    namespace={definition.i18n.namespace}
+                    save={(patch) =>
+                      save(shown, patch, { label: t(property.label) })
+                    }
+                    onInvalid={(reason) =>
+                      report(shown, t(property.label), reason)
+                    }
+                    look="panel"
+                  />
+                </dd>
+              </div>
+            ))}
         </dl>
 
         <Show when={panel.description}>
@@ -118,6 +120,26 @@ export function RecordBody<T, C>({
             />
           )}
         </Show>
+
+        {panel.properties.map((property) => {
+          const field = property.field
+          if (field?.type !== 'richText') return null
+          return (
+            <Description
+              key={`${id}-${property.id}`}
+              label={t(property.label)}
+              value={field.value(shown)}
+              editable={canEdit(shown, property.id)}
+              storageKey={`intervio.collection.${definition.key}.${id}.${property.id}`}
+              save={(text) =>
+                save(shown, field.patch(text), {
+                  label: t(property.label),
+                  quiet: true, // its status line says Not saved, with Retry
+                })
+              }
+            />
+          )
+        })}
 
         <Show when={layout === 'panel'} className="flex flex-col gap-6">
           <Sections definition={definition} panel={panel} record={shown} />

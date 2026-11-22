@@ -71,6 +71,13 @@ export type DateField<T> = {
   max?: string
 }
 
+/** A Markdown text: edited in the panel (like the description), its first line in the table. */
+export type RichTextField<T> = {
+  type: 'richText'
+  value: (record: T) => string
+  patch: (markdown: string) => Partial<T>
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -89,6 +96,7 @@ export type LinkField<T> = {
 /** How a value shows and is edited, by its type (spec 7.3.0, decision 133). */
 export type FieldDefinition<T> =
   | TextField<T>
+  | RichTextField<T>
   | NumberField<T>
   | SelectField<T>
   | MultiSelectField<T>

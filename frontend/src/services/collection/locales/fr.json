@@ -48,7 +48,8 @@
     "unsavedTitle": "Quitter sans enregistrer ?",
     "unsavedText": "Vos dernières modifications de la description ne sont pas enregistrées. Elles restent dans cet onglet jusqu’à votre retour.",
     "leave": "Quitter quand même",
-    "keepEditing": "Continuer"
+    "keepEditing": "Continuer",
+    "editLabel": "Modifier {{label}}"
   },
   "actions": {
     "more": "Plus d’actions",

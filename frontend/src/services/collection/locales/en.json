@@ -48,7 +48,8 @@
     "unsavedTitle": "Leave without saving?",
     "unsavedText": "Your last changes to the description are not saved. They stay in this tab until you come back.",
     "leave": "Leave anyway",
-    "keepEditing": "Keep editing"
+    "keepEditing": "Keep editing",
+    "editLabel": "Edit {{label}}"
   },
   "actions": {
     "more": "More actions",

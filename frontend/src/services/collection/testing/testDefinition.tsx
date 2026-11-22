@@ -151,6 +151,7 @@ export function itemDefinition(
         patch: (owner) => ({ owner }),
       },
     ],
+    columnPriority: ['name', 'status', 'updated', 'owner', 'quantity'],
     columns: [
       {
         id: 'name',

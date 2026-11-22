@@ -8,12 +8,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type RefObject,
 } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../http'
 import { addTranslations } from '../i18n'
@@ -24,7 +26,7 @@ import {
   usePath,
   useSearchParams,
 } from '../navigation'
-import { cn, Icon, Match, Show, Switch } from '../ui-kit'
+import { cn, foldSidebar, Icon, Match, Show, Switch } from '../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import { cache, keys, useCollectionQuery } from './collectionQuery'
 import { EditableCell } from './EditableCell'
@@ -37,7 +39,15 @@ import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { Button, ConfirmDialog, type MenuAction } from './parts'
 import { RecordPage } from './RecordPage'
+import {
+  clampPanel,
+  openingWidth,
+  PANEL,
+  panelLimits,
+  useLayoutMode,
+} from './layout'
 import { NewRecord } from './NewRecord'
+import { PanelDivider } from './PanelDivider'
 import { RecordPanel } from './RecordPanel'
 import { newRecordKey } from './recordQuery'
 import { Toolbar } from './Toolbar'
@@ -387,6 +397,69 @@ export function Collection<T extends RowData, C = void>({
           })
         : t(definition.i18n.count, { count: list.total })
 
+  // Layout (spec 9): the room for the list and the panel, the panel's width, the mode.
+  const mode = useLayoutMode()
+  const reduceMotion = useReducedMotion()
+  const sectionRef = useRef<HTMLElement>(null)
+  const [space, setSpace] = useState(0)
+  useLayoutEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+    const measure = () => setSpace(section.getBoundingClientRect().width)
+    measure()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [pageId])
+  const widthKey = `intervio.collection.${key}.panelWidth`
+  const [dragged, setDragged] = useState<number | null>(null)
+  const panelShown = Boolean(definition.panel && (openId || isNew))
+  // Each opening starts from the saved width, in its reasonable range (9.1).
+  const [wasShown, setWasShown] = useState(panelShown)
+  if (wasShown !== panelShown) {
+    setWasShown(panelShown)
+    if (!panelShown) setDragged(null)
+  }
+  const saved = (() => {
+    try {
+      return Number(localStorage.getItem(widthKey)) || PANEL.default
+    } catch {
+      return PANEL.default
+    }
+  })()
+  const panelWidth = space
+    ? clampPanel(dragged ?? openingWidth(saved, space), space)
+    : PANEL.default
+  const commitWidth = useCallback(
+    (width: number) => {
+      try {
+        localStorage.setItem(widthKey, String(Math.round(width)))
+      } catch {
+        // not remembered: the next panel opens at 560 px
+      }
+    },
+    [widthKey],
+  )
+  // Medium width: the sidebar folds while a panel is open (spec 9).
+  useEffect(() => {
+    foldSidebar(mode === 'medium' && panelShown)
+    return () => foldSidebar(false)
+  }, [mode, panelShown])
+  // The table's columns: as many as fit, in the collection's priority (spec 9).
+  const listWidth =
+    (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) - 24
+  const priority =
+    definition.columnPriority ?? definition.columns.map((column) => column.id)
+  const shownColumns = space
+    ? priority.slice(0, Math.max(1, Math.floor(listWidth / PANEL.column)))
+    : priority
+  const narrowPanel = mode === 'narrow' && panelShown
+  const back = narrowPanel ? t(definition.i18n.title) : undefined
+
   const dialogs = (
     <>
       <ConfirmDialog
@@ -477,11 +550,17 @@ export function Collection<T extends RowData, C = void>({
 
   return (
     <section
+      ref={sectionRef}
       aria-labelledby={`${definition.key}-title`}
       onKeyDown={onKeyDown}
       className="flex h-[calc(100dvh-5.5rem)] min-h-[360px] lg:h-[calc(100dvh-3rem)]"
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-4 pe-6">
+      <div
+        className={cn(
+          'flex min-w-0 flex-1 flex-col gap-4 pe-6',
+          narrowPanel && 'hidden',
+        )}
+      >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h1 id={`${definition.key}-title`} className="text-xl font-medium">
             {t(definition.i18n.title)}
@@ -562,6 +641,7 @@ export function Collection<T extends RowData, C = void>({
                 save={save}
                 canEdit={canEdit}
                 openId={definition.panel ? openId : null}
+                shown={shownColumns}
                 onOpen={definition.panel ? open : undefined}
               />
             </Match>
@@ -583,31 +663,56 @@ export function Collection<T extends RowData, C = void>({
         </div>
       </div>
 
-      {definition.panel && isNew && !openId && (
-        <NewRecord
-          key="new"
-          definition={definition}
-          panel={definition.panel}
-          defaults={newDefaults()}
-          onCreated={createRecord}
-          onClose={close}
+      {panelShown && !narrowPanel && (
+        <PanelDivider
+          width={panelWidth}
+          {...panelLimits(space)}
+          label={t('collection:panel.resize')}
+          onChange={setDragged}
+          onCommit={commitWidth}
         />
       )}
-      {definition.panel && openId && (
-        <RecordPanel
-          key={definition.key}
-          definition={definition}
-          panel={definition.panel}
-          context={context as C}
-          id={openId}
-          fromList={list.items.find((item) => getId(item) === openId)}
-          onClose={close}
-          onUnavailable={unavailable}
-          canEdit={canEdit}
-          save={save}
-          actions={(record) => menuActions(record, false)}
-          onAction={runMenu}
-        />
+      {panelShown && (
+        <motion.div
+          initial={{ x: 24, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+          style={narrowPanel ? undefined : { width: panelWidth }}
+          className={cn(
+            'h-full shrink-0',
+            narrowPanel &&
+              'flex-1 [&>aside]:border-0 [&>aside]:ps-0 [&>aside]:pe-0',
+          )}
+        >
+          {definition.panel && isNew && !openId && (
+            <NewRecord
+              back={back}
+              key="new"
+              definition={definition}
+              panel={definition.panel}
+              defaults={newDefaults()}
+              onCreated={createRecord}
+              onClose={close}
+            />
+          )}
+          {definition.panel && openId && (
+            <RecordPanel
+              key={definition.key}
+              back={back}
+              definition={definition}
+              panel={definition.panel}
+              context={context as C}
+              id={openId}
+              fromList={list.items.find((item) => getId(item) === openId)}
+              onClose={close}
+              onUnavailable={unavailable}
+              canEdit={canEdit}
+              save={save}
+              actions={(record) => menuActions(record, false)}
+              onAction={runMenu}
+            />
+          )}
+        </motion.div>
       )}
       {dialogs}
     </section>
@@ -616,7 +721,7 @@ export function Collection<T extends RowData, C = void>({
 
 /**
  * The table's features: none. Sorting is done by the server from the address, so the
- * headers change the address directly; column visibility comes in step 11.
+ * headers change the address directly; the columns that fit are chosen before.
  */
 const features = tableFeatures({})
 
@@ -637,6 +742,7 @@ function RecordTable<T extends RowData, C>({
   canEdit,
   openId,
   onOpen,
+  shown,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -653,14 +759,15 @@ function RecordTable<T extends RowData, C>({
   openId: Id | null
   /** Set when a row opens its record in the panel. */
   onOpen?: (id: Id) => void
+  /** The ids of the columns that fit, by priority. */
+  shown: string[]
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
-      // ponytail: beside the panel the table keeps its first two columns; step 11
-      // replaces this with the collection's column priorities and the list's width.
-      (openId ? definition.columns.slice(0, 2) : definition.columns).map(
-        (column: ColumnDefinition<T>) => ({
+      definition.columns
+        .filter((column) => shown.includes(column.id))
+        .map((column: ColumnDefinition<T>) => ({
           id: column.id,
           header: () => t(column.label),
           cell: (info) =>
@@ -684,9 +791,8 @@ function RecordTable<T extends RowData, C>({
             ) : (
               column.cell(info.row.original)
             ),
-        }),
-      ),
-    [definition.columns, definition.i18n.namespace, t, save, canEdit, openId],
+        })),
+    [definition.columns, definition.i18n.namespace, t, save, canEdit, shown],
   )
   const table = useTable({
     features,

@@ -5,7 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { useCurrentUser, useLogOut } from '../../auth'
 import { setLanguage } from '../../i18n'
 import { Link, navigate, usePath } from '../../navigation'
-import { applyTheme, Icon, useTheme } from '../../ui-kit'
+import {
+  applyTheme,
+  foldSidebar,
+  Icon,
+  useSidebarFolded,
+  useTheme,
+} from '../../ui-kit'
 import { SidebarInterventions } from '../interventions'
 
 const TABS = [
@@ -32,8 +38,12 @@ export function ClientBoardLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(savedCollapsed)
   const reduceMotion = useReducedMotion()
+  // A record panel at medium width folds the sidebar while it is open (spec 9).
+  const folded = useSidebarFolded()
+  const rail = collapsed || folded
 
   function toggleCollapsed() {
+    if (folded) return foldSidebar(false) // unfolds for now; the saved choice stays
     setCollapsed(!collapsed)
     try {
       localStorage.setItem(COLLAPSED_KEY, String(!collapsed))
@@ -46,11 +56,11 @@ export function ClientBoardLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background text-sm text-foreground">
       <motion.aside
         initial={false}
-        animate={{ width: collapsed ? 57 : 264 }}
+        animate={{ width: rail ? 57 : 264 }}
         transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
         className="sticky top-0 hidden h-screen shrink-0 overflow-hidden border-e border-border lg:flex"
       >
-        <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
+        <Sidebar collapsed={rail} onToggle={toggleCollapsed} />
       </motion.aside>
       <div className="min-w-0 flex-1">
         <header className="flex h-14 items-center gap-3 px-4 lg:hidden">

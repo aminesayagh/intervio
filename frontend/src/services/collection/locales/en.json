@@ -25,7 +25,9 @@
     "open": "Open",
     "openRecord": "Open {{name}}",
     "viewOnly": "View only",
-    "title": "Title"
+    "title": "Title",
+    "resize": "Resize the panel",
+    "back": "Back to {{name}}"
   },
   "description": {
     "label": "Description",

@@ -25,7 +25,9 @@
     "open": "Ouvrir",
     "openRecord": "Ouvrir {{name}}",
     "viewOnly": "Lecture seule",
-    "title": "Titre"
+    "title": "Titre",
+    "resize": "Redimensionner le panneau",
+    "back": "Retour à {{name}}"
   },
   "description": {
     "label": "Description",

@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Icon, Show } from '../ui-kit'
+import { Show } from '../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { EditableCell } from './EditableCell'
-import { Button } from './parts'
+import { PanelClose } from './parts'
 import { newRecordKey } from './recordQuery'
 import { refusalMessage } from './refusal'
 
@@ -36,6 +36,7 @@ export function NewRecord<T, C>({
   defaults,
   onCreated,
   onClose,
+  back,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
@@ -43,12 +44,15 @@ export function NewRecord<T, C>({
   defaults: Partial<T>
   onCreated: (draft: Partial<T>) => Promise<void>
   onClose: () => void
+  /** Narrow screens: the collection's name, for the way back. */
+  back?: string
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const storageKey = newRecordKey(definition.key)
-  const [draft, setDraft] = useState<Partial<T>>(
-    () => ({ ...defaults, ...read<T>(storageKey) }),
-  )
+  const [draft, setDraft] = useState<Partial<T>>(() => ({
+    ...defaults,
+    ...read<T>(storageKey),
+  }))
   const [error, setError] = useState<string | null>(null)
   const creating = useRef(false)
   const record = draft as T
@@ -74,21 +78,19 @@ export function NewRecord<T, C>({
   return (
     <aside
       aria-label={t(definition.create?.add ?? 'collection:panel.label')}
-      className="scroll-quiet flex h-full w-[560px] shrink-0 flex-col overflow-y-auto border-s border-border ps-8 pe-6"
+      className="scroll-quiet flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
         <span className="text-xs text-muted">
           {t('collection:create.notSaved')}
         </span>
-        <Button
-          look="ghost"
-          size="sm"
-          aria-label={t('collection:panel.close')}
-          onPress={onClose}
-          className="ms-auto px-2"
-        >
-          <Icon name="Close" size={16} />
-        </Button>
+        <span className="ms-auto" />
+        <PanelClose
+          back={back}
+          backLabel={back && t('collection:panel.back', { name: back })}
+          label={t('collection:panel.close')}
+          onClose={onClose}
+        />
       </div>
 
       <div className="flex flex-col gap-6 pt-2 pb-8">

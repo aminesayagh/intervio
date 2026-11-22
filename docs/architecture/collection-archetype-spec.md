@@ -425,6 +425,8 @@ There is no creation form: a new record is the normal record view, created as so
 - **List beside the panel:** the table shows the columns of `columnPriority` that fit its width (name first, at least 160 px per column); cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
 - **Panel animation:** it slides in from the right in 200 ms, `easeOut`, with Motion. With reduced motion, there is no animation (like the sidebar).
 
+**Built so far (step 11):** layout modes, the divider, the saved width and columns by priority (`definition.columnPriority`, at least 160 px each) are built. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. Not yet: on narrow screens the list keeps the table (with the columns that fit) rather than rows with a detail line, and the toolbar wraps instead of folding into one "Filters" button.
+
 ### 9.1 Resizing the list and the panel
 
 - **The divider** between the list and the panel can be dragged with the pointer. It shows under the pointer as a dark line with a grip, and the pointer becomes the resize cursor.

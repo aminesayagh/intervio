@@ -3,7 +3,13 @@ import { MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import { Icon, Match, Show, Switch } from '../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from './definition'
-import { ActionMenu, Button, MenuPopover, type MenuAction } from './parts'
+import {
+  ActionMenu,
+  Button,
+  MenuPopover,
+  PanelClose,
+  type MenuAction,
+} from './parts'
 import { RecordBody, RecordPlaceholders } from './RecordBody'
 import { isViewOnly, useRecord } from './recordQuery'
 import type { Id } from './types'
@@ -50,6 +56,7 @@ export function RecordPanel<T, C>({
   id,
   fromList,
   onClose,
+  back,
   onUnavailable,
   canEdit,
   save,
@@ -63,6 +70,8 @@ export function RecordPanel<T, C>({
   /** The record as the list has it, shown while the server's copy loads. */
   fromList: T | undefined
   onClose: () => void
+  /** Narrow screens: the collection's name, for the way back. */
+  back?: string
   onUnavailable: (id: Id) => void
   /** Whether the person may change a value (spec 7.7). */
   canEdit: (record: T, id: string) => boolean
@@ -92,7 +101,7 @@ export function RecordPanel<T, C>({
   return (
     <aside
       aria-label={record ? panel.title(record) : t('collection:panel.label')}
-      className="scroll-quiet flex h-full w-[560px] shrink-0 flex-col overflow-y-auto border-s border-border ps-8 pe-6"
+      className="scroll-quiet flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
         <Show as="span" when={shown}>
@@ -112,16 +121,18 @@ export function RecordPanel<T, C>({
               />
             )}
           </Show>
-          <Button
-            look="ghost"
-            size="sm"
-            aria-label={t('collection:panel.close')}
-            onPress={onClose}
-            className="px-2"
-          >
-            <Icon name="Close" size={16} />
-          </Button>
+          {!back && (
+            <PanelClose label={t('collection:panel.close')} onClose={onClose} />
+          )}
         </span>
+        {back && (
+          <PanelClose
+            back={back}
+            backLabel={back && t('collection:panel.back', { name: back })}
+            label={t('collection:panel.close')}
+            onClose={onClose}
+          />
+        )}
       </div>
 
       <Switch>

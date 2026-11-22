@@ -223,3 +223,42 @@ export function ConfirmDialog({
     </ModalOverlay>
   )
 }
+
+/**
+ * How a panel closes: × at the end of its top bar, or on a narrow screen (where the
+ * panel is the whole screen) "‹ {collection}" at its start (spec 9).
+ */
+export function PanelClose({
+  back,
+  backLabel,
+  label,
+  onClose,
+}: {
+  back?: string
+  /** "Back to {collection}", for screen readers. */
+  backLabel?: string
+  label: string
+  onClose: () => void
+}) {
+  return back ? (
+    <Button
+      look="ghost"
+      size="sm"
+      aria-label={backLabel}
+      onPress={onClose}
+      className="order-first -ms-2 px-2"
+    >
+      <span aria-hidden>‹</span> {back}
+    </Button>
+  ) : (
+    <Button
+      look="ghost"
+      size="sm"
+      aria-label={label}
+      onPress={onClose}
+      className="px-2"
+    >
+      <Icon name="Close" size={16} />
+    </Button>
+  )
+}

@@ -125,6 +125,8 @@ export type CollectionDefinition<T, C = void> = {
   source: DataSource<T, C>
   defaultSort: ListQuery['sort']
   columns: ColumnDefinition<T>[]
+  /** Which columns stay when the list narrows, most important first (spec 9). Defaults to the columns' order. */
+  columnPriority?: string[]
   filters?: FilterDefinition[]
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>

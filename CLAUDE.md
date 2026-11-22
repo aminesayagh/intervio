@@ -19,7 +19,6 @@ Keep only the latest version of each document: update it in place, do not create
 
 - **Public identifiers are UUID v7.** Every entity served outside the backend (API responses, URLs, ids sent by the frontend) is identified by its `uuid` column, generated as UUID v7 (`@UuidGenerator(algorithm = UuidVersion7Strategy.class)`). The integer `id` is internal only: never in a response, a URL or a request. Secrets (email-link tokens) and storage keys stay random, not v7.
 - **No user-facing text from the backend.** Errors are sent as `{"code": "ERROR_..."}` (upper case, `ERROR_` prefix, for example `ERROR_AUTH_FAIL`). The frontend maps each key to the translated message (English and French). Emails are the only text the backend writes.
-
 - **Changing views go through the ui-kit's animated components, never `cond && <X/>` or a ternary in JSX:** `Show` for one condition (with `fallback` for an else), `Switch` + `Match` for if / else if / else, `Variant` for one view per option of a value. They share one short fade, and none with reduced motion. The exception is where a wrapper element would be invalid HTML (rows directly in `<tbody>`, items directly in `<ol>`/`<ul>`): put the `Show` inside the row or item.
 - **A field's error shows with `FieldError`** (or `ErrorText` inside a status line), so every editable value reports a refused or failed change the same way.
 

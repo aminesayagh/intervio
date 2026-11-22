@@ -1,4 +1,4 @@
-import { memorySource } from '../memorySource'
+import { memorySource } from '../data/memorySource'
 
 /** The test collection's record (spec 15.2): one of each property kind the wrapper must handle. */
 export type Item = {

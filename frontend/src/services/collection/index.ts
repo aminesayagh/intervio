@@ -1,5 +1,5 @@
 export { Collection } from './Collection'
-export { cache, keys, useCollectionQuery } from './collectionQuery'
+export { cache, keys, useCollectionQuery } from './data/collectionQuery'
 export type {
   ActionDefinition,
   ChoiceEdit,
@@ -12,6 +12,6 @@ export type {
   SectionDefinition,
   TextEdit,
 } from './definition'
-export { memorySource, type MemorySettings } from './memorySource'
-export { restSource, type RestOptions } from './restSource'
+export { memorySource, type MemorySettings } from './data/memorySource'
+export { restSource, type RestOptions } from './data/restSource'
 export type { DataSource, Id, ListQuery, Page, SortDirection } from './types'

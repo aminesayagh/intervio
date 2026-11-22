@@ -28,7 +28,7 @@ import {
   useSearchParams,
 } from '../navigation'
 import { cn, foldSidebar, Icon, Match, Show, Switch } from '../ui-kit'
-import { cache, keys, useCollectionQuery } from './collectionQuery'
+import { cache, keys, useCollectionQuery } from './data/collectionQuery'
 import type {
   ActionDefinition,
   CollectionDefinition,
@@ -37,27 +37,27 @@ import type {
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { Button, ConfirmDialog, type MenuAction } from './parts'
-import { RecordPage } from './RecordPage'
+import { RecordPage } from './record/RecordPage'
 import {
   clampPanel,
   openingWidth,
   PANEL,
   panelLimits,
   useLayoutMode,
-} from './layout'
-import { NewRecord } from './NewRecord'
-import { PanelDivider } from './PanelDivider'
-import { RecordPanel } from './RecordPanel'
-import { newRecordKey } from './recordQuery'
-import { Toolbar } from './Toolbar'
+} from './layout/layout'
+import { NewRecord } from './create/NewRecord'
+import { PanelDivider } from './layout/PanelDivider'
+import { RecordPanel } from './record/RecordPanel'
+import { newRecordKey } from './record/recordQuery'
+import { Toolbar } from './list/Toolbar'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
-import { useCollectionList } from './useCollectionList'
-import { ValueField } from './ValueField'
+import { useCollectionList } from './list/useCollectionList'
+import { ValueField } from './values/ValueField'
 import {
   isNarrowed,
   useCollectionState,
   writeListing,
-} from './useCollectionState'
+} from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
 

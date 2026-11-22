@@ -11,8 +11,8 @@ export {
   uploadFile,
   type UploadedFile,
 } from './api'
-export { DocumentsField } from './DocumentsField'
-export { FileDropzone } from './FileDropzone'
-export { FilePreview, type PreviewFile } from './FilePreview'
-export { ImagePicker } from './ImagePicker'
+export { DocumentsField } from './components/DocumentsField'
+export { FileDropzone } from './components/FileDropzone'
+export { FilePreview, type PreviewFile } from './components/FilePreview'
+export { ImagePicker } from './components/ImagePicker'
 export { checkFile, FILE_PURPOSES, type FilePurpose } from './purposes'

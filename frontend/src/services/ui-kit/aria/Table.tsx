@@ -3,6 +3,7 @@ import type {
   FocusEvent,
   KeyboardEvent,
   PointerEvent,
+  ReactElement,
   ReactNode,
   Ref,
 } from 'react'
@@ -13,8 +14,10 @@ import {
   Row as AriaRow,
   Table as AriaTable,
   TableHeader as AriaTableHeader,
+  Collection,
   TableLoadMoreItem as AriaTableLoadMoreItem,
   TableStateContext,
+  useTableOptions,
   type CellProps,
   type ColumnProps,
   type RowProps,
@@ -24,9 +27,11 @@ import {
 import { cn } from '../cn'
 import { Icon } from '../Icon'
 import { Show } from '../views/Show'
+import { Checkbox } from './Checkbox'
 
 export {
   Collection as RowCollection,
+  type Key,
   ResizableTableContainer,
   TableBody,
   TableLayout,
@@ -62,11 +67,26 @@ export function Table({
   )
 }
 
-/** The pinned row of column titles, with the rule under it. */
+/** Width of the checkbox column, when rows can be selected. */
+export const SELECTION_WIDTH = 40
+
+/**
+ * The pinned row of column titles, with the rule under it. When the table selects
+ * several rows, it starts with the checkbox that selects them all.
+ *
+ * The checkbox column is in the JSX only when selection is on: a wrapper (Show)
+ * would hide it from React Aria's collection, which reads its children.
+ */
 export function TableHeader<T extends object>({
   className,
+  columns,
+  children,
   ...props
-}: Omit<TableHeaderProps<T>, 'className'> & { className?: string }) {
+}: Omit<TableHeaderProps<T>, 'className' | 'children'> & {
+  className?: string
+  children: (column: T) => ReactElement
+}) {
+  const { selectionBehavior, selectionMode } = useTableOptions()
   return (
     <AriaTableHeader
       {...props}
@@ -74,7 +94,18 @@ export function TableHeader<T extends object>({
         'sticky top-0 z-10 bg-background shadow-[inset_0_-1px_0_var(--foreground)]',
         className,
       )}
-    />
+    >
+      {selectionBehavior === 'toggle' && (
+        <AriaColumn
+          width={SELECTION_WIDTH}
+          minWidth={SELECTION_WIDTH}
+          className="flex h-8 items-center px-3 outline-none"
+        >
+          {selectionMode === 'multiple' && <Checkbox slot="selection" />}
+        </AriaColumn>
+      )}
+      <Collection items={columns}>{children}</Collection>
+    </AriaTableHeader>
   )
 }
 
@@ -128,12 +159,22 @@ export function Column({
   )
 }
 
-/** A record's row: a pointer when it opens the record, marked when `current`. */
+/**
+ * A record's row: a pointer when it opens the record, marked when `current`, shaded
+ * when selected. When the table selects rows, it starts with its checkbox.
+ */
 export function Row<T extends object>({
   current = false,
   className,
+  columns,
+  children,
   ...props
-}: Omit<RowProps<T>, 'className'> & { current?: boolean; className?: string }) {
+}: Omit<RowProps<T>, 'className' | 'children'> & {
+  current?: boolean
+  className?: string
+  children: (column: T) => ReactElement
+}) {
+  const { selectionBehavior } = useTableOptions()
   return (
     <AriaRow
       {...props}
@@ -146,7 +187,14 @@ export function Row<T extends object>({
         current && 'bg-default shadow-[inset_3px_0_0_var(--foreground)]',
         className,
       )}
-    />
+    >
+      {selectionBehavior === 'toggle' && (
+        <AriaCell className="flex h-full items-center px-3 outline-none">
+          <Checkbox slot="selection" />
+        </AriaCell>
+      )}
+      <Collection items={columns}>{children}</Collection>
+    </AriaRow>
   )
 }
 

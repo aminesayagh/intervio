@@ -27,6 +27,7 @@ import {
   cn,
   Column,
   ConfirmDialog,
+  SELECTION_WIDTH,
   foldSidebar,
   Icon,
   Match,
@@ -63,6 +64,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import { Toolbar } from './list/Toolbar'
+import { SelectionBar } from './selection/SelectionBar'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './values/ValueField'
 import { isNarrowed, useCollectionState } from './list/useCollectionState'
@@ -377,6 +379,87 @@ export function Collection<T, C = void>({
     setPending(null)
     void runAction(pending.action, pending.record)
   }
+
+  /** "3 items": the collection's own words for a number of its records. */
+  const countOf = (count: number) => t(definition.i18n.count, { count })
+  // Several records selected (spec 8.5): only when the collection has actions for them.
+  const selectable = Boolean(definition.actions?.length)
+  const [selected, setSelected] = useState<ReadonlySet<Id>>(() => new Set())
+  // A new search, filter or sort clears the selection.
+  const view = JSON.stringify([listing.search, listing.filters, listing.sort])
+  const [selectedView, setSelectedView] = useState(view)
+  if (view !== selectedView) {
+    setSelectedView(view)
+    setSelected(new Set())
+  }
+  const selectedRecords = list.items.filter((record) =>
+    selected.has(getId(record)),
+  )
+  const [bulk, setBulk] = useState<{
+    action: ActionDefinition
+    records: T[]
+    total: number
+  } | null>(null)
+  const bulkActions = (definition.actions ?? []).flatMap((action) => {
+    const records = selectedRecords.filter((record) =>
+      allowedActions(record).some((allowed) => allowed.id === action.id),
+    )
+    return records.length > 0
+      ? [
+          {
+            id: action.id,
+            label: t(action.label),
+            run: () =>
+              setBulk({ action, records, total: selectedRecords.length }),
+          },
+        ]
+      : []
+  })
+  /**
+   * Runs an action on each record, one at a time: those that succeed leave the list;
+   * those that fail stay selected, with one message and Retry.
+   */
+  async function runBulk(action: ActionDefinition, records: T[]) {
+    const run = action.id === 'archive' ? source.archive : source.remove
+    const failed: T[] = []
+    for (const record of records) {
+      const recordId = getId(record)
+      try {
+        if (!run) throw new Error(`${key} cannot ${action.id}`)
+        await run(recordId, context as C)
+        cache.removed(queryClient, key, recordId, getId)
+        if (openId === recordId) doClose()
+      } catch {
+        failed.push(record)
+      }
+    }
+    setSelected(new Set(failed.map(getId)))
+    if (failed.length === 0) return
+    notify({
+      tone: 'error',
+      text:
+        failed.length === 1
+          ? t(`collection:message.${action.id}Failed`, {
+              name: nameOf(failed[0]),
+            })
+          : t(`collection:selection.${action.id}Failed`, {
+              what: countOf(failed.length),
+            }),
+      action: {
+        label: t('collection:message.retry'),
+        run: () => void runBulk(action, failed),
+      },
+      scope: key,
+    })
+  }
+  function confirmBulk() {
+    if (!bulk) return
+    setBulk(null)
+    void runBulk(bulk.action, bulk.records)
+  }
+  const bulkLeftOut = bulk
+    ? selectedRecords.filter((record) => !bulk.records.includes(record))
+    : []
   const newDefaults = useCallback((): Partial<T> => {
     const values = {
       ...definition.create?.defaults(context as C),
@@ -554,7 +637,9 @@ export function Collection<T, C = void>({
   }, [mode, panelShown])
   // The table's columns: as many as fit, in the collection's priority (spec 9).
   const listWidth =
-    (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) - 24
+    (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) -
+    24 -
+    (selectable ? SELECTION_WIDTH : 0)
   const priority =
     definition.columnPriority ?? definition.columns.map((column) => column.id)
   // The same ids keep the same array, so the table's columns (and the fields being
@@ -584,6 +669,48 @@ export function Collection<T, C = void>({
 
   const dialogs = (
     <>
+      <ConfirmDialog
+        open={bulk !== null}
+        title={
+          bulk
+            ? bulk.records.length === bulk.total
+              ? t(`collection:selection.${bulk.action.id}Title`, {
+                  what: countOf(bulk.total),
+                })
+              : t(`collection:selection.${bulk.action.id}SomeTitle`, {
+                  count: bulk.records.length,
+                  what: countOf(bulk.total),
+                })
+            : ''
+        }
+        text={
+          bulk
+            ? bulkLeftOut.length === 0
+              ? t(`collection:selection.${bulk.action.id}Text`, {
+                  count: bulk.records.length,
+                })
+              : bulkLeftOut.length === 1
+                ? t(`collection:selection.${bulk.action.id}LeftOut`, {
+                    name: nameOf(bulkLeftOut[0]),
+                  })
+                : t(`collection:selection.${bulk.action.id}LeftOutMore`, {
+                    name: nameOf(bulkLeftOut[0]),
+                    count: bulkLeftOut.length - 1,
+                  })
+            : ''
+        }
+        confirm={
+          bulk
+            ? t(`collection:selection.${bulk.action.id}Button`, {
+                what: countOf(bulk.records.length),
+              })
+            : ''
+        }
+        cancel={t('collection:actions.cancel')}
+        danger
+        onConfirm={confirmBulk}
+        onCancel={() => setBulk(null)}
+      />
       <ConfirmDialog
         open={pending !== null}
         title={pending ? t(pending.action.confirm.title) : ''}
@@ -677,16 +804,25 @@ export function Collection<T, C = void>({
           </Show>
         </div>
 
-        <Show when={narrowed || list.items.length > 0}>
-          <Toolbar
-            namespace={definition.i18n.namespace}
-            filters={definition.filters ?? []}
-            listing={listing}
-            onSearch={state.setSearch}
-            onFilter={state.setFilter}
-            onClear={state.clear}
-          />
-        </Show>
+        <Switch>
+          <Match when={selectedRecords.length > 0}>
+            <SelectionBar
+              count={selectedRecords.length}
+              actions={bulkActions}
+              onClear={() => setSelected(new Set())}
+            />
+          </Match>
+          <Match when={narrowed || list.items.length > 0}>
+            <Toolbar
+              namespace={definition.i18n.namespace}
+              filters={definition.filters ?? []}
+              listing={listing}
+              onSearch={state.setSearch}
+              onFilter={state.setFilter}
+              onClear={state.clear}
+            />
+          </Match>
+        </Switch>
 
         {/* The table scrolls itself (React Aria's virtualized table). */}
         <div className="flex min-h-0 flex-1 flex-col">
@@ -744,6 +880,11 @@ export function Collection<T, C = void>({
                 openId={definition.panel ? openId : null}
                 shown={shownColumns}
                 onOpen={definition.panel ? open : undefined}
+                selection={
+                  selectable
+                    ? { keys: selected, onChange: setSelected }
+                    : undefined
+                }
               />
             </Match>
           </Switch>
@@ -842,6 +983,7 @@ function RecordTable<T, C>({
   openId,
   onOpen,
   shown,
+  selection,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -860,6 +1002,11 @@ function RecordTable<T, C>({
   onOpen?: (id: Id) => void
   /** The ids of the columns that fit, by priority. */
   shown: string[]
+  /** Set when rows can be selected (spec 8.5): the selected ids. */
+  selection?: {
+    keys: ReadonlySet<Id>
+    onChange: (keys: ReadonlySet<Id>) => void
+  }
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const columns = definition.columns.filter((column) =>
@@ -907,6 +1054,18 @@ function RecordTable<T, C>({
         }
         onSortChange={(descriptor) => sortBy(String(descriptor.column))}
         onRowAction={onOpen ? (key) => onOpen(String(key)) : undefined}
+        selectionMode={selection ? 'multiple' : 'none'}
+        selectedKeys={selection?.keys}
+        // "All" is the rows loaded now: those loaded later are not added (spec 8.5).
+        onSelectionChange={(keys) =>
+          selection?.onChange(
+            new Set(
+              keys === 'all'
+                ? items.map(definition.getId)
+                : [...keys].map(String),
+            ),
+          )
+        }
       >
         <TableHeader columns={columns}>
           {(column) => (
@@ -931,6 +1090,8 @@ function RecordTable<T, C>({
               return (
                 <Row
                   id={id}
+                  // Names the row (and its checkbox, "Select Item 001").
+                  textValue={definition.panel?.title(record) ?? id}
                   columns={columns}
                   current={id === openId}
                   onAction={onOpen ? () => onOpen(id) : undefined}

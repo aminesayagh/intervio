@@ -39,6 +39,8 @@ test('the first page shows a header row and the first items, with the total', as
   const headers = within(table)
     .getAllByRole('columnheader')
     .map((h) => h.textContent)
+    // The first is the selection checkbox's column.
+    .filter(Boolean)
   // The columns that fit 1128 px by their widths, in the definition's order.
   expect(headers).toEqual([
     'Name',
@@ -143,7 +145,7 @@ test('a failed next page keeps the loaded items and offers Retry', async () => {
 const firstName = () =>
   within(screen.getByRole('grid'))
     .getAllByRole('row')[1]
-    .querySelector('input')!.value
+    .querySelector<HTMLInputElement>('input[aria-label="Name"]')!.value
 
 test('a search waits for typing to stop, then narrows the list and the address', async () => {
   renderAt(

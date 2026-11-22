@@ -26,6 +26,7 @@ export {
   Column,
   ResizableTableContainer,
   Row,
+  SELECTION_WIDTH,
   RowCollection,
   Table,
   TableBody,
@@ -33,6 +34,7 @@ export {
   TableLayout,
   TableLoadMoreItem,
   Virtualizer,
+  type Key,
   type Selection,
   type SortDescriptor,
 } from './Table'

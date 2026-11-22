@@ -49,6 +49,8 @@ const headers = () =>
   within(screen.getByRole('grid'))
     .getAllByRole('columnheader')
     .map((header) => header.textContent)
+    // The first is the selection checkbox's column.
+    .filter(Boolean)
 
 test('the arrow keys, Home, End and Enter change the width within the limits', async () => {
   await openPanel()

@@ -102,5 +102,28 @@
     "removeFile": "Retirer {{name}}",
     "fileType": "{{name}} n’est pas un document accepté ici.",
     "fileSize": "{{name}} dépasse {{size}} Mo."
+  },
+  "selection": {
+    "label": "Éléments sélectionnés",
+    "count": "Sélection : {{count}}",
+    "clear": "Effacer la sélection",
+    "archiveTitle": "Archiver {{what}} ?",
+    "archiveSomeTitle": "Archiver {{count}} sur {{what}} ?",
+    "archiveText_one": "Il quitte la liste.",
+    "archiveText_other": "Ils quittent la liste.",
+    "archiveLeftOut": "Vous ne pouvez pas archiver {{name}}, qui reste dans la liste.",
+    "archiveLeftOutMore_one": "Vous ne pouvez pas archiver {{name}} et 1 autre, qui restent dans la liste.",
+    "archiveLeftOutMore_other": "Vous ne pouvez pas archiver {{name}} et {{count}} autres, qui restent dans la liste.",
+    "archiveButton": "Archiver {{what}}",
+    "archiveFailed": "L’archivage a échoué pour {{what}}.",
+    "removeTitle": "Supprimer {{what}} ?",
+    "removeSomeTitle": "Supprimer {{count}} sur {{what}} ?",
+    "removeText_one": "Il est supprimé définitivement.",
+    "removeText_other": "Ils sont supprimés définitivement.",
+    "removeLeftOut": "Vous ne pouvez pas supprimer {{name}}, qui reste dans la liste.",
+    "removeLeftOutMore_one": "Vous ne pouvez pas supprimer {{name}} et 1 autre, qui restent dans la liste.",
+    "removeLeftOutMore_other": "Vous ne pouvez pas supprimer {{name}} et {{count}} autres, qui restent dans la liste.",
+    "removeButton": "Supprimer {{what}}",
+    "removeFailed": "La suppression a échoué pour {{what}}."
   }
 }

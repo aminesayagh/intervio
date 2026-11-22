@@ -102,5 +102,28 @@
     "removeFile": "Remove {{name}}",
     "fileType": "{{name}} isn't a document this field takes.",
     "fileSize": "{{name}} is over {{size}} MB."
+  },
+  "selection": {
+    "label": "Selected records",
+    "count": "{{count}} selected",
+    "clear": "Clear selection",
+    "archiveTitle": "Archive {{what}}?",
+    "archiveSomeTitle": "Archive {{count}} of {{what}}?",
+    "archiveText_one": "It leaves the list.",
+    "archiveText_other": "They leave the list.",
+    "archiveLeftOut": "You can't archive {{name}}, so it stays in the list.",
+    "archiveLeftOutMore_one": "You can't archive {{name}} and 1 other, so they stay in the list.",
+    "archiveLeftOutMore_other": "You can't archive {{name}} and {{count}} others, so they stay in the list.",
+    "archiveButton": "Archive {{what}}",
+    "archiveFailed": "{{what}} couldn't be archived.",
+    "removeTitle": "Remove {{what}}?",
+    "removeSomeTitle": "Remove {{count}} of {{what}}?",
+    "removeText_one": "It is removed for good.",
+    "removeText_other": "They are removed for good.",
+    "removeLeftOut": "You can't remove {{name}}, so it stays in the list.",
+    "removeLeftOutMore_one": "You can't remove {{name}} and 1 other, so they stay in the list.",
+    "removeLeftOutMore_other": "You can't remove {{name}} and {{count}} others, so they stay in the list.",
+    "removeButton": "Remove {{what}}",
+    "removeFailed": "{{what}} couldn't be removed."
   }
 }

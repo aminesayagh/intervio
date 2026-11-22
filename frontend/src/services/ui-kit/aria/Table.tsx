@@ -127,7 +127,7 @@ export function Column({
     <AriaColumn
       {...props}
       className={cn(
-        'group/column relative h-8 px-3 text-start align-middle text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'group/column relative flex h-8 items-center px-3 text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         props.allowsSorting && 'cursor-pointer data-[hovered]:text-foreground',
         className,
       )}
@@ -257,7 +257,7 @@ function CellContent({ children }: { children: ReactNode }) {
   const arrows = useFieldKeepsArrows()
   return (
     <div
-      className="min-w-0"
+      className="min-w-0 flex-1 truncate"
       onKeyDown={keepKeysInFields}
       onPointerDown={keepPressInControls}
       onFocus={keepFocusInControls}
@@ -269,7 +269,12 @@ function CellContent({ children }: { children: ReactNode }) {
   )
 }
 
-/** A cell: its content, kept on one line; fields in it keep their keys (above). */
+/**
+ * A cell: its content centered in the row's height and kept on one line; fields in
+ * it keep their keys (above). The virtualizer puts each cell in a box of the row's
+ * height, so the cell fills that box and centers with flex (`align-middle` only works
+ * in real table cells).
+ */
 export function Cell({
   children,
   className,
@@ -282,7 +287,7 @@ export function Cell({
     <AriaCell
       {...props}
       className={cn(
-        'truncate px-3 py-3 align-middle outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'flex h-full items-center overflow-hidden px-3 outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         className,
       )}
     >

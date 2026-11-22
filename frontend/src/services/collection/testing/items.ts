@@ -11,10 +11,13 @@ export type Item = {
   website: string // '' when none
   email: string
   phone: string
+  tags: string[]
   description: string // Markdown
   linkedTo: string[] // ids of other items (for drilling down)
   updatedAt: string // ISO date
 }
+
+export const TAGS = ['electrical', 'mechanical', 'safety', 'hydraulic']
 
 export const STATUSES: Item['status'][] = ['draft', 'valid', 'outdated']
 export const OWNERS = [
@@ -38,6 +41,8 @@ export function makeItems(n: number): Item[] {
       website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
       email: index % 5 === 4 ? '' : `item${number}@example.com`,
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      // None, one, two or three tags, in turn.
+      tags: TAGS.slice(index % 4, (index % 4) + (index % 4)),
       description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
       linkedTo: index > 0 ? [makeId(1)] : [],
       // One day apart, newest first, from a fixed date.

@@ -5,6 +5,7 @@ import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
 import { CheckboxCell } from './CheckboxCell'
 import { LinkCell, LinkValue } from './LinkCell'
+import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
 
 const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
@@ -92,6 +93,18 @@ export function ValueField<T>({
         select: () =>
           field?.type === 'select' && (
             <ChoiceCell
+              record={record}
+              choose={field}
+              render={read}
+              label={label}
+              namespace={namespace}
+              save={save}
+              look={look}
+            />
+          ),
+        multiSelect: () =>
+          field?.type === 'multiSelect' && (
+            <MultiChoiceCell
               record={record}
               choose={field}
               render={read}

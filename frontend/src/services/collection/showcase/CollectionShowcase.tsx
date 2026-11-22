@@ -25,6 +25,7 @@ const rights = () => ({
           'owner',
           'quantity',
           'active',
+          'tags',
           'website',
           'email',
           'phone',

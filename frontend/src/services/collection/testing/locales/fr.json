@@ -15,7 +15,8 @@
     "active": "Actif",
     "website": "Site web",
     "email": "E-mail",
-    "phone": "Téléphone"
+    "phone": "Téléphone",
+    "tags": "Étiquettes"
   },
   "status": {
     "draft": "Brouillon",
@@ -38,5 +39,11 @@
   },
   "create": {
     "add": "+ Ajouter un élément"
+  },
+  "tags": {
+    "electrical": "Électrique",
+    "mechanical": "Mécanique",
+    "safety": "Sécurité",
+    "hydraulic": "Hydraulique"
   }
 }

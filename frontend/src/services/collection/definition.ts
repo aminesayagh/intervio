@@ -49,6 +49,15 @@ export type SelectField<T> = {
   patch: (id: string) => Partial<T>
 }
 
+/** Several values chosen from a list (tags): saved when the menu closes. */
+export type MultiSelectField<T> = {
+  type: 'multiSelect'
+  /** Each choice's id, and its label as a translation key. */
+  options: { id: string; label: string }[]
+  value: (record: T) => string[]
+  patch: (ids: string[]) => Partial<T>
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -69,6 +78,7 @@ export type FieldDefinition<T> =
   | TextField<T>
   | NumberField<T>
   | SelectField<T>
+  | MultiSelectField<T>
   | CheckboxField<T>
   | LinkField<T>
 

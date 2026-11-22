@@ -15,7 +15,8 @@
     "active": "Active",
     "website": "Website",
     "email": "Email",
-    "phone": "Phone"
+    "phone": "Phone",
+    "tags": "Tags"
   },
   "status": {
     "draft": "Draft",
@@ -38,5 +39,11 @@
   },
   "create": {
     "add": "+ Add item"
+  },
+  "tags": {
+    "electrical": "Electrical",
+    "mechanical": "Mechanical",
+    "safety": "Safety",
+    "hydraulic": "Hydraulic"
   }
 }

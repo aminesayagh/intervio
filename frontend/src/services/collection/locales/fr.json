@@ -84,6 +84,9 @@
     "url": "Ce n’est pas une adresse web.",
     "email": "Ce n’est pas une adresse e-mail.",
     "phone": "Ce n’est pas un numéro de téléphone.",
-    "open": "Ouvrir {{value}}"
+    "open": "Ouvrir {{value}}",
+    "more_one": "+{{count}}",
+    "more_other": "+{{count}}",
+    "none": "Aucun"
   }
 }

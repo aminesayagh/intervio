@@ -1,6 +1,7 @@
 import { addTranslations } from '../../i18n'
 import type {
   CheckboxField,
+  MultiSelectField,
   LinkField,
   CollectionDefinition,
   NumberField,
@@ -8,8 +9,8 @@ import type {
   TextField,
 } from '../definition'
 import type { DataSource } from '../types'
-import { Avatar, Day, StatusChip, TypeChip, UpdatedOn } from './ItemParts'
-import { itemSource, OWNERS, STATUSES, type Item } from './items'
+import { Avatar, Day, StatusChip, Tags, TypeChip, UpdatedOn } from './ItemParts'
+import { itemSource, OWNERS, STATUSES, TAGS, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 
@@ -53,6 +54,12 @@ const link = <K extends 'website' | 'email' | 'phone'>(
 const website = link('website', 'url')
 const email = link('email', 'email')
 const phone = link('phone', 'phone')
+const tags: MultiSelectField<Item> = {
+  type: 'multiSelect',
+  options: TAGS.map((tag) => ({ id: tag, label: `tags.${tag}` })),
+  value: (item) => item.tags,
+  patch: (tags) => ({ tags }),
+}
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -77,6 +84,7 @@ export function itemDefinition(
         owner: OWNERS[0],
         quantity: null,
         active: true,
+        tags: [],
         website: '',
         email: '',
         phone: '',
@@ -152,6 +160,12 @@ export function itemDefinition(
           field: active,
         },
         {
+          id: 'tags',
+          label: 'columns.tags',
+          value: (item) => <Tags tags={item.tags} max={4} />,
+          field: tags,
+        },
+        {
           id: 'website',
           label: 'columns.website',
           value: (item) => item.website,
@@ -216,6 +230,7 @@ export function itemDefinition(
       'owner',
       'quantity',
       'active',
+      'tags',
       'website',
       'email',
       'phone',
@@ -262,6 +277,13 @@ export function itemDefinition(
         width: 90,
         cell: (item) => (item.active ? 'Yes' : 'No'),
         field: active,
+      },
+      {
+        id: 'tags',
+        label: 'columns.tags',
+        width: 220,
+        cell: (item) => <Tags tags={item.tags} />,
+        field: tags,
       },
       {
         id: 'website',

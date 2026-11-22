@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ChipList } from '../values/ChipList'
 import type { Item } from './items'
 
 /** Small pieces the test collection's cards and cells are made of. */
@@ -67,4 +68,10 @@ export function UpdatedOn({ iso }: { iso: string }) {
       })}
     </>
   )
+}
+
+/** The item's tags as chips (the first ones, then "+n"). */
+export function Tags({ tags, max }: { tags: string[]; max?: number }) {
+  const { t } = useTranslation('test-items')
+  return <ChipList labels={tags.map((tag) => t(`tags.${tag}`))} max={max} />
 }

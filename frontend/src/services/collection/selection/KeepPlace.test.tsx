@@ -84,9 +84,9 @@ test('a change that keeps the order shows no line', async () => {
   const source = show('/items?sort=status:asc')
   await screen.findByText('6 items')
   // A quantity changes, not the status the list is sorted by.
-  const quantity = within(
-    within(screen.getByRole('grid')).getAllByRole('row')[2],
-  ).getByRole('textbox', { name: 'Quantity' })
+  const row = within(screen.getByRole('grid')).getAllByRole('row')[2]
+  await userEvent.hover(row)
+  const quantity = within(row).getByRole('textbox', { name: 'Quantity' })
   await userEvent.clear(quantity)
   await userEvent.type(quantity, '9{Enter}')
   await waitFor(() =>

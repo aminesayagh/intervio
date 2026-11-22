@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   render,
   screen,
@@ -23,6 +24,8 @@ async function quantityOf(row: number) {
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
+  // Under the pointer, the row's cells show their editors.
+  await userEvent.hover(rows[row])
   return {
     source,
     field: within(rows[row]).getByRole('textbox', { name: 'Quantity' }),
@@ -56,6 +59,19 @@ test('an emptied quantity saves no value; one below the minimum is kept at it', 
   await waitFor(() => expect(source.items()[1].quantity).toBe(1))
   // The field stays the same element after a save (it is not rebuilt).
   expect(field.isConnected).toBe(true)
+})
+
+test('until its row is hovered or focused, the quantity is text; the focus wakes it', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await screen.findByText('5 items')
+  const row = within(within(screen.getByRole('grid')).getAllByRole('row')[2])
+  expect(row.queryByRole('textbox', { name: 'Quantity' })).toBeNull()
+  const text = row.getByText('2')
+  act(() => text.focus())
+  const field = await row.findByRole('textbox', { name: 'Quantity' })
+  expect(field).toHaveFocus()
+  expect(field).toHaveValue('2')
 })
 
 test('a float shows its decimals, and a step adds its smallest unit', async () => {

@@ -32,10 +32,14 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
 /** Inside the Due field (the row or the panel also has the Planned period). */
 const due = (scope: HTMLElement) =>
   within(within(scope).getByRole('group', { name: 'Due' }))
-const row = async (n: number) =>
-  (await screen.findByRole('grid')).querySelectorAll('[role="row"][data-key]')[
-    n - 1
-  ] as HTMLElement
+/** The row, under the pointer: its cells show their editors. */
+async function row(n: number) {
+  const found = (await screen.findByRole('grid')).querySelectorAll(
+    '[role="row"][data-key]',
+  )[n - 1] as HTMLElement
+  await userEvent.hover(found)
+  return found
+}
 
 test('a day picked in the calendar is saved', async () => {
   const source = show()

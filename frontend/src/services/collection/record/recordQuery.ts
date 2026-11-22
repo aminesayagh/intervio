@@ -29,8 +29,11 @@ export function useRecord<T, C>({
   const query = useQuery<T, Error, T, readonly unknown[]>({
     queryKey: keys.record(definition.key, id),
     queryFn: () => definition.source.one(id, context),
-    // A record is never a function, but TanStack can't know it of a generic type.
-    placeholderData: () => fromList as never,
+    // The list's copy, as data marked old: the server's copy is fetched at once, and
+    // when its values are the same TanStack keeps the same object, so nothing renders
+    // again. (A record is never a function, but TanStack can't know it of a generic type.)
+    initialData: () => fromList as never,
+    initialDataUpdatedAt: 0,
     retry: (failures, error) => !isUnavailable(error) && failures < 1,
   })
   const unavailable = query.isError && isUnavailable(query.error)

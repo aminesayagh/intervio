@@ -26,7 +26,7 @@ import {
 } from 'react-aria-components'
 import { cn } from '../cn'
 import { Icon } from '../Icon'
-import { Show } from '../views/Show'
+import { NoFadeInside, Show } from '../views/Show'
 import { Checkbox } from './Checkbox'
 
 export {
@@ -183,7 +183,9 @@ export function Row<T extends object>({
       data-current={current || undefined}
       aria-current={current || undefined}
       className={cn(
-        'group border-b border-border outline-none data-[focus-visible]:bg-default data-[href]:cursor-pointer data-[selected]:bg-default',
+        // The virtualizer puts the row in a box of its height: it fills it, so its
+        // background (open, selected, hovered) shows.
+        'group h-full border-b border-border outline-none data-[focus-visible]:bg-default data-[href]:cursor-pointer data-[selected]:bg-default',
         props.onAction &&
           'cursor-pointer data-[hovered]:bg-[color-mix(in_srgb,var(--default)_50%,transparent)]',
         current && 'bg-default shadow-[inset_3px_0_0_var(--foreground)]',
@@ -293,7 +295,9 @@ export function Cell({
         className,
       )}
     >
-      <CellContent>{children}</CellContent>
+      <CellContent>
+        <NoFadeInside value={true}>{children}</NoFadeInside>
+      </CellContent>
     </AriaCell>
   )
 }

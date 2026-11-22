@@ -46,19 +46,21 @@ const routes: Record<string, Route> = {
 
 /**
  * Development only: the collection wrapper's showcase (collection-archetype-spec.md 17.1).
- * Loaded through import() inside the DEV check, so production builds leave it out.
+ * Loaded through import() inside the check, so production builds leave it out, except
+ * one built with VITE_SHOWCASE=1 to measure performance in production mode.
  */
-const devRoutes: Record<string, Route> = import.meta.env.DEV
-  ? {
-      '/dev/collection': {
-        page: lazy(
-          () => import('../services/collection/showcase/CollectionShowcase'),
-        ),
-        access: 'user',
-        board: true,
-      },
-    }
-  : {}
+const devRoutes: Record<string, Route> =
+  import.meta.env.DEV || import.meta.env.VITE_SHOWCASE === '1'
+    ? {
+        '/dev/collection': {
+          page: lazy(
+            () => import('../services/collection/showcase/CollectionShowcase'),
+          ),
+          access: 'user',
+          board: true,
+        },
+      }
+    : {}
 
 /** Addresses with an id: one page each, which reads the id from the address. */
 const prefixRoutes: [string, Route][] = [

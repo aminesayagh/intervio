@@ -3,9 +3,12 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  memo,
+  useDeferredValue,
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type KeyboardEvent,
   type RefObject,
 } from 'react'
@@ -66,6 +69,14 @@ import { newRecordKey } from './record/recordQuery'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
+import { Awake } from './values/awake'
+import {
+  MarksProvider,
+  useMark,
+  useMarks,
+  useMarksStore,
+  type Marks,
+} from './list/rowMarks'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './values/ValueField'
 import { isNarrowed, useCollectionState } from './list/useCollectionState'
@@ -813,7 +824,16 @@ export function Collection<T, C = void>({
     }
     return fitting.join(',')
   })()
-  const shownColumns = useMemo(() => shownKey.split(','), [shownKey])
+  // Columns that come back (the panel closes) are added in the next render, so the
+  // panel leaves first; both in one render were over 200 ms in a production build.
+  // Columns that no longer fit leave at once: the narrower table would lay them out
+  // for nothing.
+  const deferredKey = useDeferredValue(shownKey)
+  const columnsKey =
+    shownKey.split(',').length < deferredKey.split(',').length
+      ? shownKey
+      : deferredKey
+  const shownColumns = useMemo(() => columnsKey.split(','), [columnsKey])
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
 
@@ -1043,17 +1063,16 @@ export function Collection<T, C = void>({
                 shown={shownColumns}
                 onOpen={definition.panel ? open : undefined}
                 selection={
-                  selectable
-                    ? {
-                        keys: selected,
-                        onChange: select,
-                        save: saveOnSelection,
-                        note: t('collection:selection.appliesTo', {
-                          what: countOf(selectedRecords.length),
-                        }),
-                      }
-                    : undefined
+                  selectable ? { keys: selected, onChange: select } : undefined
                 }
+                marks={{
+                  openId: definition.panel ? openId : null,
+                  selected,
+                  note: t('collection:selection.appliesTo', {
+                    what: countOf(selectedRecords.length),
+                  }),
+                  saveShared: saveOnSelection,
+                }}
               />
             </Match>
           </Switch>
@@ -1153,6 +1172,7 @@ function RecordTable<T, C>({
   onOpen,
   shown,
   selection,
+  marks,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -1175,21 +1195,23 @@ function RecordTable<T, C>({
   selection?: {
     keys: ReadonlySet<Id>
     onChange: (keys: ReadonlySet<Id>) => void
-    /** Saves a shared value on every selected record (decision 135). */
-    save: (
-      column: ColumnDefinition<T>,
-      record: T,
-      patch: Partial<T>,
-      label: string,
-    ) => Promise<void>
-    /** "Applies to 3 items", shown by the editor of a shared value. */
-    note: string
   }
+  /** The open row and the selection, as the rows and cells read them (rowMarks). */
+  marks: Marks
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  const columns = definition.columns.filter((column) =>
-    shown.includes(column.id),
+  // The same array while the same columns fit: a new one would rebuild every row.
+  const columns = useMemo(
+    () => definition.columns.filter((column) => shown.includes(column.id)),
+    [definition.columns, shown],
   )
+  const store = useMarksStore(marks)
+  /** The pointer or the focus reached a row: its cells mount their editors. */
+  function wakeRow(event: { target: EventTarget }) {
+    const row = (event.target as Element).closest?.('[role="row"][data-key]')
+    const id = row?.getAttribute('data-key')
+    if (id) store.wake(id)
+  }
 
   // The open record's row stays in view (after ↑ / ↓, or a link).
   useEffect(() => {
@@ -1214,87 +1236,75 @@ function RecordTable<T, C>({
   }
 
   return (
-    <Virtualizer
-      layout={TableLayout}
-      layoutOptions={{ rowHeight: 43, headingHeight: 32, loaderHeight: 43 }}
-    >
-      <Table
-        ref={scrollRef}
-        aria-label={label}
-        sortDescriptor={
-          sort
-            ? {
-                column: sort.by,
-                direction:
-                  sort.direction === 'asc' ? 'ascending' : 'descending',
-              }
-            : undefined
-        }
-        onSortChange={(descriptor) => sortBy(String(descriptor.column))}
-        onRowAction={onOpen ? (key) => onOpen(String(key)) : undefined}
-        selectionMode={selection ? 'multiple' : 'none'}
-        selectedKeys={selection?.keys}
-        // "All" is the rows loaded now: those loaded later are not added (spec 8.5).
-        onSelectionChange={(keys) =>
-          selection?.onChange(
-            new Set(
-              keys === 'all'
-                ? items.map(definition.getId)
-                : [...keys].map(String),
-            ),
-          )
-        }
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <Column
-              id={column.id}
-              isRowHeader={column.id === columns[0]?.id}
-              allowsSorting={Boolean(column.sort)}
-              width={column.width ?? '1fr'}
-            >
-              {t(column.label)}
-            </Column>
-          )}
-        </TableHeader>
-        <TableBody>
-          <RowCollection
-            items={items}
-            // React Aria keeps the rows it built: what they show besides the record.
-            dependencies={[columns, openId, canEdit, save, report, onOpen]}
+    <MarksProvider value={store}>
+      <div className="contents" onPointerOver={wakeRow} onFocus={wakeRow}>
+        <Virtualizer
+          layout={TableLayout}
+          layoutOptions={{ rowHeight: 43, headingHeight: 32, loaderHeight: 43 }}
+        >
+          <Table
+            ref={scrollRef}
+            aria-label={label}
+            sortDescriptor={
+              sort
+                ? {
+                    column: sort.by,
+                    direction:
+                      sort.direction === 'asc' ? 'ascending' : 'descending',
+                  }
+                : undefined
+            }
+            onSortChange={(descriptor) => sortBy(String(descriptor.column))}
+            onRowAction={onOpen ? (key) => onOpen(String(key)) : undefined}
+            selectionMode={selection ? 'multiple' : 'none'}
+            selectedKeys={selection?.keys}
+            // "All" is the rows loaded now: those loaded later are not added (spec 8.5).
+            onSelectionChange={(keys) =>
+              selection?.onChange(
+                new Set(
+                  keys === 'all'
+                    ? items.map(definition.getId)
+                    : [...keys].map(String),
+                ),
+              )
+            }
           >
-            {(record) => {
-              const id = definition.getId(record)
-              return (
-                <Row
-                  id={id}
-                  // Names the row (and its checkbox, "Select Item 001").
-                  textValue={definition.panel?.title(record) ?? id}
-                  columns={columns}
-                  current={id === openId}
-                  onAction={onOpen ? () => onOpen(id) : undefined}
+            <TableHeader columns={columns}>
+              {(column) => (
+                <Column
+                  id={column.id}
+                  isRowHeader={column.id === columns[0]?.id}
+                  allowsSorting={Boolean(column.sort)}
+                  width={column.width ?? '1fr'}
                 >
-                  {(column) => (
-                    <Cell>
-                      <Show
-                        as="span"
-                        className="block min-w-0 truncate"
-                        when={column.id === columns[0]?.id && onOpen}
-                        fallback={
-                          <CellValue
-                            definition={definition}
-                            column={column}
-                            record={record}
-                            save={save}
-                            report={report}
-                            canEdit={canEdit}
-                            selection={selection}
-                          />
-                        }
-                      >
-                        {(openRecord) => (
-                          <span className="flex items-center gap-2">
-                            <span className="min-w-0 flex-1">
+                  {t(column.label)}
+                </Column>
+              )}
+            </TableHeader>
+            <TableBody>
+              <RowCollection
+                items={items}
+                // React Aria keeps the rows it built: what they show besides the record.
+                // (The open row and the selection are read from the store instead.)
+                dependencies={[columns, canEdit, save, report, onOpen]}
+              >
+                {(record) => {
+                  const id = definition.getId(record)
+                  return (
+                    <MarkedRow
+                      id={id}
+                      // Names the row (and its checkbox, "Select Item 001").
+                      textValue={definition.panel?.title(record) ?? id}
+                      columns={columns}
+                      onAction={onOpen ? () => onOpen(id) : undefined}
+                    >
+                      {(column) => (
+                        <Cell>
+                          <Show
+                            as="span"
+                            className="block min-w-0 truncate"
+                            when={column.id === columns[0]?.id && onOpen}
+                            fallback={
                               <CellValue
                                 definition={definition}
                                 column={column}
@@ -1302,51 +1312,79 @@ function RecordTable<T, C>({
                                 save={save}
                                 report={report}
                                 canEdit={canEdit}
-                                selection={selection}
                               />
-                            </span>
-                            {/* Shown on the row under the pointer or the focus: opens the record. */}
-                            <button
-                              type="button"
-                              aria-label={t('collection:panel.openRecord', {
-                                name: definition.panel?.title(record) ?? '',
-                              })}
-                              onClick={() => openRecord(id)}
-                              className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
-                            >
-                              <Icon name="lucide/chevron-right" size={16} />
-                            </button>
-                          </span>
-                        )}
-                      </Show>
-                    </Cell>
-                  )}
-                </Row>
-              )
-            }}
-          </RowCollection>
-          {/* Always here (a wrapper would hide it from React Aria's collection); it
+                            }
+                          >
+                            {(openRecord) => (
+                              <span className="flex items-center gap-2">
+                                <span className="min-w-0 flex-1">
+                                  <CellValue
+                                    definition={definition}
+                                    column={column}
+                                    record={record}
+                                    save={save}
+                                    report={report}
+                                    canEdit={canEdit}
+                                  />
+                                </span>
+                                {/* Shown on the row under the pointer or the focus: opens the record. */}
+                                <button
+                                  type="button"
+                                  aria-label={t('collection:panel.openRecord', {
+                                    name: definition.panel?.title(record) ?? '',
+                                  })}
+                                  onClick={() => openRecord(id)}
+                                  className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                                >
+                                  <Icon name="lucide/chevron-right" size={16} />
+                                </button>
+                              </span>
+                            )}
+                          </Show>
+                        </Cell>
+                      )}
+                    </MarkedRow>
+                  )
+                }}
+              </RowCollection>
+              {/* Always here (a wrapper would hide it from React Aria's collection); it
               asks for a page only when there is one to load. */}
-          <TableLoadMoreItem
-            onLoadMore={() => more.canLoadMore && more.loadMore()}
-            isLoading={more.loading}
-            label={t('collection:loading')}
-          />
-        </TableBody>
-      </Table>
-    </Virtualizer>
+              <TableLoadMoreItem
+                onLoadMore={() => more.canLoadMore && more.loadMore()}
+                isLoading={more.loading}
+                label={t('collection:loading')}
+              />
+            </TableBody>
+          </Table>
+        </Virtualizer>
+      </div>
+    </MarksProvider>
   )
 }
 
+/** A record's row, marked while its record is open (read from the store). */
+function MarkedRow<T extends object>(
+  props: Omit<ComponentProps<typeof Row<T>>, 'current'> & { id: Id },
+) {
+  const current = useMark((marks) => marks.openId === props.id)
+  return <Row {...props} current={current} />
+}
+
+type SaveShared<T> = (
+  column: ColumnDefinition<T>,
+  record: T,
+  patch: Partial<T>,
+  label: string,
+) => Promise<void>
+
 /** One value in its cell: its field when the person may change it, else its display. */
-function CellValue<T, C>({
+function CellValueOf<T, C>({
   definition,
   column,
   record,
   save,
   report,
   canEdit,
-  selection,
 }: {
   definition: CollectionDefinition<T, C>
   column: ColumnDefinition<T>
@@ -1354,47 +1392,75 @@ function CellValue<T, C>({
   save: SaveChange<T>
   report: ReportInvalid<T>
   canEdit: (record: T, id: string) => boolean
-  selection?: {
-    keys: ReadonlySet<Id>
-    save: (
-      column: ColumnDefinition<T>,
-      record: T,
-      patch: Partial<T>,
-      label: string,
-    ) => Promise<void>
-    note: string
-  }
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const label = t(column.label)
-  // A shared value of a selected row, with others selected: it changes them all.
-  const shared =
-    selection &&
-    selection.keys.size > 1 &&
-    selection.keys.has(definition.getId(record)) &&
-    isShared(column)
-      ? selection
-      : undefined
+  const id = definition.getId(record)
+  const shareable = isShared(column)
+  // A shared value of a selected row, with others selected: its note, and it changes them all.
+  const note = useMark((marks) =>
+    shareable && marks.selected.size > 1 && marks.selected.has(id)
+      ? marks.note
+      : null,
+  )
+  const marks = useMarks()
+  const awake = useMark((_, store) => store.isAwake(id))
+  // Woken by the focus on its text: the focus goes on to the editor.
+  const box = useRef<HTMLSpanElement>(null)
+  const refocus = useRef(false)
+  useEffect(() => {
+    if (!awake || !refocus.current) return
+    refocus.current = false
+    // After a frame: when the focused text leaves, React Aria first puts the focus
+    // back on the row, in its own effects.
+    const frame = requestAnimationFrame(() =>
+      box.current
+        ?.querySelector<HTMLElement>('input, [role="spinbutton"]')
+        ?.focus(),
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [awake])
   return (
-    <SharedNote value={shared ? shared.note : null}>
-      <ValueField
-        record={record}
-        field={column.field}
-        allowed={canEdit(record, column.id)}
-        read={column.cell}
-        label={t(column.label)}
-        namespace={definition.i18n.namespace}
-        save={(patch) =>
-          shared
-            ? shared.save(column, record, patch, label)
-            : save(record, patch, { label })
-        }
-        onInvalid={(reason) => report(record, label, reason)}
-        look="cell"
-      />
-    </SharedNote>
+    <span
+      ref={box}
+      className="contents"
+      onFocusCapture={(event) => {
+        if ((event.target as HTMLElement).dataset.asleep !== undefined)
+          refocus.current = true
+      }}
+    >
+      <Awake value={awake}>
+        <SharedNote value={note}>
+          <ValueField
+            record={record}
+            field={column.field}
+            allowed={canEdit(record, column.id)}
+            read={column.cell}
+            label={t(column.label)}
+            namespace={definition.i18n.namespace}
+            save={(patch) => {
+              // The latest selection, at the moment of the change.
+              const saveShared = marks.get().saveShared as
+                SaveShared<T> | undefined
+              return note !== null && saveShared
+                ? saveShared(column, record, patch, label)
+                : save(record, patch, { label })
+            }}
+            onInvalid={(reason) => report(record, label, reason)}
+            look="cell"
+          />
+        </SharedNote>
+      </Awake>
+    </span>
   )
 }
+
+/**
+ * Rendered again only when its own props change: when the panel opens or closes, the
+ * table's columns change and every row is built again, but the values already shown
+ * stay as they are.
+ */
+const CellValue = memo(CellValueOf) as typeof CellValueOf
 
 /** Grey rows where records will be: six on the first load, two while more load. */
 function Placeholders({ rows = 6 }: { rows?: number }) {

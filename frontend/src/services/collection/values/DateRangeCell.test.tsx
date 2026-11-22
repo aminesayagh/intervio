@@ -20,10 +20,14 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
   )
   return source
 }
-const row = async (n: number) =>
-  (await screen.findByRole('grid')).querySelectorAll('[role="row"][data-key]')[
-    n - 1
-  ] as HTMLElement
+/** The row, under the pointer: its cells show their editors. */
+async function row(n: number) {
+  const found = (await screen.findByRole('grid')).querySelectorAll(
+    '[role="row"][data-key]',
+  )[n - 1] as HTMLElement
+  await userEvent.hover(found)
+  return found
+}
 /** Inside the Planned field. */
 const planned = (scope: HTMLElement) =>
   within(within(scope).getByRole('group', { name: 'Planned' }))

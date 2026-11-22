@@ -27,3 +27,17 @@ export type DataSource<T, C = void> = {
   archive?: (id: Id, context: C) => Promise<void>
   restore?: (id: Id, context: C) => Promise<void>
 }
+
+/** Saves a change to one value; `field` names it for the messages (decision 132). */
+export type SaveChange<T> = (
+  record: T,
+  patch: Partial<T>,
+  field?: { label: string; quiet?: boolean },
+) => Promise<void>
+
+/** Reports a value the definition refused (its field's label, the reason). */
+export type ReportInvalid<T> = (
+  record: T,
+  field: string,
+  reason: string,
+) => void

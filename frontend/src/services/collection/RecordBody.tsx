@@ -3,7 +3,7 @@ import { cn, Show } from '../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { Description } from './Description'
 import { EditableCell } from './EditableCell'
-import type { Id } from './types'
+import type { Id, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './ValueField'
 
 /**
@@ -18,6 +18,7 @@ export function RecordBody<T, C>({
   record: shown,
   canEdit,
   save,
+  report,
   focusTitle,
   layout,
 }: {
@@ -26,7 +27,8 @@ export function RecordBody<T, C>({
   id: Id
   record: T
   canEdit: (record: T, id: string) => boolean
-  save: (record: T, patch: Partial<T>) => Promise<void>
+  save: SaveChange<T>
+  report: ReportInvalid<T>
   focusTitle?: (node: HTMLHeadingElement | null) => void
   layout: 'panel' | 'page'
 }) {
@@ -57,7 +59,12 @@ export function RecordBody<T, C>({
                   edit={edit}
                   label={t('collection:panel.title')}
                   namespace={definition.i18n.namespace}
-                  save={(patch) => save(shown, patch)}
+                  save={(patch) =>
+                    save(shown, patch, { label: t('collection:panel.name') })
+                  }
+                  onInvalid={(reason) =>
+                    report(shown, t('collection:panel.name'), reason)
+                  }
                   look="title"
                 />
               )}
@@ -82,7 +89,12 @@ export function RecordBody<T, C>({
                   read={property.value}
                   label={t(property.label)}
                   namespace={definition.i18n.namespace}
-                  save={(patch) => save(shown, patch)}
+                  save={(patch) =>
+                    save(shown, patch, { label: t(property.label) })
+                  }
+                  onInvalid={(reason) =>
+                    report(shown, t(property.label), reason)
+                  }
                   look="panel"
                 />
               </dd>
@@ -97,7 +109,12 @@ export function RecordBody<T, C>({
               value={description.value(shown)}
               editable={canEdit(shown, 'description')}
               storageKey={`intervio.collection.${definition.key}.${id}.description`}
-              save={(text) => save(shown, description.patch(text))}
+              save={(text) =>
+                save(shown, description.patch(text), {
+                  label: t('collection:description.label'),
+                  quiet: true, // its status line says Not saved, with Retry
+                })
+              }
             />
           )}
         </Show>

@@ -12,7 +12,7 @@ import {
 } from './parts'
 import { RecordBody, RecordPlaceholders } from './RecordBody'
 import { isViewOnly, useRecord } from './recordQuery'
-import type { Id } from './types'
+import type { Id, ReportInvalid, SaveChange } from './types'
 
 /** The More actions button and its menu (spec 7.4). */
 export function MoreActions({
@@ -60,6 +60,7 @@ export function RecordPanel<T, C>({
   onUnavailable,
   canEdit,
   save,
+  report,
   actions,
   onAction,
 }: {
@@ -75,7 +76,8 @@ export function RecordPanel<T, C>({
   onUnavailable: (id: Id) => void
   /** Whether the person may change a value (spec 7.7). */
   canEdit: (record: T, id: string) => boolean
-  save: (record: T, patch: Partial<T>) => Promise<void>
+  save: SaveChange<T>
+  report: ReportInvalid<T>
   /** The More actions menu's entries for a record. */
   actions: (record: T) => MenuAction[]
   onAction: (action: string, record: T) => void
@@ -174,6 +176,7 @@ export function RecordPanel<T, C>({
                 record={loaded}
                 canEdit={canEdit}
                 save={save}
+                report={report}
                 focusTitle={focusTitle}
                 layout="panel"
               />

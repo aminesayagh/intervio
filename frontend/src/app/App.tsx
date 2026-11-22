@@ -22,6 +22,7 @@ import {
   InterventionPage,
 } from '../services/core/interventions'
 import { navigate, usePath } from '../services/navigation'
+import { Notifications } from '../services/notifications'
 import { PublicLayout } from '../services/ui-kit'
 
 type Route = { page: ComponentType; access: Access; board?: boolean }
@@ -127,6 +128,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
+      <Notifications />
     </QueryClientProvider>
   )
 }

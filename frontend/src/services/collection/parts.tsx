@@ -286,21 +286,3 @@ export function ErrorText({
     </p>
   )
 }
-
-/**
- * The error under a field the person edits (a value refused, a save that failed):
- * the same look, fade and announcement on every editable value.
- */
-export function FieldError({
-  message,
-  className,
-}: {
-  message: string | null | undefined
-  className?: string
-}) {
-  return (
-    <Show when={message}>
-      {(text) => <ErrorText className={className}>{text}</ErrorText>}
-    </Show>
-  )
-}

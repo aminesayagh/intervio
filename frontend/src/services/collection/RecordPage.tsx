@@ -6,7 +6,7 @@ import type { MenuAction } from './parts'
 import { RecordBody, RecordPlaceholders } from './RecordBody'
 import { MoreActions } from './RecordPanel'
 import { isViewOnly, useRecord } from './recordQuery'
-import type { Id } from './types'
+import type { Id, ReportInvalid, SaveChange } from './types'
 
 /**
  * A record as the main view (spec 13, "Open full page"): a breadcrumb back to the list
@@ -20,6 +20,7 @@ export function RecordPage<T, C>({
   listHref,
   canEdit,
   save,
+  report,
   actions,
   onAction,
 }: {
@@ -30,7 +31,8 @@ export function RecordPage<T, C>({
   /** The list's address, with this record open in the panel. */
   listHref: string
   canEdit: (record: T, id: string) => boolean
-  save: (record: T, patch: Partial<T>) => Promise<void>
+  save: SaveChange<T>
+  report: ReportInvalid<T>
   actions: (record: T) => MenuAction[]
   onAction: (action: string, record: T) => void
 }) {
@@ -117,6 +119,7 @@ export function RecordPage<T, C>({
               record={loaded}
               canEdit={canEdit}
               save={save}
+              report={report}
               layout="page"
             />
           )}

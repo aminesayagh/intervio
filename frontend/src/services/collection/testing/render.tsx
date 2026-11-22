@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
+import { clearNotifications, Notifications } from '../../notifications'
 
 /**
  * Renders a component at an address (spec 15.2): a fresh query cache with retries off,
@@ -13,6 +14,7 @@ export function renderAt(
   session: Record<string, string> = {},
 ) {
   window.history.replaceState(null, '', url)
+  clearNotifications()
   try {
     sessionStorage.clear()
     localStorage.clear()
@@ -26,6 +28,11 @@ export function renderAt(
   })
   return {
     client,
-    ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>),
+    ...render(
+      <QueryClientProvider client={client}>
+        {ui}
+        <Notifications />
+      </QueryClientProvider>,
+    ),
   }
 }

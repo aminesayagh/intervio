@@ -45,7 +45,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 | Topic | Rule | Decision |
 |---|---|---|
 | What opens where | Records people look at open in the panel; records people work inside (intervention, later offer) open their own page | 109 |
-| List structure | Header (title, main action) · toolbar (search, filters, Cards / Table) · records · loading row | 110 |
+| List structure | Header (title, main action) · toolbar (search, filters) · records · loading row | 110 |
 | Sorting | Every sortable header, the default order's column included: first click sorts in the column's first direction, second reverses it, third goes back to the default order. The default order marks no header and puts nothing in the address; a chosen sort is in the address even when it matches the default order | 110 |
 | Loading more | **Infinite scroll**, no page numbers. The header shows the total ("42 records") | 110 |
 | Panel position | Beside the list, never over it; the list stays usable; the open record is marked | 111 |
@@ -54,7 +54,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 | Keyboard | ↑ / ↓ move between records with the panel open, Enter opens, Escape closes | 113 |
 | Panel structure | Top bar · title · added-by line · properties · sections · activity | 114 |
 | Linked records | One panel at a time, with a Back link; records with their own page open that page | 115 |
-| Editing | In place: text → field with Cancel and Save; set choices → menu that saves at once | 116 |
+| Editing | In place: text saves when the field is left; set choices → menu that saves at once; a refused or failed change is a message | 116, 132 |
 | More actions | Open full page, Copy link · Archive, Remove (with confirmation) | 117 |
 | Creating | "+ Add" opens the record view with defaults; it is created automatically once its required fields are filled; Undo for 5 s | 125 |
 | Modals | Only for confirmations: discarding input, removing | 125 |
@@ -155,7 +155,7 @@ One public component, `Collection`. Its parts are internal and are not used on t
 |---|---|
 | `Collection` | Reads the state (section 6), chooses the layout (section 9), renders the parts below |
 | `CollectionHeader` | Title, total, main action |
-| `CollectionToolbar` | Search, filter menus with counts, "Clear filters", Cards / Table |
+| `CollectionToolbar` | Search, filter menus with counts, "Clear filters" |
 | `CollectionList` | Cards or table; the marked record; the loading row; empty, no-result and error states |
 | `RecordPanel` | Top bar, panel history (Back), view or creation; loading and unavailable states |
 | `RecordView` | Title, subtitle, properties, description, sections, activity; used by the panel and the full page |
@@ -250,11 +250,9 @@ On load, in this order:
 ### 7.3 Editing in place
 
 - Only when the property's id is in the person's `rights.edit` (section 7.7).
-- **Text and long text:** clicking turns the value into a field with Cancel and Save.
-  - Enter saves a one-line field; Escape cancels.
-  - While saving, Save shows it is pending and the field is read-only.
-  - An error shows under the field (its `ERROR_…` key, translated), and the field stays open.
-- **Set choices** (select, person, switch): a menu or switch saves as soon as a choice is made. On error, the previous value comes back and the error shows under it.
+- **Text and long text:** the value is a field that looks like plain text; the change saves when the field is left or Enter is pressed, and Escape puts the value back.
+- **Set choices** (select, person, switch): a menu or switch saves as soon as a choice is made, showing the new value at once.
+- **A refused or failed change** puts the value back and shows a message (7.8): an invalid value, a missing right (`403`), a record removed meanwhile (`404`: the list refreshes and the panel closes), or a failed save (with Retry).
 - **Title:** edited the same way, when `title` is in `rights.edit`.
 - **Only one value at a time:** opening another field first cancels the open one if it is unchanged, and asks otherwise.
 - **After a save,** the record is updated in every loaded page and in the panel (section 8.3).
@@ -279,6 +277,32 @@ On load, in this order:
   - a table cell edits and saves, and Escape cancels;
   - clicking the name opens the panel instead of editing;
   - a property that doesn't apply shows "—" and doesn't edit.
+
+### 7.8 Messages
+
+Decision 132; screens 53 to 61. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
+
+- **A message** has a text, a tone (error or confirmation), an optional action (Retry, Undo), a **scope** and an optional **key**.
+  - The scope is the interaction it belongs to: a record (`{collection}:record:{id}`) or the collection (`{collection}`). Leaving it removes its messages: opening another record, closing the panel, opening the full page, leaving the collection.
+  - The key names the value concerned (`{collection}:{id}:{field}`): a new message with the same key replaces the old one, and a successful save of that value removes it.
+- **Timing:** without an action, 6 seconds; with one, until it is used, closed or its scope ends. Pointing at it or focusing it pauses the countdown.
+- **At most three** show; a fourth pushes the oldest out. The newest is at the bottom.
+- **Accessibility:** HeroUI's toast region (React Aria) announces each message, never takes the focus, and is reached with Alt+T; its buttons are reachable with Tab.
+- **Where each case comes from:**
+
+| Case | Message | Scope |
+|---|---|---|
+| Invalid value on leaving the field | "{validation text} It was put back." | record |
+| `403` on a save | "You can no longer change the {field} of {name}." | record |
+| `404` on a save | "{name} is no longer available. The list was refreshed." (lists refresh, panel closes) | collection |
+| Other failed save | "The {field} of {name} couldn't be saved." · Retry | record |
+| Creation failed | "The record couldn't be created." · Retry (what was typed stays) | new record |
+| Archive or Remove failed | "{name} couldn't be archived / removed." · Retry | collection |
+| Undo failed | "{name} couldn't be removed." | collection |
+| Copy link | "Link copied" / "The link couldn't be copied." | record |
+| Created | "Record created" · Undo | collection |
+
+- **Not messages:** the description's status line (7.6) and the loading states (7.2, 8.2).
 
 ### 7.4 Top bar and more actions
 
@@ -313,7 +337,7 @@ There is no creation form: a new record is the normal record view, created as so
     - the top bar shows the normal actions;
     - "Record created · Undo" shows for 5 seconds. Undo removes the record and closes the panel.
   - From then on, every change is an edit in place (7.3).
-  - On error, the message shows under the field concerned, and nothing is created.
+  - On error, nothing is created, what was typed stays, and a message offers Retry (7.8).
 - **Before the first save:**
   - Values are kept in session storage, so a refresh keeps them (6.4).
   - A required field left empty shows "Enter a name to save this record." (or that field's message) once another value has been typed.
@@ -628,10 +652,10 @@ Each line is one test with the test collection and MSW. Together they cover ever
 |---|---|
 | **List** | the first page shows 30 items and the total; scrolling near the end loads the next 30 once; a failed page shows Retry, and Retry loads it; the end of the list loads nothing more |
 | **Search and filters** | typing waits 250 ms, then shows only matching items and "n of 42"; a filter shows its count on its button; "Clear filters" resets both; no results shows its message |
-| **Sort and view** | clicking a column header sorts through the server and updates the address; Cards / Table switch and are remembered after a re-render |
+| **Sort** | clicking a column header sorts through the server and updates the address; a third click goes back to the default order; the last sort is remembered |
 | **Panel** | clicking an item opens it, marks it and adds `?open`; clicking another switches; × and the browser's Back both close it and agree; a `404` shows "no longer available", and the item leaves the list |
 | **Linked records** | an item of a section opens in the same panel with "‹ previous"; Back returns; a linked record with its own page navigates there |
-| **Edit in place** | a text field saves with Save and with Enter, cancels with Escape; an error stays under the field; a menu value saves on choice and comes back on error; no field shows for a value not in `rights.edit` |
+| **Edit in place** | a text field saves when left and with Enter, puts the value back with Escape; a refused or failed change puts the value back and shows its message; a menu value saves on choice and comes back on error; no field shows for a value not in `rights.edit` |
 | **Creation** | "+ Add" shows the defaults and "Not saved yet"; filling the name creates the item once; it appears on top, open, with "Record created · Undo"; Undo removes it; leaving with nothing typed asks nothing; leaving with input asks, and Discard creates nothing |
 | **Actions** | Remove asks, then removes and closes; Copy link copies the record's address |
 | **Refresh** | re-rendering at the same address with the saved session state brings back the search, filters, open item, panel history, scroll position and a new record's typed values |

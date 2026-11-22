@@ -8,9 +8,7 @@
   "error": {
     "list": "Records could not be loaded.",
     "retry": "Retry",
-    "more": "More records could not be loaded.",
-    "save": "This change could not be saved.",
-    "forbidden": "You can no longer change this."
+    "more": "More records could not be loaded."
   },
   "search": "Search",
   "clearFilters": "Clear filters",
@@ -27,7 +25,8 @@
     "viewOnly": "View only",
     "title": "Title",
     "resize": "Resize the panel",
-    "back": "Back to {{name}}"
+    "back": "Back to {{name}}",
+    "name": "name"
   },
   "description": {
     "label": "Description",
@@ -56,9 +55,7 @@
     "more": "More actions",
     "full": "Open full page",
     "copy": "Copy link",
-    "copied": "Link copied",
-    "cancel": "Cancel",
-    "failed": "This action could not be done."
+    "cancel": "Cancel"
   },
   "page": {
     "breadcrumb": "Breadcrumb"
@@ -66,10 +63,22 @@
   "create": {
     "notSaved": "Not saved yet",
     "name": "Name",
-    "created": "Record created",
-    "undo": "Undo",
     "discardTitle": "Discard this new record?",
     "discardText": "It has not been created yet, so what you typed will be lost.",
     "discard": "Discard"
+  },
+  "message": {
+    "putBack": "{{reason}} It was put back.",
+    "forbidden": "You can no longer change the {{field}} of {{name}}.",
+    "removed": "{{name}} is no longer available. The list was refreshed.",
+    "notSaved": "The {{field}} of {{name}} couldn't be saved.",
+    "retry": "Retry",
+    "notCreated": "The record couldn't be created.",
+    "archiveFailed": "{{name}} couldn't be archived.",
+    "removeFailed": "{{name}} couldn't be removed.",
+    "copied": "Link copied",
+    "notCopied": "The link couldn't be copied.",
+    "created": "Record created",
+    "undo": "Undo"
   }
 }

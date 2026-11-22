@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Show } from '../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from './definition'
 import { EditableCell } from './EditableCell'
-import { FieldError, PanelClose } from './parts'
+import { PanelClose } from './parts'
 import { newRecordKey } from './recordQuery'
-import { refusalMessage } from './refusal'
+import { dismissScope, notify } from '../notifications'
 import { ValueField } from './ValueField'
 
 function read<T>(key: string): Partial<T> | null {
@@ -53,26 +53,43 @@ export function NewRecord<T, C>({
     ...defaults,
     ...read<T>(storageKey),
   }))
-  const [error, setError] = useState<string | null>(null)
   const creating = useRef(false)
   const record = draft as T
 
-  /** A value set in the draft; once the draft is ready, it is created. */
-  async function change(patch: Partial<T>) {
-    const next = { ...draft, ...patch }
-    setDraft(next)
-    keep(storageKey, next)
-    if (creating.current || !definition.create?.ready(next)) return
+  const scope = `${definition.key}:new`
+  // Leaving the new record (created, discarded, closed) takes its notifications away.
+  useEffect(() => () => dismissScope(scope), [scope])
+
+  /** Creates the record; a failure keeps what was typed and offers Retry (7.8). */
+  async function create(next: Partial<T>) {
+    if (creating.current) return
     creating.current = true
-    setError(null)
     try {
       await onCreated(next)
       keep(storageKey, null)
-    } catch (refusal) {
-      setError(t(refusalMessage(refusal)))
+    } catch {
+      notify({
+        tone: 'error',
+        text: t('collection:message.notCreated'),
+        action: {
+          label: t('collection:message.retry'),
+          run: () => void create(next),
+        },
+        scope,
+        key: scope,
+      })
     } finally {
       creating.current = false
     }
+  }
+
+  /** A value set in the draft; once the draft is ready, it is created. */
+  function change(patch: Partial<T>) {
+    const next = { ...draft, ...patch }
+    setDraft(next)
+    keep(storageKey, next)
+    if (definition.create?.ready(next)) void create(next)
+    return Promise.resolve()
   }
 
   return (
@@ -111,7 +128,6 @@ export function NewRecord<T, C>({
               )}
             </Show>
           </h2>
-          <FieldError message={error} className="mt-1" />
         </div>
 
         <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">

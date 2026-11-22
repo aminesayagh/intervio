@@ -19,8 +19,8 @@
     "outdated": "Obsolète"
   },
   "errors": {
-    "nameRequired": "Saisissez un nom.",
-    "quantity": "Saisissez une quantité d’au moins 1."
+    "nameRequired": "Le nom ne peut pas être vide.",
+    "quantity": "La quantité doit être d’au moins 1."
   },
   "type": "Élément",
   "updatedOn": "Mis à jour le {{date}}",

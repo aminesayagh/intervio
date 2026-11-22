@@ -19,8 +19,8 @@
     "outdated": "Outdated"
   },
   "errors": {
-    "nameRequired": "Enter a name.",
-    "quantity": "Enter a quantity of at least 1."
+    "nameRequired": "The name can't be empty.",
+    "quantity": "The quantity must be at least 1."
   },
   "type": "Item",
   "updatedOn": "Updated {{date}}",

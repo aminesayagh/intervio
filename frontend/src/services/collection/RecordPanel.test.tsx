@@ -154,9 +154,11 @@ test('the panel chooses a status, and refuses a wrong quantity with its message'
   // Item 001 has no quantity: type a wrong one.
   const quantity = within(aside).getByRole('textbox', { name: 'Quantity' })
   await userEvent.type(quantity, 'zero{Enter}')
-  expect(await within(aside).findByRole('alert')).toHaveTextContent(
-    'Enter a quantity of at least 1.',
-  )
+  expect(
+    await screen.findByText(
+      'The quantity must be at least 1. It was put back.',
+    ),
+  ).toBeInTheDocument()
   expect(source.items()[0].quantity).toBeNull()
 })
 
@@ -194,9 +196,9 @@ test('a change refused as no longer allowed says so, and the value comes back', 
     within(aside).getByRole('textbox', { name: 'Title' }),
     ' X{Enter}',
   )
-  expect(await within(aside).findByRole('alert')).toHaveTextContent(
-    'You can no longer change this.',
-  )
+  expect(
+    await screen.findByText('You can no longer change the name of Item 001.'),
+  ).toBeInTheDocument()
   expect(within(aside).getByRole('textbox', { name: 'Title' })).toHaveValue(
     'Item 001',
   )

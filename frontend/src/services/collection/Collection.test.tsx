@@ -309,7 +309,10 @@ test('an empty name is refused with a message, and the name comes back', async (
   const field = await screen.findByDisplayValue('Item 003')
   await userEvent.clear(field)
   await userEvent.tab()
-  expect(await screen.findByRole('alert')).toHaveTextContent('Enter a name.')
+  // The value goes back, and a notification says why (decision 132).
+  expect(
+    await screen.findByText("The name can't be empty. It was put back."),
+  ).toBeInTheDocument()
   expect(field).toHaveValue('Item 003')
   expect(source.items()[2].name).toBe('Item 003')
 })
@@ -321,10 +324,20 @@ test('a save the server refuses puts the name back, with a message', async () =>
   source.settings.failing = true
   await userEvent.type(field, ' X')
   await userEvent.tab()
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    'This change could not be saved.',
-  )
+  expect(
+    await screen.findByText("The name of Item 004 couldn't be saved."),
+  ).toBeInTheDocument()
   expect(field).toHaveValue('Item 004')
+
+  // Retry sends the same change again.
+  source.settings.failing = false
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+  await waitFor(() => expect(source.items()[3].name).toBe('Item 004 X'))
+  await waitFor(() =>
+    expect(
+      screen.queryByText("The name of Item 004 couldn't be saved."),
+    ).toBeNull(),
+  )
 })
 
 test('a status is chosen from its chip, and saved at once', async () => {
@@ -358,9 +371,9 @@ test('a status the server refuses goes back, with a message', async () => {
     await screen.findByRole('menuitemradio', { name: 'Draft' }),
   )
 
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    'This change could not be saved.',
-  )
+  expect(
+    await screen.findByText("The status of Item 002 couldn't be saved."),
+  ).toBeInTheDocument()
   expect(
     within(rows[2]).getByRole('button', { name: 'Status: Valid' }),
   ).toBeInTheDocument()

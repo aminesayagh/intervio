@@ -19,6 +19,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../http'
 import { addTranslations } from '../i18n'
+import { dismissKey, dismissScope, notify } from '../notifications'
 import {
   entryState,
   navigate,
@@ -49,7 +50,7 @@ import { PanelDivider } from './PanelDivider'
 import { RecordPanel } from './RecordPanel'
 import { newRecordKey } from './recordQuery'
 import { Toolbar } from './Toolbar'
-import type { Id, ListQuery } from './types'
+import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { useCollectionList } from './useCollectionList'
 import { ValueField } from './ValueField'
 import {
@@ -102,25 +103,6 @@ export function Collection<T extends RowData, C = void>({
   // Saves a change made in place, then shows the saved record everywhere (spec 8.3).
   const queryClient = useQueryClient()
   const { source, getId, key } = definition
-  const save = useCallback(
-    async (record: T, patch: Partial<T>) => {
-      if (!source.update) throw new Error(`${key} cannot be edited`)
-      try {
-        const updated = await source.update(getId(record), patch, context as C)
-        cache.updated(queryClient, key, updated, getId)
-      } catch (refusal) {
-        // No right any more: reload the record and the lists, so their rights are current.
-        if (refusal instanceof ApiError && refusal.status === 403) {
-          void queryClient.invalidateQueries({
-            queryKey: keys.record(key, getId(record)),
-          })
-          void cache.refresh(queryClient, key)
-        }
-        throw refusal
-      }
-    },
-    [source, getId, key, context, queryClient],
-  )
 
   /** Whether the person may change a value of a record (spec 7.7). */
   const { rights } = definition
@@ -154,6 +136,107 @@ export function Collection<T extends RowData, C = void>({
       setSearchParams(params, { replace: true })
     }
   }, [panelMark])
+
+  // Messages (decision 132): each belongs to a record or to the collection, and
+  // leaves with it; one about a value is replaced by the next one about that value.
+  const nameOf = useCallback(
+    (record: T) => definition.panel?.title(record) ?? getId(record),
+    [definition.panel, getId],
+  )
+  const recordScope = useCallback((id: Id) => `${key}:record:${id}`, [key])
+  useEffect(() => () => dismissScope(key), [key])
+  // The panel's record and the full page's record: leaving one takes its messages away.
+  useEffect(() => {
+    const scope = openId ? recordScope(openId) : null
+    return () => {
+      if (scope) dismissScope(scope)
+    }
+  }, [openId, recordScope])
+  const shownPage = window.location.pathname.startsWith(
+    `${basePath ?? `/${key}`}/`,
+  )
+    ? decodeURIComponent(
+        window.location.pathname.slice((basePath ?? `/${key}`).length + 1),
+      )
+    : null
+  useEffect(() => {
+    const scope = shownPage ? recordScope(shownPage) : null
+    return () => {
+      if (scope) dismissScope(scope)
+    }
+  }, [shownPage, recordScope])
+
+  /**
+   * Saves a change made in place, then shows the saved record everywhere (spec 8.3).
+   * A refused or failed change is reported (7.8) and rethrown, so the field puts its
+   * value back. `field` names the value for the message; `quiet` leaves the failure
+   * to the caller (the description has its own status line).
+   */
+  const save = useCallback(
+    async function saveChange(
+      record: T,
+      patch: Partial<T>,
+      field?: { label: string; quiet?: boolean },
+    ): Promise<void> {
+      if (!source.update) throw new Error(`${key} cannot be edited`)
+      const id = getId(record)
+      const valueKey = field && `${key}:${id}:${field.label}`
+      const words = { field: field?.label.toLowerCase(), name: nameOf(record) }
+      try {
+        const updated = await source.update(id, patch, context as C)
+        cache.updated(queryClient, key, updated, getId)
+        if (valueKey) dismissKey(valueKey)
+      } catch (refusal) {
+        const status = refusal instanceof ApiError ? refusal.status : 0
+        if (status === 403) {
+          // No right any more: reload the record and the lists, so their rights are current.
+          void queryClient.invalidateQueries({ queryKey: keys.record(key, id) })
+          void cache.refresh(queryClient, key)
+          notify({
+            tone: 'error',
+            text: t('collection:message.forbidden', words),
+            scope: recordScope(id),
+            key: valueKey,
+          })
+        } else if (status === 404) {
+          // Removed by someone else: the list refreshes and the panel closes.
+          cache.removed(queryClient, key, id, getId)
+          void cache.refresh(queryClient, key)
+          if (new URLSearchParams(window.location.search).get('open') === id)
+            doClose()
+          notify({
+            tone: 'error',
+            text: t('collection:message.removed', words),
+            scope: key,
+          })
+        } else if (field && !field.quiet) {
+          notify({
+            tone: 'error',
+            text: t('collection:message.notSaved', words),
+            action: {
+              label: t('collection:message.retry'),
+              run: () => void saveChange(record, patch, field).catch(() => {}),
+            },
+            scope: recordScope(id),
+            key: valueKey,
+          })
+        }
+        throw refusal
+      }
+    },
+    [source, getId, key, context, queryClient, nameOf, recordScope, doClose, t],
+  )
+  /** A value the definition refused: it went back; the message says why. */
+  const report = useCallback(
+    (record: T, field: string, reason: string) =>
+      notify({
+        tone: 'error',
+        text: t('collection:message.putBack', { reason }),
+        scope: recordScope(getId(record)),
+        key: `${key}:${getId(record)}:${field}`,
+      }),
+    [t, recordScope, getId, key],
+  )
 
   // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
   const isNew = useSearchParams().get('new') === '1'
@@ -203,22 +286,6 @@ export function Collection<T extends RowData, C = void>({
     action: ActionDefinition
     record: T
   } | null>(null)
-  const [notice, setNotice] = useState<{
-    text: string
-    action?: { label: string; run: () => void }
-  } | null>(null)
-  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const announce = useCallback(
-    (text: string, action?: { label: string; run: () => void }) => {
-      setNotice({ text, action })
-      clearTimeout(noticeTimer.current)
-      noticeTimer.current = setTimeout(
-        () => setNotice(null),
-        action ? 5000 : 2500,
-      )
-    },
-    [],
-  )
   const allowedActions = useCallback(
     (record: T) =>
       (definition.actions ?? []).filter(
@@ -246,20 +313,31 @@ export function Collection<T extends RowData, C = void>({
       if (id === 'full') navigate(`${listPath}/${encodeURIComponent(recordId)}`)
       else if (id === 'copy') {
         const link = `${window.location.origin}${listPath}?open=${encodeURIComponent(recordId)}`
-        void navigator.clipboard
-          ?.writeText(link)
-          .then(() => announce(t('collection:actions.copied')))
+        const scope = recordScope(recordId)
+        Promise.resolve(navigator.clipboard?.writeText(link))
+          .then(() => {
+            if (!navigator.clipboard) throw new Error('no clipboard')
+            notify({
+              tone: 'confirm',
+              text: t('collection:message.copied'),
+              scope,
+            })
+          })
+          .catch(() =>
+            notify({
+              tone: 'error',
+              text: t('collection:message.notCopied'),
+              scope,
+            }),
+          )
       } else {
         const action = (definition.actions ?? []).find((a) => a.id === id)
         if (action) setPending({ action, record })
       }
     },
-    [getId, listPath, announce, t, definition.actions],
+    [getId, listPath, recordScope, t, definition.actions],
   )
-  async function confirmAction() {
-    if (!pending) return
-    const { action, record } = pending
-    setPending(null)
+  async function runAction(action: ActionDefinition, record: T) {
     const recordId = getId(record)
     try {
       const run = action.id === 'archive' ? source.archive : source.remove
@@ -269,8 +347,24 @@ export function Collection<T extends RowData, C = void>({
       if (pageId) navigate(listPath, { replace: true })
       else if (openId === recordId) doClose()
     } catch {
-      announce(t('collection:actions.failed'))
+      // The panel may be closed by now: the message belongs to the collection.
+      notify({
+        tone: 'error',
+        text: t(`collection:message.${action.id}Failed`, {
+          name: nameOf(record),
+        }),
+        action: {
+          label: t('collection:message.retry'),
+          run: () => void runAction(action, record),
+        },
+        scope: key,
+      })
     }
+  }
+  function confirmAction() {
+    if (!pending) return
+    setPending(null)
+    void runAction(pending.action, pending.record)
   }
   const newDefaults = useCallback((): Partial<T> => {
     const values = {
@@ -293,31 +387,36 @@ export function Collection<T extends RowData, C = void>({
       params.delete('new')
       params.set('open', createdId)
       setSearchParams(params, { replace: true, state: entryState() })
-      announce(t('collection:create.created'), {
-        label: t('collection:create.undo'),
-        run: () => {
-          void source.remove?.(createdId, context as C).then(() => {
-            cache.removed(queryClient, key, createdId, getId)
-            if (
-              new URLSearchParams(window.location.search).get('open') ===
-              createdId
-            )
-              doClose()
-          })
+      notify({
+        tone: 'confirm',
+        text: t('collection:message.created'),
+        action: {
+          label: t('collection:message.undo'),
+          run: () => {
+            Promise.resolve(source.remove?.(createdId, context as C))
+              .then(() => {
+                cache.removed(queryClient, key, createdId, getId)
+                if (
+                  new URLSearchParams(window.location.search).get('open') ===
+                  createdId
+                )
+                  doClose()
+              })
+              .catch(() =>
+                notify({
+                  tone: 'error',
+                  text: t('collection:message.removeFailed', {
+                    name: nameOf(created),
+                  }),
+                  scope: key,
+                }),
+              )
+          },
         },
+        scope: key,
       })
     },
-    [
-      source,
-      key,
-      context,
-      getId,
-      queryClient,
-      state.query,
-      announce,
-      t,
-      doClose,
-    ],
+    [source, key, context, getId, queryClient, state.query, t, doClose, nameOf],
   )
   const unavailable = useCallback(
     (id: Id) =>
@@ -483,30 +582,6 @@ export function Collection<T extends RowData, C = void>({
         }}
         onCancel={() => setLeaving(false)}
       />
-      <p aria-live="polite" className="sr-only">
-        {notice?.text}
-      </p>
-      <Show when={notice}>
-        {(shown) => (
-          <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-[var(--field-radius)] bg-foreground px-4 py-2 text-background shadow-md">
-            <span>{shown.text}</span>
-            <Show as="span" when={shown.action}>
-              {(action) => (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNotice(null)
-                    action.run()
-                  }}
-                  className="font-medium underline underline-offset-2"
-                >
-                  {action.label}
-                </button>
-              )}
-            </Show>
-          </div>
-        )}
-      </Show>
       <ConfirmDialog
         open={discarding}
         title={t('collection:create.discardTitle')}
@@ -540,6 +615,7 @@ export function Collection<T extends RowData, C = void>({
           listHref={`${listPath}?open=${encodeURIComponent(pageId)}`}
           canEdit={canEdit}
           save={save}
+          report={report}
           actions={(record) => menuActions(record, true)}
           onAction={runMenu}
         />
@@ -638,6 +714,7 @@ export function Collection<T extends RowData, C = void>({
                 sort={listing.sort}
                 onSort={state.setSort}
                 save={save}
+                report={report}
                 canEdit={canEdit}
                 openId={definition.panel ? openId : null}
                 shown={shownColumns}
@@ -709,6 +786,7 @@ export function Collection<T extends RowData, C = void>({
                   onUnavailable={unavailable}
                   canEdit={canEdit}
                   save={save}
+                  report={report}
                   actions={(record) => menuActions(record, false)}
                   onAction={runMenu}
                 />
@@ -742,6 +820,7 @@ function RecordTable<T extends RowData, C>({
   sort,
   onSort,
   save,
+  report,
   canEdit,
   openId,
   onOpen,
@@ -756,7 +835,8 @@ function RecordTable<T extends RowData, C>({
   /** The sort chosen, or null for the default order (no header marked). */
   sort: ListQuery['sort'] | null
   onSort: (sort: ListQuery['sort'] | null) => void
-  save: (record: T, patch: Partial<T>) => Promise<void>
+  save: SaveChange<T>
+  report: ReportInvalid<T>
   canEdit: (record: T, id: string) => boolean
   /** The record open in the panel: its row is marked. */
   openId: Id | null
@@ -781,12 +861,25 @@ function RecordTable<T extends RowData, C>({
               read={column.cell}
               label={t(column.label)}
               namespace={definition.i18n.namespace}
-              save={(patch) => save(info.row.original, patch)}
+              save={(patch) =>
+                save(info.row.original, patch, { label: t(column.label) })
+              }
+              onInvalid={(reason) =>
+                report(info.row.original, t(column.label), reason)
+              }
               look="cell"
             />
           ),
         })),
-    [definition.columns, definition.i18n.namespace, t, save, canEdit, shown],
+    [
+      definition.columns,
+      definition.i18n.namespace,
+      t,
+      save,
+      report,
+      canEdit,
+      shown,
+    ],
   )
   const table = useTable({
     features,

@@ -8,9 +8,7 @@
   "error": {
     "list": "Les éléments n’ont pas pu être chargés.",
     "retry": "Réessayer",
-    "more": "D’autres éléments n’ont pas pu être chargés.",
-    "save": "Cette modification n’a pas pu être enregistrée.",
-    "forbidden": "Vous ne pouvez plus modifier cette valeur."
+    "more": "D’autres éléments n’ont pas pu être chargés."
   },
   "search": "Rechercher",
   "clearFilters": "Effacer les filtres",
@@ -27,7 +25,8 @@
     "viewOnly": "Lecture seule",
     "title": "Titre",
     "resize": "Redimensionner le panneau",
-    "back": "Retour à {{name}}"
+    "back": "Retour à {{name}}",
+    "name": "nom"
   },
   "description": {
     "label": "Description",
@@ -56,9 +55,7 @@
     "more": "Plus d’actions",
     "full": "Ouvrir en pleine page",
     "copy": "Copier le lien",
-    "copied": "Lien copié",
-    "cancel": "Annuler",
-    "failed": "Cette action n’a pas pu être effectuée."
+    "cancel": "Annuler"
   },
   "page": {
     "breadcrumb": "Fil d’Ariane"
@@ -66,10 +63,22 @@
   "create": {
     "notSaved": "Pas encore enregistré",
     "name": "Nom",
-    "created": "Élément créé",
-    "undo": "Annuler",
     "discardTitle": "Abandonner ce nouvel élément ?",
     "discardText": "Il n’a pas encore été créé : ce que vous avez saisi sera perdu.",
     "discard": "Abandonner"
+  },
+  "message": {
+    "putBack": "{{reason}} La valeur précédente a été rétablie.",
+    "forbidden": "Vous ne pouvez plus modifier « {{field}} » de {{name}}.",
+    "removed": "{{name}} n’est plus disponible. La liste a été actualisée.",
+    "notSaved": "« {{field}} » de {{name}} n’a pas pu être enregistré.",
+    "retry": "Réessayer",
+    "notCreated": "L’élément n’a pas pu être créé.",
+    "archiveFailed": "{{name}} n’a pas pu être archivé.",
+    "removeFailed": "{{name}} n’a pas pu être supprimé.",
+    "copied": "Lien copié",
+    "notCopied": "Le lien n’a pas pu être copié.",
+    "created": "Élément créé",
+    "undo": "Annuler"
   }
 }

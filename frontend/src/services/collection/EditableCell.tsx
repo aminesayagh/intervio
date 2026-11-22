@@ -2,14 +2,12 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn, Icon, Variant } from '../ui-kit'
 import type { TextEdit } from './definition'
-import { FieldError } from './parts'
-import { refusalMessage } from './refusal'
 
 /**
  * A table cell whose text is edited in place (spec 7.3.1). It looks exactly like the
  * other cells; only the text cursor tells it can be edited. Leaving the cell (or
- * Enter) saves; Escape puts the saved text back. A refused text comes back to the
- * saved one, with a short message under it.
+ * Enter) saves; Escape puts the saved text back. A refused or failed text comes back
+ * to the saved one; the collection reports why, as a message (decision 132).
  */
 export function EditableCell<T>({
   record,
@@ -20,6 +18,7 @@ export function EditableCell<T>({
   look = 'cell',
   placeholder,
   autoFocus,
+  onInvalid,
 }: {
   record: T
   edit: TextEdit<T>
@@ -33,12 +32,13 @@ export function EditableCell<T>({
   look?: 'cell' | 'panel' | 'title'
   placeholder?: string
   autoFocus?: boolean
+  /** A text the definition refuses (its translated reason); without it, it just goes back. */
+  onInvalid?: (reason: string) => void
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = edit.value(record)
   const [text, setText] = useState(saved)
   const [seen, setSeen] = useState(saved)
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const cancelling = useRef(false)
 
@@ -60,17 +60,15 @@ export function EditableCell<T>({
     }
     const refused = edit.validate?.(next)
     if (refused) {
-      setError(t(refused))
       setText(saved)
+      onInvalid?.(t(refused))
       return
     }
     setSaving(true)
-    setError(null)
     try {
       await save(edit.patch(next))
-    } catch (refusal) {
-      setError(t(refusalMessage(refusal)))
-      setText(saved)
+    } catch {
+      setText(saved) // the message says why
     } finally {
       setSaving(false)
     }
@@ -81,20 +79,15 @@ export function EditableCell<T>({
       aria-label={label}
       placeholder={placeholder}
       autoFocus={autoFocus}
-      aria-invalid={error ? true : undefined}
       aria-busy={saving || undefined}
       value={text}
-      onChange={(event) => {
-        setText(event.target.value)
-        setError(null)
-      }}
+      onChange={(event) => setText(event.target.value)}
       onBlur={commit}
       onKeyDown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur()
         if (event.key === 'Escape') {
           cancelling.current = true
           setText(saved)
-          setError(null)
           event.currentTarget.blur()
         }
       }}
@@ -108,25 +101,22 @@ export function EditableCell<T>({
   )
 
   return (
-    <>
-      <Variant
-        as="span"
-        className="block min-w-0"
-        value={look === 'cell' ? 'plain' : 'framed'}
-        views={{
-          plain: () => input,
-          // In the panel: a pencil under the pointer or the focus.
-          framed: () => (
-            <span className="group/edit relative flex items-center">
-              {input}
-              <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
-                <Icon name="Edit" size={14} />
-              </span>
+    <Variant
+      as="span"
+      className="block min-w-0"
+      value={look === 'cell' ? 'plain' : 'framed'}
+      views={{
+        plain: () => input,
+        // In the panel: a pencil under the pointer or the focus.
+        framed: () => (
+          <span className="group/edit relative flex items-center">
+            {input}
+            <span className="pointer-events-none absolute end-0 flex text-muted opacity-0 group-focus-within/edit:opacity-100 group-hover/edit:opacity-100">
+              <Icon name="Edit" size={14} />
             </span>
-          ),
-        }}
-      />
-      <FieldError message={error} />
-    </>
+          </span>
+        ),
+      }}
+    />
   )
 }

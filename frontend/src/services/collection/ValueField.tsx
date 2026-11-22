@@ -27,6 +27,7 @@ export function ValueField<T>({
   namespace,
   save,
   look,
+  onInvalid,
 }: {
   record: T
   target: { edit?: TextEdit<T>; choose?: ChoiceEdit<T> }
@@ -38,6 +39,8 @@ export function ValueField<T>({
   namespace: string
   save: (patch: Partial<T>) => Promise<void>
   look: 'cell' | 'panel'
+  /** A text the definition refuses: the collection reports it (decision 132). */
+  onInvalid?: (reason: string) => void
 }) {
   return (
     <Variant
@@ -53,6 +56,7 @@ export function ValueField<T>({
             namespace={namespace}
             save={save}
             look={look}
+            onInvalid={onInvalid}
           />
         ),
         choose: () => (

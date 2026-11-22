@@ -3,14 +3,13 @@ import { Button, MenuTrigger } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../ui-kit'
 import type { ChoiceEdit } from './definition'
-import { refusalMessage } from './refusal'
-import { ChoiceMenu, FieldError, MenuPopover } from './parts'
+import { ChoiceMenu, MenuPopover } from './parts'
 
 /**
  * A table cell whose value is chosen from a list (a status): it shows the column's
  * own display (the chip) unchanged, with a pointer cursor; a click opens the
  * choices, and a choice saves at once. A refused choice comes back to the saved
- * one, with a short message under the cell.
+ * one; the collection reports why, as a message (decision 132).
  */
 export function ChoiceCell<T>({
   record,
@@ -34,53 +33,48 @@ export function ChoiceCell<T>({
   const { t } = useTranslation([namespace, 'collection'])
   const saved = choose.value(record)
   const [pending, setPending] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const shown = pending ?? saved
 
   async function pick(id: string) {
     if (id === saved) return
     setPending(id)
-    setError(null)
     try {
       await save(choose.patch(id))
-    } catch (refusal) {
-      setError(t(refusalMessage(refusal)))
+    } catch {
+      // the saved value comes back; the message says why
     } finally {
       setPending(null)
     }
   }
 
   return (
-    <>
-      <MenuTrigger>
-        <Button
-          aria-label={`${label}: ${t(choose.options.find((o) => o.id === shown)?.label ?? shown)}`}
-          aria-busy={pending ? true : undefined}
-          className={cn(
-            'flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground',
-            look === 'panel' &&
-              '-mx-2 px-2 py-1 data-[hovered]:bg-default data-[pressed]:bg-default',
-          )}
-        >
-          {render(
-            shown === saved ? record : { ...record, ...choose.patch(shown) },
-          )}
-        </Button>
-        <MenuPopover minWidth={180}>
-          <ChoiceMenu
-            label={label}
-            mode="single"
-            options={choose.options.map((option) => ({
-              id: option.id,
-              label: t(option.label),
-            }))}
-            selected={[shown]}
-            // Choosing the current value again would empty the choice: ignored.
-            onChange={(ids) => ids[0] && pick(ids[0])}
-          />
-        </MenuPopover>
-      </MenuTrigger>
-      <FieldError message={error} />
-    </>
+    <MenuTrigger>
+      <Button
+        aria-label={`${label}: ${t(choose.options.find((o) => o.id === shown)?.label ?? shown)}`}
+        aria-busy={pending ? true : undefined}
+        className={cn(
+          'flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-foreground',
+          look === 'panel' &&
+            '-mx-2 px-2 py-1 data-[hovered]:bg-default data-[pressed]:bg-default',
+        )}
+      >
+        {render(
+          shown === saved ? record : { ...record, ...choose.patch(shown) },
+        )}
+      </Button>
+      <MenuPopover minWidth={180}>
+        <ChoiceMenu
+          label={label}
+          mode="single"
+          options={choose.options.map((option) => ({
+            id: option.id,
+            label: t(option.label),
+          }))}
+          selected={[shown]}
+          // Choosing the current value again would empty the choice: ignored.
+          onChange={(ids) => ids[0] && pick(ids[0])}
+        />
+      </MenuPopover>
+    </MenuTrigger>
   )
 }

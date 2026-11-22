@@ -20,6 +20,7 @@ export function EditableCell<T>({
   autoFocus,
   onInvalid,
   inputType = 'text',
+  fit = false,
 }: {
   record: T
   edit: TextField<T>
@@ -37,6 +38,8 @@ export function EditableCell<T>({
   onInvalid?: (reason: string) => void
   /** The keyboard and the browser's checks: a web address, an email, a phone number. */
   inputType?: 'text' | 'url' | 'email' | 'tel'
+  /** As wide as its text, so an icon after it comes right after. */
+  fit?: boolean
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = edit.value(record)
@@ -81,6 +84,7 @@ export function EditableCell<T>({
     <TextInput
       aria-label={label}
       type={inputType}
+      fit={fit}
       look={look}
       placeholder={placeholder}
       autoFocus={autoFocus}

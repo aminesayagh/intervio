@@ -18,6 +18,6 @@ export {
   type MenuAction,
 } from './Menu'
 export { NumberInput } from './NumberField'
-export { focusRing, fieldLook, type FieldLook } from './styles'
+export { fieldLook, fieldMargin, focusRing, type FieldLook } from './styles'
 export { Tab, TabList, TabPanel, Tabs } from './Tabs'
 export { TextInput } from './TextField'

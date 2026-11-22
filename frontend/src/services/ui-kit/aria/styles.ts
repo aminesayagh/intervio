@@ -17,7 +17,14 @@ export type FieldLook = 'cell' | 'panel' | 'title'
 export const fieldLook: Record<FieldLook, string> = {
   cell: 'p-0',
   panel:
-    '-mx-2 rounded-[var(--field-radius)] px-2 py-1 data-[hovered]:bg-default data-[focused]:bg-default',
+    'rounded-[var(--field-radius)] px-2 py-1 data-[hovered]:bg-default data-[focused]:bg-default',
   title:
-    '-mx-2 rounded-[var(--field-radius)] px-2 py-1 text-xl font-medium data-[hovered]:bg-default data-[focused]:bg-default',
+    'rounded-[var(--field-radius)] px-2 py-1 text-xl font-medium data-[hovered]:bg-default data-[focused]:bg-default',
+}
+
+/** The panel's fields reach 8 px out on each side, so their text lines up with the rest. */
+export const fieldMargin: Record<FieldLook, string> = {
+  cell: '',
+  panel: '-mx-2',
+  title: '-mx-2',
 }

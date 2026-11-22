@@ -645,7 +645,7 @@ export function Collection<T extends RowData, C = void>({
       ref={sectionRef}
       aria-labelledby={`${definition.key}-title`}
       onKeyDown={onKeyDown}
-      className="flex h-[calc(100dvh-5.5rem)] min-h-[360px] lg:h-[calc(100dvh-3rem)]"
+      className="relative flex h-[calc(100dvh-5.5rem)] min-h-[360px] overflow-hidden lg:h-[calc(100dvh-3rem)]"
     >
       <div
         className={cn(

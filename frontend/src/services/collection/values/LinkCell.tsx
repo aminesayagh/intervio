@@ -127,7 +127,7 @@ export function LinkCell<T>({
   }
   return (
     <span className="group/link flex min-w-0 items-center gap-1">
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 shrink">
         <EditableCell
           record={record}
           edit={text}
@@ -136,6 +136,7 @@ export function LinkCell<T>({
           save={save}
           look={look}
           inputType={rule.input}
+          fit
           onInvalid={onInvalid}
         />
       </span>

@@ -95,7 +95,7 @@ export function NewRecord<T, C>({
   return (
     <aside
       aria-label={t(definition.create?.add ?? 'collection:panel.label')}
-      className="scroll-quiet flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
+      className="scroll-quiet relative flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       <div className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 bg-background">
         <span className="text-xs text-muted">

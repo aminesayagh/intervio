@@ -5,6 +5,7 @@
  */
 export { Button, FieldButton } from './Button'
 export { Checkbox } from './Checkbox'
+export { DatePicker } from './DatePicker'
 export { ConfirmDialog } from './Dialog'
 export {
   ActionMenu,

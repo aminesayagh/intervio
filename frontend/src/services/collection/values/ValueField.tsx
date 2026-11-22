@@ -4,6 +4,7 @@ import { ChoiceCell } from './ChoiceCell'
 import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
 import { CheckboxCell } from './CheckboxCell'
+import { DateCell } from './DateCell'
 import { LinkCell, LinkValue } from './LinkCell'
 import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
@@ -110,6 +111,16 @@ export function ValueField<T>({
               render={read}
               label={label}
               namespace={namespace}
+              save={save}
+              look={look}
+            />
+          ),
+        date: () =>
+          field?.type === 'date' && (
+            <DateCell
+              record={record}
+              edit={field}
+              label={label}
               save={save}
               look={look}
             />

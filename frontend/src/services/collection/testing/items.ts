@@ -12,6 +12,7 @@ export type Item = {
   email: string
   phone: string
   tags: string[]
+  due: string | null // '2026-12-01'
   description: string // Markdown
   linkedTo: string[] // ids of other items (for drilling down)
   updatedAt: string // ISO date
@@ -43,6 +44,13 @@ export function makeItems(n: number): Item[] {
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
       // None, one, two or three tags, in turn.
       tags: TAGS.slice(index % 4, (index % 4) + (index % 4)),
+      // From 1 December 2026, a day apart; every sixth has none.
+      due:
+        index % 6 === 5
+          ? null
+          : new Date(Date.UTC(2026, 11, 1) + index * 86_400_000)
+              .toISOString()
+              .slice(0, 10),
       description: `A test item, **Item ${number}**.\n\n- Checked once a year`,
       linkedTo: index > 0 ? [makeId(1)] : [],
       // One day apart, newest first, from a fixed date.

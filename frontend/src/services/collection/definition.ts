@@ -58,6 +58,19 @@ export type MultiSelectField<T> = {
   patch: (ids: string[]) => Partial<T>
 }
 
+/** A date, or a date and a time: typed in segments or picked in a calendar. */
+export type DateField<T> = {
+  type: 'date'
+  /** '2026-12-01', or with `time` '2026-12-01T09:30'; null when there is none. */
+  value: (record: T) => string | null
+  patch: (value: string | null) => Partial<T>
+  /** Hours and minutes too. */
+  time?: boolean
+  /** The earliest and the latest date, in the same form. */
+  min?: string
+  max?: string
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -79,6 +92,7 @@ export type FieldDefinition<T> =
   | NumberField<T>
   | SelectField<T>
   | MultiSelectField<T>
+  | DateField<T>
   | CheckboxField<T>
   | LinkField<T>
 

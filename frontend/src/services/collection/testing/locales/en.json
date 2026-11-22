@@ -16,7 +16,8 @@
     "website": "Website",
     "email": "Email",
     "phone": "Phone",
-    "tags": "Tags"
+    "tags": "Tags",
+    "due": "Due"
   },
   "status": {
     "draft": "Draft",

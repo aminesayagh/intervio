@@ -1,6 +1,7 @@
 import { addTranslations } from '../../i18n'
 import type {
   CheckboxField,
+  DateField,
   MultiSelectField,
   LinkField,
   CollectionDefinition,
@@ -60,6 +61,13 @@ const tags: MultiSelectField<Item> = {
   value: (item) => item.tags,
   patch: (tags) => ({ tags }),
 }
+const due: DateField<Item> = {
+  type: 'date',
+  value: (item) => item.due,
+  patch: (due) => ({ due }),
+}
+const dueDay = (item: Item) =>
+  item.due ? <Day iso={item.due} /> : <span className="text-muted">—</span>
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -85,6 +93,7 @@ export function itemDefinition(
         quantity: null,
         active: true,
         tags: [],
+        due: null,
         website: '',
         email: '',
         phone: '',
@@ -166,6 +175,12 @@ export function itemDefinition(
           field: tags,
         },
         {
+          id: 'due',
+          label: 'columns.due',
+          value: dueDay,
+          field: due,
+        },
+        {
           id: 'website',
           label: 'columns.website',
           value: (item) => item.website,
@@ -231,6 +246,7 @@ export function itemDefinition(
       'quantity',
       'active',
       'tags',
+      'due',
       'website',
       'email',
       'phone',
@@ -284,6 +300,13 @@ export function itemDefinition(
         width: 220,
         cell: (item) => <Tags tags={item.tags} />,
         field: tags,
+      },
+      {
+        id: 'due',
+        label: 'columns.due',
+        width: 150,
+        cell: dueDay,
+        field: due,
       },
       {
         id: 'website',

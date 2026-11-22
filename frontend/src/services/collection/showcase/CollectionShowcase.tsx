@@ -26,6 +26,7 @@ const rights = () => ({
           'quantity',
           'active',
           'tags',
+          'due',
           'website',
           'email',
           'phone',

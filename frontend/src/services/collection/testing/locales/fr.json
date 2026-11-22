@@ -16,7 +16,8 @@
     "website": "Site web",
     "email": "E-mail",
     "phone": "Téléphone",
-    "tags": "Étiquettes"
+    "tags": "Étiquettes",
+    "due": "Échéance"
   },
   "status": {
     "draft": "Brouillon",

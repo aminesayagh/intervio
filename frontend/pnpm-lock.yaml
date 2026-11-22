@@ -17,6 +17,9 @@ importers:
       '@heroui/styles':
         specifier: ^3.2.7
         version: 3.2.7(tailwind-merge@3.7.1)(tailwindcss@4.3.5)
+      '@internationalized/date':
+        specifier: 3.12.4
+        version: 3.12.4
       '@tanstack/react-query':
         specifier: ^5.108.0
         version: 5.108.0(@types/react@19.3.0)(react@19.3.1)

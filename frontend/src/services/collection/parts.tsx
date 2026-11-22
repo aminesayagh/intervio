@@ -71,7 +71,7 @@ export function MenuPopover({
       placement="bottom start"
       offset={4}
       style={{ minWidth }}
-      className="rounded-[var(--field-radius)] border border-border bg-surface p-1 shadow-md outline-none"
+      className="rounded-[var(--field-radius)] border border-border bg-surface p-1 text-sm shadow-md outline-none"
     >
       {children}
     </Popover>
@@ -111,7 +111,7 @@ export function ChoiceMenu({
           key={option.id}
           id={option.id}
           textValue={option.label}
-          className="flex cursor-pointer items-center gap-2 rounded-[var(--field-radius)] px-2 py-1.5 outline-none data-[focused]:bg-default"
+          className="flex cursor-pointer items-center gap-2 rounded-[var(--field-radius)] px-2 py-1 outline-none data-[focused]:bg-default"
         >
           {({ isSelected }) => (
             <>
@@ -150,7 +150,7 @@ export function ActionMenu({
       id={action.id}
       textValue={action.label}
       className={cn(
-        'flex cursor-pointer items-center rounded-[var(--field-radius)] px-2 py-1.5 outline-none data-[focused]:bg-default',
+        'flex cursor-pointer items-center rounded-[var(--field-radius)] px-2 py-1 outline-none data-[focused]:bg-default',
         action.danger && 'text-danger',
       )}
     >

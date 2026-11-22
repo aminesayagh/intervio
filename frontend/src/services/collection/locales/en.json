@@ -20,7 +20,6 @@
     "unavailable": "This record is no longer available.",
     "error": "This record could not be loaded.",
     "loading": "Loading the record",
-    "open": "Open",
     "openRecord": "Open {{name}}",
     "viewOnly": "View only",
     "title": "Title",

@@ -645,7 +645,9 @@ export function Collection<T extends RowData, C = void>({
       ref={sectionRef}
       aria-labelledby={`${definition.key}-title`}
       onKeyDown={onKeyDown}
-      className="relative flex h-[calc(100dvh-5.5rem)] min-h-[360px] overflow-hidden lg:h-[calc(100dvh-3rem)]"
+      // The list and the panel reach the window's bottom and right edges: the layout's
+      // padding on those sides is cancelled (it only left a dead strip there).
+      className="relative -me-4 -mb-4 flex h-[calc(100dvh-4.5rem)] min-h-[360px] overflow-hidden lg:-me-6 lg:-mb-6 lg:h-[calc(100dvh-1.5rem)]"
     >
       <div
         className={cn(

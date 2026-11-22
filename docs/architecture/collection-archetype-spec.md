@@ -3,7 +3,7 @@
 **Date:** 2026-11-21  
 **Purpose:** Everything decided for the list-and-record-panel archetype, so it can be built once as a generic wrapper and reused by every collection screen.  
 **Frontend:** React 19, TanStack Query 5, TanStack Table 9, TanStack Virtual 3, HeroUI 3, Motion, i18next, the app's History-API router (`services/navigation`). Libraries and their roles: section 5.1.  
-**Sources:** decisions 109–131 in `use-cases.md`; screens 27–56 on `docs/Intervio.excalidraw` (area "List and record panel").
+**Sources:** decisions 109–131 in `use-cases.md`; screens 27–52 on `docs/Intervio.excalidraw` (area "List and record panel"), and 53–61 (area "Messages").
 
 Anything not written here is **not decided**. Open points are listed in section 16.
 

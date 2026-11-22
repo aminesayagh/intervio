@@ -91,7 +91,9 @@ export function TableHeader<T extends object>({
     <AriaTableHeader
       {...props}
       className={cn(
-        'sticky top-0 z-10 bg-background shadow-[inset_0_-1px_0_var(--foreground)]',
+        // The virtualizer places the titles absolutely: the header takes the heading's
+        // height (layoutOptions.headingHeight), so its background and rule have room.
+        'sticky top-0 z-10 h-[32px] bg-background shadow-[inset_0_-1px_0_var(--foreground)]',
         className,
       )}
     >

@@ -19,6 +19,7 @@ export function EditableCell<T>({
   placeholder,
   autoFocus,
   onInvalid,
+  inputType = 'text',
 }: {
   record: T
   edit: TextField<T>
@@ -34,6 +35,8 @@ export function EditableCell<T>({
   autoFocus?: boolean
   /** A text the definition refuses (its translated reason); without it, it just goes back. */
   onInvalid?: (reason: string) => void
+  /** The keyboard and the browser's checks: a web address, an email, a phone number. */
+  inputType?: 'text' | 'url' | 'email' | 'tel'
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const saved = edit.value(record)
@@ -77,6 +80,7 @@ export function EditableCell<T>({
   return (
     <TextInput
       aria-label={label}
+      type={inputType}
       look={look}
       placeholder={placeholder}
       autoFocus={autoFocus}

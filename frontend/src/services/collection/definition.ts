@@ -56,9 +56,21 @@ export type CheckboxField<T> = {
   patch: (value: boolean) => Partial<T>
 }
 
+/** A web address, an email address or a phone number: checked, and shown as a link. */
+export type LinkField<T> = {
+  type: 'url' | 'email' | 'phone'
+  /** '' when there is none. */
+  value: (record: T) => string
+  patch: (value: string) => Partial<T>
+}
+
 /** How a value shows and is edited, by its type (spec 7.3.0, decision 133). */
 export type FieldDefinition<T> =
-  TextField<T> | NumberField<T> | SelectField<T> | CheckboxField<T>
+  | TextField<T>
+  | NumberField<T>
+  | SelectField<T>
+  | CheckboxField<T>
+  | LinkField<T>
 
 /** One row of the panel's properties: a label, and the record's value (spec 7). */
 export type PropertyDefinition<T> = {

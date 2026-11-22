@@ -1,6 +1,7 @@
 import { addTranslations } from '../../i18n'
 import type {
   CheckboxField,
+  LinkField,
   CollectionDefinition,
   NumberField,
   SelectField,
@@ -41,6 +42,17 @@ const active: CheckboxField<Item> = {
   value: (item) => item.active,
   patch: (active) => ({ active }),
 }
+const link = <K extends 'website' | 'email' | 'phone'>(
+  key: K,
+  type: LinkField<Item>['type'],
+): LinkField<Item> => ({
+  type,
+  value: (item) => item[key],
+  patch: (value) => ({ [key]: value }) as Partial<Item>,
+})
+const website = link('website', 'url')
+const email = link('email', 'email')
+const phone = link('phone', 'phone')
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -64,6 +76,10 @@ export function itemDefinition(
         status: 'draft',
         owner: OWNERS[0],
         quantity: null,
+        active: true,
+        website: '',
+        email: '',
+        phone: '',
         description: '',
         linkedTo: [],
         updatedAt: new Date().toISOString(),
@@ -136,6 +152,24 @@ export function itemDefinition(
           field: active,
         },
         {
+          id: 'website',
+          label: 'columns.website',
+          value: (item) => item.website,
+          field: website,
+        },
+        {
+          id: 'email',
+          label: 'columns.email',
+          value: (item) => item.email,
+          field: email,
+        },
+        {
+          id: 'phone',
+          label: 'columns.phone',
+          value: (item) => item.phone,
+          field: phone,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -182,6 +216,9 @@ export function itemDefinition(
       'owner',
       'quantity',
       'active',
+      'website',
+      'email',
+      'phone',
     ],
     columns: [
       {
@@ -225,6 +262,27 @@ export function itemDefinition(
         width: 90,
         cell: (item) => (item.active ? 'Yes' : 'No'),
         field: active,
+      },
+      {
+        id: 'website',
+        label: 'columns.website',
+        width: 220,
+        cell: (item) => item.website,
+        field: website,
+      },
+      {
+        id: 'email',
+        label: 'columns.email',
+        width: 220,
+        cell: (item) => item.email,
+        field: email,
+      },
+      {
+        id: 'phone',
+        label: 'columns.phone',
+        width: 160,
+        cell: (item) => item.phone,
+        field: phone,
       },
       {
         id: 'updated',

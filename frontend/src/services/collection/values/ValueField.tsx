@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react'
 import { Checkbox, cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
-import type { FieldDefinition } from '../definition'
+import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
 import { CheckboxCell } from './CheckboxCell'
+import { LinkCell, LinkValue } from './LinkCell'
 import { NumberCell } from './NumberCell'
+
+const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
+  field.type === 'url' || field.type === 'email' || field.type === 'phone'
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -36,6 +40,19 @@ export function ValueField<T>({
   /** A text the definition refuses: the collection reports it (decision 132). */
   onInvalid?: (reason: string) => void
 }) {
+  const link = () =>
+    field &&
+    isLink(field) && (
+      <LinkCell
+        record={record}
+        edit={field}
+        label={label}
+        namespace={namespace}
+        save={save}
+        look={look}
+        onInvalid={onInvalid}
+      />
+    )
   return (
     <Variant
       as="span"
@@ -45,7 +62,9 @@ export function ValueField<T>({
           ? field.type
           : field?.type === 'checkbox'
             ? 'checkboxRead'
-            : 'read'
+            : field && isLink(field)
+              ? 'linkRead'
+              : 'read'
       }
       views={{
         text: () =>
@@ -99,6 +118,15 @@ export function ValueField<T>({
               isReadOnly
               isSelected={field.value(record)}
             />
+          ),
+        url: () => link(),
+        email: () => link(),
+        phone: () => link(),
+        // Without the right, a link is still a link.
+        linkRead: () =>
+          field &&
+          isLink(field) && (
+            <LinkValue kind={field.type} value={field.value(record)} />
           ),
         read: () => read(record),
       }}

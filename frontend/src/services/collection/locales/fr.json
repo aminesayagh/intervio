@@ -79,5 +79,11 @@
     "notCopied": "Le lien n’a pas pu être copié.",
     "created": "Élément créé",
     "undo": "Annuler"
+  },
+  "fields": {
+    "url": "Ce n’est pas une adresse web.",
+    "email": "Ce n’est pas une adresse e-mail.",
+    "phone": "Ce n’est pas un numéro de téléphone.",
+    "open": "Ouvrir {{value}}"
   }
 }

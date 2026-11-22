@@ -12,7 +12,10 @@
     "owner": "Owner",
     "quantity": "Quantity",
     "updated": "Updated",
-    "active": "Active"
+    "active": "Active",
+    "website": "Website",
+    "email": "Email",
+    "phone": "Phone"
   },
   "status": {
     "draft": "Draft",

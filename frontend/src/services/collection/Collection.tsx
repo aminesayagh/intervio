@@ -1015,7 +1015,7 @@ function RecordTable<T extends RowData, C>({
               onClick={(event) => {
                 // An editable cell edits; anywhere else on the row opens the record.
                 const target = event.target as HTMLElement
-                if (!onOpen || target.closest('input, button')) return
+                if (!onOpen || target.closest('input, button, a')) return
                 onOpen(row.id)
               }}
               onKeyDown={(event) => {

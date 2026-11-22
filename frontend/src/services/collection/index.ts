@@ -11,6 +11,7 @@ export type {
   SectionDefinition,
   CheckboxField,
   FieldDefinition,
+  LinkField,
   NumberField,
   SelectField,
   TextField,

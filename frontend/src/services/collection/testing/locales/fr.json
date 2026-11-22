@@ -12,7 +12,10 @@
     "owner": "Responsable",
     "quantity": "Quantité",
     "updated": "Mis à jour",
-    "active": "Actif"
+    "active": "Actif",
+    "website": "Site web",
+    "email": "E-mail",
+    "phone": "Téléphone"
   },
   "status": {
     "draft": "Brouillon",

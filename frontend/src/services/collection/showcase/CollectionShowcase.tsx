@@ -25,6 +25,9 @@ const rights = () => ({
           'owner',
           'quantity',
           'active',
+          'website',
+          'email',
+          'phone',
           'description',
         ]
       : rightsChoice === 'status'

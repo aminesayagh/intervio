@@ -79,5 +79,11 @@
     "notCopied": "The link couldn't be copied.",
     "created": "Record created",
     "undo": "Undo"
+  },
+  "fields": {
+    "url": "That isn't a web address.",
+    "email": "That isn't an email address.",
+    "phone": "That isn't a phone number.",
+    "open": "Open {{value}}"
   }
 }

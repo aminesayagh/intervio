@@ -115,6 +115,53 @@ export function Collection<T, C = void>({
   const queryClient = useQueryClient()
   const { source, getId, key } = definition
 
+  /**
+   * A changed record keeps its place (spec 8.6): after a change the table holds the
+   * order it showed, and the records changed here stay even if they no longer match;
+   * the list reloads behind it. `release` sorts it again.
+   */
+  const [hold, setHold] = useState<{ order: Id[]; kept: Map<Id, T> } | null>(
+    null,
+  )
+  const shownRef = useRef<T[]>([])
+  const keepPlace = useCallback(
+    (record: T) =>
+      setHold((held) => ({
+        order: held?.order ?? shownRef.current.map(getId),
+        kept: new Map(held?.kept).set(getId(record), record),
+      })),
+    [getId],
+  )
+  const forget = useCallback(
+    (id: Id) =>
+      setHold((held) => {
+        if (!held) return held
+        const kept = new Map(held.kept)
+        kept.delete(id)
+        return { order: held.order.filter((other) => other !== id), kept }
+      }),
+    [],
+  )
+  const release = useCallback(() => setHold(null), [])
+  const shownItems = useMemo(() => {
+    if (!hold) return list.items
+    const latest = new Map(list.items.map((record) => [getId(record), record]))
+    const held = hold.order.flatMap((id) => {
+      const record = latest.get(id) ?? hold.kept.get(id)
+      return record ? [record] : []
+    })
+    const placed = new Set(hold.order)
+    return [
+      ...held,
+      ...list.items.filter((record) => !placed.has(getId(record))),
+    ]
+  }, [hold, list.items, getId])
+  shownRef.current = shownItems
+  // Out of order: the list, reloaded, would show them in another order.
+  const outOfOrder =
+    hold !== null &&
+    shownItems.map(getId).join() !== list.items.map(getId).join()
+
   /** Whether the person may change a value of a record (spec 7.7). */
   const { rights } = definition
   const canEdit = useCallback(
@@ -196,6 +243,8 @@ export function Collection<T, C = void>({
       try {
         const updated = await source.update(id, patch, context as C)
         cache.updated(queryClient, key, updated, getId)
+        keepPlace(updated)
+        void cache.refresh(queryClient, key)
         if (valueKey) dismissKey(valueKey)
       } catch (refusal) {
         const status = refusal instanceof ApiError ? refusal.status : 0
@@ -212,6 +261,7 @@ export function Collection<T, C = void>({
         } else if (status === 404) {
           // Removed by someone else: the list refreshes and the panel closes.
           cache.removed(queryClient, key, id, getId)
+          forget(id)
           void cache.refresh(queryClient, key)
           if (new URLSearchParams(window.location.search).get('open') === id)
             doClose()
@@ -235,7 +285,19 @@ export function Collection<T, C = void>({
         throw refusal
       }
     },
-    [source, getId, key, context, queryClient, nameOf, recordScope, doClose, t],
+    [
+      source,
+      getId,
+      key,
+      context,
+      queryClient,
+      nameOf,
+      recordScope,
+      doClose,
+      t,
+      keepPlace,
+      forget,
+    ],
   )
   /** A value the definition refused: it went back; the message says why. */
   const report = useCallback(
@@ -358,6 +420,7 @@ export function Collection<T, C = void>({
       if (!run) throw new Error(`${key} cannot ${action.id}`)
       await run(recordId, context as C)
       cache.removed(queryClient, key, recordId, getId)
+      forget(recordId)
       if (pageId) navigate(listPath, { replace: true })
       else if (openId === recordId) doClose()
     } catch {
@@ -392,8 +455,20 @@ export function Collection<T, C = void>({
   if (view !== selectedView) {
     setSelectedView(view)
     setSelected(new Set())
+    setHold(null)
   }
-  const selectedRecords = list.items.filter((record) =>
+  /** Clearing the selection sorts the list again (spec 8.6). */
+  const select = (keys: ReadonlySet<Id>) => {
+    if (keys.size === 0 && selected.size > 0) release()
+    setSelected(keys)
+  }
+  // Opening another record sorts the list again.
+  const [heldFor, setHeldFor] = useState(openId)
+  if (openId !== heldFor) {
+    setHeldFor(openId)
+    if (openId) setHold(null)
+  }
+  const selectedRecords = shownItems.filter((record) =>
     selected.has(getId(record)),
   )
   const [bulk, setBulk] = useState<{
@@ -429,6 +504,7 @@ export function Collection<T, C = void>({
         if (!run) throw new Error(`${key} cannot ${action.id}`)
         await run(recordId, context as C)
         cache.removed(queryClient, key, recordId, getId)
+        forget(recordId)
         if (openId === recordId) doClose()
       } catch {
         failed.push(record)
@@ -609,8 +685,8 @@ export function Collection<T, C = void>({
     }
     if (!openId || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'))
       return
-    const index = list.items.findIndex((item) => getId(item) === openId)
-    const next = list.items[index + (event.key === 'ArrowDown' ? 1 : -1)]
+    const index = shownItems.findIndex((item) => getId(item) === openId)
+    const next = shownItems[index + (event.key === 'ArrowDown' ? 1 : -1)]
     if (next) {
       event.preventDefault()
       open(getId(next))
@@ -878,25 +954,37 @@ export function Collection<T, C = void>({
           </Show>
         </div>
 
-        <Switch>
-          <Match when={selectedRecords.length > 0}>
-            <SelectionBar
-              count={selectedRecords.length}
-              actions={bulkActions}
-              onClear={() => setSelected(new Set())}
-            />
-          </Match>
-          <Match when={narrowed || list.items.length > 0}>
-            <Toolbar
-              namespace={definition.i18n.namespace}
-              filters={definition.filters ?? []}
-              listing={listing}
-              onSearch={state.setSearch}
-              onFilter={state.setFilter}
-              onClear={state.clear}
-            />
-          </Match>
-        </Switch>
+        <div className="flex flex-wrap items-center gap-2">
+          <Switch className="min-w-0 flex-1">
+            <Match when={selectedRecords.length > 0}>
+              <SelectionBar
+                count={selectedRecords.length}
+                actions={bulkActions}
+                onClear={() => select(new Set())}
+              />
+            </Match>
+            <Match when={narrowed || list.items.length > 0}>
+              <Toolbar
+                namespace={definition.i18n.namespace}
+                filters={definition.filters ?? []}
+                listing={listing}
+                onSearch={state.setSearch}
+                onFilter={state.setFilter}
+                onClear={state.clear}
+              />
+            </Match>
+          </Switch>
+          {/* A changed record keeps its place until the list is sorted again (spec 8.6). */}
+          <Show
+            when={outOfOrder}
+            className="ms-auto flex items-center gap-3 text-muted"
+          >
+            <span aria-live="polite">{t('collection:held.text')}</span>
+            <Button size="sm" onPress={release}>
+              {t('collection:held.sort')}
+            </Button>
+          </Show>
+        </div>
 
         {/* The table scrolls itself (React Aria's virtualized table). */}
         <div className="flex min-h-0 flex-1 flex-col">
@@ -942,7 +1030,7 @@ export function Collection<T, C = void>({
             <Match when={list.items.length > 0}>
               <RecordTable
                 definition={definition}
-                items={list.items}
+                items={shownItems}
                 label={t(definition.i18n.title)}
                 scrollRef={scrollRef}
                 more={more}
@@ -958,7 +1046,7 @@ export function Collection<T, C = void>({
                   selectable
                     ? {
                         keys: selected,
-                        onChange: setSelected,
+                        onChange: select,
                         save: saveOnSelection,
                         note: t('collection:selection.appliesTo', {
                           what: countOf(selectedRecords.length),

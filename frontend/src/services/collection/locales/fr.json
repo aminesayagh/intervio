@@ -129,5 +129,9 @@
     "changed": "« {{field}} » modifié sur {{what}}.",
     "changedSome": "« {{field}} » modifié sur {{count}} sur {{what}}.",
     "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}."
+  },
+  "held": {
+    "text": "Les éléments modifiés gardent leur place.",
+    "sort": "Trier maintenant"
   }
 }

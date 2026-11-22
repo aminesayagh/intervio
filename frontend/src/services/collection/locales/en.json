@@ -129,5 +129,9 @@
     "changed": "“{{field}}” changed on {{what}}.",
     "changedSome": "“{{field}}” changed on {{count}} of {{what}}.",
     "notChanged": "“{{field}}” couldn't be changed on {{what}}."
+  },
+  "held": {
+    "text": "Changed records keep their place.",
+    "sort": "Sort now"
   }
 }

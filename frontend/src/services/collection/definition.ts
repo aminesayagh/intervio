@@ -85,9 +85,12 @@ export type CheckboxField<T> = {
   patch: (value: boolean) => Partial<T>
 }
 
-/** A web address, an email address or a phone number: checked, and shown as a link. */
+/**
+ * A web address, an email address, a phone number or a location (an address,
+ * opened in a map): checked when it can be, and shown as a link.
+ */
 export type LinkField<T> = {
-  type: 'url' | 'email' | 'phone'
+  type: 'url' | 'email' | 'phone' | 'location'
   /** '' when there is none. */
   value: (record: T) => string
   patch: (value: string) => Partial<T>

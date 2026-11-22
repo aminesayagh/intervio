@@ -31,6 +31,7 @@ const rights = () => ({
           'website',
           'email',
           'phone',
+          'location',
           'description',
         ]
       : rightsChoice === 'status'

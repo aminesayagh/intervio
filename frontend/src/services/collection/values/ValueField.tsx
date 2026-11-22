@@ -11,7 +11,10 @@ import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
 
 const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
-  field.type === 'url' || field.type === 'email' || field.type === 'phone'
+  field.type === 'url' ||
+  field.type === 'email' ||
+  field.type === 'phone' ||
+  field.type === 'location'
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -156,6 +159,7 @@ export function ValueField<T>({
         url: () => link(),
         email: () => link(),
         phone: () => link(),
+        location: () => link(),
         // Without the right, a link is still a link.
         linkRead: () =>
           field &&

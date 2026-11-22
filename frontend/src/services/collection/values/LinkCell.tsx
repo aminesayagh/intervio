@@ -9,7 +9,7 @@ type Kind = LinkField<unknown>['type']
 const kinds: Record<
   Kind,
   {
-    input: 'url' | 'email' | 'tel'
+    input: 'text' | 'url' | 'email' | 'tel'
     icon: string
     invalid: string
     href: (value: string) => string
@@ -46,6 +46,17 @@ const kinds: Record<
     valid: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
     shown: (value) => value,
   },
+  location: {
+    input: 'text',
+    icon: 'lucide/map-pin',
+    invalid: '',
+    // Any address is accepted; the map finds it (OpenStreetMap, no key needed).
+    href: (value) =>
+      `https://www.openstreetmap.org/search?query=${encodeURIComponent(value)}`,
+    normalize: (value) => value,
+    valid: () => true,
+    shown: (value) => value,
+  },
   phone: {
     input: 'tel',
     icon: 'lucide/phone',
@@ -58,7 +69,10 @@ const kinds: Record<
   },
 }
 
-/** A URL, an email address or a phone number as a link (the read view). */
+/** A web page or a map opens in a new tab; an email or a call opens its app. */
+const opensTab = (kind: Kind) => kind === 'url' || kind === 'location'
+
+/** A URL, an email address, a phone number or a location as a link (the read view). */
 export function LinkValue({ kind, value }: { kind: Kind; value: string }) {
   const rule = kinds[kind]
   return (
@@ -69,8 +83,8 @@ export function LinkValue({ kind, value }: { kind: Kind; value: string }) {
     >
       <a
         href={rule.href(value)}
-        target={kind === 'url' ? '_blank' : undefined}
-        rel={kind === 'url' ? 'noreferrer' : undefined}
+        target={opensTab(kind) ? '_blank' : undefined}
+        rel={opensTab(kind) ? 'noreferrer' : undefined}
         className="truncate underline decoration-border underline-offset-2 hover:decoration-foreground"
       >
         {rule.shown(value)}
@@ -128,8 +142,8 @@ export function LinkCell<T>({
       <Show as="span" when={value} className="flex shrink-0">
         <a
           href={rule.href(value)}
-          target={edit.type === 'url' ? '_blank' : undefined}
-          rel={edit.type === 'url' ? 'noreferrer' : undefined}
+          target={opensTab(edit.type) ? '_blank' : undefined}
+          rel={opensTab(edit.type) ? 'noreferrer' : undefined}
           aria-label={t('fields.open', { value: rule.shown(value) })}
           className={cn(
             'flex rounded-[var(--field-radius)] p-1 text-muted outline-none hover:bg-default hover:text-foreground focus-visible:outline-2 focus-visible:outline-foreground',

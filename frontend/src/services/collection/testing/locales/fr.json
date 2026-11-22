@@ -18,7 +18,8 @@
     "phone": "Téléphone",
     "tags": "Étiquettes",
     "due": "Échéance",
-    "notes": "Notes"
+    "notes": "Notes",
+    "location": "Adresse"
   },
   "status": {
     "draft": "Brouillon",

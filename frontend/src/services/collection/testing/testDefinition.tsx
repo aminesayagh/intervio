@@ -46,7 +46,7 @@ const active: CheckboxField<Item> = {
   value: (item) => item.active,
   patch: (active) => ({ active }),
 }
-const link = <K extends 'website' | 'email' | 'phone'>(
+const link = <K extends 'website' | 'email' | 'phone' | 'location'>(
   key: K,
   type: LinkField<Item>['type'],
 ): LinkField<Item> => ({
@@ -57,6 +57,7 @@ const link = <K extends 'website' | 'email' | 'phone'>(
 const website = link('website', 'url')
 const email = link('email', 'email')
 const phone = link('phone', 'phone')
+const location = link('location', 'location')
 const tags: MultiSelectField<Item> = {
   type: 'multiSelect',
   options: TAGS.map((tag) => ({ id: tag, label: `tags.${tag}` })),
@@ -107,6 +108,7 @@ export function itemDefinition(
         website: '',
         email: '',
         phone: '',
+        location: '',
         description: '',
         linkedTo: [],
         updatedAt: new Date().toISOString(),
@@ -215,6 +217,12 @@ export function itemDefinition(
           field: phone,
         },
         {
+          id: 'location',
+          label: 'columns.location',
+          value: (item) => item.location,
+          field: location,
+        },
+        {
           id: 'updated',
           label: 'columns.updated',
           value: (item) => <Day iso={item.updatedAt} />,
@@ -267,6 +275,7 @@ export function itemDefinition(
       'website',
       'email',
       'phone',
+      'location',
     ],
     columns: [
       {
@@ -352,6 +361,13 @@ export function itemDefinition(
         width: 160,
         cell: (item) => item.phone,
         field: phone,
+      },
+      {
+        id: 'location',
+        label: 'columns.location',
+        width: 260,
+        cell: (item) => item.location,
+        field: location,
       },
       {
         id: 'updated',

@@ -18,7 +18,8 @@
     "phone": "Phone",
     "tags": "Tags",
     "due": "Due",
-    "notes": "Notes"
+    "notes": "Notes",
+    "location": "Location"
   },
   "status": {
     "draft": "Draft",

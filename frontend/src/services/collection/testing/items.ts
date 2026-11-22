@@ -11,6 +11,7 @@ export type Item = {
   website: string // '' when none
   email: string
   phone: string
+  location: string
   tags: string[]
   due: string | null // '2026-12-01'
   description: string // Markdown
@@ -43,6 +44,10 @@ export function makeItems(n: number): Item[] {
       website: index % 5 === 4 ? '' : `https://example.com/items/${number}`,
       email: index % 5 === 4 ? '' : `item${number}@example.com`,
       phone: index % 5 === 4 ? '' : `+33 1 23 45 6${number}`,
+      location:
+        index % 5 === 4
+          ? ''
+          : `${index + 1} rue de la Paix, 75002 Paris, France`,
       // None, one, two or three tags, in turn.
       tags: TAGS.slice(index % 4, (index % 4) + (index % 4)),
       // From 1 December 2026, a day apart; every sixth has none.

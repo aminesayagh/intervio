@@ -85,3 +85,32 @@ test('without the right, the value is only a link', async () => {
     cells.getByRole('link', { name: 'item001@example.com' }),
   ).toHaveAttribute('href', 'mailto:item001@example.com')
 })
+
+test('a location is any address, and its link opens it in a map', async () => {
+  const source = show()
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Open Item 002' }),
+  )
+  const aside = await screen.findByRole('complementary', { name: 'Item 002' })
+  const field = within(aside).getByRole('textbox', { name: 'Location' })
+  await userEvent.clear(field)
+  await userEvent.type(field, 'Building B, Lyon{Enter}')
+  await waitFor(() =>
+    expect(source.items()[1].location).toBe('Building B, Lyon'),
+  )
+  const map = within(aside).getByRole('link', { name: 'Open Building B, Lyon' })
+  expect(map).toHaveAttribute(
+    'href',
+    'https://www.openstreetmap.org/search?query=Building%20B%2C%20Lyon',
+  )
+  expect(map).toHaveAttribute('target', '_blank')
+})
+
+test('without the right, a location is only its map link', async () => {
+  show(() => ({ edit: [] }))
+  const cells = await row(1)
+  expect(cells.queryByRole('textbox', { name: 'Location' })).toBeNull()
+  expect(
+    cells.getByRole('link', { name: '1 rue de la Paix, 75002 Paris, France' }),
+  ).toHaveAttribute('target', '_blank')
+})

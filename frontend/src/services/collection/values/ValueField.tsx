@@ -1,17 +1,26 @@
 import type { ReactNode } from 'react'
 import { cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
-import type { ChoiceEdit, TextEdit } from '../definition'
+import type { ChoiceEdit, NumberEdit, TextEdit } from '../definition'
 import { EditableCell } from './EditableCell'
+import { NumberCell } from './NumberCell'
 
 /** How a value shows (spec 7.7): a text field, a menu, or plain text without the right. */
-type Editor = 'edit' | 'choose' | 'read'
+type Editor = 'edit' | 'number' | 'choose' | 'read'
 
 const editorOf = (
-  target: { edit?: unknown; choose?: unknown },
+  target: { edit?: unknown; number?: unknown; choose?: unknown },
   allowed: boolean,
 ): Editor =>
-  !allowed ? 'read' : target.edit ? 'edit' : target.choose ? 'choose' : 'read'
+  !allowed
+    ? 'read'
+    : target.edit
+      ? 'edit'
+      : target.number
+        ? 'number'
+        : target.choose
+          ? 'choose'
+          : 'read'
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -30,7 +39,7 @@ export function ValueField<T>({
   onInvalid,
 }: {
   record: T
-  target: { edit?: TextEdit<T>; choose?: ChoiceEdit<T> }
+  target: { edit?: TextEdit<T>; number?: NumberEdit<T>; choose?: ChoiceEdit<T> }
   /** The person may change this value. */
   allowed: boolean
   /** The value as plain display (also the menu's button content). */
@@ -57,6 +66,15 @@ export function ValueField<T>({
             save={save}
             look={look}
             onInvalid={onInvalid}
+          />
+        ),
+        number: () => (
+          <NumberCell
+            record={record}
+            edit={target.number!}
+            label={label}
+            save={save}
+            look={look}
           />
         ),
         choose: () => (

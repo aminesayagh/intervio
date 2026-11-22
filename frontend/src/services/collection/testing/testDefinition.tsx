@@ -1,5 +1,5 @@
 import { addTranslations } from '../../i18n'
-import type { CollectionDefinition } from '../definition'
+import type { CollectionDefinition, NumberEdit } from '../definition'
 import type { DataSource } from '../types'
 import { Avatar, Day, StatusChip, TypeChip, UpdatedOn } from './ItemParts'
 import { itemSource, OWNERS, STATUSES, type Item } from './items'
@@ -9,6 +9,13 @@ import fr from './locales/fr.json'
 addTranslations('test-items', { en, fr })
 
 /** The test collection's definition (spec 15.2): the wrapper is tested and shown with it. */
+/** The quantity: a whole number of at least 1, or none. */
+const quantity: NumberEdit<Item> = {
+  value: (item) => item.quantity,
+  patch: (quantity) => ({ quantity }),
+  min: 1,
+}
+
 export function itemDefinition(
   source: DataSource<Item> = itemSource(),
   key = 'test-items',
@@ -101,15 +108,7 @@ export function itemDefinition(
           id: 'quantity',
           label: 'columns.quantity',
           value: (item) => item.quantity ?? '—',
-          edit: {
-            value: (item) =>
-              item.quantity === null ? '' : String(item.quantity),
-            validate: (text) =>
-              /^\d+$/.test(text) && Number(text) > 0
-                ? undefined
-                : 'errors.quantity',
-            patch: (text) => ({ quantity: Number(text) }),
-          },
+          number: quantity,
         },
         {
           id: 'updated',
@@ -201,6 +200,7 @@ export function itemDefinition(
         width: 110,
         sort: 'asc',
         cell: (item) => item.quantity ?? <span className="text-muted">—</span>,
+        number: quantity,
       },
       {
         id: 'updated',

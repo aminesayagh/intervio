@@ -3,6 +3,7 @@ export { cache, keys, useCollectionQuery } from './data/collectionQuery'
 export type {
   ActionDefinition,
   ChoiceEdit,
+  NumberEdit,
   CollectionDefinition,
   ColumnDefinition,
   FilterDefinition,

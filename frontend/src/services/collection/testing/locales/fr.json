@@ -19,8 +19,7 @@
     "outdated": "Obsolète"
   },
   "errors": {
-    "nameRequired": "Le nom ne peut pas être vide.",
-    "quantity": "La quantité doit être d’au moins 1."
+    "nameRequired": "Le nom ne peut pas être vide."
   },
   "type": "Élément",
   "updatedOn": "Mis à jour le {{date}}",

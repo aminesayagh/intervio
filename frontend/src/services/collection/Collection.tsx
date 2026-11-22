@@ -552,9 +552,14 @@ export function Collection<T extends RowData, C = void>({
     (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) - 24
   const priority =
     definition.columnPriority ?? definition.columns.map((column) => column.id)
-  const shownColumns = space
-    ? priority.slice(0, Math.max(1, Math.floor(listWidth / PANEL.column)))
-    : priority
+  // The same ids keep the same array, so the table's columns (and the fields being
+  // edited in them) are not rebuilt on every render.
+  const shownKey = (
+    space
+      ? priority.slice(0, Math.max(1, Math.floor(listWidth / PANEL.column)))
+      : priority
+  ).join(',')
+  const shownColumns = useMemo(() => shownKey.split(','), [shownKey])
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
 

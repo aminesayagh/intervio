@@ -141,7 +141,7 @@ test('the panel edits the title in place, and the list follows', async () => {
   ).toBeInTheDocument()
 })
 
-test('the panel chooses a status, and refuses a wrong quantity with its message', async () => {
+test('the panel chooses a status, and edits the quantity as a number', async () => {
   const { source, aside } = await openFirst()
   await userEvent.click(
     within(aside).getByRole('button', { name: 'Status: Draft' }),
@@ -151,15 +151,10 @@ test('the panel chooses a status, and refuses a wrong quantity with its message'
   )
   await waitFor(() => expect(source.items()[0].status).toBe('valid'))
 
-  // Item 001 has no quantity: type a wrong one.
+  // Item 001 has no quantity: type one; the number field saves on Enter.
   const quantity = within(aside).getByRole('textbox', { name: 'Quantity' })
-  await userEvent.type(quantity, 'zero{Enter}')
-  expect(
-    await screen.findByText(
-      'The quantity must be at least 1. It was put back.',
-    ),
-  ).toBeInTheDocument()
-  expect(source.items()[0].quantity).toBeNull()
+  await userEvent.type(quantity, '3{Enter}')
+  await waitFor(() => expect(source.items()[0].quantity).toBe(3))
 })
 
 test('rights decide value by value, in the table and the panel', async () => {

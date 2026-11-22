@@ -17,6 +17,8 @@ export type ColumnDefinition<T> = {
   edit?: TextEdit<T>
   /** Set when the column's value is chosen from a list in its cell (a status). */
   choose?: ChoiceEdit<T>
+  /** Set when the column's number is edited in its cell, with steppers. */
+  number?: NumberEdit<T>
 }
 
 /** How a column's value is chosen in place: the choices, the current one, the change. */
@@ -25,6 +27,19 @@ export type ChoiceEdit<T> = {
   options: { id: string; label: string }[]
   value: (record: T) => string
   patch: (id: string) => Partial<T>
+}
+
+/** How a number is edited in place: read it, its decimals and limits, the change. */
+export type NumberEdit<T> = {
+  /** null: no value (the field is empty). */
+  value: (record: T) => number | null
+  patch: (value: number | null) => Partial<T>
+  /** Digits after the decimal point, for a float (default 0: a whole number). */
+  decimals?: number
+  min?: number
+  max?: number
+  /** What one step of the chevrons (or an arrow key) adds; default 1, or 0.1 with 1 decimal. */
+  step?: number
 }
 
 /** How a column's text is edited in place: read it, check it, turn it into a change. */
@@ -45,6 +60,8 @@ export type PropertyDefinition<T> = {
   edit?: TextEdit<T>
   /** Set when the value is chosen from a list in place (when the rights allow it). */
   choose?: ChoiceEdit<T>
+  /** Set when the value is a number edited in place, with steppers. */
+  number?: NumberEdit<T>
 }
 
 /** A section of linked records in the panel; it shows its first five (spec 7, 12.1). */

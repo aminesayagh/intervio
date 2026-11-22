@@ -252,6 +252,7 @@ On load, in this order:
 - Only when the property's id is in the person's `rights.edit` (section 7.7).
 - **Text and long text:** the value is a field that looks like plain text; the change saves when the field is left or Enter is pressed, and Escape puts the value back.
 - **Set choices** (select, person, switch): a menu or switch saves as soon as a choice is made, showing the new value at once.
+- **Numbers** (`number` in the definition): a number field formatted for the language, with `decimals` digits after the point (0 for a whole number), optional `min`, `max` and `step`, and two small chevrons on the right that step it up and down (in the table, under the pointer or the focus only). Leaving it, Enter or a step saves; an empty field saves no value; a value outside the limits is brought back to the nearest one.
 - **A refused or failed change** puts the value back and shows a message (7.8): an invalid value, a missing right (`403`), a record removed meanwhile (`404`: the list refreshes and the panel closes), or a failed save (with Retry).
 - **Title:** edited the same way, when `title` is in `rights.edit`.
 - **Only one value at a time:** opening another field first cancels the open one if it is unchanged, and asks otherwise.

@@ -49,7 +49,7 @@ export function isViewOnly<T>(
   const editable = [
     ...(panel.titleEdit ? ['title'] : []),
     ...panel.properties
-      .filter((property) => property.edit || property.choose)
+      .filter((property) => property.edit || property.number || property.choose)
       .map((property) => property.id),
     ...(panel.description ? ['description'] : []),
   ]

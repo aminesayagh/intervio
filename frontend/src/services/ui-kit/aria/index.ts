@@ -21,6 +21,8 @@ export { NumberInput } from './NumberField'
 export { fieldLook, fieldMargin, focusRing, type FieldLook } from './styles'
 export { Tab, TabList, TabPanel, Tabs } from './Tabs'
 export { TextInput } from './TextField'
+/** The language React Aria formats in (dates, numbers): for text that must match it. */
+export { useLocale } from 'react-aria-components'
 export {
   Cell,
   Column,

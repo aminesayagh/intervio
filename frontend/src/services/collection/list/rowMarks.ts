@@ -25,6 +25,9 @@ export type Marks = {
 
 type Store = {
   get: () => Marks
+  /** The rows the pointer or the focus reached: their cells mount their editors. */
+  isAwake: (id: Id) => boolean
+  wake: (id: Id) => void
   subscribe: (listener: () => void) => () => void
 }
 
@@ -35,12 +38,21 @@ export const MarksProvider = MarksContext.Provider
 export function useMarksStore(marks: Marks): Store {
   const [store] = useState(() => {
     let value = marks
+    // ponytail: rows stay awake until the table leaves; enough for a session's hovering.
+    const awake = new Set<Id>()
     const listeners = new Set<() => void>()
+    const notify = () => listeners.forEach((listener) => listener())
     return {
       get: () => value,
       set(next: Marks) {
         value = next
-        listeners.forEach((listener) => listener())
+        notify()
+      },
+      isAwake: (id: Id) => awake.has(id),
+      wake(id: Id) {
+        if (awake.has(id)) return
+        awake.add(id)
+        notify()
       },
       subscribe(listener: () => void) {
         listeners.add(listener)
@@ -54,10 +66,10 @@ export function useMarksStore(marks: Marks): Store {
 
 /** One mark, read from the store: the component renders again only when it changes. */
 export function useMark<R extends string | boolean | null>(
-  read: (marks: Marks) => R,
+  read: (marks: Marks, store: Store) => R,
 ): R {
   const store = useMarks()
-  return useSyncExternalStore(store.subscribe, () => read(store.get()))
+  return useSyncExternalStore(store.subscribe, () => read(store.get(), store))
 }
 
 /** The store itself, to read the latest marks in an event. */

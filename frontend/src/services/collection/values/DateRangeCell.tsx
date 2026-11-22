@@ -6,6 +6,8 @@ import {
 import { useRef, useState } from 'react'
 import { DateRangePicker } from '../../ui-kit'
 import type { DateRange, DateRangeField } from '../definition'
+import { Asleep } from './Asleep'
+import { useAwake, useDateText } from './awake'
 
 type Picked = { start: DateValue; end: DateValue } | null
 
@@ -54,6 +56,8 @@ export function DateRangeCell<T>({
   const saved = toStored(toRange(edit.value(record), time), time)
   const [draft, setDraft] = useState<Picked | undefined>(undefined)
   const latest = useRef<Picked | undefined>(undefined)
+  const awake = useAwake()
+  const text = useDateText(time)
 
   function change(picked: Picked) {
     latest.current = picked
@@ -74,6 +78,12 @@ export function DateRangeCell<T>({
     }
   }
 
+  if (!awake) {
+    const range = toRange(saved, time)
+    return (
+      <Asleep text={range && `${text(range.start)} – ${text(range.end)}`} />
+    )
+  }
   return (
     <DateRangePicker
       aria-label={label}

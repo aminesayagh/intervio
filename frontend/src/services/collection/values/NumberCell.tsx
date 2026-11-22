@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { NumberInput } from '../../ui-kit'
 import type { NumberField } from '../definition'
+import { Asleep } from './Asleep'
+import { useAwake, useNumberText } from './awake'
 
 /**
  * A number edited in place (spec 7.3): React Aria's NumberField formats it for the
@@ -27,6 +29,8 @@ export function NumberCell<T>({
   const [pending, setPending] = useState<number | null | undefined>(undefined)
   const shown = pending === undefined ? saved : pending
   const decimals = edit.decimals ?? 0
+  const awake = useAwake()
+  const text = useNumberText(decimals)
 
   async function commit(value: number) {
     const next = Number.isNaN(value) ? null : value
@@ -41,6 +45,7 @@ export function NumberCell<T>({
     }
   }
 
+  if (!awake) return <Asleep text={text(shown)} end />
   return (
     <NumberInput
       aria-label={label}

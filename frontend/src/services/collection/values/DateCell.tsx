@@ -6,6 +6,8 @@ import {
 import { useRef, useState } from 'react'
 import { DatePicker } from '../../ui-kit'
 import type { DateField } from '../definition'
+import { Asleep } from './Asleep'
+import { useAwake, useDateText } from './awake'
 
 /** A stored date ('2026-12-01', or with a time '2026-12-01T09:30') as a picker value. */
 function toValue(iso: string | null, time: boolean): DateValue | null {
@@ -42,6 +44,8 @@ export function DateCell<T>({
   // What is typed or picked, until it is saved.
   const [draft, setDraft] = useState<DateValue | null | undefined>(undefined)
   const latest = useRef<DateValue | null | undefined>(undefined)
+  const awake = useAwake()
+  const text = useDateText(time)
 
   function change(value: DateValue | null) {
     latest.current = value
@@ -62,6 +66,7 @@ export function DateCell<T>({
     }
   }
 
+  if (!awake) return <Asleep text={text(toValue(saved, time))} />
   return (
     <DatePicker
       aria-label={label}

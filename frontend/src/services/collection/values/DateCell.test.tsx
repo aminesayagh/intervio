@@ -29,18 +29,19 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
   )
   return source
 }
+/** Inside the Due field (the row or the panel also has the Planned period). */
+const due = (scope: HTMLElement) =>
+  within(within(scope).getByRole('group', { name: 'Due' }))
 const row = async (n: number) =>
-  within(
-    (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
-      n - 1
-    ] as HTMLElement,
-  )
+  (await screen.findByRole('table')).querySelectorAll('tbody tr[data-index]')[
+    n - 1
+  ] as HTMLElement
 
 test('a day picked in the calendar is saved', async () => {
   const source = show()
   // Item 001 is due on 1 December 2026.
   await userEvent.click(
-    (await row(1)).getByRole('button', { name: /calendar/i }),
+    due(await row(1)).getByRole('button', { name: /calendar/i }),
   )
   const calendar = await screen.findByRole('dialog')
   await userEvent.click(
@@ -51,7 +52,7 @@ test('a day picked in the calendar is saved', async () => {
 
 test('a segment changed with the arrow keys is saved when the field is left', async () => {
   const source = show()
-  const day = (await row(2)).getByRole('spinbutton', { name: /day/i })
+  const day = due(await row(2)).getByRole('spinbutton', { name: /day/i })
   await userEvent.click(day)
   await userEvent.keyboard('{ArrowUp}')
   expect(source.items()[1].due).toBe('2026-12-02')
@@ -64,7 +65,7 @@ test('a refused date goes back, with a message', async () => {
   const source = show()
   source.settings.failing = true
   await userEvent.click(
-    (await row(1)).getByRole('button', { name: /calendar/i }),
+    due(await row(1)).getByRole('button', { name: /calendar/i }),
   )
   await userEvent.click(
     within(await screen.findByRole('dialog')).getByRole('button', {
@@ -84,9 +85,7 @@ test('the panel picks a date too, even where there was none', async () => {
     await screen.findByRole('button', { name: 'Open Item 006' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 006' })
-  await userEvent.click(
-    within(aside).getByRole('button', { name: /calendar/i }),
-  )
+  await userEvent.click(due(aside).getByRole('button', { name: /calendar/i }))
   const calendar = await screen.findByRole('dialog')
   const days = within(calendar)
     .getAllByRole('button')
@@ -97,7 +96,7 @@ test('the panel picks a date too, even where there was none', async () => {
 
 test('without the right, the date is text only', async () => {
   show(() => ({ edit: [] }))
-  const cells = await row(1)
+  const cells = within(await row(1))
   expect(cells.queryByRole('spinbutton')).toBeNull()
   expect(cells.getByText('Dec 1, 2026')).toBeInTheDocument()
 })

@@ -4,6 +4,8 @@ export type {
   ActionDefinition,
   CollectionDefinition,
   DateField,
+  DateRange,
+  DateRangeField,
   ColumnDefinition,
   FilterDefinition,
   PanelDefinition,

@@ -19,6 +19,7 @@ export type Item = {
   files: StoredFile[]
   tags: string[]
   due: string | null // '2026-12-01'
+  planned: { start: string; end: string } | null
   description: string // Markdown
   notes: string // Markdown
   linkedTo: string[] // ids of other items (for drilling down)
@@ -80,6 +81,18 @@ export function makeItems(n: number): Item[] {
           : `${index + 1} rue de la Paix, 75002 Paris, France`,
       // None, one, two or three tags, in turn.
       tags: TAGS.slice(index % 4, (index % 4) + (index % 4)),
+      // Five days from 1 December 2026 onwards, a day apart; every fourth has none.
+      planned:
+        index % 4 === 3
+          ? null
+          : {
+              start: new Date(Date.UTC(2026, 11, 1) + index * 86_400_000)
+                .toISOString()
+                .slice(0, 10),
+              end: new Date(Date.UTC(2026, 11, 5) + index * 86_400_000)
+                .toISOString()
+                .slice(0, 10),
+            },
       // From 1 December 2026, a day apart; every sixth has none.
       due:
         index % 6 === 5

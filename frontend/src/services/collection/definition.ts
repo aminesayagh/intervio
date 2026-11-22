@@ -129,6 +129,20 @@ export type FileField<T> = {
   maxMb?: number
 }
 
+/** A period: its first and its last day (or date and time). */
+export type DateRange = { start: string; end: string }
+
+/** A period, typed in segments or picked in a range calendar. */
+export type DateRangeField<T> = {
+  type: 'dateRange'
+  /** '2026-12-01' (or with `time` '2026-12-01T09:30') for each end; null when none. */
+  value: (record: T) => DateRange | null
+  patch: (value: DateRange | null) => Partial<T>
+  time?: boolean
+  min?: string
+  max?: string
+}
+
 /** A yes-or-no value, saved on each click. */
 export type CheckboxField<T> = {
   type: 'checkbox'
@@ -155,6 +169,7 @@ export type FieldDefinition<T> =
   | SelectField<T>
   | MultiSelectField<T>
   | DateField<T>
+  | DateRangeField<T>
   | CheckboxField<T>
   | IconField<T>
   | AvatarField<T>

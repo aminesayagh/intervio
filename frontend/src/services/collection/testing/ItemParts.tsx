@@ -75,3 +75,16 @@ export function Tags({ tags, max }: { tags: string[]; max?: number }) {
   const { t } = useTranslation('test-items')
   return <ChipList labels={tags.map((tag) => t(`tags.${tag}`))} max={max} />
 }
+
+/** A period in the user's language ("Dec 1 – 5, 2026"), or "—". */
+export function Period({ range }: { range: Item['planned'] }) {
+  const { i18n } = useTranslation()
+  if (!range) return <span className="text-muted">—</span>
+  const format = new Intl.DateTimeFormat(i18n.language, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+  return <>{format.formatRange(new Date(range.start), new Date(range.end))}</>
+}

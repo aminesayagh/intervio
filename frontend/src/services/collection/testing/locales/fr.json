@@ -22,7 +22,8 @@
     "location": "Adresse",
     "icon": "Icône",
     "avatar": "Image",
-    "files": "Fichiers"
+    "files": "Fichiers",
+    "planned": "Prévu"
   },
   "status": {
     "draft": "Brouillon",

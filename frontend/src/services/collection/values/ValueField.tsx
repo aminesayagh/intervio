@@ -6,6 +6,7 @@ import { EditableCell } from './EditableCell'
 import { AvatarCell } from './AvatarCell'
 import { CheckboxCell } from './CheckboxCell'
 import { DateCell } from './DateCell'
+import { DateRangeCell } from './DateRangeCell'
 import { FileCell } from './FileCell'
 import { IconCell } from './IconCell'
 import { LinkCell, LinkValue } from './LinkCell'
@@ -171,6 +172,16 @@ export function ValueField<T>({
               save={save}
               look={look}
               onInvalid={onInvalid}
+            />
+          ),
+        dateRange: () =>
+          field?.type === 'dateRange' && (
+            <DateRangeCell
+              record={record}
+              edit={field}
+              label={label}
+              save={save}
+              look={look}
             />
           ),
         checkbox: () =>

@@ -22,7 +22,8 @@
     "location": "Location",
     "icon": "Icon",
     "avatar": "Picture",
-    "files": "Files"
+    "files": "Files",
+    "planned": "Planned"
   },
   "status": {
     "draft": "Draft",

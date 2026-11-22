@@ -6,6 +6,7 @@ import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
   AvatarField,
+  DateRangeField,
   FileField,
   CheckboxField,
   IconField,
@@ -19,7 +20,15 @@ import type {
   TextField,
 } from '../definition'
 import type { DataSource } from '../types'
-import { Avatar, Day, StatusChip, Tags, TypeChip, UpdatedOn } from './ItemParts'
+import {
+  Avatar,
+  Day,
+  Period,
+  StatusChip,
+  Tags,
+  TypeChip,
+  UpdatedOn,
+} from './ItemParts'
 import { itemSource, OWNERS, STATUSES, TAGS, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -113,6 +122,11 @@ const files: FileField<Item> = {
   upload: memoryUpload,
   src: memorySrc,
 }
+const planned: DateRangeField<Item> = {
+  type: 'dateRange',
+  value: (item) => item.planned,
+  patch: (planned) => ({ planned }),
+}
 /** The quantity: a whole number of at least 1, or none. */
 const quantity: NumberField<Item> = {
   type: 'number',
@@ -139,6 +153,7 @@ export function itemDefinition(
         active: true,
         tags: [],
         due: null,
+        planned: null,
         notes: '',
         website: '',
         email: '',
@@ -229,6 +244,12 @@ export function itemDefinition(
           label: 'columns.due',
           value: dueDay,
           field: due,
+        },
+        {
+          id: 'planned',
+          label: 'columns.planned',
+          value: (item) => <Period range={item.planned} />,
+          field: planned,
         },
         {
           id: 'notes',
@@ -329,6 +350,7 @@ export function itemDefinition(
       'active',
       'tags',
       'due',
+      'planned',
       'notes',
       'website',
       'email',
@@ -394,6 +416,13 @@ export function itemDefinition(
         width: 150,
         cell: dueDay,
         field: due,
+      },
+      {
+        id: 'planned',
+        label: 'columns.planned',
+        width: 220,
+        cell: (item) => <Period range={item.planned} />,
+        field: planned,
       },
       {
         id: 'notes',

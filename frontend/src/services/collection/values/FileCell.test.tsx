@@ -45,7 +45,9 @@ test('the table shows the count, and clicking it opens the record', async () => 
 test('files added in the panel are uploaded and saved with the others', async () => {
   const source = show()
   const aside = await panel('Item 002')
-  const chooser = aside.querySelector<HTMLInputElement>('input[type="file"][multiple]')!
+  const chooser = aside.querySelector<HTMLInputElement>(
+    'input[type="file"][multiple]',
+  )!
   await userEvent.upload(chooser, [
     document('report.pdf'),
     document('photo.png'),

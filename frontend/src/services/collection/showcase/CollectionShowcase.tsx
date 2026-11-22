@@ -27,6 +27,7 @@ const rights = () => ({
           'active',
           'tags',
           'due',
+          'planned',
           'notes',
           'website',
           'email',

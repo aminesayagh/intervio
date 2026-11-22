@@ -270,6 +270,7 @@ Decision 133. A column or a property says how its value shows and is edited with
 | `select` | its chip | menu, saved on choice | React Aria Menu |
 | `multiSelect` | chips (the table: the first ones, then "+n") | menu with checkmarks, saved when it closes | React Aria Menu |
 | `date` | the date in the user's language | date field and calendar; optional time | React Aria DatePicker |
+| `dateRange` | the period in the user's language | two date fields and a range calendar (first click the start, second the end); optional time | React Aria DateRangePicker |
 | `checkbox` | a checkbox | saved on click | React Aria Checkbox |
 | `url` | the link (its domain), in a new tab | text field, checked as a web address | — |
 | `email` | a `mailto:` link | text field, checked as an email address | — |

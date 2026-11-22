@@ -467,7 +467,7 @@ Decision 134; screens 53 to 56.
 
 - **Checkboxes:** React Aria's row selection (`selectionMode="multiple"`, `selectionBehavior="toggle"`), a checkbox at the start of each row and in the header. A press on the row still opens the record; only the checkbox selects.
 - **Select all:** the header checkbox selects the loaded rows. Records loaded later are not added.
-- **The bar:** while rows are selected, a bar floats at the bottom of the table: "3 selected", then each action allowed on at least one selected record (spec 7.4 `actions`, checked with `rights`), then a button that clears the selection. Escape clears it too.
+- **The toolbar:** while rows are selected, the toolbar shows, in place of the search and the filters: "3 selected", then each action allowed on at least one selected record (spec 7.4 `actions`, checked with `rights`), then a button that clears the selection. Escape clears it too.
 - **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
 - **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
 - **Changes of view:** a new search, filter or sort clears the selection.
@@ -478,7 +478,7 @@ Decision 134; screens 53 to 56.
 Decision 136; screens 58, 59.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
-- **The line:** while a record is out of order, a line beside the filters says "Changed records keep their place." with **Sort now**.
+- **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.
 - **Sorted again** when the person presses Sort now, changes the sort, search or filters, clears the selection, opens another record, or reloads the page.
 
 

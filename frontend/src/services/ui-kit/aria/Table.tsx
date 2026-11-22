@@ -26,7 +26,7 @@ import {
 } from 'react-aria-components'
 import { cn } from '../cn'
 import { Icon } from '../Icon'
-import { Show } from '../views/Show'
+import { NoFadeInside, Show } from '../views/Show'
 import { Checkbox } from './Checkbox'
 
 export {
@@ -293,7 +293,9 @@ export function Cell({
         className,
       )}
     >
-      <CellContent>{children}</CellContent>
+      <CellContent>
+        <NoFadeInside value={true}>{children}</NoFadeInside>
+      </CellContent>
     </AriaCell>
   )
 }

@@ -1,7 +1,9 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Children,
+  createContext,
   isValidElement,
+  useContext,
   type ReactElement,
   type ReactNode,
 } from 'react'
@@ -22,6 +24,14 @@ const render = <W,>(content: Content<W>, value: W) =>
   typeof content === 'function' ? content(value as Truthy<W>) : content
 
 /**
+ * Set inside table cells: there the views change without a fade. A table shows
+ * hundreds of them and rows come and go by scrolling, so the fades cost far more
+ * (each one re-renders Motion's presence tracking with its row) than they show.
+ */
+const NoFade = createContext(false)
+export const NoFadeInside = NoFade.Provider
+
+/**
  * Fades content in and out quickly when it appears or changes, instead of a brusque
  * jump; no animation when the person asked their system to reduce motion.
  */
@@ -32,6 +42,15 @@ function Appear({
   className,
 }: Box & { id: string | number | null; children: ReactNode }) {
   const reduce = useReducedMotion()
+  if (useContext(NoFade)) {
+    const Plain = as
+    // Keyed like the faded one: another view is a new element.
+    return id === null ? null : (
+      <Plain key={id} className={className}>
+        {children}
+      </Plain>
+    )
+  }
   const Element = as === 'span' ? motion.span : motion.div
   return (
     <AnimatePresence initial={false} mode="wait">

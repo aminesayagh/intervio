@@ -1,4 +1,8 @@
 export { Collection } from './Collection'
+export { Confirmations } from './confirm/Confirmations'
+export { confirm, type Confirmation } from './confirm/confirm'
+export { recordScope, useRecordActions } from './data/recordActions'
+export { useRecordChanges, type RecordChange } from './data/recordChanges'
 export { cache, keys, useCollectionQuery } from './data/collectionQuery'
 export type {
   ActionDefinition,

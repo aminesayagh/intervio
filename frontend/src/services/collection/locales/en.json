@@ -79,7 +79,9 @@
     "copied": "Link copied",
     "notCopied": "The link couldn't be copied.",
     "created": "Record created",
-    "undo": "Undo"
+    "undo": "Undo",
+    "archived": "{{name}} archived",
+    "restoreFailed": "{{name}} couldn't be restored."
   },
   "fields": {
     "url": "That isn't a web address.",
@@ -128,7 +130,9 @@
     "appliesTo": "Applies to {{what}}",
     "changed": "“{{field}}” changed on {{what}}.",
     "changedSome": "“{{field}}” changed on {{count}} of {{what}}.",
-    "notChanged": "“{{field}}” couldn't be changed on {{what}}."
+    "notChanged": "“{{field}}” couldn't be changed on {{what}}.",
+    "archived": "{{what}} archived",
+    "restoreFailed": "{{what}} couldn't be restored."
   },
   "held": {
     "text": "Changed records keep their place.",

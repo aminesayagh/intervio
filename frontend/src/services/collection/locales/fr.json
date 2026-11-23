@@ -79,7 +79,9 @@
     "copied": "Lien copié",
     "notCopied": "Le lien n’a pas pu être copié.",
     "created": "Élément créé",
-    "undo": "Annuler"
+    "undo": "Annuler",
+    "archived": "{{name}} archivé",
+    "restoreFailed": "{{name}} n’a pas pu être restauré."
   },
   "fields": {
     "url": "Ce n’est pas une adresse web.",
@@ -128,7 +130,9 @@
     "appliesTo": "S’applique à {{what}}",
     "changed": "« {{field}} » modifié sur {{what}}.",
     "changedSome": "« {{field}} » modifié sur {{count}} sur {{what}}.",
-    "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}."
+    "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}.",
+    "archived": "{{what}} archivés",
+    "restoreFailed": "La restauration a échoué pour {{what}}."
   },
   "held": {
     "text": "Les éléments modifiés gardent leur place.",

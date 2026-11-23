@@ -23,6 +23,8 @@ import {
 } from '../services/core/interventions'
 import { navigate, usePath } from '../services/navigation'
 import { Notifications } from '../services/notifications'
+// The host alone: importing the collection's index would load it with the app shell.
+import { Confirmations } from '../services/collection/confirm/Confirmations'
 import { PublicLayout } from '../services/ui-kit'
 
 type Route = { page: ComponentType; access: Access; board?: boolean }
@@ -140,6 +142,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Notifications />
+      <Confirmations />
     </QueryClientProvider>
   )
 }

@@ -6,8 +6,12 @@
     "title": "No parts yet",
     "text": "Add the first one to find it here later."
   },
-  "create": { "add": "+ Add part" },
-  "errors": { "nameRequired": "The name can't be empty." },
+  "create": {
+    "add": "+ Add part"
+  },
+  "errors": {
+    "nameRequired": "The name can't be empty."
+  },
   "type": "Part",
   "columns": {
     "name": "Name",
@@ -15,6 +19,17 @@
     "quantity": "Quantity",
     "item": "Item"
   },
-  "kinds": { "seal": "Seal", "bearing": "Bearing", "filter": "Filter" },
-  "scopes": { "item": "Linked to: {{name}}" }
+  "kinds": {
+    "seal": "Seal",
+    "bearing": "Bearing",
+    "filter": "Filter"
+  },
+  "scopes": {
+    "item": "Linked to: {{name}}"
+  },
+  "actions": {
+    "archive": "Archive",
+    "archiveTitle": "Archive this part?",
+    "archiveText": "It leaves the list of its item."
+  }
 }

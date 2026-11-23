@@ -1,6 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
-import { authRoutes, useCurrentUser, type Access } from '../services/auth'
+import {
+  authRoutes,
+  dropReturnTo,
+  peekReturnTo,
+  saveReturnTo,
+  useCurrentUser,
+  type Access,
+} from '../services/auth'
 import {
   CLIENT_BOARD_HOME,
   ClientBoardLayout,
@@ -97,21 +104,28 @@ function Router() {
     prefixRoutes.find(([prefix]) => path.startsWith(prefix))?.[1]
   const isPending = userPending || (!!user && companyPending)
 
+  // After logging in, the page asked for before, else the dashboard (decision 140).
+  const home = () => peekReturnTo() ?? CLIENT_BOARD_HOME
   let redirect: string | null = null
+  let keepAddress = false
   if (!isPending) {
     // "/" and unknown addresses: the dashboard when logged in, else log in (decision 82).
-    if (!route) redirect = user ? CLIENT_BOARD_HOME : '/login'
-    else if (route.access === 'user' && !user)
-      redirect = path === '/reset-password' ? '/link-invalid' : '/login'
-    else if (route.access === 'guest' && user) redirect = CLIENT_BOARD_HOME
+    if (!route) redirect = user ? home() : '/login'
+    else if (route.access === 'user' && !user) {
+      keepAddress = path !== '/reset-password'
+      redirect = keepAddress ? '/login' : '/link-invalid'
+    } else if (route.access === 'guest' && user) redirect = home()
     // A client without a company goes through onboarding first (decision 58).
     else if (user && company === null && !BEFORE_ONBOARDING.includes(path))
       redirect = ONBOARDING_START
   }
 
   useEffect(() => {
+    if (keepAddress) saveReturnTo(window.location.pathname + window.location.search)
     if (redirect) navigate(redirect, { replace: true })
-  }, [redirect])
+    // A logged-in user has arrived: the saved page works once, so it is dropped.
+    else if (user) dropReturnTo()
+  }, [redirect, keepAddress, user])
 
   if (isPending || redirect) return null
   const Page = route.page

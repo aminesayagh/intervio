@@ -90,7 +90,7 @@ Handled by Spring Security: the normal session, plus its remember-me cookie for 
 | Google | Screen 1: "Continue with Google". |
 | Sign-in link | Screen 1: the user enters their email and selects "Email me a sign-in link instead". A sign-in link is sent and screen 3 is shown. Opening the link logs the user in. |
 
-A user whose email is not confirmed cannot use the platform (decision 52). If they log in with a password before confirming, the log in is refused and a new confirmation link is sent (within the link limits of section 5). After log in, a client who owns a company goes to the client board; otherwise to onboarding (4.6).
+A user whose email is not confirmed cannot use the platform (decision 52). If they log in with a password before confirming, the log in is refused and a new confirmation link is sent (within the link limits of section 5). After log in, a client who owns a company goes to the page they asked for before being sent to log in, if any, else to the client board; otherwise to onboarding (4.6). The page asked for is kept in the browser, works once and expires after an hour (`use-cases.md` decision 140).
 
 **Google with an email that already has an account:**
 

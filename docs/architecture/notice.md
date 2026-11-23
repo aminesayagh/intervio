@@ -48,3 +48,11 @@ Two terms used below:
 - **Today:** `app/App.tsx` finds the page for an address in its own tables (exact paths, then prefixes such as `/interventions/`), and `services/navigation/router.ts` pushes entries and follows the path. nuqs now handles the query string, but it doesn't match paths.
 - **Why:** matching paths, path parameters (`/interventions/{id}`), nested layouts and redirects is a router's job (TanStack Router or React Router), and nuqs has an adapter for both.
 - **Next:** decide whether to move the pages to a routing library, and which one; the collection's history marks (`history.state`) must survive the move.
+
+## From the performance review (2026-11-23)
+
+### 9. Opening and closing a record are over the 100 ms budget
+
+- **Today:** measured in a production build of the showcase (`VITE_SHOWCASE=1`, this WSL machine, median of 5): opening a record about 600 ms, closing about 250 ms, archiving about 330 ms, sorting about 215 ms, the next record (↓) about 140 ms, selecting a row about 90 ms. The same within noise on `main` (before step 12), at the end of step 12, and after the record actions and nuqs: these changes cost nothing, and the gap was already there.
+- **Why:** opening or closing the panel changes the table's width. React Aria's virtualized table watches its size and, on a change, draws every visible row again in one synchronous render (`flushSync` in its `ScrollView`, about 200 ms), then the columns that fit change and render again. Each row is costly because it mounts React Aria's checkbox, buttons and focus handling, not because of one slow component of ours.
+- **Next, to decide:** (a) keep the table's width while the panel opens and closes (the panel covers the list's right side, the columns change once when it settles), which changes how it looks; (b) make rows lighter (the selection checkbox and the cell buttons asleep until the row is reached, as the editors already are); (c) merge the resize render and the column change into one. Measure each on a production build before keeping it, and on a faster machine to know how much is this one.

@@ -21,12 +21,14 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
   )
   return source
 }
-const row = async (n: number) =>
-  within(
-    (await screen.findByRole('grid')).querySelectorAll(
-      '[role="row"][data-key]',
-    )[n - 1] as HTMLElement,
-  )
+/** The nth row, reached by the pointer: its controls are awake (decision 139). */
+const row = async (n: number) => {
+  const found = (await screen.findByRole('grid')).querySelectorAll(
+    '[role="row"][data-key]',
+  )[n - 1] as HTMLElement
+  await userEvent.hover(found)
+  return within(found)
+}
 
 test('a web address typed without https:// is saved with it, and opens in a new tab', async () => {
   const source = show()

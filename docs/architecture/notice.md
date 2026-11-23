@@ -45,8 +45,8 @@ Two terms used below:
 
 ## From the performance review (2026-11-23)
 
-### 9. Archiving a record is the slowest action left
+### 9. Archiving a record takes about 200–240 ms (accepted)
 
-- **Today:** at the end of 2026-11-23 (production build, this machine, medians): opening a record shows its content after about 120 ms (first frame about 75 ms; it was 490 ms in the morning), the next record about 70 ms, closing about 130 ms, a linked record about 155 ms, sorting about 160 ms, selecting a row about 100 ms. Archiving, from the confirmation to the panel closed, takes about 260–300 ms (main thread blocked about 200 ms).
-- **Why:** not looked into yet. It closes the confirmation dialog and the panel, takes the row out of the table (which renders it again), and shows the message with Undo, in the same moment.
-- **Next:** trace it as opening was traced, and see which of these costs most.
+- **Today:** after the table's controls started waiting for their row (2026-11-23), archiving takes about 200–240 ms from the confirmation to the panel closed (it was about 260–290), with the main thread blocked about 130–170 ms (was about 200–230); sorting about 100–120 ms (was about 150).
+- **Why the rest (traced):** taking the row out moves every row after it, and React Aria's table draws each moved row again (its own row and cell wrappers, about 60 ms; that part only changes inside React Aria); then the panel closes, the table widens, and the columns that come back into view are drawn (about 95 ms). Closing the panel first and taking the row out after was tried and measured: it doesn't help (the same work, in another order, and the panel closes later).
+- **Decided (2026-11-23): accepted as it is.** Archiving may take this long; no further work unless a clear, cheap solution appears. The idea left: keep the columns hidden behind the panel drawn while it is open (so closing it draws nothing new), against drawing more cells all the time.

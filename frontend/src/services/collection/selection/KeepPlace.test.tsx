@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachRow } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -34,6 +35,9 @@ const names = () =>
 const line = () => screen.queryByText('Changed records keep their place.')
 
 async function setStatus(from: string, to: string) {
+  await reachRow(
+    (await screen.findAllByRole('button', { name: `Status: ${from}` }))[0],
+  )
   await userEvent.click(
     (await screen.findAllByRole('button', { name: `Status: ${from}` }))[0],
   )

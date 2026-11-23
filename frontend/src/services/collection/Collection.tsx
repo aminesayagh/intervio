@@ -1194,7 +1194,11 @@ function MarkedRow<T extends object>(
   props: Omit<ComponentProps<typeof Row<T>>, 'current'> & { id: Id },
 ) {
   const current = useMark((marks) => marks.openId === props.id)
-  return <Row {...props} current={current} />
+  // Its selection checkbox is built when the row is reached, or once it is selected.
+  const asleep = useMark(
+    (marks, store) => !store.isAwake(props.id) && !marks.selected.has(props.id),
+  )
+  return <Row {...props} current={current} selectionAsleep={asleep} />
 }
 
 type SaveShared<T> = (

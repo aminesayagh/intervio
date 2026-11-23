@@ -128,7 +128,7 @@ export function TableHeader<T extends object>({
         <AriaColumn
           width={SELECTION_WIDTH}
           minWidth={SELECTION_WIDTH}
-          className="flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] outline-none"
+          className="flex h-full items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] outline-none"
         >
           {selectionMode === 'multiple' && <Checkbox slot="selection" />}
         </AriaColumn>
@@ -156,7 +156,7 @@ export function Column({
     <AriaColumn
       {...props}
       className={cn(
-        'group/column relative flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'group/column relative flex h-full items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         props.allowsSorting && 'cursor-pointer data-[hovered]:text-foreground',
         className,
       )}
@@ -196,18 +196,28 @@ export function Column({
 const ROW_BACKGROUND =
   'bg-background group-data-[hovered]:bg-[color-mix(in_srgb,var(--default)_50%,var(--background))] group-data-[selected]:bg-default group-data-[current]:bg-default group-data-[focus-visible]:bg-default'
 
+/** The checkbox's box at rest (Checkbox), drawn still. */
+const STILL_BOX =
+  'flex size-4 shrink-0 rounded-[3px] border border-[var(--color-text-secondary)]'
+
 /**
  * A record's row: a pointer when it opens the record, marked when `current`, shaded
  * when selected. When the table selects rows, it starts with its checkbox.
  */
 export function Row<T extends object>({
   current = false,
+  selectionAsleep = false,
   className,
   columns,
   children,
   ...props
 }: Omit<RowProps<T>, 'className' | 'children'> & {
   current?: boolean
+  /**
+   * The selection checkbox drawn still (an unchecked box), until the row is reached:
+   * React Aria's checkbox is the costliest part of a row, and every row has one.
+   */
+  selectionAsleep?: boolean
   className?: string
   children: (column: T) => ReactElement
 }) {
@@ -236,7 +246,19 @@ export function Row<T extends object>({
             ROW_BACKGROUND,
           )}
         >
-          <Checkbox slot="selection" />
+          <Show
+            as="span"
+            className="flex"
+            when={!selectionAsleep}
+            fallback={
+              // In a box as the real one's label (inline-flex), so it sits as it does.
+              <span aria-hidden className="inline-flex items-center">
+                <span className={STILL_BOX} />
+              </span>
+            }
+          >
+            <Checkbox slot="selection" />
+          </Show>
         </AriaCell>
       )}
       <Collection items={columns}>{children}</Collection>

@@ -2,7 +2,13 @@
 export type Id = string
 
 /** One page of a list (spec section 11). `total` is optional: without it, the header shows "30+". */
-export type Page<T> = { items: T[]; nextCursor: string | null; total?: number }
+export type Page<T> = {
+  items: T[]
+  nextCursor: string | null
+  /** The cursor of the page before this one: null at the start of the list. */
+  previousCursor?: string | null
+  total?: number
+}
 
 export type SortDirection = 'asc' | 'desc'
 
@@ -12,6 +18,8 @@ export type ListQuery = {
   filters: Record<string, string[]> // filter id → chosen option ids
   sort: { by: string; direction: SortDirection }
   cursor: string | null
+  /** The page after the cursor (the default), or the one before it (scrolling up). */
+  direction?: 'after' | 'before'
 }
 
 /**

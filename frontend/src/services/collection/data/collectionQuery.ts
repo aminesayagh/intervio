@@ -27,27 +27,49 @@ export const keys = {
   records: (key: string, id: Id) => [key, 'one', id] as const,
 }
 
+/** Which page to load: the one after a cursor (the start, without one) or before it. */
+export type PageParam = { cursor: string | null; direction: 'after' | 'before' }
+const FIRST: PageParam = { cursor: null, direction: 'after' }
+
 /**
  * The list's records, loaded page by page through the collection's data source.
  * `items` is every loaded record in order; `total` comes from the first page.
+ * `start` begins at a page further down (the tab's bookmark, spec 8.4); the pages
+ * before it load as the person scrolls up (`fetchPreviousPage`).
  */
 export function useCollectionQuery<T, C>({
   key,
   source,
   context,
   listing,
+  start,
 }: {
   key: string
   source: DataSource<T, C>
   context: C
   listing: Listing
+  start?: PageParam | null
 }) {
   const query = useInfiniteQuery({
     queryKey: keys.list(key, context, listing),
     queryFn: ({ pageParam }) =>
-      source.list({ ...listing, cursor: pageParam }, context),
-    initialPageParam: null as string | null,
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
+      source.list(
+        {
+          ...listing,
+          cursor: pageParam.cursor,
+          direction: pageParam.direction,
+        },
+        context,
+      ),
+    initialPageParam: start ?? FIRST,
+    getNextPageParam: (last): PageParam | undefined =>
+      last.nextCursor
+        ? { cursor: last.nextCursor, direction: 'after' }
+        : undefined,
+    getPreviousPageParam: (first): PageParam | undefined =>
+      first.previousCursor
+        ? { cursor: first.previousCursor, direction: 'before' }
+        : undefined,
     // One quiet retry, then the list shows Retry (spec 8.1); never a loop.
     retry: 1,
     retryDelay: 400,
@@ -56,10 +78,16 @@ export function useCollectionQuery<T, C>({
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
     [query.data],
   )
-  return { ...query, items, total: query.data?.pages[0]?.total }
+  return {
+    ...query,
+    items,
+    total: query.data?.pages[0]?.total,
+    /** Which page each loaded page is (its cursor and direction), in order. */
+    pageParams: query.data?.pageParams as PageParam[] | undefined,
+  }
 }
 
-type Pages<T> = InfiniteData<Page<T>, string | null>
+type Pages<T> = InfiniteData<Page<T>, PageParam>
 
 function withTotal<T>(data: Pages<T>, change: number): Pages<T> {
   const [first, ...rest] = data.pages

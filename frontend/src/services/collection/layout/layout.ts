@@ -54,3 +54,9 @@ export const openingWidth = (saved: number, space: number) =>
 
 /** A table column's width when its definition gives none (spec 9). */
 export const COLUMN_WIDTH = 200
+
+/**
+ * A row's height in px: a table row, and a narrow screen's row (its name and the line
+ * under it). Every row is one height, so the list counts positions (spec 8.4).
+ */
+export const ROW_HEIGHT = { table: 43, rows: 57 }

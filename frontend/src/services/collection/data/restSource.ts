@@ -21,10 +21,12 @@ export type RestOptions<T, C> = {
     archive?: Route
     restore?: Route
   }
-  /** Query parameter names. Defaults: q, cursor, limit, sort, and "f." before a filter id. */
+  /** Query parameter names. Defaults: q, cursor, before, limit, sort, and "f." before a filter id. */
   params?: {
     search?: string
     cursor?: string
+    /** The cursor of a page asked before it (scrolling up): ?before={cursor}. */
+    before?: string
     limit?: string
     sort?: string
     filterPrefix?: string
@@ -32,7 +34,7 @@ export type RestOptions<T, C> = {
   pageSize?: number
   /** The method that changes a record. Default PATCH. */
   updateMethod?: 'PATCH' | 'PUT' | 'POST'
-  /** Turns a list response into a page. Default: the body is already { items, nextCursor, total }. */
+  /** Turns a list response into a page. Default: the body is already { items, nextCursor, previousCursor, total }. */
   toPage?: (body: unknown) => Page<T>
   /** Turns a record response into a record. Default: the body is the record. */
   toRecord?: (body: unknown) => T
@@ -49,7 +51,11 @@ export function listParams(
   for (const [id, values] of Object.entries(query.filters))
     if (values.length) params.set(names.filterPrefix + id, values.join(','))
   params.set(names.sort, `${query.sort.by}:${query.sort.direction}`)
-  if (query.cursor) params.set(names.cursor, query.cursor)
+  if (query.cursor)
+    params.set(
+      query.direction === 'before' ? names.before : names.cursor,
+      query.cursor,
+    )
   params.set(names.limit, String(pageSize))
   return params
 }
@@ -65,6 +71,7 @@ export function restSource<T, C = void>(
   const names = {
     search: 'q',
     cursor: 'cursor',
+    before: 'before',
     limit: 'limit',
     sort: 'sort',
     filterPrefix: 'f.',

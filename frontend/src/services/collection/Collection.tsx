@@ -507,25 +507,8 @@ export function Collection<T, C = void>({
     }
     const what = countOf(records.length)
     const messageKey = `${key}:shared:${column.id}`
-    if (failed.length > 0) {
-      setSelected(new Set(failed.map(getId)))
-      notify({
-        tone: 'error',
-        text: t('collection:selection.notChanged', {
-          field: label,
-          what: countOf(failed.length),
-        }),
-        action: {
-          label: t('collection:message.retry'),
-          run: () =>
-            void saveOnSelection(column, edited, patch, label, failed).catch(
-              () => {},
-            ),
-        },
-        scope: key,
-        key: messageKey,
-      })
-    } else
+    // The records changed: one message with Undo, even when others failed.
+    if (changed.length > 0)
       notify({
         tone: 'confirm',
         text:
@@ -546,6 +529,26 @@ export function Collection<T, C = void>({
         scope: key,
         key: messageKey,
       })
+    // Those that failed stay selected, with Retry, in a message of their own.
+    if (failed.length > 0) {
+      setSelected(new Set(failed.map(getId)))
+      notify({
+        tone: 'error',
+        text: t('collection:selection.notChanged', {
+          field: label,
+          what: countOf(failed.length),
+        }),
+        action: {
+          label: t('collection:message.retry'),
+          run: () =>
+            void saveOnSelection(column, edited, patch, label, failed).catch(
+              () => {},
+            ),
+        },
+        scope: key,
+        key: `${messageKey}:failed`,
+      })
+    }
     if (failed.includes(edited)) throw new Error('not saved')
   }
   const newDefaults = useCallback((): Partial<T> => {
@@ -570,12 +573,21 @@ export function Collection<T, C = void>({
     context,
   ])
   const createRecord = useCallback(
-    async (draft: Partial<T>) => {
+    async (draft: Partial<T>, latest: () => Partial<T>) => {
       const created = await actions.create(
         draft,
         keys.list(key, context, state.query),
       )
       mark({ new: null, open: getId(created) }, entryState(), true)
+      // Values typed while it was being created: saved on it, not lost.
+      const typed = latest()
+      const later = Object.fromEntries(
+        Object.entries(typed).filter(
+          ([name, value]) => draft[name as keyof T] !== value,
+        ),
+      ) as Partial<T>
+      if (Object.keys(later).length > 0)
+        void actions.save(created, later).catch(() => {}) // a failure says so
     },
     [actions, key, context, getId, state.query, mark],
   )

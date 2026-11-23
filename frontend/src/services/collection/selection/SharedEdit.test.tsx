@@ -116,7 +116,7 @@ test('records the person may not change keep their value', async () => {
   expect(status(source).slice(0, 3)).toEqual(['outdated', 'valid', 'outdated'])
 })
 
-test('a record whose save fails keeps its value and stays selected, with Retry', async () => {
+test('a record whose save fails keeps its value and stays selected, with Retry; the others can be undone', async () => {
   const source = show()
   await select('Item 001')
   await select('Item 002')
@@ -133,6 +133,11 @@ test('a record whose save fails keeps its value and stays selected, with Retry',
     await screen.findByText("“Status” couldn't be changed on 1 item."),
   ).toBeInTheDocument()
   expect(status(source).slice(0, 3)).toEqual(['draft', 'outdated', 'outdated'])
+  // The two that changed can be undone, in their own message.
+  expect(
+    screen.getByText('“Status” changed on 2 of 3 items.'),
+  ).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
   expect(
     within(screen.getByRole('toolbar', { name: 'Selected records' })).getByText(
       '1 selected',

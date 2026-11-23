@@ -20,7 +20,11 @@ export const keys = {
       listing.filters,
       listing.sort,
     ] as const,
-  record: (key: string, id: Id) => [key, 'one', id] as const,
+  /** A record as one context shows it (its values and rights there). */
+  record: (key: string, id: Id, context?: unknown) =>
+    [key, 'one', id, context ?? null] as const,
+  /** A record in every context. */
+  records: (key: string, id: Id) => [key, 'one', id] as const,
 }
 
 /**
@@ -91,10 +95,14 @@ export const cache = {
     key: string,
     record: T,
     getId: (record: T) => Id,
+    /** The context it was saved from (spec 4). */
+    context?: unknown,
   ) {
     const id = getId(record)
+    // In the context it was saved from; lists and records of other contexts reload
+    // (cache.refresh, and below), as they may show it with other rights.
     client.setQueriesData<Pages<T>>(
-      { queryKey: keys.lists(key) },
+      { queryKey: [...keys.lists(key), context ?? null] },
       (data) =>
         data && {
           ...data,
@@ -106,7 +114,11 @@ export const cache = {
           })),
         },
     )
-    client.setQueryData(keys.record(key, id), record)
+    client.setQueryData(keys.record(key, id, context), record)
+    void client.invalidateQueries({
+      queryKey: keys.records(key, id),
+      predicate: (query) => query.queryKey[3] !== (context ?? null),
+    })
   },
 
   removed<T>(
@@ -129,7 +141,7 @@ export const cache = {
       }))
       return withTotal({ ...data, pages }, -1)
     })
-    if (!keepRecord) client.removeQueries({ queryKey: keys.record(key, id) })
+    if (!keepRecord) client.removeQueries({ queryKey: keys.records(key, id) })
   },
 
   /** Reloads the loaded lists in the background, so a changed sort position shows. */

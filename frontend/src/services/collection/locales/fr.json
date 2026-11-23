@@ -139,7 +139,8 @@
     "sort": "Trier maintenant"
   },
   "section": {
-    "showAll": "Tout afficher"
+    "showAll": "Tout afficher",
+    "empty": "Aucun pour le moment."
   },
   "scope": {
     "remove": "Retirer « {{label}} »"

@@ -27,7 +27,7 @@ export function useRecord<T, C>({
   onUnavailable?: (id: Id) => void
 }) {
   const query = useQuery<T, Error, T, readonly unknown[]>({
-    queryKey: keys.record(definition.key, id),
+    queryKey: keys.record(definition.key, id, context),
     queryFn: () => definition.source.one(id, context),
     // The list's copy, as data marked old: the server's copy is fetched at once, and
     // when its values are the same TanStack keeps the same object, so nothing renders

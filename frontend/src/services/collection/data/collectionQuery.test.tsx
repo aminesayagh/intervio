@@ -98,3 +98,21 @@ test('a removal takes the record out of every loaded page and subtracts 1', asyn
   act(() => cache.removed(client, 'items', 'not-loaded', getId))
   expect(hook.result.current.total).toBe(74)
 })
+
+test('a record saved in one context replaces it there; other contexts reload it', () => {
+  const client = new QueryClient()
+  const [item] = makeItems(1)
+  client.setQueryData(keys.record('items', item.id, 'site-a'), item)
+  client.setQueryData(keys.record('items', item.id, 'site-b'), item)
+  const saved = { ...item, name: 'Renamed' }
+  cache.updated(client, 'items', saved, getId, 'site-a')
+  const name = (context: string) =>
+    client.getQueryData<Item>(keys.record('items', item.id, context))?.name
+  expect(name('site-a')).toBe('Renamed')
+  // Site B keeps its own copy (its values and rights there) until it reloads.
+  expect(name('site-b')).toBe(item.name)
+  expect(
+    client.getQueryState(keys.record('items', item.id, 'site-b'))
+      ?.isInvalidated,
+  ).toBe(true)
+})

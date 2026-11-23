@@ -85,18 +85,34 @@ export function memorySource<T extends { id: Id }>(
       )
       .sort((a, b) => sign * compare(key(a), key(b)))
 
-    const after = query.cursor
+    // Pages by cursor (spec 11): a cursor is a record's sort value and id, so a page
+    // starts right after (or ends right before) it, whatever changed since.
+    const cursor = query.cursor
       ? (JSON.parse(atob(query.cursor)) as [string | number, Id])
       : null
-    const rest = after
-      ? matching.filter((item) => sign * compare(key(item), after) > 0)
-      : matching
-    const page = rest.slice(0, pageSize)
-    const last = page[page.length - 1]
+    const encode = (item: T | undefined) =>
+      item ? btoa(JSON.stringify(key(item))) : null
+    let start: number
+    let page: T[]
+    if (cursor && query.direction === 'before') {
+      const end = matching.findIndex(
+        (item) => sign * compare(key(item), cursor) >= 0,
+      )
+      const stop = end === -1 ? matching.length : end
+      start = Math.max(0, stop - pageSize)
+      page = matching.slice(start, stop)
+    } else {
+      start = cursor
+        ? matching.findIndex((item) => sign * compare(key(item), cursor) > 0)
+        : 0
+      if (start === -1) start = matching.length
+      page = matching.slice(start, start + pageSize)
+    }
+    const end = start + page.length
     return {
       items: page,
-      nextCursor:
-        rest.length > pageSize && last ? btoa(JSON.stringify(key(last))) : null,
+      nextCursor: end < matching.length ? encode(page[page.length - 1]) : null,
+      previousCursor: start > 0 ? encode(page[0]) : null,
       total: matching.length,
     }
   }

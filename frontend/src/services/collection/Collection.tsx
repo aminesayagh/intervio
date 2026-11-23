@@ -59,6 +59,7 @@ import {
   clampPanel,
   openingWidth,
   COLUMN_WIDTH,
+  ROW_HEIGHT,
   PANEL,
   panelLimits,
   useLayoutMode,
@@ -68,6 +69,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import { RecordRows } from './list/RecordRows'
+import { readBookmark, useScrollBookmark } from './list/scrollBookmark'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
@@ -142,11 +144,19 @@ export function Collection<T, C = void>({
   })
   const { listing } = state
   const narrowed = isNarrowed(listing)
+  // Where the tab left this list (spec 8.4): it starts at that page, for the list it
+  // reopens on only (another search, filter or sort starts at the top).
+  const listKey = JSON.stringify(state.query)
+  const [opened] = useState(() => ({
+    list: listKey,
+    page: readBookmark(definition.key, listKey)?.page ?? null,
+  }))
   const list = useCollectionQuery({
     key: definition.key,
     source: definition.source,
     context: context as C,
     listing: state.query,
+    start: listKey === opened.list ? opened.page : null,
   })
   // Saves a change made in place, then shows the saved record everywhere (spec 8.3).
   const queryClient = useQueryClient()
@@ -369,6 +379,21 @@ export function Collection<T, C = void>({
   // Several records selected (spec 8.5): only when the collection has actions for them.
   // Narrow screens (decision 121): rows that open their record; no selection.
   const narrowScreen = useLayoutMode() === 'narrow'
+  // The tab remembers where the person was, and the pages above load on the way up.
+  useScrollBookmark({
+    key: definition.key,
+    list: listKey,
+    scrollRef,
+    rowHeight: narrowScreen ? ROW_HEIGHT.rows : ROW_HEIGHT.table,
+    pages: list.data?.pages,
+    pageParams: list.pageParams,
+    getId,
+    previous: {
+      has: list.hasPreviousPage,
+      loading: list.isFetchingPreviousPage,
+      load: () => void list.fetchPreviousPage(),
+    },
+  })
   const selectable = Boolean(definition.actions?.length) && !narrowScreen
   // The sort sits in the Filters panel there, as the rows have no headers.
   const narrowToolbar = useMemo(
@@ -1129,7 +1154,11 @@ function RecordTableOf<T, C>({
       <div className="contents" onPointerOver={wakeRow} onFocus={wakeRow}>
         <Virtualizer
           layout={TableLayout}
-          layoutOptions={{ rowHeight: 43, headingHeight: 32, loaderHeight: 43 }}
+          layoutOptions={{
+            rowHeight: ROW_HEIGHT.table,
+            headingHeight: 32,
+            loaderHeight: ROW_HEIGHT.table,
+          }}
         >
           <Table
             ref={scrollRef}

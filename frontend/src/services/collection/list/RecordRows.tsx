@@ -2,10 +2,8 @@ import { useTranslation } from 'react-i18next'
 import type { RefObject } from 'react'
 import { RowCollection, RowItem, RowList, RowListLoadMore } from '../../ui-kit'
 import type { CollectionDefinition } from '../definition'
+import { ROW_HEIGHT } from '../layout/layout'
 import type { Id } from '../types'
-
-/** A row's height in px: the name, and the line under it. */
-const ROW_HEIGHT = 57
 
 /**
  * The list on narrow screens (spec 9, decision 121): a row per record, with its name,
@@ -36,7 +34,7 @@ export function RecordRows<T, C>({
     <RowList
       ref={scrollRef}
       aria-label={label}
-      rowHeight={ROW_HEIGHT}
+      rowHeight={ROW_HEIGHT.rows}
       // React Aria's keys are strings or numbers; ours are ids (strings).
       onAction={onOpen ? (key) => onOpen(String(key)) : undefined}
     >

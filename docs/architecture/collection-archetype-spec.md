@@ -49,7 +49,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 | Loading more | **Infinite scroll**, no page numbers. The header shows the total ("42 records") | 110 |
 | Panel position | Beside the list, never over it; the list stays usable; the open record is marked | 111 |
 | Addresses | Every state that matters is in the address: search, filters, sort, open record, creation | 112 |
-| Refresh | A refresh brings back the same screen: list state, open record, panel history, scroll position, unsaved creation | 126 |
+| Refresh | A refresh brings back the same screen: list state, open record, panel history, place in the list, unsaved creation | 126, 144 |
 | Keyboard | ↑ / ↓ move between records with the panel open, Enter opens, Escape closes | 113 |
 | Panel structure | Top bar · title · added-by line · properties · sections · activity | 114 |
 | Linked records | One panel at a time, with a Back link; records with their own page open that page | 115 |
@@ -184,7 +184,7 @@ Hooks, each in its own file and tested on its own:
 | Open record | Address: `?open={id}` | A shared link opens the record; Back closes it |
 | Creation in progress | Address: `?new` | Back cancels it; a refresh keeps it |
 | Panel history (the Back links) | Session storage, per collection | Survives a refresh, not shared |
-| Scroll position and number of loaded pages | Session storage, per collection and address | A refresh comes back to the same place |
+| Place in the list: the page of the first record in view (its cursor) and its row | Session storage, per collection and list | A refresh comes back to the same place, loading one page |
 | Values typed in a creation | Session storage, per collection | A refresh does not lose them |
 | View (cards or table), last sort, panel width | Local storage, per collection | A preference of this browser |
 | Sidebar folded by a panel (medium width) | Not stored | It follows the panel |
@@ -224,7 +224,7 @@ When the address has no list parameters (for example, the user clicks "Resources
 On load, in this order:
 
 1. Read the address, and complete it from session storage (6.2).
-2. Load as many pages as were loaded before the refresh, up to 5 pages, then restore the scroll position (section 8.4).
+2. Load the page holding the first record that was in view, and scroll to it (section 8.4).
 3. Open the record named in `open`, even when it is not in the loaded pages; it is fetched on its own.
 4. Restore the panel history, so its Back link still works.
 5. With `?new`, reopen the new record with the values typed before.
@@ -480,12 +480,12 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 8.4 Scroll position
 
-**Set aside (2026-11-22):** the scroll memory built in step 10 was removed when the table moved to React Aria's virtualized Table; how to remember the position is to be decided again. The tab still remembers the search, filters, sort and open record (6.2).
+Decision 144 (2026-11-23). A refresh costs one request whatever the depth: the list starts at the page that was in view, and the pages above load as the person scrolls up, like any other page.
 
-**Built so far (step 10):** one session key per collection (`intervio.collection.<key>.scroll`) holds the list address, the offset and the pages loaded; it is used only when the address matches. The offset is set on the scroll element directly, with no measurement snapshot, so a list of uneven rows can land a row or so off. The tab's list memory (6.2) includes `open`. Panel history waits for step 12, which brings it.
-
-- When the user leaves the list or the page unloads, the virtualizer's `takeSnapshot()` and `scrollOffset` are kept in session storage with the number of loaded pages (section 6.1).
-- On return, the pages are reloaded (up to 5), then the virtualizer starts with `initialMeasurementsCache` and `initialOffset`, so the list lands at the same place without measuring everything again.
+- **The bookmark:** one session key per collection (`intervio.collection.<key>.scroll`) holds the list it belongs to (search, filters, sort), the page holding the first row in view (its page parameter: a cursor and a direction) and that row's place in the page. It is written as the person scrolls (`list/scrollBookmark.ts`, `useScrollBookmark`), and used only when the list matches.
+- **Pages in both directions:** the data source takes `direction: 'before'` with a cursor and answers the page ending just before it; each page carries `previousCursor` (null at the start of the list). `restSource` sends it as `?before={cursor}` (the parameter's name is set by `params.before`). `useCollectionQuery` starts at the bookmark's page and loads the pages above with `fetchPreviousPage`.
+- **Restoring:** once the page is there, the list scrolls to the row (rows are one height, `ROW_HEIGHT`, so the position is counted). Within 5 rows of the top, the page before loads at once and again as the person scrolls up near the top; the rows added above move the scroll by their height, so the rows in view stay put. Nothing is reserved for the records not loaded: the scrollbar not being at the top is the cue that more is above.
+- **A record gone since:** a cursor is a sort value and an id, so the page after it starts at the next record in the order.
 
 ### 8.5 Selecting several records
 
@@ -640,7 +640,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
     - a "‹" at the top;
     - the view's name written vertically ("{collection title} · {open record}");
     - the whole strip is one button that returns to that view.
-  - Returning to a view takes it and every view after it off the stack, then restores its address: search, filters, sort and open record (panel). The scroll position is not restored until scroll memory is designed again (8.4); the list starts at the top (2026-11-22).
+  - Returning to a view takes it and every view after it off the stack, then restores its address: search, filters, sort and open record (panel). The list comes back to the place it was left: its pages are still in the cache, and the bookmark scrolls to the row (8.4).
   - The browser's Back button does the same, one level at a time.
   - **At most 2 strips show.** With more levels, the first strip stands for all the older ones and opens a menu listing them, newest first.
   - **Removing the scope chip** leaves the plain collection, and the strips stay.
@@ -797,5 +797,5 @@ The wrapper is built in small steps. Each step ends with something that can be *
 ## 16. Open points
 
 0. **Views other than the table.** The cards view is set aside from the first build (decided 2026-11-21, during step 3): the wrapper shows a table only. How to offer several views (cards and others) is designed later; until then, the rules about cards in this document are on hold.
-1. **Restoring after a refresh is limited to 5 pages** (150 records). Deeper than that, the list reopens at the top with the record still open in the panel. Is that acceptable?
+1. ~~Restoring after a refresh is limited to 5 pages.~~ Replaced by decision 144: one page is loaded, whatever the depth.
 2. **Session storage is per browser tab.** A record opened in a new tab starts from its address only, with no panel history. That's proposed as acceptable.

@@ -78,3 +78,30 @@ test('the screen width stub answers media queries', () => {
   setScreenWidth(1440)
   expect(window.matchMedia('(min-width: 1440px)').matches).toBe(true)
 })
+
+test('a page before a cursor: the 30 records above it, and whether more are above', async () => {
+  const source = itemSource(makeItems(75))
+  const first = await source.list(query())
+  expect(first.previousCursor).toBeNull() // the start of the list
+  const second = await source.list(query({ cursor: first.nextCursor }))
+  expect(second.items[0].name).toBe('Item 031')
+  expect(second.previousCursor).not.toBeNull()
+
+  // Scrolling up from the second page brings back the first, in order.
+  const above = await source.list(
+    query({ cursor: second.previousCursor, direction: 'before' }),
+  )
+  expect(above.items.map((item) => item.name)).toEqual(
+    first.items.map((item) => item.name),
+  )
+  expect(above.previousCursor).toBeNull()
+})
+
+test('a page after a record that is gone starts at the next one', async () => {
+  const source = itemSource(makeItems(75))
+  const first = await source.list(query())
+  // The last record of the first page, Item 030, is archived meanwhile.
+  await source.archive!(first.items[29].id, undefined)
+  const second = await source.list(query({ cursor: first.nextCursor }))
+  expect(second.items[0].name).toBe('Item 031')
+})

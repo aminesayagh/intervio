@@ -128,7 +128,7 @@ export function TableHeader<T extends object>({
         <AriaColumn
           width={SELECTION_WIDTH}
           minWidth={SELECTION_WIDTH}
-          className="flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] outline-none"
+          className="flex h-full items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] outline-none"
         >
           {selectionMode === 'multiple' && <Checkbox slot="selection" />}
         </AriaColumn>
@@ -156,7 +156,7 @@ export function Column({
     <AriaColumn
       {...props}
       className={cn(
-        'group/column relative flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'group/column relative flex h-full items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         props.allowsSorting && 'cursor-pointer data-[hovered]:text-foreground',
         className,
       )}

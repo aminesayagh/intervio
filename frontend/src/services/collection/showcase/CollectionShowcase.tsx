@@ -17,6 +17,8 @@ type RightsChoice = 'all' | 'status' | 'none'
 let rightsChoice: RightsChoice = 'all'
 const rights = () => ({
   actions: rightsChoice === 'all' ? ['archive', 'remove'] : [],
+  // "+ Link or add" under the Parts section, with every right.
+  add: rightsChoice === 'all' ? ['parts'] : [],
   edit:
     rightsChoice === 'all'
       ? [

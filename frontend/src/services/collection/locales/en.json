@@ -141,7 +141,10 @@
   },
   "section": {
     "showAll": "Show all",
-    "empty": "None yet."
+    "empty": "None yet.",
+    "linkOrAdd": "+ Link or add",
+    "nothingToLink": "Nothing to link.",
+    "link": "Link"
   },
   "scope": {
     "remove": "Remove “{{label}}”"

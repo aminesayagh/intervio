@@ -217,6 +217,12 @@ export type SectionDefinition<T> = {
    * `context` is the context of the collection showing the section.
    */
   context?: (record: T, context: unknown) => unknown
+  /**
+   * How a record of the linked collection becomes linked to this one: the change saved
+   * on it ({ item: this item's id }). With it, the section offers "+ Link or add": a
+   * search to link an existing record, or a new one, created linked.
+   */
+  link?: (record: T) => Record<string, unknown>
 }
 
 /**
@@ -260,6 +266,8 @@ export type Rights = {
   edit: string[]
   /** The ids of the actions the person may run (archive, remove). */
   actions?: string[]
+  /** The ids of the sections where the person may link or add records ("+ Link or add"). */
+  add?: string[]
 }
 
 /**

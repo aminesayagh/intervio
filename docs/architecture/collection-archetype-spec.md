@@ -120,7 +120,7 @@ type Rights = {
 
 `PropertyDefinition` has an id, a label key, a value getter and a kind: `text`, `longText`, `date`, `select` (with options), `person`, `chip`, `switch` or `custom` (a render function). An editable property also has a `validate` function returning an `ERROR_…` key or nothing.
 
-`SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so.
+`SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so. **Built (2026-11-23, decision 143):** `link: (record) => patch` says how a record of the linked collection becomes linked (for parts, `{ item: id }`); with it, and `rights.add` naming the section (or no rights at all), the section shows "+ Link or add" (`record/LinkOrAdd.tsx`): a `PopoverDialog` with a search over the records the patch would change (the others are already linked), saved through the shared record actions, and the collection's "+ Add …", which drills into the scoped list with `?new=1`.
 
 `FilterDefinition` has an id, a label key, its options (fixed, or loaded once), and whether several can be chosen.
 

@@ -16,6 +16,7 @@ import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { ValueField } from '../values/ValueField'
 import { WakeOnReach } from '../values/WakeOnReach'
+import { LinkOrAdd } from './LinkOrAdd'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -237,6 +238,16 @@ function Sections<T, C>({
           scope={section.scope(record)}
           context={section.context?.(record, context)}
           viewName={viewName}
+          // "+ Link or add" when the section says how to link, and the rights allow it.
+          link={
+            section.link &&
+            (!definition.rights ||
+              (definition.rights(record, context as C).add ?? []).includes(
+                section.id,
+              ))
+              ? section.link(record)
+              : undefined
+          }
         />
       ))}
     </>
@@ -256,6 +267,7 @@ function Section({
   scope,
   context,
   viewName,
+  link,
 }: {
   label: string
   linked: AnyCollection
@@ -263,6 +275,8 @@ function Section({
   /** The linked collection's context, when the section gives one. */
   context: unknown
   viewName: string
+  /** The change that links a record here, when the person may link or add. */
+  link?: Record<string, unknown>
 }) {
   const { t } = useTranslation([linked.i18n.namespace, 'collection'])
   // In the panel, a linked record opens there (decision 137); on the full page, its
@@ -370,6 +384,17 @@ function Section({
           </ul>
         </Match>
       </Switch>
+      <Show when={link} className="mt-1 flex">
+        {(patch) => (
+          <LinkOrAdd
+            linked={linked}
+            context={context}
+            patch={patch}
+            listAddress={address}
+            viewName={viewName}
+          />
+        )}
+      </Show>
     </section>
   )
 }

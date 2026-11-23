@@ -141,7 +141,10 @@
   },
   "section": {
     "showAll": "Tout afficher",
-    "empty": "Aucun pour le moment."
+    "empty": "Aucun pour le moment.",
+    "linkOrAdd": "+ Lier ou ajouter",
+    "nothingToLink": "Rien à lier.",
+    "link": "Lien"
   },
   "scope": {
     "remove": "Retirer « {{label}} »"

@@ -14,7 +14,8 @@ export function PopoverDialog({
   trigger: ReactElement
   /** The panel's name, for assistive technologies. */
   label: string
-  children: ReactNode
+  /** Its content, or a function given `close`, to close it after a choice. */
+  children: ReactNode | ((close: () => void) => ReactNode)
 }) {
   return (
     <DialogTrigger>
@@ -25,7 +26,9 @@ export function PopoverDialog({
         className="w-[300px] max-w-[calc(100vw-32px)] rounded-[var(--field-radius)] border border-border bg-surface p-3 text-sm shadow-md outline-none"
       >
         <Dialog aria-label={label} className="flex flex-col gap-4 outline-none">
-          {children}
+          {({ close }) =>
+            typeof children === 'function' ? children(close) : children
+          }
         </Dialog>
       </Popover>
     </DialogTrigger>

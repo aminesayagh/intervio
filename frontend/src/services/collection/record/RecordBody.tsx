@@ -7,6 +7,7 @@ import type {
   PanelDefinition,
 } from '../definition'
 import { drill } from '../drill/viewStack'
+import { useOpenLinked } from './linked'
 import { writeListing } from '../list/useCollectionState'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
@@ -209,6 +210,8 @@ function Section({
   viewName: string
 }) {
   const { t } = useTranslation([linked.i18n.namespace, 'collection'])
+  // In the panel, a linked record opens there (decision 137); on the full page it is text.
+  const openLinked = useOpenLinked()
   // ponytail: the linked collection gets no context; add one to the section when a
   // real collection needs it.
   const list = useCollectionQuery({
@@ -256,9 +259,22 @@ function Section({
             key={linked.getId(item)}
             className="flex items-center gap-2 border-b border-border py-2"
           >
-            <span className="min-w-0 flex-1 truncate">
-              {linked.panel?.title(item) ?? linked.getId(item)}
-            </span>
+            <Show
+              as="span"
+              when={openLinked}
+              className="min-w-0 flex-1 truncate"
+              fallback={linked.panel?.title(item) ?? linked.getId(item)}
+            >
+              {(open) => (
+                <button
+                  type="button"
+                  onClick={() => open(linked.key, linked.getId(item))}
+                  className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+                >
+                  {linked.panel?.title(item) ?? linked.getId(item)}
+                </button>
+              )}
+            </Show>
             {linked.panel?.type(item)}
           </li>
         ))}

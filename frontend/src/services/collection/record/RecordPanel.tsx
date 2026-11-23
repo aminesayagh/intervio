@@ -60,6 +60,7 @@ export function RecordPanel<T, C>({
   fromList,
   onClose,
   back,
+  onLeave,
   onUnavailable,
   canEdit,
   save,
@@ -76,6 +77,11 @@ export function RecordPanel<T, C>({
   onClose: () => void
   /** Narrow screens: the collection's name, for the way back. */
   back?: string
+  /**
+   * A linked record (decision 137): × goes back one step (onClose), and on a narrow
+   * screen "‹ {collection}" leaves for the list.
+   */
+  onLeave?: () => void
   onUnavailable: (id: Id) => void
   /** Whether the person may change a value (spec 7.7). */
   canEdit: (record: T, id: string) => boolean
@@ -123,7 +129,12 @@ export function RecordPanel<T, C>({
           </span>
         </Show>
         <span className="ms-auto flex items-center gap-1">
-          <Show as="span" when={visible}>
+          <Show
+            as="span"
+            when={
+              visible !== undefined && actions(visible).length > 0 && visible
+            }
+          >
             {(loaded) => (
               <MoreActions
                 actions={actions(loaded)}
@@ -131,7 +142,7 @@ export function RecordPanel<T, C>({
               />
             )}
           </Show>
-          <Show as="span" when={!back}>
+          <Show as="span" when={!back || onLeave}>
             <PanelClose label={t('collection:panel.close')} onClose={onClose} />
           </Show>
         </span>
@@ -141,7 +152,7 @@ export function RecordPanel<T, C>({
               back={name}
               backLabel={t('collection:panel.back', { name })}
               label={t('collection:panel.close')}
-              onClose={onClose}
+              onClose={onLeave ?? onClose}
             />
           )}
         </Show>

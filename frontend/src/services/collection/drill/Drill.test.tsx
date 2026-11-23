@@ -168,3 +168,60 @@ test('beyond two, the older views fold into the first strip’s menu, newest fir
   await userEvent.click(items[1])
   expect(opened).toEqual(['A'])
 })
+
+const tabs = () =>
+  within(screen.getByRole('navigation', { name: 'Records left' }))
+/** Clicks a linked record in a section of the panel shown. */
+async function openLinked(panelName: string, section: string, name: string) {
+  const aside = await panel(panelName)
+  const found = (await within(aside).findByText(section)).closest('section')!
+  await userEvent.click(await within(found).findByRole('button', { name }))
+}
+
+test('a linked record opens in the panel, the record left folds into a tab, and × goes back one step', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Parts', 'Filter 1, Item 001')
+  const part = await panel('Filter 1, Item 001')
+  // Another kind: the part's own panel.
+  expect(within(part).getByText('Kind')).toBeInTheDocument()
+  expect(
+    tabs().getByRole('button', { name: 'Back to Item 001' }),
+  ).toBeInTheDocument()
+
+  await userEvent.click(within(part).getByRole('button', { name: 'Close' }))
+  expect(await panel('Item 001')).toBeInTheDocument()
+  expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
+
+  await userEvent.click(
+    within(await panel('Item 001')).getByRole('button', { name: 'Close' }),
+  )
+  await waitFor(() =>
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument(),
+  )
+})
+
+test('a tab opens its record again, and the tabs after it go', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Linked items', 'Item 004')
+  await openLinked('Item 004', 'Parts', 'Filter 1, Item 004')
+  await panel('Filter 1, Item 004')
+  expect(
+    tabs()
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('aria-label')),
+  ).toEqual(['Back to Item 001', 'Back to Item 004'])
+
+  await userEvent.click(
+    tabs().getByRole('button', { name: 'Back to Item 001' }),
+  )
+  expect(await panel('Item 001')).toBeInTheDocument()
+  expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
+})
+
+test('the browser’s Back goes back one linked record', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Linked items', 'Item 004')
+  await panel('Item 004')
+  act(() => window.history.back())
+  expect(await panel('Item 001')).toBeInTheDocument()
+})

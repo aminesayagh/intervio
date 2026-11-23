@@ -41,15 +41,18 @@ test('the first page shows a header row and the first items, with the total', as
     .map((h) => h.textContent)
     // The first is the selection checkbox's column.
     .filter(Boolean)
-  // The columns that fit 1128 px by their widths, in the definition's order.
+  // Every column at its own width, in the definition's order; only those in view
+  // (and the next ones, drawn ahead) are in the page, the others scroll sideways.
   expect(headers).toEqual([
     'Name',
     'Status',
     'Owner',
+    'Updated',
     'Quantity',
     'Active',
     'Tags',
-    'Updated',
+    'Due',
+    'Planned',
   ])
   // React Aria counts the rows loaded (the first page of 30, and the header).
   expect(table).toHaveAttribute('aria-rowcount', '31')

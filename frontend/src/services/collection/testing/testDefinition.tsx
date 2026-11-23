@@ -362,29 +362,11 @@ export function itemDefinition(
         patch: (owner) => ({ owner }),
       },
     ],
-    columnPriority: [
-      'name',
-      'status',
-      'updated',
-      'owner',
-      'quantity',
-      'active',
-      'tags',
-      'due',
-      'planned',
-      'notes',
-      'website',
-      'email',
-      'phone',
-      'location',
-      'icon',
-      'avatar',
-      'files',
-    ],
     columns: [
       {
         id: 'name',
         label: 'columns.name',
+        width: 260,
         sort: 'asc',
         cell: (item) => item.name,
         field: name,
@@ -408,6 +390,13 @@ export function itemDefinition(
             <span className="truncate">{item.owner}</span>
           </span>
         ),
+      },
+      {
+        id: 'updated',
+        label: 'columns.updated',
+        width: 140,
+        sort: 'desc',
+        cell: (item) => <Day iso={item.updatedAt} />,
       },
       {
         id: 'quantity',
@@ -500,13 +489,6 @@ export function itemDefinition(
         width: 110,
         cell: (item) => <FileCount files={item.files} />,
         field: files,
-      },
-      {
-        id: 'updated',
-        label: 'columns.updated',
-        width: 140,
-        sort: 'desc',
-        cell: (item) => <Day iso={item.updatedAt} />,
       },
     ],
   }

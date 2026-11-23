@@ -5,7 +5,7 @@ import type { DataSource, Id, ListQuery, SortDirection } from './types'
 export type ColumnDefinition<T> = {
   id: string
   label: string
-  /** Width in px; the first column (the name) takes the rest of the row. */
+  /** Width in px (200 when not given): columns keep it, and the table scrolls sideways (spec 9). */
   width?: number
   cell: (record: T) => ReactNode
   /**
@@ -298,8 +298,6 @@ export type CollectionDefinition<T, C = void> = {
   source: DataSource<T, C>
   defaultSort: ListQuery['sort']
   columns: ColumnDefinition<T>[]
-  /** Which columns stay when the list narrows, most important first (spec 9). Defaults to the columns' order. */
-  columnPriority?: string[]
   filters?: FilterDefinition[]
   /** The filters "Show all" sets from another record's panel (spec 12.1). */
   scopes?: ScopeDefinition[]

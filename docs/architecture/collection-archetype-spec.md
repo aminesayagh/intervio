@@ -3,7 +3,7 @@
 **Date:** 2026-11-21  
 **Purpose:** Everything decided for the list-and-record-panel archetype, so it can be built once as a generic wrapper and reused by every collection screen.  
 **Frontend:** React 19, TanStack Query 5, React Aria Components (through `ui-kit/aria`), Motion, i18next, the app's History-API router (`services/navigation`). Libraries and their roles: section 5.
-**Sources:** decisions 109–136 in `use-cases.md`; screens 27–59 on `docs/Intervio.excalidraw` (area "List and record panel"), and 60–68 (area "Messages").
+**Sources:** decisions 109–140 in `use-cases.md`; screens 27–65 on `docs/Intervio.excalidraw` (area "List and record panel"), and 66–74 (area "Messages").
 
 Anything not written here is **not decided**. Open points are listed in section 16.
 
@@ -310,7 +310,7 @@ Every type follows the same rules: read view only without the right; saved when 
 
 ### 7.8 Messages
 
-Decision 132; screens 65 to 73. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
+Decision 132; screens 66 to 74. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
 
 - **A message** has a text, a tone (error or confirmation), an optional action (Retry, Undo), a **scope** and an optional **key**.
   - The scope is the interaction it belongs to: a record (`{collection}:record:{id}`) or the collection (`{collection}`). Leaving it removes its messages: opening another record, closing the panel, opening the full page, leaving the collection.
@@ -486,7 +486,7 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 8.5 Selecting several records
 
-Decision 134; screens 58 to 61.
+Decision 134; screens 59 to 62.
 
 - **Checkboxes:** React Aria's row selection (`selectionMode="multiple"`, `selectionBehavior="toggle"`), a checkbox at the start of each row and in the header (a dash when some rows are selected). With nothing selected, a press on a row opens its record. Once a row is selected, a press on another row adds it to the selection or takes it out (React Aria's toggle behavior), and the › button on the row still opens the record. Space selects the focused row.
 - **Select all:** the header checkbox selects the loaded rows. Records loaded later are not added.
@@ -494,11 +494,11 @@ Decision 134; screens 58 to 61.
 - **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
 - **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
 - **Changes of view:** a new search, filter or sort clears the selection.
-- **Changing several at once** (decision 135; screens 62, 63): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
+- **Changing several at once** (decision 135; screens 63, 64): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
 
 ### 8.6 A changed record keeps its place
 
-Decision 136; screens 63, 64.
+Decision 136; screens 64, 65.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
 - **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.

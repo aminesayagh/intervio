@@ -9,8 +9,10 @@ import {
   applyTheme,
   foldSidebar,
   Icon,
+  Show,
   useSidebarFolded,
   useTheme,
+  useTopBarBack,
 } from '../../ui-kit'
 import { SidebarInterventions } from '../interventions'
 
@@ -36,6 +38,7 @@ function savedCollapsed() {
 export function ClientBoardLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('client-board')
   const [menuOpen, setMenuOpen] = useState(false)
+  const back = useTopBarBack()
   const [collapsed, setCollapsed] = useState(savedCollapsed)
   const reduceMotion = useReducedMotion()
   // A record panel at medium width folds the sidebar while it is open (spec 9).
@@ -64,6 +67,19 @@ export function ClientBoardLayout({ children }: { children: ReactNode }) {
       </motion.aside>
       <div className="min-w-0 flex-1">
         <header className="flex h-14 items-center gap-3 px-4 lg:hidden">
+          {/* Up one level, when the screen offers it (decision 128). */}
+          <Show as="span" when={back} className="flex">
+            {(up) => (
+              <button
+                type="button"
+                aria-label={up.label}
+                className="flex text-muted hover:text-foreground"
+                onClick={up.run}
+              >
+                <Icon name="Arrow - Left-1" size={20} />
+              </button>
+            )}
+          </Show>
           <button
             type="button"
             aria-label={t('nav.openMenu')}

@@ -143,6 +143,8 @@ export function partDefinition(
       }),
       ready: (draft) => Boolean(draft.name?.trim()),
     },
+    // Narrow screens: its item under the name, its kind on the right.
+    row: { detail: itemName, status: (part) => <KindText part={part} /> },
     columns: [
       {
         id: 'name',

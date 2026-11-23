@@ -298,6 +298,15 @@ export type CollectionDefinition<T, C = void> = {
   source: DataSource<T, C>
   defaultSort: ListQuery['sort']
   columns: ColumnDefinition<T>[]
+  /**
+   * A record as a row, on narrow screens (spec 9, decision 121): the line under its
+   * name (a file's "PDF · 1.2 MB", an item's owner), and its status on the right.
+   * Without a detail, the panel's subtitle is used.
+   */
+  row?: {
+    detail?: (record: T) => ReactNode
+    status?: (record: T) => ReactNode
+  }
   filters?: FilterDefinition[]
   /** The filters "Show all" sets from another record's panel (spec 12.1). */
   scopes?: ScopeDefinition[]

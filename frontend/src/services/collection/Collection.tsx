@@ -67,6 +67,7 @@ import { NewRecord } from './create/NewRecord'
 import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
+import { RecordRows } from './list/RecordRows'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
@@ -86,7 +87,11 @@ import {
 } from './list/rowMarks'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './values/ValueField'
-import { isNarrowed, useCollectionState } from './list/useCollectionState'
+import {
+  isNarrowed,
+  nextSort,
+  useCollectionState,
+} from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
 
@@ -362,7 +367,25 @@ export function Collection<T, C = void>({
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
   // Several records selected (spec 8.5): only when the collection has actions for them.
-  const selectable = Boolean(definition.actions?.length)
+  // Narrow screens (decision 121): rows that open their record; no selection.
+  const narrowScreen = useLayoutMode() === 'narrow'
+  const selectable = Boolean(definition.actions?.length) && !narrowScreen
+  // The sort sits in the Filters panel there, as the rows have no headers.
+  const narrowToolbar = useMemo(
+    () =>
+      narrowScreen
+        ? {
+            sorts: definition.columns.flatMap((column) =>
+              column.sort
+                ? [{ id: column.id, label: column.label, first: column.sort }]
+                : [],
+            ),
+            onSort: state.setSort,
+          }
+        : undefined,
+    // The definition, not its columns: those are read only on narrow screens.
+    [narrowScreen, definition, state.setSort],
+  )
   const [selected, setSelected] = useState<ReadonlySet<Id>>(() => new Set())
   // A new search, filter or sort clears the selection.
   const view = JSON.stringify([listing.search, listing.filters, listing.sort])
@@ -823,7 +846,10 @@ export function Collection<T, C = void>({
                 onClear={() => select(new Set())}
               />
             </Match>
-            <Match when={narrowed || list.items.length > 0}>
+            {/* Hidden only for a collection with no records at all (decision 119),
+            not while a new sort or filter loads: it would blink, and close the
+            narrow screen's Filters panel. */}
+            <Match when={narrowed || list.items.length > 0 || !list.isSuccess}>
               <Toolbar
                 namespace={definition.i18n.namespace}
                 filters={definition.filters ?? []}
@@ -832,6 +858,7 @@ export function Collection<T, C = void>({
                 onSearch={state.setSearch}
                 onFilter={state.setFilter}
                 onClear={state.clear}
+                narrow={narrowToolbar}
               />
             </Match>
           </Switch>
@@ -887,6 +914,16 @@ export function Collection<T, C = void>({
                   </Button>
                 </Show>
               </div>
+            </Match>
+            <Match when={list.items.length > 0 && narrowScreen}>
+              <RecordRows
+                definition={definition}
+                items={shownItems}
+                label={t(definition.i18n.title)}
+                scrollRef={scrollRef}
+                more={more}
+                onOpen={definition.panel ? open : undefined}
+              />
             </Match>
             <Match when={list.items.length > 0}>
               <RecordTable
@@ -1078,12 +1115,7 @@ function RecordTableOf<T, C>({
    */
   function sortBy(id: string) {
     const column = definition.columns.find((c) => c.id === id)
-    if (!column) return
-    const first = column.sort ?? 'asc'
-    if (sort?.by !== id) onSort({ by: id, direction: first })
-    else if (sort.direction === first)
-      onSort({ by: id, direction: first === 'asc' ? 'desc' : 'asc' })
-    else onSort(null)
+    if (column) onSort(nextSort(sort, id, column.sort ?? 'asc'))
   }
 
   return (

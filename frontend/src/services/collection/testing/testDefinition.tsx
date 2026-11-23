@@ -362,6 +362,14 @@ export function itemDefinition(
         patch: (owner) => ({ owner }),
       },
     ],
+    // Narrow screens: the owner and the quantity under the name, the status chip.
+    row: {
+      detail: (item) =>
+        item.quantity === null
+          ? item.owner
+          : `${item.owner} · ${item.quantity}`,
+      status: (item) => <StatusChip status={item.status} />,
+    },
     columns: [
       {
         id: 'name',

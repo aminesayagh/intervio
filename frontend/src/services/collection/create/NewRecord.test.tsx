@@ -117,15 +117,27 @@ test('a refresh keeps what was typed in a new record', async () => {
 })
 
 test('what is typed while the record is being created is saved on it', async () => {
-  const source = show()
+  const source = itemSource(makeItems(5))
+  const definition = itemDefinition(source)
+  // The creation waits until the test lets it finish: what is typed meanwhile is
+  // typed while it is running, however slow the machine.
+  let finish = () => {}
+  const held = new Promise<void>((done) => (finish = done))
+  const create = source.create!
+  definition.source = {
+    ...source,
+    create: async (values, context) => {
+      await held
+      return create(values, context)
+    },
+  }
+  renderAt('/items', <Collection definition={definition} basePath="/items" />)
   const aside = await startNew()
-  source.settings.latencyMs = 800
   const name = within(aside).getByRole('textbox', { name: 'Title' })
   await userEvent.type(name, 'Gasket{Enter}') // ready: the creation starts
   await userEvent.type(name, 's{Enter}') // typed before it comes back
-  await waitFor(() => expect(source.items()[0].name).toBe('Gaskets'), {
-    timeout: 3000,
-  })
+  finish()
+  await waitFor(() => expect(source.items()[0].name).toBe('Gaskets'))
 })
 
 test('without a way to remove records, "Record created" offers no Undo', async () => {

@@ -20,6 +20,21 @@ export type Listing = {
   sort: Sort | null
 }
 
+/**
+ * The sort after choosing a column (its header, or the narrow screen's Filters):
+ * its first direction, then reversed, then the collection's default order (null).
+ */
+export function nextSort(
+  sort: Sort | null,
+  by: string,
+  first: Sort['direction'],
+): Sort | null {
+  if (sort?.by !== by) return { by, direction: first }
+  if (sort.direction === first)
+    return { by, direction: first === 'asc' ? 'desc' : 'asc' }
+  return null
+}
+
 /** True when a search or a filter narrows the list. */
 export const isNarrowed = (listing: Listing) =>
   listing.search.trim() !== '' ||

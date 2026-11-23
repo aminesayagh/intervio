@@ -69,7 +69,7 @@ import { newRecordKey } from './record/recordQuery'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
-import { Awake } from './values/awake'
+import { Awake, useHandFocus } from './values/awake'
 import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
 import { OpenLinked, type Step } from './record/linked'
@@ -1233,29 +1233,9 @@ function CellValueOf<T, C>({
   const marks = useMarks()
   const awake = useMark((_, store) => store.isAwake(id))
   // Woken by the focus on its text: the focus goes on to the editor.
-  const box = useRef<HTMLSpanElement>(null)
-  const refocus = useRef(false)
-  useEffect(() => {
-    if (!awake || !refocus.current) return
-    refocus.current = false
-    // After a frame: when the focused text leaves, React Aria first puts the focus
-    // back on the row, in its own effects.
-    const frame = requestAnimationFrame(() =>
-      box.current
-        ?.querySelector<HTMLElement>('input, [role="spinbutton"]')
-        ?.focus(),
-    )
-    return () => cancelAnimationFrame(frame)
-  }, [awake])
+  const { boxRef, onFocusCapture } = useHandFocus<HTMLSpanElement>(awake)
   return (
-    <span
-      ref={box}
-      className="contents"
-      onFocusCapture={(event) => {
-        if ((event.target as HTMLElement).dataset.asleep !== undefined)
-          refocus.current = true
-      }}
-    >
+    <span ref={boxRef} className="contents" onFocusCapture={onFocusCapture}>
       <Awake value={awake}>
         <SharedNote value={note}>
           <ValueField

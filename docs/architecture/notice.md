@@ -45,8 +45,8 @@ Two terms used below:
 
 ## From the performance review (2026-11-23)
 
-### 9. Opening a record shows its content after about 360 ms
+### 9. Archiving a record is the slowest action left
 
-- **Today:** after the table work of 2026-11-23 (fixed column widths, the table no longer rendering when the open record changes; spec 8, 9), measured in a production build on this machine, before → after: opening a record 490 → 362 ms until its content shows (main thread blocked 225 → 62 ms; the panel itself starts sliding in after about 60 ms), closing 211 → 129 ms (blocked 260 → 67 ms), archiving 333 → 260 ms (blocked 473 → 165 ms). Next record (↓) about 100 ms, sort about 125 ms, select a row about 70 ms: unchanged.
-- **Why the rest:** the table is out of it now. Opening a record waits for the panel's own content: React renders it in small slices while the panel slides in (its values come one render after it opens), about 300 ms of JavaScript for the date pickers, number fields, the description and the sections.
-- **Next:** make the panel's content lighter, as the table's cells are: values shown as text, their editors mounted when the person reaches them; then measure again on a production build, and on a faster machine to know how much is this one.
+- **Today:** at the end of 2026-11-23 (production build, this machine, medians): opening a record shows its content after about 120 ms (first frame about 75 ms; it was 490 ms in the morning), the next record about 70 ms, closing about 130 ms, a linked record about 155 ms, sorting about 160 ms, selecting a row about 100 ms. Archiving, from the confirmation to the panel closed, takes about 260–300 ms (main thread blocked about 200 ms).
+- **Why:** not looked into yet. It closes the confirmation dialog and the panel, takes the row out of the table (which renders it again), and shows the message with Undo, in the same moment.
+- **Next:** trace it as opening was traced, and see which of these costs most.

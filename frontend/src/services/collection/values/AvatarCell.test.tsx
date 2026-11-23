@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -78,6 +79,7 @@ test('the panel removes the picture', async () => {
     await screen.findByRole('button', { name: 'Open Item 001' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  await reachValue(aside, 'Picture')
   await userEvent.click(within(aside).getByRole('button', { name: 'Remove' }))
   await waitFor(() => expect(source.items()[0].avatar).toBeNull())
   expect(

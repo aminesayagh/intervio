@@ -81,7 +81,11 @@ export function DateRangeCell<T>({
   if (!awake) {
     const range = toRange(saved, time)
     return (
-      <Asleep text={range && `${text(range.start)} – ${text(range.end)}`} />
+      <Asleep
+        text={range && `${text(range.start)} – ${text(range.end)}`}
+        look={look}
+        icon="calendar"
+      />
     )
   }
   return (

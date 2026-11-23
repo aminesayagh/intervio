@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, cn, Icon, Show } from '../../ui-kit'
 import { useCollectionQuery } from '../data/collectionQuery'
@@ -13,6 +14,7 @@ import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { ValueField } from '../values/ValueField'
+import { WakeOnReach } from '../values/WakeOnReach'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -92,21 +94,23 @@ export function RecordBody<T, C>({
               <div key={property.id} className="contents">
                 <dt className="text-muted">{t(property.label)}</dt>
                 <dd className="min-w-0">
-                  <ValueField
-                    record={shown}
-                    field={property.field}
-                    allowed={canEdit(shown, property.id)}
-                    read={property.value}
-                    label={t(property.label)}
-                    namespace={definition.i18n.namespace}
-                    save={(patch) =>
-                      save(shown, patch, { label: t(property.label) })
-                    }
-                    onInvalid={(reason) =>
-                      report(shown, t(property.label), reason)
-                    }
-                    look="panel"
-                  />
+                  <WakeOnReach>
+                    <ValueField
+                      record={shown}
+                      field={property.field}
+                      allowed={canEdit(shown, property.id)}
+                      read={property.value}
+                      label={t(property.label)}
+                      namespace={definition.i18n.namespace}
+                      save={(patch) =>
+                        save(shown, patch, { label: t(property.label) })
+                      }
+                      onInvalid={(reason) =>
+                        report(shown, t(property.label), reason)
+                      }
+                      look="panel"
+                    />
+                  </WakeOnReach>
                 </dd>
               </div>
             ))}
@@ -150,7 +154,9 @@ export function RecordBody<T, C>({
         })}
 
         <Show when={layout === 'panel'} className="flex flex-col gap-6">
-          <Sections definition={definition} panel={panel} record={shown} />
+          <WhenNear>
+            <Sections definition={definition} panel={panel} record={shown} />
+          </WhenNear>
         </Show>
       </div>
 
@@ -160,6 +166,35 @@ export function RecordBody<T, C>({
         </aside>
       </Show>
     </div>
+  )
+}
+
+/**
+ * Its content once it comes near the visible part of the panel: below the values and
+ * the description, the linked records (and their requests) wait until the person
+ * scrolls toward them, so opening a record doesn't build them.
+ */
+function WhenNear({ children }: { children: ReactNode }) {
+  const [near, setNear] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  )
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const element = ref.current
+    if (near || !element) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true)
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near])
+  return (
+    <Show when={near} fallback={<div ref={ref} className="h-px" />}>
+      {children}
+    </Show>
   )
 }
 

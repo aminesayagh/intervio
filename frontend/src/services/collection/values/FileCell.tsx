@@ -182,6 +182,7 @@ export function FileCell<T>({
                 size="sm"
                 isDisabled={busy}
                 className="-ms-3 mt-1"
+                data-wake
               >
                 {t('fields.addFiles')}
               </Button>

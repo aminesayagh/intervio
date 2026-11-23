@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue } from 'react'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ActionMenu,
@@ -99,9 +99,6 @@ export function RecordPanel<T, C>({
     fromList,
     onUnavailable,
   })
-  // The values come one render after the panel opens: the panel shows at once (its
-  // slide-in hides the wait) and the table makes room in the same render.
-  const opened = useDeferredValue(true, false)
   /** The record, once it can show (loaded, not removed). */
   const visible = unavailable ? undefined : record
   const shown = visible !== undefined
@@ -185,7 +182,9 @@ export function RecordPanel<T, C>({
         </Match>
         <Match when={record}>
           {(loaded) => (
-            <Show when={opened} className="pt-2 pb-8">
+            // In the same render as the panel: the table no longer renders when a record
+            // opens (spec 8), and the panel's editors wait until they are reached.
+            <div className="pt-2 pb-8">
               <RecordBody
                 definition={definition}
                 panel={panel}
@@ -197,7 +196,7 @@ export function RecordPanel<T, C>({
                 focusTitle={focusTitle}
                 layout="panel"
               />
-            </Show>
+            </div>
           )}
         </Match>
       </Switch>

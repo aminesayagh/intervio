@@ -13,6 +13,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 import { DateCell } from './DateCell'
@@ -89,6 +90,7 @@ test('the panel picks a date too, even where there was none', async () => {
     await screen.findByRole('button', { name: 'Open Item 006' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 006' })
+  await reachValue(aside, 'Due')
   await userEvent.click(due(aside).getByRole('button', { name: /calendar/i }))
   const calendar = await screen.findByRole('dialog')
   const days = within(calendar)

@@ -5,6 +5,7 @@ import '../i18n'
 import { Collection } from './Collection'
 import { itemSource, makeItems } from './testing/items'
 import { stubElementSizes } from './testing/layout'
+import { seeSections } from './testing/panel'
 import { renderAt } from './testing/render'
 import { itemDefinition } from './testing/testDefinition'
 
@@ -143,6 +144,7 @@ test('an Undo that fails says the record stays', async () => {
   )
   const jack = await screen.findByRole('complementary', { name: 'Jack' })
   // Its linked records load first (they ask the same source), then the Undo fails.
+  seeSections()
   const linked = (await within(jack).findByText('Linked items')).closest(
     'section',
   )!

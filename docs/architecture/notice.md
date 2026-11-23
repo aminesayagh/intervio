@@ -1,6 +1,6 @@
 # Notice: points to come back to
 
-Points left open on purpose, each with what a person notices today and what it waits for. When one is done, remove it from this file. (Points 1 and 2, record actions served globally, were built on 2026-11-23: spec 8.3.)
+Points left open on purpose, each with what a person notices today and what it waits for. When one is done, remove it from this file. (Points 1 and 2, record actions served globally, were built on 2026-11-23: spec 8.3. Point 8, pages matched by hand, was built on 2026-11-23 with React Router: spec 6.3.)
 
 ## From step 12 (drilling into linked records, 2026-11-23)
 
@@ -14,14 +14,6 @@ Two terms used below:
 - **Today:** a section can give its linked collection a context (`SectionDefinition.context`, built 2026-11-23), and the section's list asks for its records with it. But a record opened from that section in the panel, and the list "Show all" opens, get no context: the address keeps only the linked collection's key and the record's id.
 - **Why it matters later:** an intervention's resource panel with a section "Requests it served": opening one of those requests, or showing them all, must still ask within that intervention.
 - **Next:** decide how the context travels in the address (for example the parent's id, which the linked collection turns back into its context), shaped on the first real case.
-
-## From moving the address to nuqs (2026-11-23)
-
-### 8. Pages are still matched by hand
-
-- **Today:** `app/App.tsx` finds the page for an address in its own tables (exact paths, then prefixes such as `/interventions/`), and `services/navigation/router.ts` pushes entries and follows the path. nuqs now handles the query string, but it doesn't match paths.
-- **Why:** matching paths, path parameters (`/interventions/{id}`), nested layouts and redirects is a router's job (TanStack Router or React Router), and nuqs has an adapter for both.
-- **Next:** decide whether to move the pages to a routing library, and which one; the collection's history marks (`history.state`) must survive the move.
 
 ## From the performance review (2026-11-23)
 

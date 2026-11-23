@@ -141,7 +141,12 @@ test('an Undo that fails says the record stays', async () => {
     within(aside).getByRole('textbox', { name: 'Title' }),
     'Jack{Enter}',
   )
-  await screen.findByRole('complementary', { name: 'Jack' })
+  const jack = await screen.findByRole('complementary', { name: 'Jack' })
+  // Its linked records load first (they ask the same source), then the Undo fails.
+  const linked = (await within(jack).findByText('Linked items')).closest(
+    'section',
+  )!
+  await waitFor(() => expect(linked.textContent).toMatch(/\d/))
   source.settings.failNext = true
   await userEvent.click(screen.getByRole('button', { name: 'Undo' }))
   expect(

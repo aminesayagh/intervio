@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Button, Segmented } from '../../ui-kit'
 import { Collection } from '../Collection'
 import { itemSource } from '../testing/items'
+import { partDefinition, partSource } from '../testing/parts'
 import { itemDefinition } from '../testing/testDefinition'
 
 // ponytail: a developer's page, never built into production (spec 17.1), so its few
@@ -42,9 +43,26 @@ const rights = () => ({
         ? ['status']
         : [],
 })
+const parts = partSource()
 const definitions = {
-  full: itemDefinition(full, 'showcase-items', rights),
+  full: itemDefinition(
+    full,
+    'showcase-items',
+    rights,
+    () => partsDefinition,
+    '/dev/collection',
+  ),
   empty: itemDefinition(empty, 'showcase-empty', rights),
+}
+/** The second collection, linked to the items (step 12): its list is /dev/parts. */
+const partsDefinition = partDefinition(parts, () => definitions.full, {
+  key: 'showcase-parts',
+  basePath: '/dev/parts',
+})
+
+/** /dev/parts: the parts linked to the showcase's items, where "Show all" drills. */
+export function PartsShowcase() {
+  return <Collection definition={partsDefinition} />
 }
 
 type Latency = '0' | '300' | '1500'
@@ -62,7 +80,7 @@ export default function CollectionShowcase() {
   const [refusing, setRefusing] = useState(false)
 
   function set(change: Partial<{ latency: Latency; failing: boolean }>) {
-    for (const source of [full, empty]) {
+    for (const source of [full, empty, parts]) {
       if (change.latency) source.settings.latencyMs = Number(change.latency)
       if (change.failing !== undefined) source.settings.failing = change.failing
     }

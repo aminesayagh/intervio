@@ -133,5 +133,11 @@
   "held": {
     "text": "Les éléments modifiés gardent leur place.",
     "sort": "Trier maintenant"
+  },
+  "section": {
+    "showAll": "Tout afficher"
+  },
+  "scope": {
+    "remove": "Retirer « {{label}} »"
   }
 }

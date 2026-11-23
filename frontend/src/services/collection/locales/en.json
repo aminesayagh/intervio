@@ -133,5 +133,11 @@
   "held": {
     "text": "Changed records keep their place.",
     "sort": "Sort now"
+  },
+  "section": {
+    "showAll": "Show all"
+  },
+  "scope": {
+    "remove": "Remove “{{label}}”"
   }
 }

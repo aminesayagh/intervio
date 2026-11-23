@@ -79,7 +79,12 @@ function write(storage: () => Storage, key: string, value: string | null) {
  * browser remembers the last sort chosen. `query` is what the data source is asked:
  * the listing, with the default order when no sort is chosen.
  */
-export function useCollectionState(key: string, defaultSort: Sort) {
+export function useCollectionState(
+  key: string,
+  defaultSort: Sort,
+  /** Filters "Clear filters" keeps: the scopes, which only their chip removes. */
+  kept: string[] = [],
+) {
   const params = useSearchParams()
   const address = params.toString()
   const tabKey = `intervio.collection.${key}.list`
@@ -142,7 +147,14 @@ export function useCollectionState(key: string, defaultSort: Sort) {
     setSearch: (search: string) => change({ ...listing, search }),
     setFilter: (id: string, values: string[]) =>
       change({ ...listing, filters: { ...listing.filters, [id]: values } }),
-    clear: () => change({ ...listing, search: '', filters: {} }),
+    clear: () =>
+      change({
+        ...listing,
+        search: '',
+        filters: Object.fromEntries(
+          Object.entries(listing.filters).filter(([id]) => kept.includes(id)),
+        ),
+      }),
     /** A sort chosen, or null to go back to the default order. */
     setSort: (sort: Sort | null) => {
       write(

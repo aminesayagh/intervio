@@ -8,7 +8,9 @@ import {
   MenuTrigger,
   Show,
 } from '../../ui-kit'
-import type { FilterDefinition } from '../definition'
+import { useQuery } from '@tanstack/react-query'
+import { keys } from '../data/collectionQuery'
+import type { FilterDefinition, ScopeDefinition } from '../definition'
 import { isNarrowed, type Listing } from './useCollectionState'
 
 /** The delay between the last key typed and the search (spec 6.3). */
@@ -18,6 +20,7 @@ const SEARCH_DELAY = 250
 export function Toolbar({
   namespace,
   filters,
+  scopes = [],
   listing,
   onSearch,
   onFilter,
@@ -25,15 +28,42 @@ export function Toolbar({
 }: {
   namespace: string
   filters: FilterDefinition[]
+  scopes?: ScopeDefinition[]
   listing: Listing
   onSearch: (search: string) => void
   onFilter: (id: string, values: string[]) => void
   onClear: () => void
 }) {
   const { t } = useTranslation('collection')
+  // "Clear filters" leaves the scope: only its chip's × removes it (spec 12.1).
+  const scopeIds = new Set(scopes.map((scope) => scope.id))
+  const unscoped = {
+    ...listing,
+    filters: Object.fromEntries(
+      Object.entries(listing.filters).filter(([id]) => !scopeIds.has(id)),
+    ),
+  }
   return (
     <div className="flex flex-wrap items-center gap-2">
       <SearchField value={listing.search} onSearch={onSearch} />
+      {scopes.flatMap((scope) =>
+        (listing.filters[scope.id] ?? []).map((parentId) => (
+          <ScopeChip
+            key={`${scope.id}:${parentId}`}
+            namespace={namespace}
+            scope={scope}
+            parentId={parentId}
+            onRemove={() =>
+              onFilter(
+                scope.id,
+                (listing.filters[scope.id] ?? []).filter(
+                  (id) => id !== parentId,
+                ),
+              )
+            }
+          />
+        )),
+      )}
       {filters.map((filter) => (
         <FilterMenu
           key={filter.id}
@@ -43,7 +73,7 @@ export function Toolbar({
           onChange={(values) => onFilter(filter.id, values)}
         />
       ))}
-      <Show when={isNarrowed(listing)}>
+      <Show when={isNarrowed(unscoped)}>
         <Button size="sm" look="ghost" onPress={onClear}>
           {t('clearFilters')}
         </Button>
@@ -131,5 +161,45 @@ function FilterMenu({
         />
       </MenuPopover>
     </MenuTrigger>
+  )
+}
+
+/**
+ * The scope "Show all" set (spec 12.1): "Linked to: Pump specification", with × to
+ * see the whole collection. The parent's name comes from its own collection.
+ */
+function ScopeChip({
+  namespace,
+  scope,
+  parentId,
+  onRemove,
+}: {
+  namespace: string
+  scope: ScopeDefinition
+  parentId: string
+  onRemove: () => void
+}) {
+  const { t } = useTranslation([namespace, 'collection'])
+  const parent = scope.parent()
+  const record = useQuery({
+    queryKey: keys.record(parent.key, parentId),
+    queryFn: () => parent.source.one(parentId, undefined),
+  })
+  const name = record.data
+    ? (parent.panel?.title(record.data) ?? parentId)
+    : '…'
+  const label = t(scope.label, { name })
+  return (
+    <span className="flex h-8 items-center gap-1 rounded-[var(--field-radius)] bg-default ps-3 pe-1 text-sm">
+      {label}
+      <button
+        type="button"
+        aria-label={t('collection:scope.remove', { label })}
+        onClick={onRemove}
+        className="flex cursor-pointer items-center rounded-[var(--field-radius)] p-1 text-muted outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-foreground"
+      >
+        <Icon name="lucide/x" size={14} />
+      </button>
+    </span>
   )
 }

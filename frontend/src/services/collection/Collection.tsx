@@ -101,19 +101,24 @@ type More = {
 export function Collection<T, C = void>({
   definition,
   context,
-  basePath,
+  basePath: basePathProp,
 }: {
   definition: CollectionDefinition<T, C>
   context?: C
   /**
    * The list's address (spec 12, 13); a record's full page is {basePath}/{id}.
-   * Defaults to /{definition.key}.
+   * Defaults to the definition's, else /{definition.key}.
    */
   basePath?: string
 }) {
+  const basePath = basePathProp ?? definition.basePath
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const state = useCollectionState(definition.key, definition.defaultSort)
+  const state = useCollectionState(
+    definition.key,
+    definition.defaultSort,
+    definition.scopes?.map((scope) => scope.id),
+  )
   const { listing } = state
   const narrowed = isNarrowed(listing)
   const list = useCollectionQuery({
@@ -625,13 +630,23 @@ export function Collection<T, C = void>({
     const values = {
       ...definition.create?.defaults(context as C),
     } as Partial<T>
-    for (const filter of definition.filters ?? []) {
+    // A list filtered or scoped to one value creates records with it (spec 7.5, 12.1).
+    for (const filter of [
+      ...(definition.filters ?? []),
+      ...(definition.scopes ?? []),
+    ]) {
       const chosen = listing.filters[filter.id] ?? []
       if (chosen.length === 1 && filter.patch)
         Object.assign(values, filter.patch(chosen[0]))
     }
     return values
-  }, [definition.create, definition.filters, listing.filters, context])
+  }, [
+    definition.create,
+    definition.filters,
+    definition.scopes,
+    listing.filters,
+    context,
+  ])
   const createRecord = useCallback(
     async (draft: Partial<T>) => {
       if (!source.create) throw new Error(`${key} cannot be created`)
@@ -987,6 +1002,7 @@ export function Collection<T, C = void>({
               <Toolbar
                 namespace={definition.i18n.namespace}
                 filters={definition.filters ?? []}
+                scopes={definition.scopes}
                 listing={listing}
                 onSearch={state.setSearch}
                 onFilter={state.setFilter}

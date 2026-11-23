@@ -1,0 +1,20 @@
+{
+  "title": "Pièces",
+  "count_one": "{{count}} pièce",
+  "count_other": "{{count}} pièces",
+  "empty": {
+    "title": "Aucune pièce pour l’instant",
+    "text": "Ajoutez la première pour la retrouver ici."
+  },
+  "create": { "add": "+ Ajouter une pièce" },
+  "errors": { "nameRequired": "Le nom ne peut pas être vide." },
+  "type": "Pièce",
+  "columns": {
+    "name": "Nom",
+    "kind": "Type",
+    "quantity": "Quantité",
+    "item": "Élément"
+  },
+  "kinds": { "seal": "Joint", "bearing": "Roulement", "filter": "Filtre" },
+  "scopes": { "item": "Lié à : {{name}}" }
+}

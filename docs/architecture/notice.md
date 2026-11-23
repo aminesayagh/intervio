@@ -9,17 +9,11 @@ Two terms used below:
 - **A list's own records and linked records.** On the Items page, the items in the table are its own records. A part opened in that page's panel, from a section of Item 001, is a linked record: it belongs to the Parts collection, which is not on screen.
 - **Context.** What a collection lives inside, passed to every data request (spec 4). For example, the intervention whose Resources tab lists its resources.
 
-### 3. A section passes no context to its collection
+### 3. A record opened from a section, and "Show all", get no context
 
-- **Today:** nothing shows in the showcase (items and parts need no context).
-- **Why it matters later:** an intervention's resource panel with a section "Requests it served" must ask for that intervention's requests, so the Requests collection needs the intervention as its context.
-- **Next:** a `context: (record, context) => …` on the section, shaped on the first real case (step 13).
-
-### 4. A record with its own page opens in the panel
-
-- **Today:** every linked record opens in the panel. Decision 137 (screen 51) says a record people work inside, such as an intervention, opens its page instead.
-- **Why:** the definition needs to say "this record has its own page at this address" (`opensAsPage`), and the first collection that needs it, interventions, is not on the collection component yet.
-- **Next:** add `opensAsPage` with the interventions collection.
+- **Today:** a section can give its linked collection a context (`SectionDefinition.context`, built 2026-11-23), and the section's list asks for its records with it. But a record opened from that section in the panel, and the list "Show all" opens, get no context: the address keeps only the linked collection's key and the record's id.
+- **Why it matters later:** an intervention's resource panel with a section "Requests it served": opening one of those requests, or showing them all, must still ask within that intervention.
+- **Next:** decide how the context travels in the address (for example the parent's id, which the linked collection turns back into its context), shaped on the first real case.
 
 ## From moving the address to nuqs (2026-11-23)
 

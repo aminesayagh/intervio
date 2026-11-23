@@ -335,3 +335,50 @@ test('on a narrow screen, the top bar’s ‹ goes up to the view left', async (
   expect(await panel('Item 001')).toBeInTheDocument()
   expect(window.location.pathname).toBe('/items')
 })
+
+test('a linked record people work inside opens its page; Back returns to the panel', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Parts', 'Bearing 3, Item 001')
+  // Its own page (screen 51), not the panel.
+  expect(
+    await screen.findByRole('heading', { name: 'Bearing 3, Item 001' }),
+  ).toBeInTheDocument()
+  expect(window.location.pathname).toMatch(/^\/parts\/[0-9a-f-]+$/)
+  act(() => window.history.back())
+  expect(await panel('Item 001')).toBeInTheDocument()
+})
+
+test('a section passes its context to its collection', async () => {
+  const items = itemSource(makeItems(8))
+  const parts = partSource()
+  const asked: unknown[] = []
+  const list = parts.list
+  parts.list = (query, context) => {
+    asked.push(context)
+    return list(query, context)
+  }
+  const definitions: {
+    items?: CollectionDefinition<Item>
+    parts?: CollectionDefinition<Part>
+  } = {}
+  definitions.items = itemDefinition(
+    items,
+    'test-items',
+    undefined,
+    () => definitions.parts!,
+    '/items',
+  )
+  definitions.parts = partDefinition(parts, () => definitions.items!)
+  const panelDefinition = definitions.items.panel!
+  panelDefinition.sections = panelDefinition.sections!.map((section) =>
+    section.id === 'parts'
+      ? { ...section, context: () => ({ site: 'Building B' }) }
+      : section,
+  )
+  renderAt(
+    `/items?open=${ITEM_001}`,
+    <Collection definition={definitions.items} />,
+  )
+  await openLinked('Item 001', 'Parts', 'Filter 1, Item 001')
+  expect(asked).toContainEqual({ site: 'Building B' })
+})

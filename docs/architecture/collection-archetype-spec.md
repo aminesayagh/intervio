@@ -619,7 +619,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
 - A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
 - The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
 - Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
-- Not built yet: a section passes no `context` to its collection, and `opensAsPage` (a record with its own page) waits for the first collection that needs it (notice, points 3 and 4). Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
+- Built since (2026-11-23): a section's `context` reaches its list (`SectionDefinition.context`), and `opensAsPage` opens a record people work inside on its own page from a section (a link on the full page); in the showcase, a part of kind Bearing stands for one. Not built yet: a record opened from a section in the panel, and "Show all", get no context (notice, point 3). Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
 
 
 - **In the panel:**

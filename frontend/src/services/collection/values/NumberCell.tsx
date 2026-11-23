@@ -45,7 +45,7 @@ export function NumberCell<T>({
     }
   }
 
-  if (!awake) return <Asleep text={text(shown)} end />
+  if (!awake) return <Asleep text={text(shown)} end look={look} icon="steps" />
   return (
     <NumberInput
       aria-label={label}

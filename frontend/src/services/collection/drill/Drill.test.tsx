@@ -15,6 +15,7 @@ import type { CollectionDefinition } from '../definition'
 import { itemSource, makeItems, type Item } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
 import { partDefinition, partSource, type Part } from '../testing/parts'
+import { seeSections } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { Folds } from './Folded'
 import { itemDefinition } from '../testing/testDefinition'
@@ -57,6 +58,7 @@ function show(url: string) {
 const panel = (name: string) => screen.findByRole('complementary', { name })
 async function showAllParts() {
   const aside = await panel('Item 001')
+  seeSections()
   const section = (await within(aside).findByText('Parts')).closest('section')!
   await userEvent.click(
     await within(section).findByRole('button', { name: /Show all/ }),
@@ -66,6 +68,7 @@ async function showAllParts() {
 test('a section shows its first five linked records and their count', async () => {
   show(`/items?open=${ITEM_001}`)
   const aside = await panel('Item 001')
+  seeSections()
   const section = (await within(aside).findByText('Parts')).closest('section')!
   expect(await within(section).findByText('7')).toBeInTheDocument()
   expect(within(section).getAllByRole('listitem')).toHaveLength(5)
@@ -174,6 +177,7 @@ const tabs = () =>
 /** Clicks a linked record in a section of the panel shown. */
 async function openLinked(panelName: string, section: string, name: string) {
   const aside = await panel(panelName)
+  seeSections()
   const found = (await within(aside).findByText(section)).closest('section')!
   await userEvent.click(await within(found).findByRole('button', { name }))
 }
@@ -249,6 +253,7 @@ test('a linked part is archived from the item’s panel: the panel goes back, th
 
   // One step back, to the item, whose Parts section counts one part less.
   const item = await panel('Item 001')
+  seeSections()
   const section = (await within(item).findByText('Parts')).closest('section')!
   expect(await within(section).findByText('6')).toBeInTheDocument()
   expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()

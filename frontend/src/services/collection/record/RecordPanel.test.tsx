@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue, seeSections } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -30,7 +31,8 @@ test('Open shows the record beside the list, marks its row, and adds it to the a
   expect(within(aside).getByRole('heading', { name: 'Item 002' })).toHaveFocus()
   expect(within(aside).getByText('Valid')).toBeInTheDocument()
   expect(within(aside).getByText('Karim Benali')).toBeInTheDocument()
-  expect(within(aside).getByText('Linked items')).toBeInTheDocument()
+  seeSections()
+  expect(await within(aside).findByText('Linked items')).toBeInTheDocument()
   expect(window.location.search).toBe(`?open=${id(2)}`)
   const row = within(screen.getByRole('grid'))
     .getByDisplayValue('Item 002')
@@ -152,6 +154,7 @@ test('the panel chooses a status, and edits the quantity as a number', async () 
   await waitFor(() => expect(source.items()[0].status).toBe('valid'))
 
   // Item 001 has no quantity: type one; the number field saves on Enter.
+  await reachValue(aside, 'Quantity')
   const quantity = within(aside).getByRole('textbox', { name: 'Quantity' })
   await userEvent.type(quantity, '3{Enter}')
   await waitFor(() => expect(source.items()[0].quantity).toBe(3))
@@ -196,5 +199,25 @@ test('a change refused as no longer allowed says so, and the value comes back', 
   ).toBeInTheDocument()
   expect(within(aside).getByRole('textbox', { name: 'Title' })).toHaveValue(
     'Item 001',
+  )
+})
+
+test('the panel builds no date or number editor until a value is reached; Tab reaches one and types in it', async () => {
+  show()
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Open Item 001' }),
+  )
+  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  expect(within(aside).queryByRole('spinbutton')).toBeNull()
+  expect(within(aside).queryByRole('textbox', { name: 'Quantity' })).toBeNull()
+
+  // The keyboard reaches the quantity's text: it wakes, and the focus goes on to it.
+  const box = within(aside).getByText('Quantity', { selector: 'dt' })
+    .nextElementSibling as HTMLElement
+  box.querySelector<HTMLElement>('[data-asleep]')!.focus()
+  await waitFor(() =>
+    expect(
+      within(aside).getByRole('textbox', { name: 'Quantity' }),
+    ).toHaveFocus(),
   )
 })

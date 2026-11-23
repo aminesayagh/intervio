@@ -66,7 +66,10 @@ export function DateCell<T>({
     }
   }
 
-  if (!awake) return <Asleep text={text(toValue(saved, time))} />
+  if (!awake)
+    return (
+      <Asleep text={text(toValue(saved, time))} look={look} icon="calendar" />
+    )
   return (
     <DatePicker
       aria-label={label}

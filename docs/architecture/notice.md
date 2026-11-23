@@ -45,8 +45,8 @@ Two terms used below:
 
 ## From the performance review (2026-11-23)
 
-### 9. Opening a record shows its content after about 360 ms
+### 9. Opening a record: what is left
 
-- **Today:** after the table work of 2026-11-23 (fixed column widths, the table no longer rendering when the open record changes; spec 8, 9), measured in a production build on this machine, before → after: opening a record 490 → 362 ms until its content shows (main thread blocked 225 → 62 ms; the panel itself starts sliding in after about 60 ms), closing 211 → 129 ms (blocked 260 → 67 ms), archiving 333 → 260 ms (blocked 473 → 165 ms). Next record (↓) about 100 ms, sort about 125 ms, select a row about 70 ms: unchanged.
-- **Why the rest:** the table is out of it now. Opening a record waits for the panel's own content: React renders it in small slices while the panel slides in (its values come one render after it opens), about 300 ms of JavaScript for the date pickers, number fields, the description and the sections.
-- **Next:** make the panel's content lighter, as the table's cells are: values shown as text, their editors mounted when the person reaches them; then measure again on a production build, and on a faster machine to know how much is this one.
+- **Today:** after the table work and the light panel of 2026-11-23, measured in a production build on this machine (medians; runs vary by up to 100 ms): opening a record shows its content after about 160–180 ms (it was 490 at the start of the day), opening a linked record about 180 ms (was 280), closing about 150 ms, the next record (↓) about 90 ms. The first frame now comes after about 100 ms, since the whole panel is built in the first render.
+- **Why the rest:** in that first render, the panel's shell and slide-in, the title's field, the picture and files fields (each about 7 ms in development), the link fields (website, email, phone, location), the description and notes.
+- **Next, if needed:** let the link, picture and files fields sleep too (as dates and numbers do now); measure on a faster machine to know how much of the rest is this one.

@@ -3,14 +3,21 @@ import {
   getLocalTimeZone,
   type DateValue,
 } from '@internationalized/date'
-import { createContext, useContext } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  type FocusEvent,
+} from 'react'
 import { useLocale } from '../../ui-kit'
 
 /**
- * Whether a cell's editor is mounted. A table cell holding a date or a number shows
- * it as text until its row is under the pointer or the focus: React Aria's date and
- * number fields are the costliest part of a row, and most rows are only looked at.
- * Outside the table (the panel, a new record), editors are always awake.
+ * Whether a value's editor is mounted. A date, a period or a number shows as text
+ * until the person reaches it (decision 139): in the table, its row under the pointer
+ * or the focus; in the panel, the value itself. React Aria's date and number fields
+ * are the costliest part of a row and of a panel, and most values are only looked at.
+ * Where nothing says otherwise (a new record), editors are awake.
  */
 export const Awake = createContext(true)
 export const useAwake = () => useContext(Awake)
@@ -37,4 +44,32 @@ export function useNumberText(decimals: number) {
   })
   return (value: number | null) =>
     value === null ? null : format.format(value)
+}
+
+/**
+ * When the focus woke a value (it reached the text), the focus goes on to the editor
+ * once it is there. Put `boxRef` and `onFocusCapture` on an element around the value.
+ */
+export function useHandFocus<E extends HTMLElement>(awake: boolean) {
+  const boxRef = useRef<E>(null)
+  const pending = useRef(false)
+  useEffect(() => {
+    if (!awake || !pending.current) return
+    pending.current = false
+    // After a frame: when the focused text leaves, React Aria may first put the focus
+    // back where it was (a table's row), in its own effects.
+    const frame = requestAnimationFrame(() =>
+      boxRef.current
+        ?.querySelector<HTMLElement>('input, [role="spinbutton"]')
+        ?.focus(),
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [awake])
+  return {
+    boxRef,
+    onFocusCapture: (event: FocusEvent) => {
+      if ((event.target as HTMLElement).dataset.asleep !== undefined)
+        pending.current = true
+    },
+  }
 }

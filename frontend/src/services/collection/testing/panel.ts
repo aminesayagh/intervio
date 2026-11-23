@@ -20,3 +20,11 @@ export async function reachValue(panel: HTMLElement, label: string) {
   await userEvent.hover(box)
   return box
 }
+
+/**
+ * The pointer reached the row holding an element: its cells' controls wake
+ * (decision 139). Look the control up again afterwards: the still one is gone.
+ */
+export async function reachRow(inside: HTMLElement) {
+  await userEvent.hover(inside.closest<HTMLElement>('[role="row"]')!)
+}

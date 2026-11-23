@@ -6,6 +6,7 @@ import { Collection } from '../Collection'
 import type { TextField } from '../definition'
 import { itemSource, makeItems, type Item } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachRow } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -35,6 +36,9 @@ function show() {
 test('selecting a row renders that row again, not the others', async () => {
   const count = show()
   await screen.findByText('8 items')
+  // The pointer reaches the two rows first: their checkboxes wake (decision 139).
+  await reachRow(await screen.findByDisplayValue('Item 001'))
+  await reachRow(await screen.findByDisplayValue('Item 002'))
   const checkbox = await screen.findByRole('checkbox', {
     name: 'Select Item 001',
   })
@@ -74,4 +78,21 @@ test('opening a record, and the next one, doesn’t render the table again', asy
   await screen.findByRole('complementary', { name: 'Item 002' })
   // Before the table got only stable props, it rendered with every change of record.
   expect(renders).toBe(0)
+})
+
+test('a row builds its controls only once it is reached', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(8)))} />,
+  )
+  await screen.findByText('8 items')
+  const row = screen
+    .getByRole('grid')
+    .querySelector<HTMLElement>('[role="row"][data-key]')!
+  // Still: no menu, no checkbox, no text field of React Aria yet (decision 139).
+  const controls = () =>
+    row.querySelectorAll('[aria-haspopup], input[type="checkbox"]').length
+  expect(controls()).toBe(0)
+  await reachRow(row)
+  expect(controls()).toBeGreaterThan(0)
 })

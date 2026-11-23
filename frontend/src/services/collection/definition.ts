@@ -324,14 +324,19 @@ export type CollectionDefinition<T, C = void> = {
   filters?: FilterDefinition[]
   /** The filters "Show all" sets from another record's panel (spec 12.1). */
   scopes?: ScopeDefinition[]
-  /** The address of the collection's list, which "Show all" opens. Defaults to /{key}. */
-  basePath?: string
+  /**
+   * The address of the collection's list, which "Show all" opens; a record's full page
+   * is {basePath}/{id}. Defaults to /{key}. A collection that lives inside a record
+   * puts that record in its path, from its context: (context) =>
+   * `/interventions/${context.intervention}/resources` (decided 2026-11-23).
+   */
+  basePath?: string | ((context: C) => string)
   /**
    * A record people work inside (decision 137, screen 51): the address of its own
    * page, opened instead of the panel when it is reached as a linked record; null
    * for a record that opens in the panel as usual.
    */
-  opensAsPage?: (record: T) => string | null
+  opensAsPage?: (record: T, context: C) => string | null
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>
   /**
@@ -352,4 +357,15 @@ export type CollectionDefinition<T, C = void> = {
     /** True when the new record has what it needs to be created (its name, often). */
     ready: (draft: Partial<T>) => boolean
   }
+}
+
+/** The collection's list address in a context (`basePath`): /{key} by default. */
+export function listPathOf<C>(
+  definition: { key: string; basePath?: string | ((context: C) => string) },
+  context: C,
+) {
+  const path = definition.basePath
+  return typeof path === 'function'
+    ? path(context)
+    : (path ?? `/${definition.key}`)
 }

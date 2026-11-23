@@ -128,8 +128,10 @@ Usage:
 
 ```tsx
 <Collection definition={resourcesDefinition} />
-<Collection definition={interventionResourcesDefinition} context={{ interventionId }} basePath={`/interventions/${interventionId}/resources`} />
+<Collection definition={interventionResourcesDefinition} context={{ interventionId }} />
 ```
+
+A collection that lives inside a record gives `basePath` as a function of its context, `(context) => `/interventions/${context.interventionId}/resources``, so its list, its records' full pages and "Show all" from a section all carry that record in the path (decision 145). `listPathOf(definition, context)` gives the address; the `basePath` prop still overrides it.
 
 ## 5. Component structure
 
@@ -621,7 +623,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
 - A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
 - The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
 - Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
-- Built since (2026-11-23): a section's `context` reaches its list (`SectionDefinition.context`), and `opensAsPage` opens a record people work inside on its own page from a section (a link on the full page); in the showcase, a part of kind Bearing stands for one. Not built yet: a record opened from a section in the panel, and "Show all", get no context (notice, point 3). Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
+- Built since (2026-11-23): a section's `context` reaches its list (`SectionDefinition.context`), and `opensAsPage` opens a record people work inside on its own page from a section (a link on the full page); in the showcase, a part of kind Bearing stands for one. Built since (decision 145): a record opened from a section in the panel gets its context from the chain: the record before it in `?linked=` is its parent, and the parent's section gives the context (`useChain` in `record/linked.ts`, which loads the parent first after a refresh). "Show all" and full pages use the linked collection's `basePath` in that context; `opensAsPage(record, context)` gets it too. In the showcase, an item's Checks live inside it (`/dev/collection/{item}/checks`), and their data source refuses any request without the item. Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
 
 
 - **In the panel:**

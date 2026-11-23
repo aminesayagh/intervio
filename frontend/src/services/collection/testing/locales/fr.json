@@ -56,5 +56,6 @@
   "scopes": {
     "linkedTo": "Lié à : {{name}}"
   },
-  "parts": "Pièces"
+  "parts": "Pièces",
+  "checks": "Contrôles"
 }

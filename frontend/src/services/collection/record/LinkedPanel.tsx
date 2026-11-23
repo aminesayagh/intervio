@@ -1,7 +1,6 @@
 import { useRecordActions } from '../data/recordActions'
-import type { AnyCollection } from '../definition'
 import { RecordPanel } from './RecordPanel'
-import { findCollection, type Step } from './linked'
+import type { ChainStep } from './linked'
 
 const nothing = () => {}
 
@@ -11,27 +10,25 @@ const nothing = () => {}
  * actions). × goes back one step, as archiving or removing it does.
  */
 export function LinkedPanel({
-  root,
   step,
   onClose,
   onLeave,
   back,
 }: {
-  /** The collection on screen; the linked one is found through its sections. */
-  root: AnyCollection
-  step: Step
+  /** The linked record, its collection and its context (`useChain`). */
+  step: ChainStep
   onClose: () => void
   onLeave: () => void
   back?: string
 }) {
-  const linked = findCollection(root, step.key) ?? root
-  const actions = useRecordActions(linked, undefined)
+  const linked = step.collection
+  const actions = useRecordActions(linked, step.context)
   if (!linked.panel) return null
   return (
     <RecordPanel
       definition={linked}
       panel={linked.panel}
-      context={undefined}
+      context={step.context}
       id={step.id}
       fromList={undefined}
       onClose={onClose}

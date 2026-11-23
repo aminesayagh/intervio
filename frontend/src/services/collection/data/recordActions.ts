@@ -8,6 +8,7 @@ import type { MenuAction } from '../../ui-kit'
 import { panelAddress } from '../address'
 import { confirm } from '../confirm/confirm'
 import type { ActionDefinition, CollectionDefinition } from '../definition'
+import { listPathOf } from '../definition'
 import type { Id } from '../types'
 import { cache, keys } from './collectionQuery'
 import { announce } from './recordChanges'
@@ -25,7 +26,7 @@ export function useRecordActions<T, C>(
   definition: CollectionDefinition<T, C>,
   context: C,
   /** The collection's list address, for Open full page and Copy link. */
-  basePath = definition.basePath ?? `/${definition.key}`,
+  basePath = listPathOf(definition, context),
 ) {
   const queryClient = useQueryClient()
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])

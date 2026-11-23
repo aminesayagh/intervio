@@ -1,9 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { keys } from '../data/collectionQuery'
-import type { AnyCollection } from '../definition'
 import { Folds } from '../drill/Folded'
-import type { Id } from '../types'
-import { findCollection, type Step } from './linked'
+import type { ChainStep } from './linked'
 
 /**
  * The records left on the way to the linked record shown (decision 137): the one
@@ -11,31 +9,20 @@ import { findCollection, type Step } from './linked'
  * the panel. A tab opens its record again; the tabs after it go.
  */
 export function LinkedTabs({
-  root,
-  context,
-  openId,
-  chain,
+  steps,
   onOpen,
 }: {
-  root: AnyCollection
-  context: unknown
-  openId: Id
-  chain: Step[]
+  /** The records left, from the one opened from the list (`useChain`). */
+  steps: ChainStep[]
   /** Shows the record at this depth: 0 is the one opened from the list. */
   onOpen: (depth: number) => void
 }) {
-  const entries = [{ key: root.key, id: openId }, ...chain.slice(0, -1)].map(
-    (step) => ({ ...step, collection: findCollection(root, step.key) ?? root }),
-  )
-  // Records just seen: their names come from the cache.
+  const entries = steps
+  // Records just seen: their names come from the cache, read in their context.
   const records = useQueries({
     queries: entries.map((entry) => ({
-      queryKey: keys.record(entry.collection.key, entry.id),
-      queryFn: () =>
-        entry.collection.source.one(
-          entry.id,
-          entry.collection === root ? context : undefined,
-        ),
+      queryKey: keys.record(entry.collection.key, entry.id, entry.context),
+      queryFn: () => entry.collection.source.one(entry.id, entry.context),
     })),
   })
   return (

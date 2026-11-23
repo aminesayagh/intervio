@@ -8,6 +8,7 @@ import type {
   CollectionDefinition,
   PanelDefinition,
 } from '../definition'
+import { listPathOf } from '../definition'
 import { drill } from '../drill/viewStack'
 import { useOpenLinked } from './linked'
 import { listAddress } from '../address'
@@ -282,7 +283,7 @@ function Section({
   // In the panel, a linked record opens there (decision 137); on the full page, its
   // own full page opens.
   const openLinked = useOpenLinked()
-  const linkedPath = linked.basePath ?? `/${linked.key}`
+  const linkedPath = listPathOf(linked, context)
   const list = useCollectionQuery({
     key: linked.key,
     source: linked.source,
@@ -290,7 +291,7 @@ function Section({
     listing: { search: '', filters: scope, sort: linked.defaultSort },
   })
   const total = list.total ?? list.items.length
-  const address = listAddress(linked.basePath ?? `/${linked.key}`, scope)
+  const address = listAddress(linkedPath, scope)
   return (
     <section className="border-t border-border pt-4">
       <h3 className="flex items-baseline gap-2 font-medium">
@@ -353,7 +354,7 @@ function Section({
                   fallback={
                     <Link
                       href={
-                        linked.opensAsPage?.(item) ??
+                        linked.opensAsPage?.(item, context) ??
                         `${linkedPath}/${encodeURIComponent(linked.getId(item))}`
                       }
                       className="block max-w-full truncate outline-none hover:underline focus-visible:underline"
@@ -368,7 +369,7 @@ function Section({
                       // A record people work inside opens its page (screen 51);
                       // Back returns here. Any other opens in this panel (137).
                       onClick={() => {
-                        const page = linked.opensAsPage?.(item)
+                        const page = linked.opensAsPage?.(item, context)
                         if (page) navigate(page)
                         else open(linked.key, linked.getId(item))
                       }}

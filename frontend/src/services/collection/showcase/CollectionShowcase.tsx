@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Button, Segmented } from '../../ui-kit'
+import { usePath } from '../../navigation'
+import { Button, Segmented, Show } from '../../ui-kit'
 import { Collection } from '../Collection'
+import { checkDefinition, checkSource } from '../testing/checks'
 import { itemSource } from '../testing/items'
 import { partDefinition, partSource } from '../testing/parts'
 import { itemDefinition } from '../testing/testDefinition'
@@ -53,6 +55,7 @@ const definitions = {
     rights,
     () => partsDefinition,
     '/dev/collection',
+    () => checksDefinition,
   ),
   empty: itemDefinition(empty, 'showcase-empty', rights),
 }
@@ -61,6 +64,15 @@ const partsDefinition = partDefinition(parts, () => definitions.full, {
   key: 'showcase-parts',
   basePath: '/dev/parts',
 })
+
+/** The checks, which live inside an item (notice 3): /dev/collection/{item}/checks. */
+const checks = checkSource()
+const checksDefinition = checkDefinition(checks, {
+  key: 'showcase-checks',
+  itemsPath: '/dev/collection',
+})
+/** An item's checks page: the item's id from the address is the list's context. */
+const CHECKS_PATH = /^\/dev\/collection\/([^/]+)\/checks(?:\/|$)/
 
 /** /dev/parts: the parts linked to the showcase's items, where "Show all" drills. */
 export function PartsShowcase() {
@@ -74,6 +86,21 @@ type Latency = '0' | '300' | '1500'
  * before any real collection uses it. The switches make the data slow, failing or empty.
  */
 export default function CollectionShowcase() {
+  const checksOf = CHECKS_PATH.exec(usePath())?.[1]
+  return (
+    <Show when={checksOf} fallback={<ItemsShowcase />}>
+      {(item) => (
+        <Collection
+          key={item}
+          definition={checksDefinition}
+          context={{ item: decodeURIComponent(item) }}
+        />
+      )}
+    </Show>
+  )
+}
+
+function ItemsShowcase() {
   const queryClient = useQueryClient()
   const [latency, setLatency] = useState<Latency>('0')
   const [failing, setFailing] = useState(false)
@@ -82,7 +109,7 @@ export default function CollectionShowcase() {
   const [refusing, setRefusing] = useState(false)
 
   function set(change: Partial<{ latency: Latency; failing: boolean }>) {
-    for (const source of [full, empty, parts]) {
+    for (const source of [full, empty, parts, checks]) {
       if (change.latency) source.settings.latencyMs = Number(change.latency)
       if (change.failing !== undefined) source.settings.failing = change.failing
     }

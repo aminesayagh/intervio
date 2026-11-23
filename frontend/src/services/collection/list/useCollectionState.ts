@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
-import { setSearchParams, useSearchParams } from '../../navigation'
-import type { ListQuery, SortDirection } from '../types'
+import {
+  createLoader,
+  createSerializer,
+  parseAsString,
+  useQueryStates,
+} from '../../navigation'
+import { listParsers, sortParser } from '../address'
+import type { ListQuery } from '../types'
 
 type Sort = ListQuery['sort']
 
@@ -12,43 +18,6 @@ export type Listing = {
   search: string
   filters: Record<string, string[]>
   sort: Sort | null
-}
-
-/** The address parameters that describe a list (spec 6.1); others (open, new) are kept as they are. */
-const isListParam = (name: string) =>
-  name === 'q' || name === 'sort' || name.startsWith('f.')
-
-function parseSort(value: string | null): Sort | null {
-  const [by, direction] = value?.split(':') ?? []
-  return by && (direction === 'asc' || direction === 'desc')
-    ? { by, direction: direction as SortDirection }
-    : null
-}
-
-/** Reads the list's state from an address. */
-export function readListing(params: URLSearchParams): Listing {
-  const filters: Record<string, string[]> = {}
-  for (const [name, value] of params)
-    if (name.startsWith('f.') && value)
-      filters[name.slice(2)] = value.split(',').filter(Boolean)
-  return {
-    search: params.get('q') ?? '',
-    filters,
-    sort: parseSort(params.get('sort')),
-  }
-}
-
-/** Writes a list's state into an address, leaving empty values out and other parameters alone. */
-export function writeListing(params: URLSearchParams, listing: Listing) {
-  const next = new URLSearchParams(
-    [...params].filter(([name]) => !isListParam(name)),
-  )
-  if (listing.search.trim()) next.set('q', listing.search.trim())
-  for (const [id, values] of Object.entries(listing.filters))
-    if (values.length) next.set(`f.${id}`, values.join(','))
-  if (listing.sort)
-    next.set('sort', `${listing.sort.by}:${listing.sort.direction}`)
-  return next
 }
 
 /** True when a search or a filter narrows the list. */
@@ -73,84 +42,131 @@ function write(storage: () => Storage, key: string, value: string | null) {
 }
 
 /**
- * The list's search, filters and sort, kept in the address (spec 6). Changing them
- * replaces the address (no history entry). The browser tab remembers the last list
- * state, which comes back when the collection is opened on a bare address (6.2); the
- * browser remembers the last sort chosen. `query` is what the data source is asked:
- * the listing, with the default order when no sort is chosen.
+ * The list's search, filters and sort, kept in the address (spec 6) through nuqs.
+ * Changing them replaces the address (no history entry). The browser tab remembers the
+ * last list state, which comes back when the collection is opened on a bare address
+ * (6.2); the browser remembers the last sort chosen. `query` is what the data source
+ * is asked: the listing, with the default order when no sort is chosen.
  */
-export function useCollectionState(key: string, defaultSort: Sort) {
-  const params = useSearchParams()
-  const address = params.toString()
+export function useCollectionState(
+  key: string,
+  defaultSort: Sort,
+  {
+    filters = [],
+    kept = [],
+  }: {
+    /** The ids of the collection's filters and scopes: their f.{id} parameters. */
+    filters?: string[]
+    /** Filters "Clear filters" keeps: the scopes, which only their chip removes. */
+    kept?: string[]
+  } = {},
+) {
   const tabKey = `intervio.collection.${key}.list`
   const sortKey = `intervio.collection.${key}.sort`
+  const ids = filters.join(',')
+  const keptIds = kept.join(',')
+  const parsers = useMemo(
+    () => ({
+      ...listParsers(ids ? ids.split(',') : []),
+      open: parseAsString,
+      new: parseAsString,
+    }),
+    [ids],
+  )
+  const [values, setValues] = useQueryStates(parsers)
+  /** The options chosen in a filter (its f.{id} parameter). */
+  const chosen = (id: string) =>
+    (values as Record<string, unknown>)[`f.${id}`] as string[]
 
   // A bare address takes back the tab's last list state, or at least the last sort.
   useLayoutEffect(() => {
-    const current = new URLSearchParams(window.location.search)
-    if ([...current.keys()].some(isListParam)) return
+    const listed =
+      values.q !== '' ||
+      values.sort !== null ||
+      filters.some((id) => chosen(id).length > 0)
+    if (listed) return
     const saved = read(() => sessionStorage, tabKey)
-    const lastSort = parseSort(read(() => localStorage, sortKey))
-    const savedParams = new URLSearchParams(saved ?? '')
-    const restored = saved
-      ? readListing(savedParams)
-      : lastSort
-        ? { search: '', filters: {}, sort: lastSort }
-        : null
-    if (!restored) return
-    const next = writeListing(current, restored)
-    // The record open last comes back too, unless the address names one (or a new one).
-    const open = savedParams.get('open')
-    if (open && !current.has('open') && !current.has('new'))
-      next.set('open', open)
-    setSearchParams(next, { replace: true })
+    const lastSort = sortParser.parse(read(() => localStorage, sortKey) ?? '')
+    if (saved !== null) {
+      const restored = createLoader(parsers)(`?${saved}`)
+      // The record open last comes back too, unless the address names one (or a new one).
+      const open = values.open ?? (values.new ? null : restored.open)
+      void setValues({ ...restored, open, new: values.new })
+    } else if (lastSort) void setValues({ sort: lastSort })
     // Only when the collection opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // The tab remembers the list it shows, however it got there (toolbar or address).
-  useEffect(() => {
-    const list = new URLSearchParams(address)
-    write(
-      () => sessionStorage,
-      tabKey,
-      new URLSearchParams(
-        [...list].filter(([name]) => isListParam(name) || name === 'open'),
-      ).toString(),
-    )
-  }, [address, tabKey])
+  const remembered = useMemo(
+    () =>
+      createSerializer(parsers)({ ...values, new: null }).replace(/^\?/, ''),
+    [parsers, values],
+  )
+  useEffect(
+    () => write(() => sessionStorage, tabKey, remembered),
+    [remembered, tabKey],
+  )
 
-  const listing = useMemo(
-    () => readListing(new URLSearchParams(address)),
-    [address],
+  const listing = useMemo<Listing>(
+    () => ({
+      search: values.q,
+      filters: Object.fromEntries(
+        (ids ? ids.split(',') : [])
+          .map((id) => [
+            id,
+            (values as Record<string, unknown>)[`f.${id}`] as string[],
+          ])
+          .filter(([, options]) => options.length > 0),
+      ),
+      sort: values.sort,
+    }),
+    [values, ids],
   )
   const query = useMemo(
     () => ({ ...listing, sort: listing.sort ?? defaultSort }),
     [listing, defaultSort],
   )
 
-  const change = useCallback((next: Listing) => {
-    setSearchParams(
-      writeListing(new URLSearchParams(window.location.search), next),
-      { replace: true },
-    )
-  }, [])
-
-  return {
-    listing,
-    query,
-    setSearch: (search: string) => change({ ...listing, search }),
-    setFilter: (id: string, values: string[]) =>
-      change({ ...listing, filters: { ...listing.filters, [id]: values } }),
-    clear: () => change({ ...listing, search: '', filters: {} }),
-    /** A sort chosen, or null to go back to the default order. */
-    setSort: (sort: Sort | null) => {
+  const setFilter = useCallback(
+    (id: string, chosen: string[]) => void setValues({ [`f.${id}`]: chosen }),
+    [setValues],
+  )
+  const setSort = useCallback(
+    (sort: Sort | null) => {
       write(
         () => localStorage,
         sortKey,
         sort ? `${sort.by}:${sort.direction}` : null,
       )
-      change({ ...listing, sort })
+      void setValues({ sort })
     },
+    [setValues, sortKey],
+  )
+  const setSearch = useCallback(
+    (search: string) => void setValues({ q: search.trim() }),
+    [setValues],
+  )
+  const clear = useCallback(
+    () =>
+      void setValues({
+        q: '',
+        ...Object.fromEntries(
+          (ids ? ids.split(',') : [])
+            .filter((id) => !keptIds.split(',').includes(id))
+            .map((id) => [`f.${id}`, []]),
+        ),
+      }),
+    [setValues, ids, keptIds],
+  )
+  // The same functions from one render to the next: the table doesn't render again.
+  return {
+    listing,
+    query,
+    setSearch,
+    setFilter,
+    clear,
+    /** A sort chosen, or null to go back to the default order. */
+    setSort,
   }
 }

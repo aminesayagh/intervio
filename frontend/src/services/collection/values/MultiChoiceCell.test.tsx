@@ -11,6 +11,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 import { ChipList } from './ChipList'
@@ -89,6 +90,7 @@ test('the panel chooses tags too', async () => {
     await screen.findByRole('button', { name: 'Open Item 004' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 004' })
+  await reachValue(aside, 'Tags')
   await userEvent.click(
     within(aside).getByRole('button', { name: 'Tags: Hydraulic' }),
   )

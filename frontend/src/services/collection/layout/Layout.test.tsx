@@ -92,14 +92,25 @@ test('the next panel opens with the saved width; an extreme one at the limit', a
   expect(divider()).toHaveAttribute('aria-valuenow', '677')
 })
 
-test('the table shows fewer columns as the panel grows, keeping the name', async () => {
+test('the columns keep their widths as the panel opens and grows; the name stays pinned', async () => {
   await openPanel()
-  expect(headers()).toEqual(['Name', 'Status', 'Updated'])
+  // The virtualizer places each title in a box of the column's width.
+  const box = (name: RegExp) =>
+    screen.getByRole('columnheader', { name }).parentElement!
+  expect(box(/Name/).style.width).toBe('260px')
+  expect(box(/Status/).style.width).toBe('140px')
+  // The name (and the selection checkbox before it) stay while the others scroll.
+  expect(box(/Name/).style.position).toBe('sticky')
+  expect(box(/Status/).style.position).toBe('absolute')
+
+  const shown = headers()
   divider().focus()
   await userEvent.keyboard('{End}')
-  expect(headers()).toEqual(['Name', 'Status'])
+  expect(box(/Name/).style.width).toBe('260px')
   await userEvent.click(screen.getByRole('button', { name: 'Close' }))
-  await waitFor(() => expect(headers()).toHaveLength(7))
+  await waitFor(() => expect(screen.queryByRole('separator')).toBeNull())
+  expect(headers()).toEqual(shown)
+  expect(box(/Status/).style.width).toBe('140px')
 })
 
 test('at medium width the sidebar folds while a panel is open', async () => {

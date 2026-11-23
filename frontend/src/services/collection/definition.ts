@@ -5,7 +5,7 @@ import type { DataSource, Id, ListQuery, SortDirection } from './types'
 export type ColumnDefinition<T> = {
   id: string
   label: string
-  /** Width in px; the first column (the name) takes the rest of the row. */
+  /** Width in px (200 when not given): columns keep it, and the table scrolls sideways (spec 9). */
   width?: number
   cell: (record: T) => ReactNode
   /**
@@ -191,12 +191,41 @@ export type PropertyDefinition<T> = {
   field?: FieldDefinition<T>
 }
 
-/** A section of linked records in the panel; it shows its first five (spec 7, 12.1). */
+/**
+ * Any collection, for the links between collections: a section names the collection
+ * its records belong to, a scope the collection its parent belongs to.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyCollection = CollectionDefinition<any, any>
+
+/**
+ * A section of linked records in the panel (spec 7, 12.1): the records of a collection
+ * (another one, or the same) that its scope keeps to this record. It shows the first
+ * five; "Show all" opens that collection's list with the scope.
+ */
 export type SectionDefinition<T> = {
   id: string
   /** Translation key of the title. */
   label: string
-  items: (record: T) => { id: string; label: string; kind?: ReactNode }[]
+  /** A function, so two collections can name each other. */
+  collection: () => AnyCollection
+  /** The linked collection's filters for this record: { linkedTo: [its id] }. */
+  scope: (record: T) => Record<string, string[]>
+}
+
+/**
+ * A filter that keeps a list to the records linked to one record (spec 12.1): set by
+ * "Show all", shown as a chip ("Linked to: Pump specification") instead of a menu.
+ */
+export type ScopeDefinition = {
+  /** The filter's id in the address (f.{id}) and in the data source's filters. */
+  id: string
+  /** Translation key, with {{name}}: "Linked to: {{name}}". */
+  label: string
+  /** The collection the parent record belongs to, to show its name. */
+  parent: () => AnyCollection
+  /** How a record created in the scoped list links to the parent (spec 7.5). */
+  patch?: (parentId: string) => Partial<unknown>
 }
 
 /** What the record panel shows (spec 7). */
@@ -269,9 +298,11 @@ export type CollectionDefinition<T, C = void> = {
   source: DataSource<T, C>
   defaultSort: ListQuery['sort']
   columns: ColumnDefinition<T>[]
-  /** Which columns stay when the list narrows, most important first (spec 9). Defaults to the columns' order. */
-  columnPriority?: string[]
   filters?: FilterDefinition[]
+  /** The filters "Show all" sets from another record's panel (spec 12.1). */
+  scopes?: ScopeDefinition[]
+  /** The address of the collection's list, which "Show all" opens. Defaults to /{key}. */
+  basePath?: string
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>
   /**

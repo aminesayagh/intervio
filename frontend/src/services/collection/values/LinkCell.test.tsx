@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -60,6 +61,7 @@ test('a phone number is saved, and its link dials the digits', async () => {
     await screen.findByRole('button', { name: 'Open Item 003' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 003' })
+  await reachValue(aside, 'Phone')
   const field = within(aside).getByRole('textbox', { name: 'Phone' })
   await userEvent.clear(field)
   await userEvent.type(field, '+33 6 12 34 56 78{Enter}')
@@ -92,6 +94,7 @@ test('a location is any address, and its link opens it in a map', async () => {
     await screen.findByRole('button', { name: 'Open Item 002' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 002' })
+  await reachValue(aside, 'Location')
   const field = within(aside).getByRole('textbox', { name: 'Location' })
   await userEvent.clear(field)
   await userEvent.type(field, 'Building B, Lyon{Enter}')

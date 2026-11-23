@@ -1,10 +1,20 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn, Show } from '../../ui-kit'
-import type { CollectionDefinition, PanelDefinition } from '../definition'
+import { Button, cn, Icon, Show } from '../../ui-kit'
+import { useCollectionQuery } from '../data/collectionQuery'
+import type {
+  AnyCollection,
+  CollectionDefinition,
+  PanelDefinition,
+} from '../definition'
+import { drill } from '../drill/viewStack'
+import { useOpenLinked } from './linked'
+import { listAddress } from '../address'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { ValueField } from '../values/ValueField'
+import { WakeOnReach } from '../values/WakeOnReach'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -84,21 +94,23 @@ export function RecordBody<T, C>({
               <div key={property.id} className="contents">
                 <dt className="text-muted">{t(property.label)}</dt>
                 <dd className="min-w-0">
-                  <ValueField
-                    record={shown}
-                    field={property.field}
-                    allowed={canEdit(shown, property.id)}
-                    read={property.value}
-                    label={t(property.label)}
-                    namespace={definition.i18n.namespace}
-                    save={(patch) =>
-                      save(shown, patch, { label: t(property.label) })
-                    }
-                    onInvalid={(reason) =>
-                      report(shown, t(property.label), reason)
-                    }
-                    look="panel"
-                  />
+                  <WakeOnReach>
+                    <ValueField
+                      record={shown}
+                      field={property.field}
+                      allowed={canEdit(shown, property.id)}
+                      read={property.value}
+                      label={t(property.label)}
+                      namespace={definition.i18n.namespace}
+                      save={(patch) =>
+                        save(shown, patch, { label: t(property.label) })
+                      }
+                      onInvalid={(reason) =>
+                        report(shown, t(property.label), reason)
+                      }
+                      look="panel"
+                    />
+                  </WakeOnReach>
                 </dd>
               </div>
             ))}
@@ -142,7 +154,9 @@ export function RecordBody<T, C>({
         })}
 
         <Show when={layout === 'panel'} className="flex flex-col gap-6">
-          <Sections definition={definition} panel={panel} record={shown} />
+          <WhenNear>
+            <Sections definition={definition} panel={panel} record={shown} />
+          </WhenNear>
         </Show>
       </div>
 
@@ -152,6 +166,35 @@ export function RecordBody<T, C>({
         </aside>
       </Show>
     </div>
+  )
+}
+
+/**
+ * Its content once it comes near the visible part of the panel: below the values and
+ * the description, the linked records (and their requests) wait until the person
+ * scrolls toward them, so opening a record doesn't build them.
+ */
+function WhenNear({ children }: { children: ReactNode }) {
+  const [near, setNear] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  )
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const element = ref.current
+    if (near || !element) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true)
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near])
+  return (
+    <Show when={near} fallback={<div ref={ref} className="h-px" />}>
+      {children}
+    </Show>
   )
 }
 
@@ -166,33 +209,103 @@ function Sections<T, C>({
   record: T
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
+  // The strip of the view left names it: "Records · Pump specification" (spec 12.1).
+  const viewName = `${t(definition.i18n.title)} · ${panel.title(record)}`
   return (
     <>
-      {panel.sections?.map((section) => {
-        const items = section.items(record)
-        return (
-          <section key={section.id} className="border-t border-border pt-4">
-            <h3 className="flex items-baseline gap-2 font-medium">
-              {t(section.label)}
-              <span className="text-xs font-normal text-muted">
-                {items.length}
-              </span>
-            </h3>
-            <ul className="mt-2 flex flex-col">
-              {items.slice(0, 5).map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center gap-2 border-b border-border py-2"
-                >
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.kind}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      })}
+      {panel.sections?.map((section) => (
+        <Section
+          key={section.id}
+          label={t(section.label)}
+          linked={section.collection()}
+          scope={section.scope(record)}
+          viewName={viewName}
+        />
+      ))}
     </>
+  )
+}
+
+/** How many linked records a section shows; "Show all" opens the rest (decision 127). */
+const PREVIEW = 5
+
+/**
+ * One section: the linked collection's records in its scope, loaded as its list loads
+ * them, so "Show all" opens a list already in the cache.
+ */
+function Section({
+  label,
+  linked,
+  scope,
+  viewName,
+}: {
+  label: string
+  linked: AnyCollection
+  scope: Record<string, string[]>
+  viewName: string
+}) {
+  const { t } = useTranslation([linked.i18n.namespace, 'collection'])
+  // In the panel, a linked record opens there (decision 137); on the full page it is text.
+  const openLinked = useOpenLinked()
+  // ponytail: the linked collection gets no context; add one to the section when a
+  // real collection needs it.
+  const list = useCollectionQuery({
+    key: linked.key,
+    source: linked.source,
+    context: undefined,
+    listing: { search: '', filters: scope, sort: linked.defaultSort },
+  })
+  const total = list.total ?? list.items.length
+  const address = listAddress(linked.basePath ?? `/${linked.key}`, scope)
+  return (
+    <section className="border-t border-border pt-4">
+      <h3 className="flex items-baseline gap-2 font-medium">
+        {label}
+        <Show
+          as="span"
+          when={list.data}
+          className="text-xs font-normal text-muted"
+        >
+          {total}
+        </Show>
+        <Show as="span" when={total > PREVIEW} className="ms-auto">
+          <Button
+            size="sm"
+            look="ghost"
+            onPress={() => drill(address, viewName)}
+          >
+            {t('collection:section.showAll')}
+            <Icon name="lucide/maximize-2" size={14} />
+          </Button>
+        </Show>
+      </h3>
+      <ul className="mt-2 flex flex-col">
+        {list.items.slice(0, PREVIEW).map((item) => (
+          <li
+            key={linked.getId(item)}
+            className="flex items-center gap-2 border-b border-border py-2"
+          >
+            <Show
+              as="span"
+              when={openLinked}
+              className="min-w-0 flex-1 truncate"
+              fallback={linked.panel?.title(item) ?? linked.getId(item)}
+            >
+              {(open) => (
+                <button
+                  type="button"
+                  onClick={() => open(linked.key, linked.getId(item))}
+                  className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+                >
+                  {linked.panel?.title(item) ?? linked.getId(item)}
+                </button>
+              )}
+            </Show>
+            {linked.panel?.type(item)}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

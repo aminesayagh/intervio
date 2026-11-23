@@ -33,10 +33,10 @@ export {
   Table,
   TableBody,
   TableHeader,
-  TableLayout,
   TableLoadMoreItem,
   Virtualizer,
   type Key,
   type Selection,
   type SortDescriptor,
 } from './Table'
+export { TableLayout } from './tableLayout'

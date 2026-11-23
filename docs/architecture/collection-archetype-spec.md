@@ -95,7 +95,6 @@ type CollectionDefinition<T, C = undefined> = {
   defaultSort: ListQuery['sort']
   card: (record: T) => CardContent      // type chip, title, detail line, status, avatar
   columns: ColumnDefinition<T>[]        // the full table; a column that shows a property names it, and is edited like it (7.3)
-  columnPriority: string[]              // column ids by importance; beside the panel, the table shows those that fit, name first
 
   // Panel and full page
   panel: {
@@ -213,7 +212,9 @@ When the address has no list parameters (for example, the user clicks "Resources
   - otherwise, for example on a shared link, it **replaces** the address without `open`.
 
   So Back and × always agree. The router marks its own entries in `history.state`.
-- The router's `navigate` gains the ability to set a query string without changing the path; `useSearchParams` already reads it.
+- A record's tab (decision 137) goes back through the history to that record when the linked steps were pushed, as × and Back do, so no stale entry is left behind.
+
+**How the address is read and written (2026-11-23).** The query string is managed with nuqs (`services/navigation` re-exports it; `<QueryProvider>` at the app's root): each parameter has a typed parser in `collection/address.ts` (`q`, `sort`, `f.{id}`, `open`, `new`, `linked`), defaults are left out of the address, and changes to the list are batched into one replaced entry. The panel's parameters are read with nuqs but written with the router's `navigate`, built by nuqs's serializer, because those entries carry marks in `history.state` (the panel opened here, a linked step, the drill depth) that nuqs can't set; nuqs follows these entries through `enableHistorySync()`. The router (`services/navigation/router.ts`) only matches pages and pushes entries; matching paths with a routing library is a separate change.
 
 ### 6.4 Refresh
 
@@ -233,8 +234,14 @@ On load, in this order:
   - clicking a row (anywhere but an editable cell), pressing Enter on it, or its **Open** button opens its record. The Open button sits at the end of the row's first cell and shows on the row under the pointer or the focus, since editable cells leave little else to click;
   - clicking the open record again does nothing;
   - opening another record replaces the panel's content.
-- **A linked record** opens in the same panel. The panel history gains an entry, and the top bar shows "‹ {previous record's name}". If the linked record has its own page (`opensAsPage`), the app navigates there instead.
-- **Closing** clears the panel history.
+- **A linked record** opens in the same panel (decision 137):
+  - the record left folds into a **tab** between the list and the panel: 32 px, a ‹ at the top, its name written vertically; the tab takes its room from the list, so the panel keeps its width;
+  - clicking a tab opens that record again and removes the tabs after it;
+  - at most 2 tabs show; with more steps, the first stands for the older records ("2 earlier records") and opens a menu of them, newest first;
+  - a linked record of another collection shows that collection's panel definition; one with its own page (`opensAsPage`) navigates there instead;
+  - each step pushes an address, so the browser's Back goes back one step.
+- **Closing (×)** goes back one step: it opens the previous record, and closes the panel only when there is none left.
+- **Below 1024 px** there are no tabs and no other back control: × goes back one step, and "‹ {collection}" returns to the list.
 
 ### 7.2 States
 
@@ -303,7 +310,7 @@ Every type follows the same rules: read view only without the right; saved when 
 
 ### 7.8 Messages
 
-Decision 132; screens 60 to 68. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
+Decision 132; screens 65 to 73. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
 
 - **A message** has a text, a tone (error or confirmation), an optional action (Retry, Undo), a **scope** and an optional **key**.
   - The scope is the interaction it belongs to: a record (`{collection}:record:{id}`) or the collection (`{collection}`). Leaving it removes its messages: opening another record, closing the panel, opening the full page, leaving the collection.
@@ -321,6 +328,8 @@ Decision 132; screens 60 to 68. The **notifications service** (`services/notific
 | Other failed save | "“{field}” couldn't be saved for {name}." · Retry | record |
 | Creation failed | "The record couldn't be created." · Retry (what was typed stays) | new record |
 | Archive or Remove failed | "{name} couldn't be archived / removed." · Retry | collection |
+| Archived (one, or several selected) | "{name} archived" / "{count} archived" · Undo (restores them; an archived record stays in the database, a removed one does not) | collection |
+| Undo of an archive failed | "{name} couldn't be restored." | collection |
 | Undo failed | "{name} couldn't be removed." | collection |
 | Copy link | "Link copied" / "The link couldn't be copied." | record |
 | Created | "Record created" · Undo | collection |
@@ -333,6 +342,7 @@ Decision 132; screens 60 to 68. The **notifications service** (`services/notific
 - **More actions:** Open full page, Copy link, then a separator, then the definition's actions (Archive, Remove…).
   - An action that removes or archives asks for confirmation in a dialog with a danger button.
   - It then removes the record from the list and closes the panel.
+  - A linked record (decision 137) has the same menu, with its own collection's actions; archiving or removing it goes back one step.
 
 ### 7.5 Creating
 
@@ -433,8 +443,9 @@ There is no creation form: a new record is the normal record view, created as so
 - **Keeping the table fast** (2026-11-22; budget: an action shows its result within 100 ms):
   - React Aria builds every row again when a value its rows depend on changes. So the open row and the selection don't reach the rows as props: rows and cells read them from a small store (`list/rowMarks.ts`), and a change renders only the rows concerned. A test (`list/Rerender.test.tsx`) fails if selecting a row renders the others.
   - Inside table cells, `Show`, `Switch` and `Variant` change views without a fade (`NoFadeInside` in `ui-kit/views/Show.tsx`): hundreds of fades re-rendered with every row.
-  - A date, a period or a number in a cell shows as text until its row is under the pointer or the focus; then its editor mounts in its place, looking the same (`values/Asleep.tsx`). The text takes the focus, so the keyboard reaches the editor as before. In the panel, editors are always mounted.
-  - Opening and closing a record don't do everything in one render: the panel's values come one render after it opens (its slide-in hides the wait), and columns that come back when it closes are added in the next render (`useDeferredValue`). Values already in the table don't render again when the columns change (`memo`).
+  - A date, a period or a number in a cell shows as text until its row is under the pointer or the focus; then its editor mounts in its place, looking the same (`values/Asleep.tsx`). The text takes the focus, so the keyboard reaches the editor as before. In the panel, every value (decision 139, 2026-11-23): dates, periods and numbers draw their `Asleep` text with the editor's look (padding, calendar button, chevrons); the other kinds draw a still copy of their control (`values/StillValue.tsx`: the text field's padding, the menu button, the checkbox's box, the picture's and files' buttons as plain buttons, so they size and align the same). The value wakes when the pointer is over it, the focus reaches it (Tab included) or a file is dragged over it; then its control mounts and takes the focus, the one marked `data-wake` if any (`values/WakeOnReach.tsx`, `useHandFocus`). Opening a record builds no React Aria control but the title's field. The title stays a field: the focus goes to it when a record opens.
+  - Opening a record builds its panel in one render (2026-11-23): the table no longer renders, the editors sleep, and the linked records wait until the panel is scrolled near them (`WhenNear` in `record/RecordBody.tsx`, an `IntersectionObserver` with a 200 px margin). The earlier split (the values one render after the panel, `useDeferredValue`) was removed: React renders a deferred render in slices and starts it again whenever the record's data or a section's arrives, and the content showed after about 350 ms instead of 180.
+  - The table doesn't render when the open record changes (2026-11-23): `RecordTable` is memoized and gets only stable props (the marks store, memoized objects, stable setters), and the panel's width no longer reaches it (fixed column widths). Cells don't listen to React Aria's table state, which changes whenever the focus enters or leaves the table: they read it from a box kept up to date (`LatestState` in `ui-kit/aria/Table.tsx`). A test (`list/Rerender.test.tsx`) fails if opening a record, or the next one, renders the table.
   - React Scan outlines re-renders in `make dev`; `VITE_SHOWCASE=1 vite build` measures the showcase in a production build.
 - **Loading more:** when the last drawn item is within the last 5 records loaded, and there is a next page and none is loading, it calls `fetchNextPage`. There is no separate marker.
 - **While a page loads:** a loading row shows placeholder rows under the list.
@@ -458,6 +469,12 @@ There is no creation form: a new record is the normal record view, created as so
 - **After archiving or removing:** take the record out of every loaded page, subtract 1 from the total, and close the panel.
 - **After any of these,** refetch the list's pages in the background. An edited record keeps its place (section 8.6): the new order shows when the list is sorted again.
 
+**Record actions, shared (built 2026-11-23).** None of the above is written in the collection screen: every change to a record goes through one shared layer, so any component can change a record of any collection, with or without that collection on screen.
+
+- `useRecordActions(definition, context, basePath?)` returns `canEdit`, `allowed` (the actions the rights allow), `save`, `report`, `act` (an action's confirmation, then the action), `runMany` (several records), `create`, and `menu` / `runMenu` (More actions). Each goes through the data source, keeps the cache right as above, and reports failures as messages.
+- `useRecordChanges(listener)` hears every change, `{ key, id, kind: updated | created | removed, record }`. The collection screen uses it for what is its own: a changed record of its list keeps its place (8.6), wherever it was changed; a removed one leaves the selection, and the panel, full page or linked record showing it closes.
+- `confirm({ title, text, button, cancel?, danger? })` resolves to true or false. One `<Confirmations />` host, beside `<Notifications />` at the app's root, shows it; it belongs to the collection service.
+
 ### 8.4 Scroll position
 
 **Set aside (2026-11-22):** the scroll memory built in step 10 was removed when the table moved to React Aria's virtualized Table; how to remember the position is to be decided again. The tab still remembers the search, filters, sort and open record (6.2).
@@ -469,7 +486,7 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 8.5 Selecting several records
 
-Decision 134; screens 53 to 56.
+Decision 134; screens 58 to 61.
 
 - **Checkboxes:** React Aria's row selection (`selectionMode="multiple"`, `selectionBehavior="toggle"`), a checkbox at the start of each row and in the header (a dash when some rows are selected). With nothing selected, a press on a row opens its record. Once a row is selected, a press on another row adds it to the selection or takes it out (React Aria's toggle behavior), and the › button on the row still opens the record. Space selects the focused row.
 - **Select all:** the header checkbox selects the loaded rows. Records loaded later are not added.
@@ -477,11 +494,11 @@ Decision 134; screens 53 to 56.
 - **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
 - **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
 - **Changes of view:** a new search, filter or sort clears the selection.
-- **Changing several at once** (decision 135; screens 57, 58): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
+- **Changing several at once** (decision 135; screens 62, 63): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
 
 ### 8.6 A changed record keeps its place
 
-Decision 136; screens 58, 59.
+Decision 136; screens 63, 64.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
 - **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.
@@ -496,10 +513,10 @@ Decision 136; screens 58, 59.
 | `medium` | Sidebar · list | Rail (57 px) · list beside the panel · panel. The sidebar folds for as long as the panel is open; the user's saved sidebar choice does not change |
 | `narrow` | Top bar · list as rows (name, detail line, status) · one "Filters" button | The panel is the whole screen, with "‹ {collection}" to go back one level |
 
-- **List beside the panel:** the table shows the columns of `columnPriority` that fit its width (name first, at least 160 px per column); cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
+- **List beside the panel:** the table keeps every column at its width (`column.width`, 200 px when not given) and scrolls sideways when they don't fit; the selection checkbox and the name stay pinned on the left (decision 138). Cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
 - **Panel animation:** it slides in from the right in 200 ms, `easeOut`, with Motion. With reduced motion, there is no animation (like the sidebar).
 
-**Built so far (step 11):** layout modes, the divider, the saved width and columns by priority (`definition.columnPriority`, at least 160 px each) are built. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. Not yet: on narrow screens the list keeps the table (with the columns that fit) rather than rows with a detail line, and the toolbar wraps instead of folding into one "Filters" button.
+**Built so far (step 11):** layout modes, the divider and the saved width are built. Columns by priority were replaced (2026-11-23) by fixed widths with a horizontal scroll and pinned name (decision 138): `ui-kit/aria/tableLayout.ts` subclasses React Aria's `TableLayout` so the table lays its rows out again only when its height changes (not when the panel changes its width), and pins every column up to the row header. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. Not yet: on narrow screens the list keeps the table (scrolling sideways) rather than rows with a detail line, and the toolbar wraps instead of folding into one "Filters" button.
 
 ### 9.1 Resizing the list and the panel
 
@@ -523,7 +540,7 @@ Decision 136; screens 58, 59.
   - dragging and the arrow keys change the width within the limits, and a double-click resets it;
   - after closing and reopening, the panel has the saved width;
   - a saved extreme width reopens at the limit;
-  - the table shows fewer columns when the panel grows, keeping the name.
+  - the columns keep their widths as the panel opens and grows, and the name stays pinned.
 
 ## 10. Keyboard and accessibility
 
@@ -597,6 +614,13 @@ const resources = restSource<Resource, { interventionId: Id }>({
 
 ### 12.1 Drilling into linked records
 
+**Built so far (step 12, 2026-11-23), seen in the showcase (/dev/collection and /dev/parts, a second collection linked to the items):**
+- A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
+- The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
+- Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
+- Not built yet: a section passes no `context` to its collection; a linked record of another collection has no More actions and no keep-place; `opensAsPage` (a record with its own page) and, below 1024 px, the "‹" that goes up one level of strips come with the first real collections that need them.
+
+
 - **In the panel:**
   - a section shows its first 5 items;
   - when it has more, "Show all ⤢" shows on the section's title line, on the right (the count is already in the title).
@@ -613,7 +637,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
     - a "‹" at the top;
     - the view's name written vertically ("{collection title} · {open record}");
     - the whole strip is one button that returns to that view.
-  - Returning to a view takes it and every view after it off the stack, then restores it exactly (address, scroll, panel).
+  - Returning to a view takes it and every view after it off the stack, then restores its address: search, filters, sort and open record (panel). The scroll position is not restored until scroll memory is designed again (8.4); the list starts at the top (2026-11-22).
   - The browser's Back button does the same, one level at a time.
   - **At most 2 strips show.** With more levels, the first strip stands for all the older ones and opens a menu listing them, newest first.
   - **Removing the scope chip** leaves the plain collection, and the strips stay.
@@ -623,7 +647,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
   - below 1024 px there are no strips, and "‹" goes up one level.
 - **Tests (added to 15.4):**
   - "Show all" opens the scoped list with its chip;
-  - a strip returns to the previous view with its scroll and panel;
+  - a strip returns to the previous view with its search, filters, sort and panel;
   - the browser's Back button does the same;
   - a third level folds the older views into the first strip's menu;
   - removing the chip keeps the strips;
@@ -704,7 +728,7 @@ Each line is one test with the test collection and MSW. Together they cover ever
 | **Search and filters** | typing waits 250 ms, then shows only matching items and "n of 42"; a filter shows its count on its button; "Clear filters" resets both; no results shows its message |
 | **Sort** | clicking a column header sorts through the server and updates the address; a third click goes back to the default order; the last sort is remembered |
 | **Panel** | clicking an item opens it, marks it and adds `?open`; clicking another switches; × and the browser's Back both close it and agree; a `404` shows "no longer available", and the item leaves the list |
-| **Linked records** | an item of a section opens in the same panel with "‹ previous"; Back returns; a linked record with its own page navigates there |
+| **Linked records** | an item of a section opens in the same panel and the record left folds into a tab; a tab opens its record again; × and Back go back one step; a third step folds the older records into the first tab's menu; a linked record with its own page navigates there |
 | **Edit in place** | a text field saves when left and with Enter, puts the value back with Escape; a refused or failed change puts the value back and shows its message; a menu value saves on choice and comes back on error; no field shows for a value not in `rights.edit` |
 | **Creation** | "+ Add" shows the defaults and "Not saved yet"; filling the name creates the item once; it appears on top, open, with "Record created · Undo"; Undo removes it; leaving with nothing typed asks nothing; leaving with input asks, and Discard creates nothing |
 | **Actions** | Remove asks, then removes and closes; Copy link copies the record's address |

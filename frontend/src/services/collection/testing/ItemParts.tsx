@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import type { Part } from './parts'
 import { ChipList } from '../values/ChipList'
 import type { Item } from './items'
 
@@ -87,4 +88,18 @@ export function Period({ range }: { range: Item['planned'] }) {
     timeZone: 'UTC',
   })
   return <>{format.formatRange(new Date(range.start), new Date(range.end))}</>
+}
+
+/** The parts' kind chip (step 12's second collection). */
+export function PartChip() {
+  const { t } = useTranslation('test-parts')
+  return (
+    <span className="inline-flex h-5 items-center rounded-[var(--field-radius)] bg-default px-2 text-xs font-medium">
+      {t('type')}
+    </span>
+  )
+}
+export function KindText({ part }: { part: Part }) {
+  const { t } = useTranslation('test-parts')
+  return <>{t(`kinds.${part.kind}`)}</>
 }

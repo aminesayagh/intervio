@@ -51,3 +51,27 @@ test('selecting a row renders that row again, not the others', async () => {
   await screen.findByText('2 selected')
   expect(count.reads()).toBeLessThanOrEqual(1)
 })
+
+test('opening a record, and the next one, doesn’t render the table again', async () => {
+  const definition = itemDefinition(itemSource(makeItems(8)))
+  // Only the table reads the columns, each time it renders.
+  let renders = 0
+  const columns = definition.columns
+  Object.defineProperty(definition, 'columns', {
+    get() {
+      renders++
+      return columns
+    },
+  })
+  renderAt('/items', <Collection definition={definition} />)
+  await screen.findByText('8 items')
+  renders = 0
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Open Item 001' }),
+  )
+  await screen.findByRole('complementary', { name: 'Item 001' })
+  await userEvent.keyboard('{ArrowDown}')
+  await screen.findByRole('complementary', { name: 'Item 002' })
+  // Before the table got only stable props, it rendered with every change of record.
+  expect(renders).toBe(0)
+})

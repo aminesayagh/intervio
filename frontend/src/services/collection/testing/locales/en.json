@@ -52,5 +52,9 @@
     "mechanical": "Mechanical",
     "safety": "Safety",
     "hydraulic": "Hydraulic"
-  }
+  },
+  "scopes": {
+    "linkedTo": "Linked to: {{name}}"
+  },
+  "parts": "Parts"
 }

@@ -5,6 +5,7 @@ import { memorySrc, memoryUpload } from './memoryFiles'
 import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
+  AnyCollection,
   AvatarField,
   DateRangeField,
   FileField,
@@ -140,9 +141,23 @@ export function itemDefinition(
   source: DataSource<Item> = itemSource(),
   key = 'test-items',
   rights?: CollectionDefinition<Item>['rights'],
+  /** The parts collection, when the items link to it (the showcase, drill-down tests). */
+  parts?: () => AnyCollection,
+  /** Its list's address, which "Show all" opens; defaults to /{key}. */
+  basePath?: string,
 ): CollectionDefinition<Item> {
-  return {
+  const definition: CollectionDefinition<Item> = {
+    basePath,
     rights,
+    // "Show all" on an item's linked records opens the items that link to it.
+    scopes: [
+      {
+        id: 'linkedTo',
+        label: 'scopes.linkedTo',
+        parent: () => definition,
+        patch: (id) => ({ linkedTo: [id] }),
+      },
+    ],
     create: {
       add: 'create.add',
       defaults: () => ({
@@ -315,13 +330,19 @@ export function itemDefinition(
         {
           id: 'linked',
           label: 'linked',
-          items: (item) =>
-            item.linkedTo.map((id) => ({
-              id,
-              label: `Item ${id.slice(-3)}`,
-              kind: <TypeChip />,
-            })),
+          collection: () => definition,
+          scope: (item) => ({ linkedTo: [item.id] }),
         },
+        ...(parts
+          ? [
+              {
+                id: 'parts',
+                label: 'parts',
+                collection: parts,
+                scope: (item: Item) => ({ item: [item.id] }),
+              },
+            ]
+          : []),
       ],
     },
     filters: [
@@ -341,29 +362,11 @@ export function itemDefinition(
         patch: (owner) => ({ owner }),
       },
     ],
-    columnPriority: [
-      'name',
-      'status',
-      'updated',
-      'owner',
-      'quantity',
-      'active',
-      'tags',
-      'due',
-      'planned',
-      'notes',
-      'website',
-      'email',
-      'phone',
-      'location',
-      'icon',
-      'avatar',
-      'files',
-    ],
     columns: [
       {
         id: 'name',
         label: 'columns.name',
+        width: 260,
         sort: 'asc',
         cell: (item) => item.name,
         field: name,
@@ -387,6 +390,13 @@ export function itemDefinition(
             <span className="truncate">{item.owner}</span>
           </span>
         ),
+      },
+      {
+        id: 'updated',
+        label: 'columns.updated',
+        width: 140,
+        sort: 'desc',
+        cell: (item) => <Day iso={item.updatedAt} />,
       },
       {
         id: 'quantity',
@@ -480,13 +490,7 @@ export function itemDefinition(
         cell: (item) => <FileCount files={item.files} />,
         field: files,
       },
-      {
-        id: 'updated',
-        label: 'columns.updated',
-        width: 140,
-        sort: 'desc',
-        cell: (item) => <Day iso={item.updatedAt} />,
-      },
     ],
   }
+  return definition
 }

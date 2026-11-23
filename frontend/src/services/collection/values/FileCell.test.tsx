@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -24,7 +25,10 @@ async function panel(name: string) {
   await userEvent.click(
     await screen.findByRole('button', { name: `Open ${name}` }),
   )
-  return screen.findByRole('complementary', { name })
+  const aside = await screen.findByRole('complementary', { name })
+  // The files field wakes when it is reached (decision 139).
+  await reachValue(aside, 'Files')
+  return aside
 }
 const document = (name: string) =>
   new File(['x'], name, { type: 'application/pdf' })

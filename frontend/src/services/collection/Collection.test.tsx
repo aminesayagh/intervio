@@ -41,15 +41,18 @@ test('the first page shows a header row and the first items, with the total', as
     .map((h) => h.textContent)
     // The first is the selection checkbox's column.
     .filter(Boolean)
-  // The columns that fit 1128 px by their widths, in the definition's order.
+  // Every column at its own width, in the definition's order; only those in view
+  // (and the next ones, drawn ahead) are in the page, the others scroll sideways.
   expect(headers).toEqual([
     'Name',
     'Status',
     'Owner',
+    'Updated',
     'Quantity',
     'Active',
     'Tags',
-    'Updated',
+    'Due',
+    'Planned',
   ])
   // React Aria counts the rows loaded (the first page of 30, and the header).
   expect(table).toHaveAttribute('aria-rowcount', '31')
@@ -214,7 +217,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
   )
 
   await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
-  await waitFor(() => expect(window.location.search).toBe('?sort=name%3Aasc'))
+  await waitFor(() => expect(window.location.search).toBe('?sort=name:asc'))
   expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveAttribute(
     'aria-sort',
     'ascending',
@@ -223,7 +226,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
 
   await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
   await waitFor(() => expect(firstName()).toBe('Item 042'))
-  expect(window.location.search).toBe('?sort=name%3Adesc')
+  await waitFor(() => expect(window.location.search).toBe('?sort=name:desc'))
 
   // A third click goes back to the default order, and the sort leaves the address.
   await userEvent.click(screen.getByRole('columnheader', { name: /Name/ }))
@@ -276,9 +279,7 @@ test('the default column cycles the same way: chosen, reversed, then no sort', a
   expect(header()).toHaveAttribute('aria-sort', 'none')
 
   await userEvent.click(button())
-  await waitFor(() =>
-    expect(window.location.search).toBe('?sort=updated%3Adesc'),
-  )
+  await waitFor(() => expect(window.location.search).toBe('?sort=updated:desc'))
   expect(header()).toHaveAttribute('aria-sort', 'descending')
 
   await userEvent.click(button())

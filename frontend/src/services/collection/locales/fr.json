@@ -79,7 +79,9 @@
     "copied": "Lien copié",
     "notCopied": "Le lien n’a pas pu être copié.",
     "created": "Élément créé",
-    "undo": "Annuler"
+    "undo": "Annuler",
+    "archived": "{{name}} archivé",
+    "restoreFailed": "{{name}} n’a pas pu être restauré."
   },
   "fields": {
     "url": "Ce n’est pas une adresse web.",
@@ -128,10 +130,27 @@
     "appliesTo": "S’applique à {{what}}",
     "changed": "« {{field}} » modifié sur {{what}}.",
     "changedSome": "« {{field}} » modifié sur {{count}} sur {{what}}.",
-    "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}."
+    "notChanged": "« {{field}} » n’a pas pu être modifié sur {{what}}.",
+    "archived": "{{what}} archivés",
+    "restoreFailed": "La restauration a échoué pour {{what}}."
   },
   "held": {
     "text": "Les éléments modifiés gardent leur place.",
     "sort": "Trier maintenant"
+  },
+  "section": {
+    "showAll": "Tout afficher"
+  },
+  "scope": {
+    "remove": "Retirer « {{label}} »"
+  },
+  "folds": {
+    "views": "Vues précédentes",
+    "records": "Fiches précédentes",
+    "viewsOlder_one": "{{count}} vue précédente",
+    "viewsOlder_other": "{{count}} vues précédentes",
+    "recordsOlder_one": "{{count}} fiche précédente",
+    "recordsOlder_other": "{{count}} fiches précédentes",
+    "back": "Revenir à {{name}}"
   }
 }

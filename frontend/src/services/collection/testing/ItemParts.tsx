@@ -103,3 +103,13 @@ export function KindText({ part }: { part: Part }) {
   const { t } = useTranslation('test-parts')
   return <>{t(`kinds.${part.kind}`)}</>
 }
+
+/** The checks' chip in the panel's top bar. */
+export function CheckChip() {
+  const { t } = useTranslation('test-checks')
+  return (
+    <span className="inline-flex h-5 items-center rounded-[var(--field-radius)] bg-default px-2 text-xs font-medium">
+      {t('type')}
+    </span>
+  )
+}

@@ -52,6 +52,7 @@ import type {
   CollectionDefinition,
   ColumnDefinition,
 } from './definition'
+import { listPathOf } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { RecordPage } from './record/RecordPage'
@@ -79,6 +80,7 @@ import { currentViews } from './drill/viewStack'
 import { OpenLinked, type Step } from './record/linked'
 import { panelAddress, panelParsers, readPanel } from './address'
 import { LinkedPanel } from './record/LinkedPanel'
+import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
 import {
   MarksProvider,
@@ -133,7 +135,7 @@ export function Collection<T, C = void>({
    */
   basePath?: string
 }) {
-  const basePath = basePathProp ?? definition.basePath
+  const basePath = basePathProp ?? listPathOf(definition, context as C)
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
   const state = useCollectionState(definition.key, definition.defaultSort, {
@@ -208,6 +210,8 @@ export function Collection<T, C = void>({
   const openId = panel.open
   const chain = panel.linked
   const isNew = panel.new === '1'
+  // Each record on the way, with its collection and context (notice 3).
+  const linkedChain = useChain(definition, context, openId ?? null, chain)
   const panelMark = `panel:${key}`
   /**
    * Changes the panel's parameters at once (nuqs's own updates wait a moment), with an
@@ -1005,10 +1009,8 @@ export function Collection<T, C = void>({
       >
         {(rootId) => (
           <LinkedTabs
-            root={definition}
-            context={context}
-            openId={rootId}
-            chain={chain}
+            key={rootId}
+            steps={linkedChain.steps.slice(0, -1)}
             onOpen={stepTo}
           />
         )}
@@ -1039,12 +1041,16 @@ export function Collection<T, C = void>({
                 />
               </Match>
               <Match
-                when={openId && chain.length > 0 && chain[chain.length - 1]}
+                when={
+                  openId &&
+                  chain.length > 0 &&
+                  linkedChain.ready &&
+                  linkedChain.steps[linkedChain.steps.length - 1]
+                }
               >
                 {(step) => (
                   <LinkedPanel
                     key={`${step.key}:${step.id}`}
-                    root={definition}
                     step={step}
                     back={back}
                     onClose={stepBack}

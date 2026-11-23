@@ -145,6 +145,8 @@ export function itemDefinition(
   parts?: () => AnyCollection,
   /** Its list's address, which "Show all" opens; defaults to /{key}. */
   basePath?: string,
+  /** The checks collection, which lives inside each item (notice 3). */
+  checks?: () => AnyCollection,
 ): CollectionDefinition<Item> {
   const definition: CollectionDefinition<Item> = {
     basePath,
@@ -342,6 +344,18 @@ export function itemDefinition(
                 scope: (item: Item) => ({ item: [item.id] }),
                 // A part linked to this item: its item is this one.
                 link: (item: Item) => ({ item: item.id }),
+              },
+            ]
+          : []),
+        ...(checks
+          ? [
+              {
+                id: 'checks',
+                label: 'checks',
+                collection: checks,
+                // The context narrows them to this item already.
+                scope: () => ({}),
+                context: (item: Item) => ({ item: item.id }),
               },
             ]
           : []),

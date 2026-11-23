@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
 // ponytail: a small router on the History API covers flat pages; switch to a routing
-// library when nested layouts or route loaders are needed.
+// library when nested layouts or route loaders are needed. The query string is nuqs's
+// (query.ts): this file only changes pages and pushes entries that carry state.
 
 const listeners = new Set<() => void>()
 
@@ -30,27 +31,6 @@ export function navigate(
   listeners.forEach((listener) => listener())
 }
 
-/**
- * Changes only the query string of the current address. Empty values are left out,
- * so defaults never show in the address.
- */
-export function setSearchParams(
-  params: URLSearchParams | Record<string, string | null | undefined>,
-  options: { replace?: boolean; state?: Record<string, unknown> } = {},
-) {
-  const entries =
-    params instanceof URLSearchParams ? [...params] : Object.entries(params)
-  const search = new URLSearchParams()
-  for (const [key, value] of entries) if (value) search.set(key, value)
-  const query = search.toString()
-  // Same page, same place in a drill-down: the entry keeps its depth (spec 12.1).
-  const drill = entryState().drill
-  navigate(window.location.pathname + (query ? `?${query}` : ''), {
-    ...options,
-    state: { ...(drill === undefined ? {} : { drill }), ...options.state },
-  })
-}
-
 /** The extra state the current history entry was pushed with (see navigate). */
 export function entryState(): Record<string, unknown> {
   return (window.history.state as Record<string, unknown> | null) ?? {}
@@ -68,12 +48,9 @@ export function usePath() {
   return useSyncExternalStore(subscribe, () => window.location.pathname)
 }
 
-/** Current query string, re-rendering on navigation. */
-function useSearch() {
-  return useSyncExternalStore(subscribe, () => window.location.search)
-}
+/** The query string shown, for reading it at once (nuqs's createLoader). */
+export const currentSearch = () => window.location.search
 
-/** Current query string parameters. */
-export function useSearchParams() {
-  return new URLSearchParams(useSearch())
-}
+/** The address shown (path and query), for building another one from it. */
+export const currentAddress = () =>
+  window.location.pathname + window.location.search

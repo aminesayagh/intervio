@@ -213,7 +213,9 @@ When the address has no list parameters (for example, the user clicks "Resources
   - otherwise, for example on a shared link, it **replaces** the address without `open`.
 
   So Back and × always agree. The router marks its own entries in `history.state`.
-- The router's `navigate` gains the ability to set a query string without changing the path; `useSearchParams` already reads it.
+- A record's tab (decision 137) goes back through the history to that record when the linked steps were pushed, as × and Back do, so no stale entry is left behind.
+
+**How the address is read and written (2026-11-23).** The query string is managed with nuqs (`services/navigation` re-exports it; `<QueryProvider>` at the app's root): each parameter has a typed parser in `collection/address.ts` (`q`, `sort`, `f.{id}`, `open`, `new`, `linked`), defaults are left out of the address, and changes to the list are batched into one replaced entry. The panel's parameters are read with nuqs but written with the router's `navigate`, built by nuqs's serializer, because those entries carry marks in `history.state` (the panel opened here, a linked step, the drill depth) that nuqs can't set; nuqs follows these entries through `enableHistorySync()`. The router (`services/navigation/router.ts`) only matches pages and pushes entries; matching paths with a routing library is a separate change.
 
 ### 6.4 Refresh
 
@@ -327,6 +329,8 @@ Decision 132; screens 65 to 73. The **notifications service** (`services/notific
 | Other failed save | "“{field}” couldn't be saved for {name}." · Retry | record |
 | Creation failed | "The record couldn't be created." · Retry (what was typed stays) | new record |
 | Archive or Remove failed | "{name} couldn't be archived / removed." · Retry | collection |
+| Archived (one, or several selected) | "{name} archived" / "{count} archived" · Undo (restores them; an archived record stays in the database, a removed one does not) | collection |
+| Undo of an archive failed | "{name} couldn't be restored." | collection |
 | Undo failed | "{name} couldn't be removed." | collection |
 | Copy link | "Link copied" / "The link couldn't be copied." | record |
 | Created | "Record created" · Undo | collection |
@@ -339,6 +343,7 @@ Decision 132; screens 65 to 73. The **notifications service** (`services/notific
 - **More actions:** Open full page, Copy link, then a separator, then the definition's actions (Archive, Remove…).
   - An action that removes or archives asks for confirmation in a dialog with a danger button.
   - It then removes the record from the list and closes the panel.
+  - A linked record (decision 137) has the same menu, with its own collection's actions; archiving or removing it goes back one step.
 
 ### 7.5 Creating
 
@@ -463,6 +468,12 @@ There is no creation form: a new record is the normal record view, created as so
 - **After editing:** replace the record in every loaded page, and in its own query `[key, 'one', id]`.
 - **After archiving or removing:** take the record out of every loaded page, subtract 1 from the total, and close the panel.
 - **After any of these,** refetch the list's pages in the background. An edited record keeps its place (section 8.6): the new order shows when the list is sorted again.
+
+**Record actions, shared (built 2026-11-23).** None of the above is written in the collection screen: every change to a record goes through one shared layer, so any component can change a record of any collection, with or without that collection on screen.
+
+- `useRecordActions(definition, context, basePath?)` returns `canEdit`, `allowed` (the actions the rights allow), `save`, `report`, `act` (an action's confirmation, then the action), `runMany` (several records), `create`, and `menu` / `runMenu` (More actions). Each goes through the data source, keeps the cache right as above, and reports failures as messages.
+- `useRecordChanges(listener)` hears every change, `{ key, id, kind: updated | created | removed, record }`. The collection screen uses it for what is its own: a changed record of its list keeps its place (8.6), wherever it was changed; a removed one leaves the selection, and the panel, full page or linked record showing it closes.
+- `confirm({ title, text, button, cancel?, danger? })` resolves to true or false. One `<Confirmations />` host, beside `<Notifications />` at the app's root, shows it; it belongs to the collection service.
 
 ### 8.4 Scroll position
 

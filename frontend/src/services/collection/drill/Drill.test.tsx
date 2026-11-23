@@ -183,7 +183,7 @@ test('a linked record opens in the panel, the record left folds into a tab, and 
   await openLinked('Item 001', 'Parts', 'Filter 1, Item 001')
   const part = await panel('Filter 1, Item 001')
   // Another kind: the part's own panel.
-  expect(within(part).getByText('Kind')).toBeInTheDocument()
+  expect(await within(part).findByText('Kind')).toBeInTheDocument()
   expect(
     tabs().getByRole('button', { name: 'Back to Item 001' }),
   ).toBeInTheDocument()
@@ -214,8 +214,15 @@ test('a tab opens its record again, and the tabs after it go', async () => {
   await userEvent.click(
     tabs().getByRole('button', { name: 'Back to Item 001' }),
   )
-  expect(await panel('Item 001')).toBeInTheDocument()
+  const item = await panel('Item 001')
   expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
+
+  // The tab went back through the history: × closes, with no stale entry left.
+  await userEvent.click(within(item).getByRole('button', { name: 'Close' }))
+  await waitFor(() =>
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument(),
+  )
+  expect(window.location.search).toBe('')
 })
 
 test('the browser’s Back goes back one linked record', async () => {
@@ -224,4 +231,28 @@ test('the browser’s Back goes back one linked record', async () => {
   await panel('Item 004')
   act(() => window.history.back())
   expect(await panel('Item 001')).toBeInTheDocument()
+})
+
+test('a linked part is archived from the item’s panel: the panel goes back, the section loses it, and Undo brings it back', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Parts', 'Filter 1, Item 001')
+  const part = await panel('Filter 1, Item 001')
+  await userEvent.click(
+    within(part).getByRole('button', { name: 'More actions' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitem', { name: 'Archive' }),
+  )
+  const dialog = await screen.findByRole('alertdialog')
+  expect(within(dialog).getByText('Archive this part?')).toBeInTheDocument()
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Archive' }))
+
+  // One step back, to the item, whose Parts section counts one part less.
+  const item = await panel('Item 001')
+  const section = (await within(item).findByText('Parts')).closest('section')!
+  expect(await within(section).findByText('6')).toBeInTheDocument()
+  expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Undo' }))
+  expect(await within(section).findByText('7')).toBeInTheDocument()
 })

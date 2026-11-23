@@ -1,8 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useContext } from 'react'
-import { useTranslation } from 'react-i18next'
-import { notify } from '../../notifications'
-import { cache } from '../data/collectionQuery'
+import { createContext, useContext } from 'react'
 import type { AnyCollection } from '../definition'
 import type { Id } from '../types'
 
@@ -50,57 +46,3 @@ export const OpenLinked = createContext<((key: string, id: Id) => void) | null>(
   null,
 )
 export const useOpenLinked = () => useContext(OpenLinked)
-
-/**
- * Changing a linked record of any collection: the change goes through its own data
- * source and cache, and a refused or failed one is a message (decision 132).
- */
-// ponytail: no keep-place nor 403/404 handling here (the list's own records have
-// them); add them when a linked collection needs them.
-export function useLinkedEditing(linked: AnyCollection) {
-  const queryClient = useQueryClient()
-  const { t } = useTranslation([linked.i18n.namespace, 'collection'])
-  const canEdit = useCallback(
-    (record: unknown, id: string) =>
-      !linked.rights || linked.rights(record, undefined).edit.includes(id),
-    [linked],
-  )
-  const save = useCallback(
-    async (
-      record: unknown,
-      patch: Partial<unknown>,
-      field?: { label: string; quiet?: boolean },
-    ) => {
-      const id = linked.getId(record)
-      try {
-        if (!linked.source.update)
-          throw new Error(`${linked.key} cannot be edited`)
-        const updated = await linked.source.update(id, patch, undefined)
-        cache.updated(queryClient, linked.key, updated, linked.getId)
-        void cache.refresh(queryClient, linked.key)
-      } catch (refusal) {
-        if (field && !field.quiet)
-          notify({
-            tone: 'error',
-            text: t('collection:message.notSaved', {
-              field: field.label,
-              name: linked.panel?.title(record) ?? id,
-            }),
-            scope: `${linked.key}:record:${id}`,
-          })
-        throw refusal
-      }
-    },
-    [linked, queryClient, t],
-  )
-  const report = useCallback(
-    (record: unknown, _field: string, reason: string) =>
-      notify({
-        tone: 'error',
-        text: t('collection:message.putBack', { reason }),
-        scope: `${linked.key}:record:${linked.getId(record)}`,
-      }),
-    [linked, t],
-  )
-  return { canEdit, save, report }
-}

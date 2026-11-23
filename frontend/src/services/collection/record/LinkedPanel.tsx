@@ -1,13 +1,14 @@
+import { useRecordActions } from '../data/recordActions'
 import type { AnyCollection } from '../definition'
 import { RecordPanel } from './RecordPanel'
-import { findCollection, useLinkedEditing, type Step } from './linked'
+import { findCollection, type Step } from './linked'
 
 const nothing = () => {}
-const noActions = () => []
 
 /**
  * A linked record in the panel (decision 137): shown with its own collection's panel
- * definition, changed through its own data source. × goes back one step.
+ * definition, changed through its own collection's record actions (save, More
+ * actions). × goes back one step, as archiving or removing it does.
  */
 export function LinkedPanel({
   root,
@@ -24,7 +25,7 @@ export function LinkedPanel({
   back?: string
 }) {
   const linked = findCollection(root, step.key) ?? root
-  const editing = useLinkedEditing(linked)
+  const actions = useRecordActions(linked, undefined)
   if (!linked.panel) return null
   return (
     <RecordPanel
@@ -37,11 +38,11 @@ export function LinkedPanel({
       onLeave={onLeave}
       back={back}
       onUnavailable={nothing}
-      canEdit={editing.canEdit}
-      save={editing.save}
-      report={editing.report}
-      actions={noActions}
-      onAction={nothing}
+      canEdit={actions.canEdit}
+      save={actions.save}
+      report={actions.report}
+      actions={(record) => actions.menu(record)}
+      onAction={actions.runMenu}
     />
   )
 }

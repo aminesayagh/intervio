@@ -173,6 +173,17 @@ export function partDefinition(
         cell: itemName,
       },
     ],
+    actions: [
+      {
+        id: 'archive',
+        label: 'actions.archive',
+        confirm: {
+          title: 'actions.archiveTitle',
+          text: 'actions.archiveText',
+          button: 'actions.archive',
+        },
+      },
+    ],
     panel: {
       type: () => <PartChip />,
       title: (part) => part.name,

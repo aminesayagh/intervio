@@ -14,22 +14,21 @@ import {
 } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ApiError } from '../http'
 import { addTranslations } from '../i18n'
-import { dismissKey, dismissScope, notify } from '../notifications'
+import { dismissScope, notify } from '../notifications'
 import {
+  currentAddress,
+  currentSearch,
   entryState,
   navigate,
-  setSearchParams,
   usePath,
-  useSearchParams,
+  useQueryStates,
 } from '../navigation'
 import {
   Button,
   Cell,
   cn,
   Column,
-  ConfirmDialog,
   SELECTION_WIDTH,
   foldSidebar,
   Icon,
@@ -43,10 +42,12 @@ import {
   TableHeader,
   TableLayout,
   TableLoadMoreItem,
-  type MenuAction,
   Virtualizer,
 } from '../ui-kit'
 import { cache, keys, useCollectionQuery } from './data/collectionQuery'
+import { useRecordActions } from './data/recordActions'
+import { useRecordChanges } from './data/recordChanges'
+import { confirm } from './confirm/confirm'
 import type {
   ActionDefinition,
   CollectionDefinition,
@@ -72,7 +73,8 @@ import { isShared, SharedNote } from './selection/sharedEdit'
 import { Awake } from './values/awake'
 import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
-import { formatChain, OpenLinked, parseChain, type Step } from './record/linked'
+import { OpenLinked, type Step } from './record/linked'
+import { panelAddress, panelParsers, readPanel } from './address'
 import { LinkedPanel } from './record/LinkedPanel'
 import { LinkedTabs } from './record/LinkedTabs'
 import {
@@ -87,6 +89,14 @@ import { ValueField } from './values/ValueField'
 import { isNarrowed, useCollectionState } from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
+
+/**
+ * The panel's parameters as the address has them now. The panel's callbacks read them
+ * when they run, not from the last render: one click can call them several times
+ * before a render (a row's press, then its action), and they stay the same from one
+ * record to the next, so rows don't render again.
+ */
+const current = () => readPanel(currentSearch())
 
 /** What the list parts need from the query to load more (spec 8.1). */
 type More = {
@@ -119,11 +129,12 @@ export function Collection<T, C = void>({
   const basePath = basePathProp ?? definition.basePath
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const state = useCollectionState(
-    definition.key,
-    definition.defaultSort,
-    definition.scopes?.map((scope) => scope.id),
-  )
+  const state = useCollectionState(definition.key, definition.defaultSort, {
+    filters: [...(definition.filters ?? []), ...(definition.scopes ?? [])].map(
+      (filter) => filter.id,
+    ),
+    kept: definition.scopes?.map((scope) => scope.id),
+  })
   const { listing } = state
   const narrowed = isNarrowed(listing)
   const list = useCollectionQuery({
@@ -143,15 +154,6 @@ export function Collection<T, C = void>({
    */
   const [hold, setHold] = useState<{ order: Id[]; kept: Map<Id, T> } | null>(
     null,
-  )
-  const shownRef = useRef<T[]>([])
-  const keepPlace = useCallback(
-    (record: T) =>
-      setHold((held) => ({
-        order: held?.order ?? shownRef.current.map(getId),
-        kept: new Map(held?.kept).set(getId(record), record),
-      })),
-    [getId],
   )
   const forget = useCallback(
     (id: Id) =>
@@ -177,87 +179,100 @@ export function Collection<T, C = void>({
       ...list.items.filter((record) => !placed.has(getId(record))),
     ]
   }, [hold, list.items, getId])
-  shownRef.current = shownItems
   // Out of order: the list, reloaded, would show them in another order.
   const outOfOrder =
     hold !== null &&
     shownItems.map(getId).join() !== list.items.map(getId).join()
 
-  /** Whether the person may change a value of a record (spec 7.7). */
-  const { rights } = definition
-  const canEdit = useCallback(
-    (record: T, id: string) =>
-      !rights || rights(record, context as C).edit.includes(id),
-    [rights, context],
-  )
-  // The open record (spec 6.3, 7.1): its id is in the address (?open=).
-  const openId = useSearchParams().get('open')
+  // Every change to a record goes through the shared record actions (spec 8.3).
+  const actions = useRecordActions(definition, context as C, basePath)
+  const { canEdit, save, report } = actions
+  // The panel's address (spec 6.3, 7.1, decision 137): the record open (?open=), a new
+  // one (?new=1), the linked records opened after it (?linked=key:id,…).
+  const [panel] = useQueryStates(panelParsers)
+  const openId = panel.open
+  const chain = panel.linked
+  const isNew = panel.new === '1'
   const panelMark = `panel:${key}`
-  const open = useCallback(
-    (id: Id) => {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('open') === id) return
-      const wasOpen = params.has('open')
-      params.set('open', id)
-      params.delete('linked') // another record from the list: no linked ones after it
-      // Opening pushes an entry (Back closes); switching records replaces it.
-      setSearchParams(params, {
-        replace: wasOpen,
-        state: wasOpen
-          ? { ...entryState(), linkedStep: false }
-          : { panel: panelMark },
+  /**
+   * Changes the panel's parameters at once (nuqs's own updates wait a moment), with an
+   * entry that carries this screen's marks, which nuqs can't set: pushed, or replacing
+   * the current one. The entry keeps its place in a drill-down (spec 12.1).
+   */
+  const mark = useCallback(
+    (
+      values: Parameters<typeof panelAddress>[1],
+      state: Record<string, unknown>,
+      replace = false,
+    ) => {
+      const drill = entryState().drill
+      navigate(panelAddress(currentAddress(), values), {
+        replace,
+        state: { ...(drill === undefined ? {} : { drill }), ...state },
       })
     },
-    [panelMark],
+    [],
+  )
+  const open = useCallback(
+    (id: Id) => {
+      const wasOpen = current().open
+      if (wasOpen === id) return
+      // Another record from the list: no linked ones after it. Opening pushes an
+      // entry (Back closes); switching records replaces it.
+      if (wasOpen)
+        mark(
+          { open: id, linked: null },
+          { ...entryState(), linkedStep: false },
+          true,
+        )
+      else mark({ open: id, linked: null }, { panel: panelMark })
+    },
+    [mark, panelMark],
   )
 
-  // Linked records opened in the panel after it (decision 137): ?linked=key:id,…
-  const linkedParam = useSearchParams().get('linked')
-  const chain = useMemo(() => parseChain(linkedParam), [linkedParam])
   /** Shows the chain cut to this many steps (0: the record opened from the list). */
-  const showChain = useCallback((next: Step[], push = false) => {
-    const params = new URLSearchParams(window.location.search)
-    if (next.length) params.set('linked', formatChain(next))
-    else params.delete('linked')
-    setSearchParams(params, {
-      replace: !push,
-      state: push ? { ...entryState(), linkedStep: true } : entryState(),
-    })
-  }, [])
+  const showChain = useCallback(
+    (next: Step[]) => mark({ linked: next }, entryState(), true),
+    [mark],
+  )
   /** A section's record opens in the panel; Back returns to the one before. */
   const openLinked = useCallback(
     (collectionKey: string, id: Id) =>
-      showChain(
-        [
-          ...parseChain(
-            new URLSearchParams(window.location.search).get('linked'),
-          ),
-          { key: collectionKey, id },
-        ],
-        true,
+      mark(
+        { linked: [...current().linked, { key: collectionKey, id }] },
+        { ...entryState(), linkedStep: true },
       ),
-    [showChain],
+    [mark],
   )
   /** "‹ {collection}" on a narrow screen: the list, whatever the depth. */
-  const leave = useCallback(() => {
-    const params = new URLSearchParams(window.location.search)
-    params.delete('open')
-    params.delete('linked')
-    setSearchParams(params, { replace: true })
-  }, [])
-  /** × on a linked record: one step back, as Back does when the step was pushed. */
-  const stepBack = useCallback(() => {
-    if (entryState().linkedStep === true) window.history.back()
-    else showChain(chain.slice(0, -1))
-  }, [chain, showChain])
+  const leave = useCallback(
+    () => mark({ open: null, linked: null }, entryState(), true),
+    [mark],
+  )
+  /**
+   * Back to the chain cut to this depth (a tab, or × one step): through the browser's
+   * history when the steps were pushed, so Back never meets a stale entry after it.
+   */
+  // ponytail: assumes each step after the first linked one was pushed (openLinked
+  // does); a chain from a link (the address alone) has no entries, so it is replaced.
+  const stepTo = useCallback(
+    (depth: number) => {
+      const steps = current().linked.length - depth
+      if (steps <= 0) return
+      if (entryState().linkedStep === true) window.history.go(-steps)
+      else showChain(current().linked.slice(0, depth))
+    },
+    [showChain],
+  )
+  /** × on a linked record: one step back, as Back does. */
+  const stepBack = useCallback(
+    () => stepTo(current().linked.length - 1),
+    [stepTo],
+  )
   const doClose = useCallback(() => {
     if (entryState().panel === panelMark) window.history.back()
-    else {
-      const params = new URLSearchParams(window.location.search)
-      params.delete('open')
-      setSearchParams(params, { replace: true })
-    }
-  }, [panelMark])
+    else mark({ open: null }, entryState(), true)
+  }, [panelMark, mark])
 
   // Messages (decision 132): each belongs to a record or to the collection, and
   // leaves with it; one about a value is replaced by the next one about that value.
@@ -274,110 +289,20 @@ export function Collection<T, C = void>({
       if (scope) dismissScope(scope)
     }
   }, [openId, recordScope])
-  const shownPage = window.location.pathname.startsWith(
-    `${basePath ?? `/${key}`}/`,
-  )
-    ? decodeURIComponent(
-        window.location.pathname.slice((basePath ?? `/${key}`).length + 1),
-      )
+  // More actions (spec 7.4) and the full page: the record's own address.
+  const listPath = basePath ?? `/${key}`
+  const path = usePath()
+  const pageId = path.startsWith(`${listPath}/`)
+    ? decodeURIComponent(path.slice(listPath.length + 1))
     : null
   useEffect(() => {
-    const scope = shownPage ? recordScope(shownPage) : null
+    const scope = pageId ? recordScope(pageId) : null
     return () => {
       if (scope) dismissScope(scope)
     }
-  }, [shownPage, recordScope])
-
-  /**
-   * Saves a change made in place, then shows the saved record everywhere (spec 8.3).
-   * A refused or failed change is reported (7.8) and rethrown, so the field puts its
-   * value back. `field` names the value for the message; `quiet` leaves the failure
-   * to the caller (the description has its own status line).
-   */
-  const save = useCallback(
-    async function saveChange(
-      record: T,
-      patch: Partial<T>,
-      field?: { label: string; quiet?: boolean },
-    ): Promise<void> {
-      if (!source.update) throw new Error(`${key} cannot be edited`)
-      const id = getId(record)
-      const valueKey = field && `${key}:${id}:${field.label}`
-      const words = { field: field?.label, name: nameOf(record) }
-      try {
-        const updated = await source.update(id, patch, context as C)
-        cache.updated(queryClient, key, updated, getId)
-        keepPlace(updated)
-        void cache.refresh(queryClient, key)
-        if (valueKey) dismissKey(valueKey)
-      } catch (refusal) {
-        const status = refusal instanceof ApiError ? refusal.status : 0
-        if (status === 403) {
-          // No right any more: reload the record and the lists, so their rights are current.
-          void queryClient.invalidateQueries({ queryKey: keys.record(key, id) })
-          void cache.refresh(queryClient, key)
-          notify({
-            tone: 'error',
-            text: t('collection:message.forbidden', words),
-            scope: recordScope(id),
-            key: valueKey,
-          })
-        } else if (status === 404) {
-          // Removed by someone else: the list refreshes and the panel closes.
-          cache.removed(queryClient, key, id, getId)
-          forget(id)
-          void cache.refresh(queryClient, key)
-          if (new URLSearchParams(window.location.search).get('open') === id)
-            doClose()
-          notify({
-            tone: 'error',
-            text: t('collection:message.removed', words),
-            scope: key,
-          })
-        } else if (field && !field.quiet) {
-          notify({
-            tone: 'error',
-            text: t('collection:message.notSaved', words),
-            action: {
-              label: t('collection:message.retry'),
-              run: () => void saveChange(record, patch, field).catch(() => {}),
-            },
-            scope: recordScope(id),
-            key: valueKey,
-          })
-        }
-        throw refusal
-      }
-    },
-    [
-      source,
-      getId,
-      key,
-      context,
-      queryClient,
-      nameOf,
-      recordScope,
-      doClose,
-      t,
-      keepPlace,
-      forget,
-    ],
-  )
-  /** A value the definition refused: it went back; the message says why. */
-  const report = useCallback(
-    (record: T, field: string, reason: string) =>
-      notify({
-        tone: 'error',
-        text: t('collection:message.putBack', { reason }),
-        scope: recordScope(getId(record)),
-        key: `${key}:${getId(record)}:${field}`,
-      }),
-    [t, recordScope, getId, key],
-  )
+  }, [pageId, recordScope])
 
   // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
-  const isNew = useSearchParams().get('new') === '1'
-  const [discarding, setDiscarding] = useState(false)
   const hasDraft = useCallback(() => {
     try {
       return sessionStorage.getItem(newRecordKey(key)) !== null
@@ -386,19 +311,16 @@ export function Collection<T, C = void>({
     }
   }, [key])
   const startNew = useCallback(() => {
-    const params = new URLSearchParams(window.location.search)
-    const wasOpen = params.has('open') || params.has('new')
-    params.delete('open')
-    params.set('new', '1')
-    setSearchParams(params, {
-      replace: wasOpen,
-      state: wasOpen ? entryState() : { panel: panelMark },
-    })
-  }, [panelMark])
+    const wasOpen = Boolean(current().open || current().new)
+    mark(
+      { open: null, new: '1' },
+      wasOpen ? entryState() : { panel: panelMark },
+      wasOpen,
+    )
+  }, [mark, panelMark])
 
   // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
-  const [leaving, setLeaving] = useState(false)
-  const close = useCallback(() => {
+  const close = useCallback(async () => {
     const unsaved = (() => {
       try {
         // The description and every rich text value keep unsaved text here.
@@ -411,102 +333,31 @@ export function Collection<T, C = void>({
         return null
       }
     })()
-    if (unsaved !== null) setLeaving(true)
-    else if (isNew && hasDraft()) setDiscarding(true)
-    else doClose()
-  }, [key, openId, doClose, isNew, hasDraft])
-
-  // More actions (spec 7.4): open full page, copy link, then the collection's actions.
-  const listPath = basePath ?? `/${key}`
-  const path = usePath()
-  const pageId = path.startsWith(`${listPath}/`)
-    ? decodeURIComponent(path.slice(listPath.length + 1))
-    : null
-  const [pending, setPending] = useState<{
-    action: ActionDefinition
-    record: T
-  } | null>(null)
-  const allowedActions = useCallback(
-    (record: T) =>
-      (definition.actions ?? []).filter(
-        (action) =>
-          !rights ||
-          (rights(record, context as C).actions ?? []).includes(action.id),
-      ),
-    [definition.actions, rights, context],
-  )
-  const menuActions = useCallback(
-    (record: T, onPage: boolean): MenuAction[] => [
-      ...(onPage ? [] : [{ id: 'full', label: t('collection:actions.full') }]),
-      { id: 'copy', label: t('collection:actions.copy') },
-      ...allowedActions(record).map((action) => ({
-        id: action.id,
-        label: t(action.label),
-        danger: true,
-      })),
-    ],
-    [allowedActions, t],
-  )
-  const runMenu = useCallback(
-    (id: string, record: T) => {
-      const recordId = getId(record)
-      if (id === 'full') navigate(`${listPath}/${encodeURIComponent(recordId)}`)
-      else if (id === 'copy') {
-        const link = `${window.location.origin}${listPath}?open=${encodeURIComponent(recordId)}`
-        const scope = recordScope(recordId)
-        Promise.resolve(navigator.clipboard?.writeText(link))
-          .then(() => {
-            if (!navigator.clipboard) throw new Error('no clipboard')
-            notify({
-              tone: 'confirm',
-              text: t('collection:message.copied'),
-              scope,
-            })
-          })
-          .catch(() =>
-            notify({
-              tone: 'error',
-              text: t('collection:message.notCopied'),
-              scope,
-            }),
-          )
-      } else {
-        const action = (definition.actions ?? []).find((a) => a.id === id)
-        if (action) setPending({ action, record })
-      }
-    },
-    [getId, listPath, recordScope, t, definition.actions],
-  )
-  async function runAction(action: ActionDefinition, record: T) {
-    const recordId = getId(record)
-    try {
-      const run = action.id === 'archive' ? source.archive : source.remove
-      if (!run) throw new Error(`${key} cannot ${action.id}`)
-      await run(recordId, context as C)
-      cache.removed(queryClient, key, recordId, getId)
-      forget(recordId)
-      if (pageId) navigate(listPath, { replace: true })
-      else if (openId === recordId) doClose()
-    } catch {
-      // The panel may be closed by now: the message belongs to the collection.
-      notify({
-        tone: 'error',
-        text: t(`collection:message.${action.id}Failed`, {
-          name: nameOf(record),
-        }),
-        action: {
-          label: t('collection:message.retry'),
-          run: () => void runAction(action, record),
-        },
-        scope: key,
+    if (unsaved !== null) {
+      const leave = await confirm({
+        title: t('collection:description.unsavedTitle'),
+        text: t('collection:description.unsavedText'),
+        button: t('collection:description.leave'),
+        cancel: t('collection:description.keepEditing'),
       })
-    }
-  }
-  function confirmAction() {
-    if (!pending) return
-    setPending(null)
-    void runAction(pending.action, pending.record)
-  }
+      if (leave) doClose()
+    } else if (isNew && hasDraft()) {
+      const discard = await confirm({
+        title: t('collection:create.discardTitle'),
+        text: t('collection:create.discardText'),
+        button: t('collection:create.discard'),
+        cancel: t('collection:description.keepEditing'),
+        danger: true,
+      })
+      if (!discard) return
+      try {
+        sessionStorage.removeItem(newRecordKey(key))
+      } catch {
+        // storage blocked: nothing kept
+      }
+      doClose()
+    } else doClose()
+  }, [key, openId, doClose, isNew, hasDraft, t])
 
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
@@ -535,63 +386,92 @@ export function Collection<T, C = void>({
   const selectedRecords = shownItems.filter((record) =>
     selected.has(getId(record)),
   )
-  const [bulk, setBulk] = useState<{
-    action: ActionDefinition
-    records: T[]
-    total: number
-  } | null>(null)
+  // A record changed anywhere (spec 8.3): one of this list's records changed
+  // keeps its place; a removed one leaves the selection, and the panel, the page or
+  // the linked record showing it closes.
+  useRecordChanges((change) => {
+    if (change.kind === 'updated' && change.key === key) {
+      const shown = shownItems.map(getId)
+      if (shown.includes(change.id))
+        setHold((held) => ({
+          order: held?.order ?? shown,
+          kept: new Map(held?.kept).set(change.id, change.record as T),
+        }))
+      return
+    }
+    if (change.kind !== 'removed') return
+    const shown = current()
+    const last = shown.linked.at(-1)
+    const linkedShown = last?.key === change.key && last.id === change.id
+    if (linkedShown) stepBack()
+    if (change.key !== key) return
+    forget(change.id)
+    setSelected((keys) => {
+      if (!keys.has(change.id)) return keys
+      const next = new Set(keys)
+      next.delete(change.id)
+      return next
+    })
+    if (pageId === change.id) navigate(listPath, { replace: true })
+    else if (!linkedShown && shown.open === change.id)
+      if (shown.linked.length) leave()
+      else doClose()
+  })
   const bulkActions = (definition.actions ?? []).flatMap((action) => {
     const records = selectedRecords.filter((record) =>
-      allowedActions(record).some((allowed) => allowed.id === action.id),
+      actions.allowed(record).some((allowed) => allowed.id === action.id),
     )
     return records.length > 0
       ? [
           {
             id: action.id,
             label: t(action.label),
-            run: () =>
-              setBulk({ action, records, total: selectedRecords.length }),
+            run: () => void runBulk(action, records),
           },
         ]
       : []
   })
   /**
-   * Runs an action on each record, one at a time: those that succeed leave the list;
-   * those that fail stay selected, with one message and Retry.
+   * Asks, then runs an action on the selected records it applies to: those that
+   * succeed leave the list; those that fail stay selected, with one message and Retry.
    */
   async function runBulk(action: ActionDefinition, records: T[]) {
-    const run = action.id === 'archive' ? source.archive : source.remove
-    const failed: T[] = []
-    for (const record of records) {
-      const recordId = getId(record)
-      try {
-        if (!run) throw new Error(`${key} cannot ${action.id}`)
-        await run(recordId, context as C)
-        cache.removed(queryClient, key, recordId, getId)
-        forget(recordId)
-        if (openId === recordId) doClose()
-      } catch {
-        failed.push(record)
-      }
-    }
-    setSelected(new Set(failed.map(getId)))
-    if (failed.length === 0) return
-    notify({
-      tone: 'error',
-      text:
-        failed.length === 1
-          ? t(`collection:message.${action.id}Failed`, {
-              name: nameOf(failed[0]),
+    const total = selectedRecords.length
+    const leftOut = selectedRecords.filter(
+      (record) => !records.includes(record),
+    )
+    const confirmed = await confirm({
+      title:
+        records.length === total
+          ? t(`collection:selection.${action.id}Title`, {
+              what: countOf(total),
             })
-          : t(`collection:selection.${action.id}Failed`, {
-              what: countOf(failed.length),
+          : t(`collection:selection.${action.id}SomeTitle`, {
+              count: records.length,
+              what: countOf(total),
             }),
-      action: {
-        label: t('collection:message.retry'),
-        run: () => void runBulk(action, failed),
-      },
-      scope: key,
+      text:
+        leftOut.length === 0
+          ? t(`collection:selection.${action.id}Text`, {
+              count: records.length,
+            })
+          : leftOut.length === 1
+            ? t(`collection:selection.${action.id}LeftOut`, {
+                name: nameOf(leftOut[0]),
+              })
+            : t(`collection:selection.${action.id}LeftOutMore`, {
+                name: nameOf(leftOut[0]),
+                count: leftOut.length - 1,
+              }),
+      button: t(`collection:selection.${action.id}Button`, {
+        what: countOf(records.length),
+      }),
+      danger: true,
     })
+    if (!confirmed) return
+    const keepSelected = (failed: T[]) =>
+      setSelected(new Set(failed.map(getId)))
+    keepSelected(await actions.runMany(action, records, keepSelected))
   }
   /**
    * A shared value changed on a selected row (decision 135): saved on every selected
@@ -666,14 +546,6 @@ export function Collection<T, C = void>({
       })
     if (failed.includes(edited)) throw new Error('not saved')
   }
-  function confirmBulk() {
-    if (!bulk) return
-    setBulk(null)
-    void runBulk(bulk.action, bulk.records)
-  }
-  const bulkLeftOut = bulk
-    ? selectedRecords.filter((record) => !bulk.records.includes(record))
-    : []
   const newDefaults = useCallback((): Partial<T> => {
     const values = {
       ...definition.create?.defaults(context as C),
@@ -697,44 +569,13 @@ export function Collection<T, C = void>({
   ])
   const createRecord = useCallback(
     async (draft: Partial<T>) => {
-      if (!source.create) throw new Error(`${key} cannot be created`)
-      const created = await source.create(draft, context as C)
-      const createdId = getId(created)
-      cache.created(queryClient, keys.list(key, context, state.query), created)
-      const params = new URLSearchParams(window.location.search)
-      params.delete('new')
-      params.set('open', createdId)
-      setSearchParams(params, { replace: true, state: entryState() })
-      notify({
-        tone: 'confirm',
-        text: t('collection:message.created'),
-        action: {
-          label: t('collection:message.undo'),
-          run: () => {
-            Promise.resolve(source.remove?.(createdId, context as C))
-              .then(() => {
-                cache.removed(queryClient, key, createdId, getId)
-                if (
-                  new URLSearchParams(window.location.search).get('open') ===
-                  createdId
-                )
-                  doClose()
-              })
-              .catch(() =>
-                notify({
-                  tone: 'error',
-                  text: t('collection:message.removeFailed', {
-                    name: nameOf(created),
-                  }),
-                  scope: key,
-                }),
-              )
-          },
-        },
-        scope: key,
-      })
+      const created = await actions.create(
+        draft,
+        keys.list(key, context, state.query),
+      )
+      mark({ new: null, open: getId(created) }, entryState(), true)
     },
-    [source, key, context, getId, queryClient, state.query, t, doClose, nameOf],
+    [actions, key, context, getId, state.query, mark],
   )
   const unavailable = useCallback(
     (id: Id) =>
@@ -915,111 +756,21 @@ export function Collection<T, C = void>({
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
 
-  const dialogs = (
-    <>
-      <ConfirmDialog
-        open={bulk !== null}
-        title={
-          bulk
-            ? bulk.records.length === bulk.total
-              ? t(`collection:selection.${bulk.action.id}Title`, {
-                  what: countOf(bulk.total),
-                })
-              : t(`collection:selection.${bulk.action.id}SomeTitle`, {
-                  count: bulk.records.length,
-                  what: countOf(bulk.total),
-                })
-            : ''
-        }
-        text={
-          bulk
-            ? bulkLeftOut.length === 0
-              ? t(`collection:selection.${bulk.action.id}Text`, {
-                  count: bulk.records.length,
-                })
-              : bulkLeftOut.length === 1
-                ? t(`collection:selection.${bulk.action.id}LeftOut`, {
-                    name: nameOf(bulkLeftOut[0]),
-                  })
-                : t(`collection:selection.${bulk.action.id}LeftOutMore`, {
-                    name: nameOf(bulkLeftOut[0]),
-                    count: bulkLeftOut.length - 1,
-                  })
-            : ''
-        }
-        confirm={
-          bulk
-            ? t(`collection:selection.${bulk.action.id}Button`, {
-                what: countOf(bulk.records.length),
-              })
-            : ''
-        }
-        cancel={t('collection:actions.cancel')}
-        danger
-        onConfirm={confirmBulk}
-        onCancel={() => setBulk(null)}
-      />
-      <ConfirmDialog
-        open={pending !== null}
-        title={pending ? t(pending.action.confirm.title) : ''}
-        text={pending ? t(pending.action.confirm.text) : ''}
-        confirm={pending ? t(pending.action.confirm.button) : ''}
-        cancel={t('collection:actions.cancel')}
-        danger
-        onConfirm={() => void confirmAction()}
-        onCancel={() => setPending(null)}
-      />
-      <ConfirmDialog
-        open={leaving}
-        title={t('collection:description.unsavedTitle')}
-        text={t('collection:description.unsavedText')}
-        confirm={t('collection:description.leave')}
-        cancel={t('collection:description.keepEditing')}
-        onConfirm={() => {
-          setLeaving(false)
-          doClose()
-        }}
-        onCancel={() => setLeaving(false)}
-      />
-      <ConfirmDialog
-        open={discarding}
-        title={t('collection:create.discardTitle')}
-        text={t('collection:create.discardText')}
-        confirm={t('collection:create.discard')}
-        cancel={t('collection:description.keepEditing')}
-        danger
-        onConfirm={() => {
-          setDiscarding(false)
-          try {
-            sessionStorage.removeItem(newRecordKey(key))
-          } catch {
-            // storage blocked: nothing kept
-          }
-          doClose()
-        }}
-        onCancel={() => setDiscarding(false)}
-      />
-    </>
-  )
-
   if (pageId && definition.panel)
     return (
-      <>
-        <RecordPage
-          key={pageId}
-          definition={definition}
-          panel={definition.panel}
-          context={context as C}
-          id={pageId}
-          listHref={`${listPath}?open=${encodeURIComponent(pageId)}`}
-          canEdit={canEdit}
-          save={save}
-          report={report}
-          actions={(record) => menuActions(record, true)}
-          onAction={runMenu}
-        />
-        {dialogs}
-      </>
+      <RecordPage
+        key={pageId}
+        definition={definition}
+        panel={definition.panel}
+        context={context as C}
+        id={pageId}
+        listHref={`${listPath}?open=${encodeURIComponent(pageId)}`}
+        canEdit={canEdit}
+        save={save}
+        report={report}
+        actions={(record) => actions.menu(record, true)}
+        onAction={actions.runMenu}
+      />
     )
 
   return (
@@ -1194,7 +945,7 @@ export function Collection<T, C = void>({
             context={context}
             openId={rootId}
             chain={chain}
-            onOpen={(depth) => showChain(chain.slice(0, depth))}
+            onOpen={stepTo}
           />
         )}
       </Show>
@@ -1252,8 +1003,8 @@ export function Collection<T, C = void>({
                     canEdit={canEdit}
                     save={save}
                     report={report}
-                    actions={(record) => menuActions(record, false)}
-                    onAction={runMenu}
+                    actions={(record) => actions.menu(record)}
+                    onAction={actions.runMenu}
                   />
                 )}
               </Match>
@@ -1261,7 +1012,6 @@ export function Collection<T, C = void>({
           </OpenLinked>
         </motion.div>
       )}
-      {dialogs}
     </section>
   )
 }

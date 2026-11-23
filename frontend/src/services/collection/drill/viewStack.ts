@@ -1,4 +1,4 @@
-import { entryState, navigate } from '../../navigation'
+import { currentAddress, entryState, navigate } from '../../navigation'
 
 /** A view left by drilling (spec 12.1): its address, and the name its strip shows. */
 export type View = { address: string; name: string }
@@ -38,10 +38,7 @@ export function currentViews(): View[] {
  * the stack, and the new address is pushed, so Back returns to it.
  */
 export function drill(to: string, name: string) {
-  const views = [
-    ...currentViews(),
-    { address: window.location.pathname + window.location.search, name },
-  ]
+  const views = [...currentViews(), { address: currentAddress(), name }]
   writeViews(views)
   navigate(to, { state: { drill: views.length } })
 }

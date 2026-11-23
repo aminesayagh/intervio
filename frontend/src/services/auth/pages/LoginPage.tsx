@@ -2,7 +2,7 @@ import { Button, Checkbox, Form } from '@heroui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, navigate, useSearchParams } from '../../navigation'
+import { Link, navigate, useQueryState } from '../../navigation'
 import { Field, FormError, Title, check } from '../../ui-kit'
 import { authApi, currentUserKey, errorKey } from '../api'
 import { GoogleButton, LinkButton, OrDivider } from '../components/Parts'
@@ -11,7 +11,7 @@ import { GoogleButton, LinkButton, OrDivider } from '../components/Parts'
 export function LoginPage() {
   const { t } = useTranslation('auth')
   const queryClient = useQueryClient()
-  const googleFailed = useSearchParams().get('error') === 'google'
+  const googleFailed = useQueryState('error')[0] === 'google'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)

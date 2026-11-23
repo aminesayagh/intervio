@@ -37,8 +37,11 @@ async function openPanel(width = 1600) {
       <FoldProbe />
     </>,
   )
+  // A row of the narrow list opens its record; on wider screens, its open button.
   await userEvent.click(
-    await screen.findByRole('button', { name: 'Open Item 001' }),
+    width < 1024
+      ? await screen.findByRole('row', { name: 'Item 001' })
+      : await screen.findByRole('button', { name: 'Open Item 001' }),
   )
   await screen.findByRole('complementary', { name: 'Item 001' })
 }
@@ -133,4 +136,43 @@ test('on a narrow screen the panel is the screen, with a way back', async () => 
       screen.queryByRole('complementary', { name: 'Item 001' }),
     ).toBeNull(),
   )
+})
+
+test('on a narrow screen the list is rows: name, detail line and status, no checkboxes', async () => {
+  setScreenWidth(900)
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
+  )
+  const row = await screen.findByRole('row', { name: 'Item 002' })
+  // The owner and the quantity under the name, and the status chip.
+  expect(within(row).getByText('Karim Benali · 2')).toBeInTheDocument()
+  expect(within(row).getByText('Valid')).toBeInTheDocument()
+  expect(screen.queryByRole('checkbox')).toBeNull()
+  expect(screen.queryByRole('columnheader')).toBeNull()
+})
+
+test('on a narrow screen one Filters button holds the sort and the filters', async () => {
+  setScreenWidth(900)
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
+  )
+  await screen.findByRole('row', { name: 'Item 001' })
+  expect(screen.queryByRole('button', { name: 'Status' })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Filters' }))
+  const panel = await screen.findByRole('dialog', { name: 'Filters' })
+
+  await userEvent.click(within(panel).getByRole('button', { name: /Name/ }))
+  await waitFor(() => expect(window.location.search).toBe('?sort=name:asc'))
+
+  await userEvent.click(within(panel).getByRole('checkbox', { name: 'Valid' }))
+  await waitFor(() =>
+    expect(window.location.search).toContain('f.status=valid'),
+  )
+  // Closed, its button says how many filters are chosen.
+  await userEvent.keyboard('{Escape}')
+  expect(
+    await screen.findByRole('button', { name: 'Filters' }),
+  ).toHaveTextContent('Filters (1)')
 })

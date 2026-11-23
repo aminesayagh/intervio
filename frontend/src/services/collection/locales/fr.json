@@ -153,5 +153,7 @@
     "recordsOlder_one": "{{count}} fiche précédente",
     "recordsOlder_other": "{{count}} fiches précédentes",
     "back": "Revenir à {{name}}"
-  }
+  },
+  "filters": "Filtres",
+  "sortTitle": "Tri"
 }

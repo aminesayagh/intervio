@@ -153,5 +153,7 @@
     "recordsOlder_one": "{{count}} earlier record",
     "recordsOlder_other": "{{count}} earlier records",
     "back": "Back to {{name}}"
-  }
+  },
+  "filters": "Filters",
+  "sortTitle": "Sort"
 }

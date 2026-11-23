@@ -59,6 +59,15 @@ const devRoutes: Record<string, Route> =
           access: 'user',
           board: true,
         },
+        '/dev/parts': {
+          page: lazy(() =>
+            import('../services/collection/showcase/CollectionShowcase').then(
+              (module) => ({ default: module.PartsShowcase }),
+            ),
+          ),
+          access: 'user',
+          board: true,
+        },
       }
     : {}
 

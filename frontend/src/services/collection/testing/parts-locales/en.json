@@ -1,0 +1,20 @@
+{
+  "title": "Parts",
+  "count_one": "{{count}} part",
+  "count_other": "{{count}} parts",
+  "empty": {
+    "title": "No parts yet",
+    "text": "Add the first one to find it here later."
+  },
+  "create": { "add": "+ Add part" },
+  "errors": { "nameRequired": "The name can't be empty." },
+  "type": "Part",
+  "columns": {
+    "name": "Name",
+    "kind": "Kind",
+    "quantity": "Quantity",
+    "item": "Item"
+  },
+  "kinds": { "seal": "Seal", "bearing": "Bearing", "filter": "Filter" },
+  "scopes": { "item": "Linked to: {{name}}" }
+}

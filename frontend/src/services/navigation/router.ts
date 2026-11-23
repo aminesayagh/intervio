@@ -43,7 +43,12 @@ export function setSearchParams(
   const search = new URLSearchParams()
   for (const [key, value] of entries) if (value) search.set(key, value)
   const query = search.toString()
-  navigate(window.location.pathname + (query ? `?${query}` : ''), options)
+  // Same page, same place in a drill-down: the entry keeps its depth (spec 12.1).
+  const drill = entryState().drill
+  navigate(window.location.pathname + (query ? `?${query}` : ''), {
+    ...options,
+    state: { ...(drill === undefined ? {} : { drill }), ...options.state },
+  })
 }
 
 /** The extra state the current history entry was pushed with (see navigate). */

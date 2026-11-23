@@ -70,6 +70,11 @@ import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
 import { Awake } from './values/awake'
+import { Folds, type Fold } from './drill/Folded'
+import { currentViews } from './drill/viewStack'
+import { formatChain, OpenLinked, parseChain, type Step } from './record/linked'
+import { LinkedPanel } from './record/LinkedPanel'
+import { LinkedTabs } from './record/LinkedTabs'
 import {
   MarksProvider,
   useMark,
@@ -101,19 +106,24 @@ type More = {
 export function Collection<T, C = void>({
   definition,
   context,
-  basePath,
+  basePath: basePathProp,
 }: {
   definition: CollectionDefinition<T, C>
   context?: C
   /**
    * The list's address (spec 12, 13); a record's full page is {basePath}/{id}.
-   * Defaults to /{definition.key}.
+   * Defaults to the definition's, else /{definition.key}.
    */
   basePath?: string
 }) {
+  const basePath = basePathProp ?? definition.basePath
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const state = useCollectionState(definition.key, definition.defaultSort)
+  const state = useCollectionState(
+    definition.key,
+    definition.defaultSort,
+    definition.scopes?.map((scope) => scope.id),
+  )
   const { listing } = state
   const narrowed = isNarrowed(listing)
   const list = useCollectionQuery({
@@ -189,14 +199,57 @@ export function Collection<T, C = void>({
       if (params.get('open') === id) return
       const wasOpen = params.has('open')
       params.set('open', id)
+      params.delete('linked') // another record from the list: no linked ones after it
       // Opening pushes an entry (Back closes); switching records replaces it.
       setSearchParams(params, {
         replace: wasOpen,
-        state: wasOpen ? entryState() : { panel: panelMark },
+        state: wasOpen
+          ? { ...entryState(), linkedStep: false }
+          : { panel: panelMark },
       })
     },
     [panelMark],
   )
+
+  // Linked records opened in the panel after it (decision 137): ?linked=key:id,…
+  const linkedParam = useSearchParams().get('linked')
+  const chain = useMemo(() => parseChain(linkedParam), [linkedParam])
+  /** Shows the chain cut to this many steps (0: the record opened from the list). */
+  const showChain = useCallback((next: Step[], push = false) => {
+    const params = new URLSearchParams(window.location.search)
+    if (next.length) params.set('linked', formatChain(next))
+    else params.delete('linked')
+    setSearchParams(params, {
+      replace: !push,
+      state: push ? { ...entryState(), linkedStep: true } : entryState(),
+    })
+  }, [])
+  /** A section's record opens in the panel; Back returns to the one before. */
+  const openLinked = useCallback(
+    (collectionKey: string, id: Id) =>
+      showChain(
+        [
+          ...parseChain(
+            new URLSearchParams(window.location.search).get('linked'),
+          ),
+          { key: collectionKey, id },
+        ],
+        true,
+      ),
+    [showChain],
+  )
+  /** "‹ {collection}" on a narrow screen: the list, whatever the depth. */
+  const leave = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    params.delete('open')
+    params.delete('linked')
+    setSearchParams(params, { replace: true })
+  }, [])
+  /** × on a linked record: one step back, as Back does when the step was pushed. */
+  const stepBack = useCallback(() => {
+    if (entryState().linkedStep === true) window.history.back()
+    else showChain(chain.slice(0, -1))
+  }, [chain, showChain])
   const doClose = useCallback(() => {
     if (entryState().panel === panelMark) window.history.back()
     else {
@@ -625,13 +678,23 @@ export function Collection<T, C = void>({
     const values = {
       ...definition.create?.defaults(context as C),
     } as Partial<T>
-    for (const filter of definition.filters ?? []) {
+    // A list filtered or scoped to one value creates records with it (spec 7.5, 12.1).
+    for (const filter of [
+      ...(definition.filters ?? []),
+      ...(definition.scopes ?? []),
+    ]) {
       const chosen = listing.filters[filter.id] ?? []
       if (chosen.length === 1 && filter.patch)
         Object.assign(values, filter.patch(chosen[0]))
     }
     return values
-  }, [definition.create, definition.filters, listing.filters, context])
+  }, [
+    definition.create,
+    definition.filters,
+    definition.scopes,
+    listing.filters,
+    context,
+  ])
   const createRecord = useCallback(
     async (draft: Partial<T>) => {
       if (!source.create) throw new Error(`${key} cannot be created`)
@@ -691,7 +754,8 @@ export function Collection<T, C = void>({
       return
     if (event.key === 'Escape') {
       event.preventDefault()
-      close()
+      if (chain.length) stepBack()
+      else close()
       return
     }
     if (!openId || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'))
@@ -791,14 +855,28 @@ export function Collection<T, C = void>({
     },
     [widthKey],
   )
-  // Medium width: the sidebar folds while a panel is open (spec 9).
+  // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
+  // Returning to one takes it and the views after it off the stack.
+  const strips: Fold[] =
+    mode === 'narrow'
+      ? []
+      : currentViews().map((view, index) => ({
+          name: view.name,
+          open: () => navigate(view.address, { state: { drill: index } }),
+        }))
+  const hasStrips = strips.length > 0
+  // Medium width: the sidebar folds while a panel or a strip shows (spec 9, 12.1).
   useEffect(() => {
-    foldSidebar(mode === 'medium' && panelShown)
+    foldSidebar(mode === 'medium' && (panelShown || hasStrips))
     return () => foldSidebar(false)
-  }, [mode, panelShown])
+  }, [mode, panelShown, hasStrips])
   // The table's columns: as many as fit, in the collection's priority (spec 9).
+  // Tabs before the panel take their room from the list (at most 2 show).
+  const tabsWidth = Math.min(chain.length, 2) * 32
   const listWidth =
-    (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) -
+    (panelShown && mode !== 'narrow'
+      ? space - panelWidth - 8 - tabsWidth
+      : space) -
     24 -
     (selectable ? SELECTION_WIDTH : 0)
   const priority =
@@ -954,6 +1032,10 @@ export function Collection<T, C = void>({
       // them has its own top spacing (the list here, the panel in its top bar).
       className="relative -mt-4 -me-4 -mb-4 flex h-[calc(100dvh-3.5rem)] min-h-[360px] overflow-hidden lg:-mt-6 lg:-me-6 lg:-mb-6 lg:h-dvh"
     >
+      {/* Right after the sidebar, before the list. */}
+      <Show when={hasStrips} className="me-4 h-full lg:me-6">
+        <Folds folds={strips} kind="views" />
+      </Show>
       <div
         className={cn(
           'flex min-w-0 flex-1 flex-col gap-4 pe-6 pt-4 lg:pt-6',
@@ -987,6 +1069,7 @@ export function Collection<T, C = void>({
               <Toolbar
                 namespace={definition.i18n.namespace}
                 filters={definition.filters ?? []}
+                scopes={definition.scopes}
                 listing={listing}
                 onSearch={state.setSearch}
                 onFilter={state.setFilter}
@@ -1099,6 +1182,22 @@ export function Collection<T, C = void>({
           onCommit={commitWidth}
         />
       )}
+      <Show
+        when={
+          panelShown && !narrowPanel && openId && chain.length > 0 && openId
+        }
+        className="h-full"
+      >
+        {(rootId) => (
+          <LinkedTabs
+            root={definition}
+            context={context}
+            openId={rootId}
+            chain={chain}
+            onOpen={(depth) => showChain(chain.slice(0, depth))}
+          />
+        )}
+      </Show>
       {panelShown && (
         <motion.div
           initial={{ x: 24, opacity: 0 }}
@@ -1111,39 +1210,55 @@ export function Collection<T, C = void>({
               'flex-1 [&>aside]:border-0 [&>aside]:ps-0 [&>aside]:pe-0',
           )}
         >
-          <Switch className="h-full">
-            <Match when={isNew && !openId}>
-              <NewRecord
-                back={back}
-                key="new"
-                definition={definition}
-                panel={definition.panel!}
-                defaults={newDefaults()}
-                onCreated={createRecord}
-                onClose={close}
-              />
-            </Match>
-            <Match when={openId}>
-              {(id) => (
-                <RecordPanel
-                  key={definition.key}
+          <OpenLinked value={openLinked}>
+            <Switch className="h-full">
+              <Match when={isNew && !openId}>
+                <NewRecord
                   back={back}
+                  key="new"
                   definition={definition}
                   panel={definition.panel!}
-                  context={context as C}
-                  id={id}
-                  fromList={list.items.find((item) => getId(item) === id)}
+                  defaults={newDefaults()}
+                  onCreated={createRecord}
                   onClose={close}
-                  onUnavailable={unavailable}
-                  canEdit={canEdit}
-                  save={save}
-                  report={report}
-                  actions={(record) => menuActions(record, false)}
-                  onAction={runMenu}
                 />
-              )}
-            </Match>
-          </Switch>
+              </Match>
+              <Match
+                when={openId && chain.length > 0 && chain[chain.length - 1]}
+              >
+                {(step) => (
+                  <LinkedPanel
+                    key={`${step.key}:${step.id}`}
+                    root={definition}
+                    step={step}
+                    back={back}
+                    onClose={stepBack}
+                    onLeave={leave}
+                  />
+                )}
+              </Match>
+              <Match when={openId}>
+                {(id) => (
+                  <RecordPanel
+                    key={definition.key}
+                    back={back}
+                    definition={definition}
+                    panel={definition.panel!}
+                    context={context as C}
+                    id={id}
+                    fromList={list.items.find((item) => getId(item) === id)}
+                    onClose={close}
+                    onUnavailable={unavailable}
+                    canEdit={canEdit}
+                    save={save}
+                    report={report}
+                    actions={(record) => menuActions(record, false)}
+                    onAction={runMenu}
+                  />
+                )}
+              </Match>
+            </Switch>
+          </OpenLinked>
         </motion.div>
       )}
       {dialogs}

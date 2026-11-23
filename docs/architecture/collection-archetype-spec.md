@@ -233,8 +233,14 @@ On load, in this order:
   - clicking a row (anywhere but an editable cell), pressing Enter on it, or its **Open** button opens its record. The Open button sits at the end of the row's first cell and shows on the row under the pointer or the focus, since editable cells leave little else to click;
   - clicking the open record again does nothing;
   - opening another record replaces the panel's content.
-- **A linked record** opens in the same panel. The panel history gains an entry, and the top bar shows "‹ {previous record's name}". If the linked record has its own page (`opensAsPage`), the app navigates there instead.
-- **Closing** clears the panel history.
+- **A linked record** opens in the same panel (decision 137):
+  - the record left folds into a **tab** between the list and the panel: 32 px, a ‹ at the top, its name written vertically; the tab takes its room from the list, so the panel keeps its width;
+  - clicking a tab opens that record again and removes the tabs after it;
+  - at most 2 tabs show; with more steps, the first stands for the older records ("2 earlier records") and opens a menu of them, newest first;
+  - a linked record of another collection shows that collection's panel definition; one with its own page (`opensAsPage`) navigates there instead;
+  - each step pushes an address, so the browser's Back goes back one step.
+- **Closing (×)** goes back one step: it opens the previous record, and closes the panel only when there is none left.
+- **Below 1024 px** there are no tabs and no other back control: × goes back one step, and "‹ {collection}" returns to the list.
 
 ### 7.2 States
 
@@ -303,7 +309,7 @@ Every type follows the same rules: read view only without the right; saved when 
 
 ### 7.8 Messages
 
-Decision 132; screens 60 to 68. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
+Decision 132; screens 65 to 73. The **notifications service** (`services/notifications`) is the app's only way to notify: every screen calls its `notify()`, never a toast library directly, and its `Notifications` (HeroUI's `Toast.Provider`, mounted once at the root) is the only toaster. HeroUI's toast does the queue, the timing and the announcements; the service adds the scope and the key below. A component from another library that wants to notify is wired to `notify` through its callback, and its own toaster is turned off.
 
 - **A message** has a text, a tone (error or confirmation), an optional action (Retry, Undo), a **scope** and an optional **key**.
   - The scope is the interaction it belongs to: a record (`{collection}:record:{id}`) or the collection (`{collection}`). Leaving it removes its messages: opening another record, closing the panel, opening the full page, leaving the collection.
@@ -469,7 +475,7 @@ There is no creation form: a new record is the normal record view, created as so
 
 ### 8.5 Selecting several records
 
-Decision 134; screens 53 to 56.
+Decision 134; screens 58 to 61.
 
 - **Checkboxes:** React Aria's row selection (`selectionMode="multiple"`, `selectionBehavior="toggle"`), a checkbox at the start of each row and in the header (a dash when some rows are selected). With nothing selected, a press on a row opens its record. Once a row is selected, a press on another row adds it to the selection or takes it out (React Aria's toggle behavior), and the › button on the row still opens the record. Space selects the focused row.
 - **Select all:** the header checkbox selects the loaded rows. Records loaded later are not added.
@@ -477,11 +483,11 @@ Decision 134; screens 53 to 56.
 - **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
 - **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
 - **Changes of view:** a new search, filter or sort clears the selection.
-- **Changing several at once** (decision 135; screens 57, 58): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
+- **Changing several at once** (decision 135; screens 62, 63): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
 
 ### 8.6 A changed record keeps its place
 
-Decision 136; screens 58, 59.
+Decision 136; screens 63, 64.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
 - **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.
@@ -597,6 +603,13 @@ const resources = restSource<Resource, { interventionId: Id }>({
 
 ### 12.1 Drilling into linked records
 
+**Built so far (step 12, 2026-11-23), seen in the showcase (/dev/collection and /dev/parts, a second collection linked to the items):**
+- A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
+- The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
+- Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
+- Not built yet: a section passes no `context` to its collection; a linked record of another collection has no More actions and no keep-place; `opensAsPage` (a record with its own page) and, below 1024 px, the "‹" that goes up one level of strips come with the first real collections that need them.
+
+
 - **In the panel:**
   - a section shows its first 5 items;
   - when it has more, "Show all ⤢" shows on the section's title line, on the right (the count is already in the title).
@@ -613,7 +626,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
     - a "‹" at the top;
     - the view's name written vertically ("{collection title} · {open record}");
     - the whole strip is one button that returns to that view.
-  - Returning to a view takes it and every view after it off the stack, then restores it exactly (address, scroll, panel).
+  - Returning to a view takes it and every view after it off the stack, then restores its address: search, filters, sort and open record (panel). The scroll position is not restored until scroll memory is designed again (8.4); the list starts at the top (2026-11-22).
   - The browser's Back button does the same, one level at a time.
   - **At most 2 strips show.** With more levels, the first strip stands for all the older ones and opens a menu listing them, newest first.
   - **Removing the scope chip** leaves the plain collection, and the strips stay.
@@ -623,7 +636,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
   - below 1024 px there are no strips, and "‹" goes up one level.
 - **Tests (added to 15.4):**
   - "Show all" opens the scoped list with its chip;
-  - a strip returns to the previous view with its scroll and panel;
+  - a strip returns to the previous view with its search, filters, sort and panel;
   - the browser's Back button does the same;
   - a third level folds the older views into the first strip's menu;
   - removing the chip keeps the strips;
@@ -704,7 +717,7 @@ Each line is one test with the test collection and MSW. Together they cover ever
 | **Search and filters** | typing waits 250 ms, then shows only matching items and "n of 42"; a filter shows its count on its button; "Clear filters" resets both; no results shows its message |
 | **Sort** | clicking a column header sorts through the server and updates the address; a third click goes back to the default order; the last sort is remembered |
 | **Panel** | clicking an item opens it, marks it and adds `?open`; clicking another switches; × and the browser's Back both close it and agree; a `404` shows "no longer available", and the item leaves the list |
-| **Linked records** | an item of a section opens in the same panel with "‹ previous"; Back returns; a linked record with its own page navigates there |
+| **Linked records** | an item of a section opens in the same panel and the record left folds into a tab; a tab opens its record again; × and Back go back one step; a third step folds the older records into the first tab's menu; a linked record with its own page navigates there |
 | **Edit in place** | a text field saves when left and with Enter, puts the value back with Escape; a refused or failed change puts the value back and shows its message; a menu value saves on choice and comes back on error; no field shows for a value not in `rights.edit` |
 | **Creation** | "+ Add" shows the defaults and "Not saved yet"; filling the name creates the item once; it appears on top, open, with "Record created · Undo"; Undo removes it; leaving with nothing typed asks nothing; leaving with input asks, and Discard creates nothing |
 | **Actions** | Remove asks, then removes and closes; Copy link copies the record's address |

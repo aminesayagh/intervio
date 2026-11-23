@@ -1,6 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import { cn, Show } from '../../ui-kit'
-import type { CollectionDefinition, PanelDefinition } from '../definition'
+import { Button, cn, Icon, Show } from '../../ui-kit'
+import { useCollectionQuery } from '../data/collectionQuery'
+import type {
+  AnyCollection,
+  CollectionDefinition,
+  PanelDefinition,
+} from '../definition'
+import { drill } from '../drill/viewStack'
+import { useOpenLinked } from './linked'
+import { writeListing } from '../list/useCollectionState'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
@@ -166,33 +174,112 @@ function Sections<T, C>({
   record: T
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
+  // The strip of the view left names it: "Records · Pump specification" (spec 12.1).
+  const viewName = `${t(definition.i18n.title)} · ${panel.title(record)}`
   return (
     <>
-      {panel.sections?.map((section) => {
-        const items = section.items(record)
-        return (
-          <section key={section.id} className="border-t border-border pt-4">
-            <h3 className="flex items-baseline gap-2 font-medium">
-              {t(section.label)}
-              <span className="text-xs font-normal text-muted">
-                {items.length}
-              </span>
-            </h3>
-            <ul className="mt-2 flex flex-col">
-              {items.slice(0, 5).map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center gap-2 border-b border-border py-2"
-                >
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.kind}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      })}
+      {panel.sections?.map((section) => (
+        <Section
+          key={section.id}
+          label={t(section.label)}
+          linked={section.collection()}
+          scope={section.scope(record)}
+          viewName={viewName}
+        />
+      ))}
     </>
+  )
+}
+
+/** How many linked records a section shows; "Show all" opens the rest (decision 127). */
+const PREVIEW = 5
+
+/**
+ * One section: the linked collection's records in its scope, loaded as its list loads
+ * them, so "Show all" opens a list already in the cache.
+ */
+function Section({
+  label,
+  linked,
+  scope,
+  viewName,
+}: {
+  label: string
+  linked: AnyCollection
+  scope: Record<string, string[]>
+  viewName: string
+}) {
+  const { t } = useTranslation([linked.i18n.namespace, 'collection'])
+  // In the panel, a linked record opens there (decision 137); on the full page it is text.
+  const openLinked = useOpenLinked()
+  // ponytail: the linked collection gets no context; add one to the section when a
+  // real collection needs it.
+  const list = useCollectionQuery({
+    key: linked.key,
+    source: linked.source,
+    context: undefined,
+    listing: { search: '', filters: scope, sort: linked.defaultSort },
+  })
+  const total = list.total ?? list.items.length
+  const address = writeListing(new URLSearchParams(), {
+    search: '',
+    filters: scope,
+    sort: null,
+  })
+  return (
+    <section className="border-t border-border pt-4">
+      <h3 className="flex items-baseline gap-2 font-medium">
+        {label}
+        <Show
+          as="span"
+          when={list.data}
+          className="text-xs font-normal text-muted"
+        >
+          {total}
+        </Show>
+        <Show as="span" when={total > PREVIEW} className="ms-auto">
+          <Button
+            size="sm"
+            look="ghost"
+            onPress={() =>
+              drill(
+                `${linked.basePath ?? `/${linked.key}`}?${address}`,
+                viewName,
+              )
+            }
+          >
+            {t('collection:section.showAll')}
+            <Icon name="lucide/maximize-2" size={14} />
+          </Button>
+        </Show>
+      </h3>
+      <ul className="mt-2 flex flex-col">
+        {list.items.slice(0, PREVIEW).map((item) => (
+          <li
+            key={linked.getId(item)}
+            className="flex items-center gap-2 border-b border-border py-2"
+          >
+            <Show
+              as="span"
+              when={openLinked}
+              className="min-w-0 flex-1 truncate"
+              fallback={linked.panel?.title(item) ?? linked.getId(item)}
+            >
+              {(open) => (
+                <button
+                  type="button"
+                  onClick={() => open(linked.key, linked.getId(item))}
+                  className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+                >
+                  {linked.panel?.title(item) ?? linked.getId(item)}
+                </button>
+              )}
+            </Show>
+            {linked.panel?.type(item)}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

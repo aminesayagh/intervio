@@ -8,7 +8,7 @@ import type {
 } from '../definition'
 import { drill } from '../drill/viewStack'
 import { useOpenLinked } from './linked'
-import { writeListing } from '../list/useCollectionState'
+import { listAddress } from '../address'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
@@ -221,11 +221,7 @@ function Section({
     listing: { search: '', filters: scope, sort: linked.defaultSort },
   })
   const total = list.total ?? list.items.length
-  const address = writeListing(new URLSearchParams(), {
-    search: '',
-    filters: scope,
-    sort: null,
-  })
+  const address = listAddress(linked.basePath ?? `/${linked.key}`, scope)
   return (
     <section className="border-t border-border pt-4">
       <h3 className="flex items-baseline gap-2 font-medium">
@@ -241,12 +237,7 @@ function Section({
           <Button
             size="sm"
             look="ghost"
-            onPress={() =>
-              drill(
-                `${linked.basePath ?? `/${linked.key}`}?${address}`,
-                viewName,
-              )
-            }
+            onPress={() => drill(address, viewName)}
           >
             {t('collection:section.showAll')}
             <Icon name="lucide/maximize-2" size={14} />

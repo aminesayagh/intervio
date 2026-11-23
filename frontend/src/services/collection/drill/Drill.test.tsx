@@ -214,8 +214,15 @@ test('a tab opens its record again, and the tabs after it go', async () => {
   await userEvent.click(
     tabs().getByRole('button', { name: 'Back to Item 001' }),
   )
-  expect(await panel('Item 001')).toBeInTheDocument()
+  const item = await panel('Item 001')
   expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
+
+  // The tab went back through the history: × closes, with no stale entry left.
+  await userEvent.click(within(item).getByRole('button', { name: 'Close' }))
+  await waitFor(() =>
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument(),
+  )
+  expect(window.location.search).toBe('')
 })
 
 test('the browser’s Back goes back one linked record', async () => {

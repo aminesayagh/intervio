@@ -1,0 +1,73 @@
+import {
+  createLoader,
+  createParser,
+  createSerializer,
+  parseAsArrayOf,
+  parseAsString,
+} from '../navigation'
+import { formatChain, parseChain, type Step } from './record/linked'
+import type { ListQuery } from './types'
+
+/**
+ * What a collection keeps in the address (spec 6.1), as nuqs parsers: the list
+ * (q, sort, f.{filter}) and the panel (open, new, linked).
+ */
+
+type Sort = ListQuery['sort']
+
+/** `sort=name:asc`: a sort chosen; anything else is none (the default order). */
+export const sortParser = createParser<Sort>({
+  parse: (value) => {
+    const [by, direction] = value.split(':')
+    return by && (direction === 'asc' || direction === 'desc')
+      ? { by, direction }
+      : null
+  },
+  serialize: (sort) => `${sort.by}:${sort.direction}`,
+  eq: (a, b) => a.by === b.by && a.direction === b.direction,
+})
+
+/** `linked=parts:id,items:id`: the linked records opened after the panel's (decision 137). */
+export const chainParser = createParser<Step[]>({
+  parse: (value) => {
+    const chain = parseChain(value)
+    return chain.length ? chain : null
+  },
+  serialize: formatChain,
+  eq: (a, b) => formatChain(a) === formatChain(b),
+}).withDefault([])
+
+/** The list's parameters, for a collection with these filter (and scope) ids. */
+export const listParsers = (filterIds: string[]) => ({
+  q: parseAsString.withDefault(''),
+  sort: sortParser,
+  ...Object.fromEntries(
+    filterIds.map((id) => [
+      `f.${id}`,
+      parseAsArrayOf(parseAsString).withDefault([]),
+    ]),
+  ),
+})
+
+/** The panel's parameters: the record open, a new one, the linked ones after it. */
+export const panelParsers = {
+  open: parseAsString,
+  new: parseAsString,
+  linked: chainParser,
+}
+
+/** Reads the panel's parameters from an address, at once (no render in between). */
+export const readPanel = createLoader(panelParsers)
+
+/** Builds an address with other panel parameters, keeping the rest. */
+export const panelAddress = createSerializer(panelParsers)
+
+/** A list's address, scoped by these filters (a section's "Show all", spec 12.1). */
+export function listAddress(path: string, filters: Record<string, string[]>) {
+  return createSerializer(listParsers(Object.keys(filters)))(
+    path,
+    Object.fromEntries(
+      Object.entries(filters).map(([id, values]) => [`f.${id}`, values]),
+    ),
+  )
+}

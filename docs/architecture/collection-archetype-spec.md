@@ -213,7 +213,9 @@ When the address has no list parameters (for example, the user clicks "Resources
   - otherwise, for example on a shared link, it **replaces** the address without `open`.
 
   So Back and × always agree. The router marks its own entries in `history.state`.
-- The router's `navigate` gains the ability to set a query string without changing the path; `useSearchParams` already reads it.
+- A record's tab (decision 137) goes back through the history to that record when the linked steps were pushed, as × and Back do, so no stale entry is left behind.
+
+**How the address is read and written (2026-11-23).** The query string is managed with nuqs (`services/navigation` re-exports it; `<QueryProvider>` at the app's root): each parameter has a typed parser in `collection/address.ts` (`q`, `sort`, `f.{id}`, `open`, `new`, `linked`), defaults are left out of the address, and changes to the list are batched into one replaced entry. The panel's parameters are read with nuqs but written with the router's `navigate`, built by nuqs's serializer, because those entries carry marks in `history.state` (the panel opened here, a linked step, the drill depth) that nuqs can't set; nuqs follows these entries through `enableHistorySync()`. The router (`services/navigation/router.ts`) only matches pages and pushes entries; matching paths with a routing library is a separate change.
 
 ### 6.4 Refresh
 

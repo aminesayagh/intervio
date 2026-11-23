@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { navigate, useSearchParams } from '../../navigation'
+import { navigate, parseAsString, useQueryState } from '../../navigation'
 import { authApi, currentUserKey } from '../api'
 
 /**
@@ -11,7 +11,7 @@ import { authApi, currentUserKey } from '../api'
 export function OpenLinkPage() {
   const { t } = useTranslation('auth')
   const queryClient = useQueryClient()
-  const token = useSearchParams().get('token') ?? ''
+  const [token] = useQueryState('token', parseAsString.withDefault(''))
   const opened = useRef(false)
 
   useEffect(() => {

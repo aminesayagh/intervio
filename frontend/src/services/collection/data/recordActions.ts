@@ -5,6 +5,7 @@ import { ApiError } from '../../http'
 import { navigate } from '../../navigation'
 import { dismissKey, notify } from '../../notifications'
 import type { MenuAction } from '../../ui-kit'
+import { panelAddress } from '../address'
 import { confirm } from '../confirm/confirm'
 import type { ActionDefinition, CollectionDefinition } from '../definition'
 import type { Id } from '../types'
@@ -289,7 +290,7 @@ export function useRecordActions<T, C>(
       const recordId = encodeURIComponent(getId(record))
       if (id === 'full') navigate(`${basePath}/${recordId}`)
       else if (id === 'copy') {
-        const link = `${window.location.origin}${basePath}?open=${recordId}`
+        const link = `${window.location.origin}${panelAddress(basePath, { open: getId(record) })}`
         Promise.resolve(navigator.clipboard?.writeText(link))
           .then(() => {
             if (!navigator.clipboard) throw new Error('no clipboard')

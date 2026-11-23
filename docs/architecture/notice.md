@@ -26,3 +26,25 @@ Two terms used below:
 - **Today:** on a narrow window the strips are hidden (decision 128), and only the browser's Back goes up a level.
 - **Why:** decision 128 says "‹" goes up one level there, but no wireframe shows where that "‹" sits (beside the page title, in the top bar…).
 - **Next:** decide its place on the wireframes, then build it.
+
+## From the shared record actions (2026-11-23)
+
+### 6. Stepping back from a linked record redraws the whole table
+
+- **Today:** closing a linked record (×, a tab, Back, or archiving it) makes every row and cell of the list draw again (React Scan shows it).
+- **Why:** each record tab before the panel takes 32 px from the list (`tabsWidth`); when the last tab leaves, the list is wider, so the columns that fit change and the table is rebuilt. It comes from step 12, not from the record actions.
+- **Next:** keep the list's width the same while tabs come and go (the tabs take their room from the panel, or the columns are worked out without them), then check with React Scan that only the panel draws again.
+
+### 7. A section moves a changed linked record at once
+
+- **Today:** a part changed from an item's panel moves at once to its new place in that item's Parts section (when the change touches its sort), where a list on screen would keep it in place (decision 136).
+- **Why:** a section shows only its first five records and has no "Sort now"; keep-place was left to lists.
+- **Next:** decide whether a section keeps a changed record in place too (and how it is sorted again), then build it with `useRecordChanges`, as the list does.
+
+## From moving the address to nuqs (2026-11-23)
+
+### 8. Pages are still matched by hand
+
+- **Today:** `app/App.tsx` finds the page for an address in its own tables (exact paths, then prefixes such as `/interventions/`), and `services/navigation/router.ts` pushes entries and follows the path. nuqs now handles the query string, but it doesn't match paths.
+- **Why:** matching paths, path parameters (`/interventions/{id}`), nested layouts and redirects is a router's job (TanStack Router or React Router), and nuqs has an adapter for both.
+- **Next:** decide whether to move the pages to a routing library, and which one; the collection's history marks (`history.state`) must survive the move.

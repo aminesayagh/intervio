@@ -17,11 +17,12 @@ import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { dismissScope, notify } from '../notifications'
 import {
+  currentAddress,
+  currentSearch,
   entryState,
   navigate,
-  setSearchParams,
   usePath,
-  useSearchParams,
+  useQueryStates,
 } from '../navigation'
 import {
   Button,
@@ -72,7 +73,8 @@ import { isShared, SharedNote } from './selection/sharedEdit'
 import { Awake } from './values/awake'
 import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
-import { formatChain, OpenLinked, parseChain, type Step } from './record/linked'
+import { OpenLinked, type Step } from './record/linked'
+import { panelAddress, panelParsers, readPanel } from './address'
 import { LinkedPanel } from './record/LinkedPanel'
 import { LinkedTabs } from './record/LinkedTabs'
 import {
@@ -87,6 +89,14 @@ import { ValueField } from './values/ValueField'
 import { isNarrowed, useCollectionState } from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
+
+/**
+ * The panel's parameters as the address has them now. The panel's callbacks read them
+ * when they run, not from the last render: one click can call them several times
+ * before a render (a row's press, then its action), and they stay the same from one
+ * record to the next, so rows don't render again.
+ */
+const current = () => readPanel(currentSearch())
 
 /** What the list parts need from the query to load more (spec 8.1). */
 type More = {
@@ -119,11 +129,12 @@ export function Collection<T, C = void>({
   const basePath = basePathProp ?? definition.basePath
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const state = useCollectionState(
-    definition.key,
-    definition.defaultSort,
-    definition.scopes?.map((scope) => scope.id),
-  )
+  const state = useCollectionState(definition.key, definition.defaultSort, {
+    filters: [...(definition.filters ?? []), ...(definition.scopes ?? [])].map(
+      (filter) => filter.id,
+    ),
+    kept: definition.scopes?.map((scope) => scope.id),
+  })
   const { listing } = state
   const narrowed = isNarrowed(listing)
   const list = useCollectionQuery({
@@ -176,74 +187,92 @@ export function Collection<T, C = void>({
   // Every change to a record goes through the shared record actions (spec 8.3).
   const actions = useRecordActions(definition, context as C, basePath)
   const { canEdit, save, report } = actions
-  // The open record (spec 6.3, 7.1): its id is in the address (?open=).
-  const openId = useSearchParams().get('open')
+  // The panel's address (spec 6.3, 7.1, decision 137): the record open (?open=), a new
+  // one (?new=1), the linked records opened after it (?linked=key:id,…).
+  const [panel] = useQueryStates(panelParsers)
+  const openId = panel.open
+  const chain = panel.linked
+  const isNew = panel.new === '1'
   const panelMark = `panel:${key}`
-  const open = useCallback(
-    (id: Id) => {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('open') === id) return
-      const wasOpen = params.has('open')
-      params.set('open', id)
-      params.delete('linked') // another record from the list: no linked ones after it
-      // Opening pushes an entry (Back closes); switching records replaces it.
-      setSearchParams(params, {
-        replace: wasOpen,
-        state: wasOpen
-          ? { ...entryState(), linkedStep: false }
-          : { panel: panelMark },
+  /**
+   * Changes the panel's parameters at once (nuqs's own updates wait a moment), with an
+   * entry that carries this screen's marks, which nuqs can't set: pushed, or replacing
+   * the current one. The entry keeps its place in a drill-down (spec 12.1).
+   */
+  const mark = useCallback(
+    (
+      values: Parameters<typeof panelAddress>[1],
+      state: Record<string, unknown>,
+      replace = false,
+    ) => {
+      const drill = entryState().drill
+      navigate(panelAddress(currentAddress(), values), {
+        replace,
+        state: { ...(drill === undefined ? {} : { drill }), ...state },
       })
     },
-    [panelMark],
+    [],
+  )
+  const open = useCallback(
+    (id: Id) => {
+      const wasOpen = current().open
+      if (wasOpen === id) return
+      // Another record from the list: no linked ones after it. Opening pushes an
+      // entry (Back closes); switching records replaces it.
+      if (wasOpen)
+        mark(
+          { open: id, linked: null },
+          { ...entryState(), linkedStep: false },
+          true,
+        )
+      else mark({ open: id, linked: null }, { panel: panelMark })
+    },
+    [mark, panelMark],
   )
 
-  // Linked records opened in the panel after it (decision 137): ?linked=key:id,…
-  const linkedParam = useSearchParams().get('linked')
-  const chain = useMemo(() => parseChain(linkedParam), [linkedParam])
   /** Shows the chain cut to this many steps (0: the record opened from the list). */
-  const showChain = useCallback((next: Step[], push = false) => {
-    const params = new URLSearchParams(window.location.search)
-    if (next.length) params.set('linked', formatChain(next))
-    else params.delete('linked')
-    setSearchParams(params, {
-      replace: !push,
-      state: push ? { ...entryState(), linkedStep: true } : entryState(),
-    })
-  }, [])
+  const showChain = useCallback(
+    (next: Step[]) => mark({ linked: next }, entryState(), true),
+    [mark],
+  )
   /** A section's record opens in the panel; Back returns to the one before. */
   const openLinked = useCallback(
     (collectionKey: string, id: Id) =>
-      showChain(
-        [
-          ...parseChain(
-            new URLSearchParams(window.location.search).get('linked'),
-          ),
-          { key: collectionKey, id },
-        ],
-        true,
+      mark(
+        { linked: [...current().linked, { key: collectionKey, id }] },
+        { ...entryState(), linkedStep: true },
       ),
-    [showChain],
+    [mark],
   )
   /** "‹ {collection}" on a narrow screen: the list, whatever the depth. */
-  const leave = useCallback(() => {
-    const params = new URLSearchParams(window.location.search)
-    params.delete('open')
-    params.delete('linked')
-    setSearchParams(params, { replace: true })
-  }, [])
-  /** × on a linked record: one step back, as Back does when the step was pushed. */
-  const stepBack = useCallback(() => {
-    if (entryState().linkedStep === true) window.history.back()
-    else showChain(chain.slice(0, -1))
-  }, [chain, showChain])
+  const leave = useCallback(
+    () => mark({ open: null, linked: null }, entryState(), true),
+    [mark],
+  )
+  /**
+   * Back to the chain cut to this depth (a tab, or × one step): through the browser's
+   * history when the steps were pushed, so Back never meets a stale entry after it.
+   */
+  // ponytail: assumes each step after the first linked one was pushed (openLinked
+  // does); a chain from a link (the address alone) has no entries, so it is replaced.
+  const stepTo = useCallback(
+    (depth: number) => {
+      const steps = current().linked.length - depth
+      if (steps <= 0) return
+      if (entryState().linkedStep === true) window.history.go(-steps)
+      else showChain(current().linked.slice(0, depth))
+    },
+    [showChain],
+  )
+  /** × on a linked record: one step back, as Back does. */
+  const stepBack = useCallback(
+    () => stepTo(current().linked.length - 1),
+    [stepTo],
+  )
   const doClose = useCallback(() => {
     if (entryState().panel === panelMark) window.history.back()
-    else {
-      const params = new URLSearchParams(window.location.search)
-      params.delete('open')
-      setSearchParams(params, { replace: true })
-    }
-  }, [panelMark])
+    else mark({ open: null }, entryState(), true)
+  }, [panelMark, mark])
 
   // Messages (decision 132): each belongs to a record or to the collection, and
   // leaves with it; one about a value is replaced by the next one about that value.
@@ -260,22 +289,20 @@ export function Collection<T, C = void>({
       if (scope) dismissScope(scope)
     }
   }, [openId, recordScope])
-  const shownPage = window.location.pathname.startsWith(
-    `${basePath ?? `/${key}`}/`,
-  )
-    ? decodeURIComponent(
-        window.location.pathname.slice((basePath ?? `/${key}`).length + 1),
-      )
+  // More actions (spec 7.4) and the full page: the record's own address.
+  const listPath = basePath ?? `/${key}`
+  const path = usePath()
+  const pageId = path.startsWith(`${listPath}/`)
+    ? decodeURIComponent(path.slice(listPath.length + 1))
     : null
   useEffect(() => {
-    const scope = shownPage ? recordScope(shownPage) : null
+    const scope = pageId ? recordScope(pageId) : null
     return () => {
       if (scope) dismissScope(scope)
     }
-  }, [shownPage, recordScope])
+  }, [pageId, recordScope])
 
   // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
-  const isNew = useSearchParams().get('new') === '1'
   const hasDraft = useCallback(() => {
     try {
       return sessionStorage.getItem(newRecordKey(key)) !== null
@@ -284,15 +311,13 @@ export function Collection<T, C = void>({
     }
   }, [key])
   const startNew = useCallback(() => {
-    const params = new URLSearchParams(window.location.search)
-    const wasOpen = params.has('open') || params.has('new')
-    params.delete('open')
-    params.set('new', '1')
-    setSearchParams(params, {
-      replace: wasOpen,
-      state: wasOpen ? entryState() : { panel: panelMark },
-    })
-  }, [panelMark])
+    const wasOpen = Boolean(current().open || current().new)
+    mark(
+      { open: null, new: '1' },
+      wasOpen ? entryState() : { panel: panelMark },
+      wasOpen,
+    )
+  }, [mark, panelMark])
 
   // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
   const close = useCallback(async () => {
@@ -334,12 +359,6 @@ export function Collection<T, C = void>({
     } else doClose()
   }, [key, openId, doClose, isNew, hasDraft, t])
 
-  // More actions (spec 7.4): open full page, copy link, then the collection's actions.
-  const listPath = basePath ?? `/${key}`
-  const path = usePath()
-  const pageId = path.startsWith(`${listPath}/`)
-    ? decodeURIComponent(path.slice(listPath.length + 1))
-    : null
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
   // Several records selected (spec 8.5): only when the collection has actions for them.
@@ -381,8 +400,8 @@ export function Collection<T, C = void>({
       return
     }
     if (change.kind !== 'removed') return
-    const params = new URLSearchParams(window.location.search)
-    const last = parseChain(params.get('linked')).at(-1)
+    const shown = current()
+    const last = shown.linked.at(-1)
     const linkedShown = last?.key === change.key && last.id === change.id
     if (linkedShown) stepBack()
     if (change.key !== key) return
@@ -394,8 +413,8 @@ export function Collection<T, C = void>({
       return next
     })
     if (pageId === change.id) navigate(listPath, { replace: true })
-    else if (!linkedShown && params.get('open') === change.id)
-      if (params.has('linked')) leave()
+    else if (!linkedShown && shown.open === change.id)
+      if (shown.linked.length) leave()
       else doClose()
   })
   const bulkActions = (definition.actions ?? []).flatMap((action) => {
@@ -554,12 +573,9 @@ export function Collection<T, C = void>({
         draft,
         keys.list(key, context, state.query),
       )
-      const params = new URLSearchParams(window.location.search)
-      params.delete('new')
-      params.set('open', getId(created))
-      setSearchParams(params, { replace: true, state: entryState() })
+      mark({ new: null, open: getId(created) }, entryState(), true)
     },
-    [actions, key, context, getId, state.query],
+    [actions, key, context, getId, state.query, mark],
   )
   const unavailable = useCallback(
     (id: Id) =>
@@ -929,7 +945,7 @@ export function Collection<T, C = void>({
             context={context}
             openId={rootId}
             chain={chain}
-            onOpen={(depth) => showChain(chain.slice(0, depth))}
+            onOpen={stepTo}
           />
         )}
       </Show>

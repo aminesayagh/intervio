@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from '../../navigation'
+import { Link, parseAsString, useQueryStates } from '../../navigation'
 import { FormError, Notice, Title } from '../../ui-kit'
 import { authApi, errorKey } from '../api'
 
 /** Screen 3: check your email, after a sign-up or a sign-in link request. */
 export function CheckEmailPage() {
   const { t } = useTranslation('auth')
-  const params = useSearchParams()
-  const email = params.get('email') ?? ''
-  const kind = params.get('kind')
+  const [{ email, kind }] = useQueryStates({
+    email: parseAsString.withDefault(''),
+    kind: parseAsString,
+  })
   const [resent, setResent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

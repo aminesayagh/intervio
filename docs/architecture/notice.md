@@ -1,6 +1,6 @@
 # Notice: points to come back to
 
-Points left open on purpose, each with what a person notices today and what it waits for. When one is done, remove it from this file. (Points 1 and 2, record actions served globally, were built on 2026-11-23: spec 8.3.)
+Points left open on purpose, each with what a person notices today and what it waits for. When one is done, remove it from this file. (Points 1 and 2, record actions served globally, were built on 2026-11-23: spec 8.3. Point 8, pages matched by hand, was built on 2026-11-23 with React Router: spec 6.3.)
 
 ## From step 12 (drilling into linked records, 2026-11-23)
 
@@ -20,14 +20,6 @@ Two terms used below:
 - **Today:** every linked record opens in the panel. Decision 137 (screen 51) says a record people work inside, such as an intervention, opens its page instead.
 - **Why:** the definition needs to say "this record has its own page at this address" (`opensAsPage`), and the first collection that needs it, interventions, is not on the collection component yet.
 - **Next:** add `opensAsPage` with the interventions collection.
-
-## From moving the address to nuqs (2026-11-23)
-
-### 8. Pages are still matched by hand
-
-- **Today:** `app/App.tsx` finds the page for an address in its own tables (exact paths, then prefixes such as `/interventions/`), and `services/navigation/router.ts` pushes entries and follows the path. nuqs now handles the query string, but it doesn't match paths.
-- **Why:** matching paths, path parameters (`/interventions/{id}`), nested layouts and redirects is a router's job (TanStack Router or React Router), and nuqs has an adapter for both.
-- **Next:** decide whether to move the pages to a routing library, and which one; the collection's history marks (`history.state`) must survive the move.
 
 ## From the performance review (2026-11-23)
 

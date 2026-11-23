@@ -1,18 +1,21 @@
-import { useSyncExternalStore } from 'react'
+import {
+  createBrowserRouter,
+  useLocation,
+  type RouteObject,
+} from 'react-router'
 
-// ponytail: a small router on the History API covers flat pages; switch to a routing
-// library when nested layouts or route loaders are needed. The query string is nuqs's
-// (query.ts): this file only changes pages and pushes entries that carry state.
+// Pages are React Router's (data mode, decision 142): navigate() goes through the one
+// router, so code outside components keeps calling it. The query string is nuqs's
+// (query.tsx): this file changes pages and pushes entries that carry state.
 
-const listeners = new Set<() => void>()
+type Router = ReturnType<typeof createBrowserRouter>
+let router: Router | null = null
 
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  window.addEventListener('popstate', listener)
-  return () => {
-    listeners.delete(listener)
-    window.removeEventListener('popstate', listener)
-  }
+/** Creates the router navigate() goes through; one at a time (a test makes its own). */
+export function createRouter(routes: RouteObject[]) {
+  router?.dispose()
+  router = createBrowserRouter(routes)
+  return router
 }
 
 /** Marks the history entries this app pushed, so a caller can tell them from a visit's first page. */
@@ -25,27 +28,23 @@ export function navigate(
     state: extra = {},
   }: { replace?: boolean; state?: Record<string, unknown> } = {},
 ) {
-  const state = { ...extra, [OWN]: true }
-  if (replace) window.history.replaceState(state, '', to)
-  else window.history.pushState(state, '', to)
-  listeners.forEach((listener) => listener())
+  if (!router) throw new Error('navigate() before createRouter()')
+  void router.navigate(to, { replace, state: { ...extra, [OWN]: true } })
 }
+
+/** The state an entry was pushed with: React Router keeps it under `usr`. */
+const usr = () =>
+  (window.history.state as { usr?: Record<string, unknown> } | null)?.usr ?? {}
 
 /** The extra state the current history entry was pushed with (see navigate). */
-export function entryState(): Record<string, unknown> {
-  return (window.history.state as Record<string, unknown> | null) ?? {}
-}
+export const entryState = usr
 
 /** True when the current history entry was pushed by the app (so going back stays in the app). */
-export function isOwnEntry() {
-  return (
-    (window.history.state as Record<string, unknown> | null)?.[OWN] === true
-  )
-}
+export const isOwnEntry = () => usr()[OWN] === true
 
 /** Current path, re-rendering on navigation. */
 export function usePath() {
-  return useSyncExternalStore(subscribe, () => window.location.pathname)
+  return useLocation().pathname
 }
 
 /** The query string shown, for reading it at once (nuqs's createLoader). */

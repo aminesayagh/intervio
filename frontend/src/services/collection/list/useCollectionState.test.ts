@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { QueryProvider } from '../../navigation'
+import { AddressProvider } from '../../navigation'
 import { listAddress, sortParser } from '../address'
 import { isNarrowed, useCollectionState } from './useCollectionState'
 
@@ -8,7 +8,7 @@ const defaultSort = { by: 'updated', direction: 'desc' as const }
 const filters = ['status']
 const render = () =>
   renderHook(() => useCollectionState('items', defaultSort, { filters }), {
-    wrapper: QueryProvider,
+    wrapper: AddressProvider,
   })
 
 afterEach(cleanup)

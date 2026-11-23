@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react'
+import { Outlet, useMatches } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
 import {
   authRoutes,
   dropReturnTo,
@@ -28,12 +30,18 @@ import {
   interventionRoutes,
   InterventionPage,
 } from '../services/core/interventions'
-import { navigate, QueryProvider, usePath } from '../services/navigation'
+import {
+  createRouter,
+  navigate,
+  QueryProvider,
+  usePath,
+} from '../services/navigation'
 import { Notifications } from '../services/notifications'
 // The host alone: importing the collection's index would load it with the app shell.
 import { Confirmations } from '../services/collection/confirm/Confirmations'
 import { PublicLayout } from '../services/ui-kit'
 
+/** A page, who may open it, and whether it sits in the client board. */
 type Route = { page: ComponentType; access: Access; board?: boolean }
 
 const routes: Record<string, Route> = {
@@ -80,22 +88,25 @@ const devRoutes: Record<string, Route> =
       }
     : {}
 
-/** Addresses with an id: one page each, which reads the id from the address. */
-const prefixRoutes: [string, Route][] = [
-  // Development only: a test record's full page in the showcase.
-  ...Object.entries(devRoutes).map(([path, route]): [string, Route] => [
-    `${path}/`,
-    route,
-  ]),
-  [
-    COMPANY_SETTINGS_PREFIX,
-    { page: CompanySettingsPage, access: 'user', board: true },
-  ],
-  [
-    INTERVENTION_PREFIX,
-    { page: InterventionPage, access: 'user', board: true },
-  ],
-]
+/**
+ * Addresses with an id: one page each, which reads the id from the address. The
+ * showcase's pages also serve a test record's full page (/dev/collection/{id}).
+ */
+const prefixRoutes: Record<string, Route> = {
+  ...Object.fromEntries(
+    Object.entries(devRoutes).map(([path, route]) => [`${path}/*`, route]),
+  ),
+  [`${COMPANY_SETTINGS_PREFIX}*`]: {
+    page: CompanySettingsPage,
+    access: 'user',
+    board: true,
+  },
+  [`${INTERVENTION_PREFIX}*`]: {
+    page: InterventionPage,
+    access: 'user',
+    board: true,
+  },
+}
 
 /** Pages a logged-in user may open before onboarding is done. */
 const BEFORE_ONBOARDING = [
@@ -105,17 +116,16 @@ const BEFORE_ONBOARDING = [
   ONBOARDING_START,
 ]
 
-function Router() {
+/** Redirects (login, onboarding, dashboard), then the page in its layout. */
+function Guard() {
   const path = usePath()
   const { data: user, isPending: userPending } = useCurrentUser()
   const { data: company, isPending: companyPending } = useCompany(!!user)
-  const route =
-    routes[path] ??
-    devRoutes[path] ??
-    prefixRoutes.find(([prefix]) => path.startsWith(prefix))?.[1]
+  // The page matched; none for "/" and unknown addresses (the catch-all route).
+  const route = useMatches().at(-1)?.handle as Route | undefined
   const isPending = userPending || (!!user && companyPending)
 
-  // After logging in, the page asked for before, else the dashboard (decision 140).
+  // After logging in, the page asked for before, else the dashboard (decision 141).
   const home = () => peekReturnTo() ?? CLIENT_BOARD_HOME
   let redirect: string | null = null
   let keepAddress = false
@@ -139,27 +149,48 @@ function Router() {
     else if (user) dropReturnTo()
   }, [redirect, keepAddress, user])
 
-  if (isPending || redirect) return null
-  const Page = route.page
+  if (isPending || redirect || !route) return null
   const Layout = route.board ? ClientBoardLayout : PublicLayout
   return (
     <Layout>
       <Suspense fallback={null}>
-        <Page />
+        <Outlet />
       </Suspense>
     </Layout>
   )
 }
 
-export function App() {
-  const [queryClient] = useState(() => new QueryClient())
-  return (
-    <QueryClientProvider client={queryClient}>
+/** Every page under one root, which owns the redirects and the layouts (decision 142). */
+const pageRoutes = () => [
+  {
+    element: (
       <QueryProvider>
-        <Router />
+        <Guard />
         <Notifications />
         <Confirmations />
       </QueryProvider>
+    ),
+    children: [
+      ...Object.entries({ ...routes, ...prefixRoutes }).map(
+        ([path, route]) => ({ path, handle: route, Component: route.page }),
+      ),
+      { path: '*' },
+    ],
+  },
+]
+
+/**
+ * The one router, made on first use: not in useState, whose initializer StrictMode
+ * calls twice (the router shown and the one navigate() uses would differ).
+ */
+let router: ReturnType<typeof createRouter> | null = null
+
+export function App() {
+  router ??= createRouter(pageRoutes())
+  const [queryClient] = useState(() => new QueryClient())
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
     </QueryClientProvider>
   )
 }

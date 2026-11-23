@@ -1,7 +1,7 @@
 /**
  * The page a logged-out visitor asked for, kept while they log in so they land on it after.
  * Saved in localStorage so every way of logging in (password, Google, email link, even in
- * another tab) finds it. It works once and expires after an hour (decision 140).
+ * another tab) finds it. It works once and expires after an hour (decision 141).
  */
 const KEY = 'intervio.returnTo'
 const LIFETIME = 60 * 60 * 1000

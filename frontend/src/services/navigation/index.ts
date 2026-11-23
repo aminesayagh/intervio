@@ -1,5 +1,6 @@
 export { Link } from './Link'
 export {
+  createRouter,
   currentAddress,
   currentSearch,
   entryState,
@@ -7,7 +8,7 @@ export {
   navigate,
   usePath,
 } from './router'
-export { QueryProvider } from './query'
+export { AddressProvider, QueryProvider } from './query'
 // The query string's state: other services take nuqs from here.
 export {
   createLoader,

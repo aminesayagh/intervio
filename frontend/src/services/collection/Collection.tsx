@@ -70,6 +70,8 @@ import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { isShared, SharedNote } from './selection/sharedEdit'
 import { Awake } from './values/awake'
+import { Folds, type Fold } from './drill/Folded'
+import { currentViews } from './drill/viewStack'
 import {
   MarksProvider,
   useMark,
@@ -806,11 +808,21 @@ export function Collection<T, C = void>({
     },
     [widthKey],
   )
-  // Medium width: the sidebar folds while a panel is open (spec 9).
+  // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
+  // Returning to one takes it and the views after it off the stack.
+  const strips: Fold[] =
+    mode === 'narrow'
+      ? []
+      : currentViews().map((view, index) => ({
+          name: view.name,
+          open: () => navigate(view.address, { state: { drill: index } }),
+        }))
+  const hasStrips = strips.length > 0
+  // Medium width: the sidebar folds while a panel or a strip shows (spec 9, 12.1).
   useEffect(() => {
-    foldSidebar(mode === 'medium' && panelShown)
+    foldSidebar(mode === 'medium' && (panelShown || hasStrips))
     return () => foldSidebar(false)
-  }, [mode, panelShown])
+  }, [mode, panelShown, hasStrips])
   // The table's columns: as many as fit, in the collection's priority (spec 9).
   const listWidth =
     (panelShown && mode !== 'narrow' ? space - panelWidth - 8 : space) -
@@ -969,6 +981,10 @@ export function Collection<T, C = void>({
       // them has its own top spacing (the list here, the panel in its top bar).
       className="relative -mt-4 -me-4 -mb-4 flex h-[calc(100dvh-3.5rem)] min-h-[360px] overflow-hidden lg:-mt-6 lg:-me-6 lg:-mb-6 lg:h-dvh"
     >
+      {/* Right after the sidebar, before the list. */}
+      <Show when={hasStrips} className="me-4 h-full lg:me-6">
+        <Folds folds={strips} kind="views" />
+      </Show>
       <div
         className={cn(
           'flex min-w-0 flex-1 flex-col gap-4 pe-6 pt-4 lg:pt-6',

@@ -139,5 +139,14 @@
   },
   "scope": {
     "remove": "Retirer « {{label}} »"
+  },
+  "folds": {
+    "views": "Vues précédentes",
+    "records": "Fiches précédentes",
+    "viewsOlder_one": "{{count}} vue précédente",
+    "viewsOlder_other": "{{count}} vues précédentes",
+    "recordsOlder_one": "{{count}} fiche précédente",
+    "recordsOlder_other": "{{count}} fiches précédentes",
+    "back": "Revenir à {{name}}"
   }
 }

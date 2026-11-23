@@ -27,12 +27,30 @@ export function StillValue<T>({
   record,
   field: definition,
   read,
+  label,
+  namespace,
+  look,
 }: {
   record: T
   field: FieldDefinition<T>
   read: (record: T) => ReactNode
+  /** The value's name: still buttons and boxes are named as their control is. */
+  label: string
+  /** The collection's namespace, for the names of its options. */
+  namespace: string
+  look: 'cell' | 'panel'
 }) {
   const { t } = useTranslation('collection')
+  if (look === 'cell')
+    return (
+      <StillCell
+        record={record}
+        field={definition}
+        read={read}
+        label={label}
+        namespace={namespace}
+      />
+    )
   const none = <span className="text-muted">—</span>
   switch (definition.type) {
     case 'text':
@@ -135,3 +153,112 @@ export function StillValue<T>({
       return null
   }
 }
+
+/**
+ * A value of the table, drawn still until its row is reached (decision 139): the
+ * cell's look of its field, menu button or checkbox, named as the control is. Their
+ * row wakes them under the pointer or the focus; they don't take the focus
+ * themselves (the grid's arrow keys move between cells).
+ */
+function StillCell<T>({
+  record,
+  field: definition,
+  read,
+  label,
+  namespace,
+}: {
+  record: T
+  field: FieldDefinition<T>
+  read: (record: T) => ReactNode
+  label: string
+  namespace: string
+}) {
+  const { t } = useTranslation([namespace, 'collection'])
+  switch (definition.type) {
+    case 'text':
+      return (
+        <input
+          readOnly
+          data-asleep
+          tabIndex={-1}
+          aria-label={label}
+          value={definition.value(record)}
+          className="w-full min-w-0 cursor-text truncate bg-transparent p-0 outline-none"
+        />
+      )
+    case 'url':
+    case 'email':
+    case 'phone':
+    case 'location': {
+      const value = definition.value(record)
+      return (
+        <span className="group/link flex min-w-0 items-center gap-1">
+          <span data-asleep tabIndex={-1} className="min-w-16 truncate pe-4">
+            {value}
+          </span>
+          <OpenLink kind={definition.type} value={value} look="cell" />
+        </span>
+      )
+    }
+    case 'select': {
+      const chosen = definition.options.find(
+        (option) => option.id === definition.value(record),
+      )
+      return (
+        <button
+          type="button"
+          data-asleep
+          tabIndex={-1}
+          aria-label={`${label}: ${chosen ? t(chosen.label) : definition.value(record)}`}
+          className={cell}
+        >
+          {read(record)}
+        </button>
+      )
+    }
+    case 'multiSelect': {
+      const chosen = definition.value(record)
+      const names = definition.options
+        .filter((option) => chosen.includes(option.id))
+        .map((option) => t(option.label))
+      return (
+        <button
+          type="button"
+          data-asleep
+          tabIndex={-1}
+          aria-label={`${label}: ${names.join(', ') || t('collection:fields.none')}`}
+          className={cell}
+        >
+          {read(record)}
+        </button>
+      )
+    }
+    case 'checkbox': {
+      const on = definition.value(record)
+      const check = on ? <Icon name="lucide/check" size={12} /> : null
+      return (
+        <span
+          role="checkbox"
+          aria-checked={on}
+          aria-label={label}
+          data-asleep
+          tabIndex={-1}
+          className="inline-flex cursor-pointer items-center outline-none"
+        >
+          <span className={cn(box, on && 'border-foreground bg-foreground')}>
+            {check}
+          </span>
+        </span>
+      )
+    }
+    default:
+      return null
+  }
+}
+
+/** The menu button's cell look (FieldButton), at rest. */
+const cell =
+  'flex max-w-full cursor-pointer rounded-[var(--field-radius)] outline-none'
+/** The checkbox's box (Checkbox), at rest. */
+const box =
+  'flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-[var(--color-text-secondary)] text-background'

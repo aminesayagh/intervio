@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachRow } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -20,12 +21,26 @@ function show(rights?: Parameters<typeof itemDefinition>[2]) {
   )
   return source
 }
-const select = async (name: string) =>
-  userEvent.click(
+/** Selects a row by its checkbox, once the pointer reached the row (decision 139). */
+const select = async (name: string) => {
+  // Its name, as a field or as text (without the right to change it).
+  await reachRow(
+    await waitFor(() => {
+      const shown = screen.queryByDisplayValue(name) ?? screen.queryByText(name)
+      if (!shown) throw new Error(`${name} is not in the list yet`)
+      return shown
+    }),
+  )
+  await userEvent.click(
     await screen.findByRole('checkbox', { name: `Select ${name}` }),
   )
-const row = (n: number) =>
-  within(within(screen.getByRole('grid')).getAllByRole('row')[n])
+}
+/** The nth row, reached by the pointer: its controls are awake (decision 139). */
+const row = async (n: number) => {
+  const found = within(screen.getByRole('grid')).getAllByRole('row')[n]
+  await userEvent.hover(found)
+  return within(found)
+}
 const status = (source: ReturnType<typeof show>) =>
   source.items().map((item) => item.status)
 
@@ -33,7 +48,9 @@ test('a status chosen on a selected row is saved on every selected row, with Und
   const source = show()
   await select('Item 001')
   await select('Item 003')
-  await userEvent.click(row(1).getByRole('button', { name: 'Status: Draft' }))
+  await userEvent.click(
+    (await row(1)).getByRole('button', { name: 'Status: Draft' }),
+  )
   expect(await screen.findByText('Applies to 2 items')).toBeInTheDocument()
   await userEvent.click(
     await screen.findByRole('menuitemradio', { name: 'Valid' }),
@@ -57,7 +74,7 @@ test('a name changed on a selected row stays on that row', async () => {
   const source = show()
   await select('Item 001')
   await select('Item 002')
-  const name = row(1).getByDisplayValue('Item 001')
+  const name = (await row(1)).getByDisplayValue('Item 001')
   await userEvent.clear(name)
   await userEvent.type(name, 'Pump{Enter}')
   await waitFor(() => expect(source.items()[0].name).toBe('Pump'))
@@ -69,7 +86,7 @@ test('a row not selected changes alone', async () => {
   await select('Item 001')
   await select('Item 002')
   await userEvent.click(
-    row(3).getByRole('button', { name: 'Status: Outdated' }),
+    (await row(3)).getByRole('button', { name: 'Status: Outdated' }),
   )
   expect(screen.queryByText('Applies to 2 items')).not.toBeInTheDocument()
   await userEvent.click(
@@ -87,7 +104,9 @@ test('records the person may not change keep their value', async () => {
   await select('Item 001')
   await select('Item 002')
   await select('Item 003')
-  await userEvent.click(row(1).getByRole('button', { name: 'Status: Draft' }))
+  await userEvent.click(
+    (await row(1)).getByRole('button', { name: 'Status: Draft' }),
+  )
   await userEvent.click(
     await screen.findByRole('menuitemradio', { name: 'Outdated' }),
   )
@@ -102,7 +121,9 @@ test('a record whose save fails keeps its value and stays selected, with Retry',
   await select('Item 001')
   await select('Item 002')
   await select('Item 003')
-  await userEvent.click(row(1).getByRole('button', { name: 'Status: Draft' }))
+  await userEvent.click(
+    (await row(1)).getByRole('button', { name: 'Status: Draft' }),
+  )
   // The first save fails: Item 001, the row edited, goes back.
   source.settings.failNext = true
   await userEvent.click(

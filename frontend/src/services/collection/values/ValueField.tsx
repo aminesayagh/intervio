@@ -13,7 +13,7 @@ import { LinkCell, LinkValue } from './LinkCell'
 import { firstLine } from './markdown'
 import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
-import { STILL } from './still'
+import { STILL, STILL_IN_TABLE } from './still'
 import { StillValue } from './StillValue'
 import { useAwake } from './awake'
 
@@ -67,10 +67,24 @@ export function ValueField<T>({
         onInvalid={onInvalid}
       />
     )
-  // In the panel, a value the person may change is drawn still until reached
-  // (decision 139): its field is built when the pointer or the focus comes to it.
-  if (look === 'panel' && !awake && allowed && field && STILL.has(field.type))
-    return <StillValue record={record} field={field} read={read} />
+  // A value the person may change is drawn still until reached (decision 139): its
+  // control is built when the pointer or the focus comes to it (in the table, to its row).
+  if (
+    !awake &&
+    allowed &&
+    field &&
+    (look === 'panel' ? STILL : STILL_IN_TABLE).has(field.type)
+  )
+    return (
+      <StillValue
+        record={record}
+        field={field}
+        read={read}
+        label={label}
+        namespace={namespace}
+        look={look}
+      />
+    )
   return (
     <Variant
       as="span"

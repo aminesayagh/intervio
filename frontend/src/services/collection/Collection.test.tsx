@@ -6,6 +6,7 @@ import '../i18n'
 import { Collection } from './Collection'
 import { itemSource, makeItems } from './testing/items'
 import { reachListEnd, stubElementSizes } from './testing/layout'
+import { reachRow } from './testing/panel'
 import { renderAt } from './testing/render'
 import { itemDefinition } from './testing/testDefinition'
 
@@ -295,6 +296,7 @@ test('the default column cycles the same way: chosen, reversed, then no sort', a
 test('a name edited in its cell is saved when the cell is left', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await reachRow(await screen.findByDisplayValue('Item 001'))
   const field = await screen.findByDisplayValue('Item 001')
   await userEvent.clear(field)
   await userEvent.type(field, 'Hydraulic jack')
@@ -307,6 +309,7 @@ test('a name edited in its cell is saved when the cell is left', async () => {
 test('Enter saves, Escape puts the saved name back', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await reachRow(await screen.findByDisplayValue('Item 002'))
   const field = await screen.findByDisplayValue('Item 002')
   await userEvent.type(field, ' A{Enter}')
   await waitFor(() => expect(source.items()[1].name).toBe('Item 002 A'))
@@ -319,6 +322,7 @@ test('Enter saves, Escape puts the saved name back', async () => {
 test('an empty name is refused with a message, and the name comes back', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await reachRow(await screen.findByDisplayValue('Item 003'))
   const field = await screen.findByDisplayValue('Item 003')
   await userEvent.clear(field)
   await userEvent.tab()
@@ -333,6 +337,7 @@ test('an empty name is refused with a message, and the name comes back', async (
 test('a save the server refuses puts the name back, with a message', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
+  await reachRow(await screen.findByDisplayValue('Item 004'))
   const field = await screen.findByDisplayValue('Item 004')
   source.settings.failing = true
   await userEvent.type(field, ' X')
@@ -358,6 +363,7 @@ test('a status is chosen from its chip, and saved at once', async () => {
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
+  await reachRow(rows[1])
   await userEvent.click(
     within(rows[1]).getByRole('button', { name: 'Status: Draft' }),
   )
@@ -376,6 +382,7 @@ test('a status the server refuses goes back, with a message', async () => {
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
+  await reachRow(rows[2])
   source.settings.failing = true
   await userEvent.click(
     within(rows[2]).getByRole('button', { name: 'Status: Valid' }),
@@ -398,6 +405,7 @@ test('an owner is chosen from its cell, and saved at once', async () => {
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await screen.findByText('5 items')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
+  await reachRow(rows[1])
   await userEvent.click(
     within(rows[1]).getByRole('button', { name: 'Owner: Julie Moreau' }),
   )

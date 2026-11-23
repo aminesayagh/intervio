@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachRow } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -19,10 +20,20 @@ function show(count = 8, rights?: Parameters<typeof itemDefinition>[2]) {
   )
   return source
 }
-const select = async (name: string) =>
-  userEvent.click(
+/** Selects a row by its checkbox, once the pointer reached the row (decision 139). */
+const select = async (name: string) => {
+  // Its name, as a field or as text (without the right to change it).
+  await reachRow(
+    await waitFor(() => {
+      const shown = screen.queryByDisplayValue(name) ?? screen.queryByText(name)
+      if (!shown) throw new Error(`${name} is not in the list yet`)
+      return shown
+    }),
+  )
+  await userEvent.click(
     await screen.findByRole('checkbox', { name: `Select ${name}` }),
   )
+}
 const toolbar = () => screen.getByRole('toolbar', { name: 'Selected records' })
 /** Gone from the table (an archived record stays in the source, hidden). */
 const archived = (...names: string[]) =>

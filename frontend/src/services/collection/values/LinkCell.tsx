@@ -115,7 +115,6 @@ export function LinkCell<T>({
   look?: 'cell' | 'panel'
   onInvalid?: (reason: string) => void
 }) {
-  const { t } = useTranslation('collection')
   const rule = kinds[edit.type]
   const value = edit.value(record)
   const text: TextField<T> = {
@@ -140,21 +139,38 @@ export function LinkCell<T>({
           onInvalid={onInvalid}
         />
       </span>
-      <Show as="span" when={value} className="flex shrink-0">
-        <a
-          href={rule.href(value)}
-          target={opensTab(edit.type) ? '_blank' : undefined}
-          rel={opensTab(edit.type) ? 'noreferrer' : undefined}
-          aria-label={t('fields.open', { value: rule.shown(value) })}
-          className={cn(
-            'flex rounded-[var(--field-radius)] p-1 text-muted outline-none hover:bg-default hover:text-foreground focus-visible:outline-2 focus-visible:outline-foreground',
-            look === 'cell' &&
-              'opacity-0 group-focus-within/link:opacity-100 group-hover/link:opacity-100 focus-visible:opacity-100',
-          )}
-        >
-          <Icon name={rule.icon} size={14} />
-        </a>
-      </Show>
+      <OpenLink kind={edit.type} value={value} look={look} />
     </span>
+  )
+}
+
+/** The small icon after a link's field that opens it (in the table, under the pointer). */
+export function OpenLink({
+  kind,
+  value,
+  look,
+}: {
+  kind: Kind
+  value: string
+  look: 'cell' | 'panel'
+}) {
+  const { t } = useTranslation('collection')
+  const rule = kinds[kind]
+  return (
+    <Show as="span" when={value} className="flex shrink-0">
+      <a
+        href={rule.href(value)}
+        target={opensTab(kind) ? '_blank' : undefined}
+        rel={opensTab(kind) ? 'noreferrer' : undefined}
+        aria-label={t('fields.open', { value: rule.shown(value) })}
+        className={cn(
+          'flex rounded-[var(--field-radius)] p-1 text-muted outline-none hover:bg-default hover:text-foreground focus-visible:outline-2 focus-visible:outline-foreground',
+          look === 'cell' &&
+            'opacity-0 group-focus-within/link:opacity-100 group-hover/link:opacity-100 focus-visible:opacity-100',
+        )}
+      >
+        <Icon name={rule.icon} size={14} />
+      </a>
+    </Show>
   )
 }

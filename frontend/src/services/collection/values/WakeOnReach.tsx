@@ -14,6 +14,8 @@ export function WakeOnReach({ children }: { children: ReactNode }) {
     <div
       ref={boxRef}
       onPointerOver={wake}
+      // A file dragged over the panel: its drop zone must be there to take it.
+      onDragEnter={wake}
       onFocusCapture={(event) => {
         onFocusCapture(event)
         wake()

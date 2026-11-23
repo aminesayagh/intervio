@@ -13,6 +13,9 @@ import { LinkCell, LinkValue } from './LinkCell'
 import { firstLine } from './markdown'
 import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
+import { STILL } from './still'
+import { StillValue } from './StillValue'
+import { useAwake } from './awake'
 
 const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
   field.type === 'url' ||
@@ -50,6 +53,7 @@ export function ValueField<T>({
   /** A text the definition refuses: the collection reports it (decision 132). */
   onInvalid?: (reason: string) => void
 }) {
+  const awake = useAwake()
   const link = () =>
     field &&
     isLink(field) && (
@@ -63,6 +67,10 @@ export function ValueField<T>({
         onInvalid={onInvalid}
       />
     )
+  // In the panel, a value the person may change is drawn still until reached
+  // (decision 139): its field is built when the pointer or the focus comes to it.
+  if (look === 'panel' && !awake && allowed && field && STILL.has(field.type))
+    return <StillValue record={record} field={field} read={read} />
   return (
     <Variant
       as="span"

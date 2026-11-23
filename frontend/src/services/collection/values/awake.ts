@@ -48,7 +48,7 @@ export function useNumberText(decimals: number) {
 
 /**
  * When the focus woke a value (it reached the text), the focus goes on to the editor
- * once it is there. Put `boxRef` and `onFocusCapture` on an element around the value.
+ * once it is there: the control marked `data-wake`, else its first field or button. Put `boxRef` and `onFocusCapture` on an element around the value.
  */
 export function useHandFocus<E extends HTMLElement>(awake: boolean) {
   const boxRef = useRef<E>(null)
@@ -58,11 +58,16 @@ export function useHandFocus<E extends HTMLElement>(awake: boolean) {
     pending.current = false
     // After a frame: when the focused text leaves, React Aria may first put the focus
     // back where it was (a table's row), in its own effects.
-    const frame = requestAnimationFrame(() =>
-      boxRef.current
-        ?.querySelector<HTMLElement>('input, [role="spinbutton"]')
-        ?.focus(),
-    )
+    const frame = requestAnimationFrame(() => {
+      const box = boxRef.current
+      // The marked control first: a list of selectors would match in page order.
+      ;(
+        box?.querySelector<HTMLElement>('[data-wake]') ??
+        box?.querySelector<HTMLElement>(
+          'input:not([type="file"]), [role="spinbutton"], button',
+        )
+      )?.focus()
+    })
     return () => cancelAnimationFrame(frame)
   }, [awake])
   return {

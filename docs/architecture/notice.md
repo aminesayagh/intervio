@@ -45,8 +45,8 @@ Two terms used below:
 
 ## From the performance review (2026-11-23)
 
-### 9. Opening a record: what is left
+### 9. Archiving a record is the slowest action left
 
-- **Today:** after the table work and the light panel of 2026-11-23, measured in a production build on this machine (medians; runs vary by up to 100 ms): opening a record shows its content after about 160–180 ms (it was 490 at the start of the day), opening a linked record about 180 ms (was 280), closing about 150 ms, the next record (↓) about 90 ms. The first frame now comes after about 100 ms, since the whole panel is built in the first render.
-- **Why the rest:** in that first render, the panel's shell and slide-in, the title's field, the picture and files fields (each about 7 ms in development), the link fields (website, email, phone, location), the description and notes.
-- **Next, if needed:** let the link, picture and files fields sleep too (as dates and numbers do now); measure on a faster machine to know how much of the rest is this one.
+- **Today:** at the end of 2026-11-23 (production build, this machine, medians): opening a record shows its content after about 120 ms (first frame about 75 ms; it was 490 ms in the morning), the next record about 70 ms, closing about 130 ms, a linked record about 155 ms, sorting about 160 ms, selecting a row about 100 ms. Archiving, from the confirmation to the panel closed, takes about 260–300 ms (main thread blocked about 200 ms).
+- **Why:** not looked into yet. It closes the confirmation dialog and the panel, takes the row out of the table (which renders it again), and shows the message with Undo, in the same moment.
+- **Next:** trace it as opening was traced, and see which of these costs most.

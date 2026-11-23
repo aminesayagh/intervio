@@ -145,6 +145,7 @@ test('the panel edits the title in place, and the list follows', async () => {
 
 test('the panel chooses a status, and edits the quantity as a number', async () => {
   const { source, aside } = await openFirst()
+  await reachValue(aside, 'Status')
   await userEvent.click(
     within(aside).getByRole('button', { name: 'Status: Draft' }),
   )
@@ -172,6 +173,7 @@ test('rights decide value by value, in the table and the panel', async () => {
   ).not.toBeInTheDocument()
 
   expect(within(aside).queryByRole('textbox')).not.toBeInTheDocument() // title, quantity
+  await reachValue(aside, 'Status')
   expect(
     within(aside).getByRole('button', { name: 'Status: Draft' }),
   ).toBeInTheDocument()
@@ -202,7 +204,7 @@ test('a change refused as no longer allowed says so, and the value comes back', 
   )
 })
 
-test('the panel builds no date or number editor until a value is reached; Tab reaches one and types in it', async () => {
+test('the panel builds no editor until a value is reached; Tab reaches one and types in it', async () => {
   show()
   await userEvent.click(
     await screen.findByRole('button', { name: 'Open Item 001' }),
@@ -210,6 +212,10 @@ test('the panel builds no date or number editor until a value is reached; Tab re
   const aside = await screen.findByRole('complementary', { name: 'Item 001' })
   expect(within(aside).queryByRole('spinbutton')).toBeNull()
   expect(within(aside).queryByRole('textbox', { name: 'Quantity' })).toBeNull()
+  // Nor any other: no checkbox, no menu, no link field (the title stays a field).
+  expect(within(aside).queryByRole('checkbox')).toBeNull()
+  expect(within(aside).queryByRole('button', { name: /^Status:/ })).toBeNull()
+  expect(within(aside).queryByRole('textbox', { name: 'Website' })).toBeNull()
 
   // The keyboard reaches the quantity's text: it wakes, and the focus goes on to it.
   const box = within(aside).getByText('Quantity', { selector: 'dt' })

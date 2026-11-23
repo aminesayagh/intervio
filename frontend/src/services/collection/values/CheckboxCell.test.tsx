@@ -5,6 +5,7 @@ import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
+import { reachValue } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
 
@@ -54,6 +55,7 @@ test('the panel saves its checkbox too', async () => {
     await screen.findByRole('button', { name: 'Open Item 003' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 003' })
+  await reachValue(aside, 'Active')
   // Item 003 is not active.
   const box = within(aside).getByRole('checkbox', { name: 'Active' })
   expect(box).not.toBeChecked()

@@ -502,7 +502,7 @@ Decision 134; screens 60 to 63.
 Decision 136; screens 65, 66.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
-- **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.
+- **The line:** while a record is out of order, a line at the right of the toolbar says, in the collection's words, how many changed records keep their place ("After a change, 2 items keep their place.") with **Sort now**.
 - **Sorted again** when the person presses Sort now, changes the sort, search or filters, clears the selection, opens another record, or reloads the page.
 
 

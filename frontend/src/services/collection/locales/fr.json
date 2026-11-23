@@ -135,7 +135,8 @@
     "restoreFailed": "La restauration a échoué pour {{what}}."
   },
   "held": {
-    "text": "Les éléments modifiés gardent leur place.",
+    "text_one": "Après modification, {{what}} garde sa place.",
+    "text_other": "Après modification, {{what}} gardent leur place.",
     "sort": "Trier maintenant"
   },
   "section": {

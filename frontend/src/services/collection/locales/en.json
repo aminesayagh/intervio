@@ -135,7 +135,8 @@
     "restoreFailed": "{{what}} couldn't be restored."
   },
   "held": {
-    "text": "Changed records keep their place.",
+    "text_one": "After a change, {{what}} keeps its place.",
+    "text_other": "After a change, {{what}} keep their place.",
     "sort": "Sort now"
   },
   "section": {

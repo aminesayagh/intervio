@@ -603,6 +603,13 @@ const resources = restSource<Resource, { interventionId: Id }>({
 
 ### 12.1 Drilling into linked records
 
+**Built so far (step 12, 2026-11-23), seen in the showcase (/dev/collection and /dev/parts, a second collection linked to the items):**
+- A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
+- The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
+- Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
+- Not built yet: a section passes no `context` to its collection; a linked record of another collection has no More actions and no keep-place; `opensAsPage` (a record with its own page) and, below 1024 px, the "‹" that goes up one level of strips come with the first real collections that need them.
+
+
 - **In the panel:**
   - a section shows its first 5 items;
   - when it has more, "Show all ⤢" shows on the section's title line, on the right (the count is already in the title).

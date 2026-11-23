@@ -107,6 +107,10 @@ export function partDefinition(
   return {
     key,
     basePath,
+    // A bearing stands for a record people work inside (screen 51): reached from an
+    // item's panel, it opens its own page.
+    opensAsPage: (part) =>
+      basePath && part.kind === 'bearing' ? `${basePath}/${part.id}` : null,
     i18n: {
       namespace: 'test-parts',
       title: 'title',

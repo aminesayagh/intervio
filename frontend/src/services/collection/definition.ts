@@ -211,6 +211,18 @@ export type SectionDefinition<T> = {
   collection: () => AnyCollection
   /** The linked collection's filters for this record: { linkedTo: [its id] }. */
   scope: (record: T) => Record<string, string[]>
+  /**
+   * The linked collection's context for this record (spec 4), when it lives inside
+   * something: an intervention's resource panel asks for that intervention's requests.
+   * `context` is the context of the collection showing the section.
+   */
+  context?: (record: T, context: unknown) => unknown
+  /**
+   * How a record of the linked collection becomes linked to this one: the change saved
+   * on it ({ item: this item's id }). With it, the section offers "+ Link or add": a
+   * search to link an existing record, or a new one, created linked.
+   */
+  link?: (record: T) => Record<string, unknown>
 }
 
 /**
@@ -254,6 +266,8 @@ export type Rights = {
   edit: string[]
   /** The ids of the actions the person may run (archive, remove). */
   actions?: string[]
+  /** The ids of the sections where the person may link or add records ("+ Link or add"). */
+  add?: string[]
 }
 
 /**
@@ -312,6 +326,12 @@ export type CollectionDefinition<T, C = void> = {
   scopes?: ScopeDefinition[]
   /** The address of the collection's list, which "Show all" opens. Defaults to /{key}. */
   basePath?: string
+  /**
+   * A record people work inside (decision 137, screen 51): the address of its own
+   * page, opened instead of the panel when it is reached as a linked record; null
+   * for a record that opens in the panel as usual.
+   */
+  opensAsPage?: (record: T) => string | null
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>
   /**

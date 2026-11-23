@@ -867,7 +867,13 @@ export function Collection<T, C = void>({
             when={outOfOrder}
             className="ms-auto flex items-center gap-3 text-muted"
           >
-            <span aria-live="polite">{t('collection:held.text')}</span>
+            {/* In the collection's words: "After a change, 2 items keep their place." */}
+            <span aria-live="polite">
+              {t('collection:held.text', {
+                count: hold?.kept.size ?? 0,
+                what: countOf(hold?.kept.size ?? 0),
+              })}
+            </span>
             <Button size="sm" onPress={release}>
               {t('collection:held.sort')}
             </Button>

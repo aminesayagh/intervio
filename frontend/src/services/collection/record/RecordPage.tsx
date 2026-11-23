@@ -124,6 +124,7 @@ export function RecordPage<T, C>({
               save={save}
               report={report}
               layout="page"
+              context={context}
             />
           )}
         </Match>

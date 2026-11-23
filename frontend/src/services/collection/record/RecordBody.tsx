@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from '../../navigation'
+import { Link, navigate } from '../../navigation'
 import { Button, cn, Icon, Match, Show, Switch } from '../../ui-kit'
 import { useCollectionQuery } from '../data/collectionQuery'
 import type {
@@ -16,6 +16,7 @@ import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { ValueField } from '../values/ValueField'
 import { WakeOnReach } from '../values/WakeOnReach'
+import { LinkOrAdd } from './LinkOrAdd'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -32,6 +33,7 @@ export function RecordBody<T, C>({
   report,
   focusTitle,
   layout,
+  context,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
@@ -42,6 +44,8 @@ export function RecordBody<T, C>({
   report: ReportInvalid<T>
   focusTitle?: (node: HTMLHeadingElement | null) => void
   layout: 'panel' | 'page'
+  /** The collection's context, which a section may pass on to its own (spec 4). */
+  context?: C
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   return (
@@ -156,14 +160,24 @@ export function RecordBody<T, C>({
 
         <Show when={layout === 'panel'} className="flex flex-col gap-6">
           <WhenNear>
-            <Sections definition={definition} panel={panel} record={shown} />
+            <Sections
+              definition={definition}
+              panel={panel}
+              record={shown}
+              context={context}
+            />
           </WhenNear>
         </Show>
       </div>
 
       <Show when={layout === 'page'}>
         <aside className="flex flex-col gap-6">
-          <Sections definition={definition} panel={panel} record={shown} />
+          <Sections
+            definition={definition}
+            panel={panel}
+            record={shown}
+            context={context}
+          />
         </aside>
       </Show>
     </div>
@@ -204,10 +218,12 @@ function Sections<T, C>({
   definition,
   panel,
   record,
+  context,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
   record: T
+  context?: C
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   // The strip of the view left names it: "Records · Pump specification" (spec 12.1).
@@ -220,7 +236,18 @@ function Sections<T, C>({
           label={t(section.label)}
           linked={section.collection()}
           scope={section.scope(record)}
+          context={section.context?.(record, context)}
           viewName={viewName}
+          // "+ Link or add" when the section says how to link, and the rights allow it.
+          link={
+            section.link &&
+            (!definition.rights ||
+              (definition.rights(record, context as C).add ?? []).includes(
+                section.id,
+              ))
+              ? section.link(record)
+              : undefined
+          }
         />
       ))}
     </>
@@ -238,24 +265,28 @@ function Section({
   label,
   linked,
   scope,
+  context,
   viewName,
+  link,
 }: {
   label: string
   linked: AnyCollection
   scope: Record<string, string[]>
+  /** The linked collection's context, when the section gives one. */
+  context: unknown
   viewName: string
+  /** The change that links a record here, when the person may link or add. */
+  link?: Record<string, unknown>
 }) {
   const { t } = useTranslation([linked.i18n.namespace, 'collection'])
   // In the panel, a linked record opens there (decision 137); on the full page, its
   // own full page opens.
   const openLinked = useOpenLinked()
   const linkedPath = linked.basePath ?? `/${linked.key}`
-  // ponytail: the linked collection gets no context; add one to the section when a
-  // real collection needs it.
   const list = useCollectionQuery({
     key: linked.key,
     source: linked.source,
-    context: undefined,
+    context,
     listing: { search: '', filters: scope, sort: linked.defaultSort },
   })
   const total = list.total ?? list.items.length
@@ -321,7 +352,10 @@ function Section({
                   className="min-w-0 flex-1 truncate"
                   fallback={
                     <Link
-                      href={`${linkedPath}/${encodeURIComponent(linked.getId(item))}`}
+                      href={
+                        linked.opensAsPage?.(item) ??
+                        `${linkedPath}/${encodeURIComponent(linked.getId(item))}`
+                      }
                       className="block max-w-full truncate outline-none hover:underline focus-visible:underline"
                     >
                       {linked.panel?.title(item) ?? linked.getId(item)}
@@ -331,7 +365,13 @@ function Section({
                   {(open) => (
                     <button
                       type="button"
-                      onClick={() => open(linked.key, linked.getId(item))}
+                      // A record people work inside opens its page (screen 51);
+                      // Back returns here. Any other opens in this panel (137).
+                      onClick={() => {
+                        const page = linked.opensAsPage?.(item)
+                        if (page) navigate(page)
+                        else open(linked.key, linked.getId(item))
+                      }}
                       className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
                     >
                       {linked.panel?.title(item) ?? linked.getId(item)}
@@ -344,6 +384,17 @@ function Section({
           </ul>
         </Match>
       </Switch>
+      <Show when={link} className="mt-1 flex">
+        {(patch) => (
+          <LinkOrAdd
+            linked={linked}
+            context={context}
+            patch={patch}
+            listAddress={address}
+            viewName={viewName}
+          />
+        )}
+      </Show>
     </section>
   )
 }

@@ -335,3 +335,125 @@ test('on a narrow screen, the top bar’s ‹ goes up to the view left', async (
   expect(await panel('Item 001')).toBeInTheDocument()
   expect(window.location.pathname).toBe('/items')
 })
+
+test('a linked record people work inside opens its page; Back returns to the panel', async () => {
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Parts', 'Bearing 3, Item 001')
+  // Its own page (screen 51), not the panel.
+  expect(
+    await screen.findByRole('heading', { name: 'Bearing 3, Item 001' }),
+  ).toBeInTheDocument()
+  expect(window.location.pathname).toMatch(/^\/parts\/[0-9a-f-]+$/)
+  act(() => window.history.back())
+  expect(await panel('Item 001')).toBeInTheDocument()
+})
+
+test('a section passes its context to its collection', async () => {
+  const items = itemSource(makeItems(8))
+  const parts = partSource()
+  const asked: unknown[] = []
+  const list = parts.list
+  parts.list = (query, context) => {
+    asked.push(context)
+    return list(query, context)
+  }
+  const definitions: {
+    items?: CollectionDefinition<Item>
+    parts?: CollectionDefinition<Part>
+  } = {}
+  definitions.items = itemDefinition(
+    items,
+    'test-items',
+    undefined,
+    () => definitions.parts!,
+    '/items',
+  )
+  definitions.parts = partDefinition(parts, () => definitions.items!)
+  const panelDefinition = definitions.items.panel!
+  panelDefinition.sections = panelDefinition.sections!.map((section) =>
+    section.id === 'parts'
+      ? { ...section, context: () => ({ site: 'Building B' }) }
+      : section,
+  )
+  renderAt(
+    `/items?open=${ITEM_001}`,
+    <Collection definition={definitions.items} />,
+  )
+  await openLinked('Item 001', 'Parts', 'Filter 1, Item 001')
+  expect(asked).toContainEqual({ site: 'Building B' })
+})
+
+/** Opens "+ Link or add" under Item 001's Parts section; returns the section. */
+async function linkOrAdd() {
+  const aside = await panel('Item 001')
+  seeSections()
+  const section = (await within(aside).findByText('Parts')).closest('section')!
+  await within(section).findByText('7')
+  await userEvent.click(
+    within(section).getByRole('button', { name: '+ Link or add' }),
+  )
+  return section
+}
+
+test('"+ Link or add" links an existing record found by its name', async () => {
+  const { parts } = show(`/items?open=${ITEM_001}`)
+  const section = await linkOrAdd()
+  const dialog = await screen.findByRole('dialog', { name: '+ Link or add' })
+  await userEvent.type(
+    within(dialog).getByRole('textbox', { name: 'Search' }),
+    'Filter 1, Item 004',
+  )
+  await userEvent.click(
+    await within(dialog).findByRole('button', { name: 'Filter 1, Item 004' }),
+  )
+  await waitFor(() =>
+    expect(
+      parts.items().find((part) => part.name === 'Filter 1, Item 004')?.item,
+    ).toBe(ITEM_001),
+  )
+  // The section counts it now.
+  expect(await within(section).findByText('8')).toBeInTheDocument()
+})
+
+test('"+ Link or add" adds a new record, created linked', async () => {
+  const { parts } = show(`/items?open=${ITEM_001}`)
+  await linkOrAdd()
+  const dialog = await screen.findByRole('dialog', { name: '+ Link or add' })
+  await userEvent.click(
+    within(dialog).getByRole('button', { name: '+ Add part' }),
+  )
+  const aside = await panel('+ Add part')
+  expect(window.location.pathname).toBe('/parts')
+  await userEvent.type(
+    within(aside).getByRole('textbox', { name: 'Title' }),
+    'Gasket{Enter}',
+  )
+  await waitFor(() => expect(parts.items()[0].name).toBe('Gasket'))
+  expect(parts.items()[0].item).toBe(ITEM_001)
+})
+
+test('without the right to add in a section, there is no "+ Link or add"', async () => {
+  const definitions: {
+    items?: CollectionDefinition<Item>
+    parts?: CollectionDefinition<Part>
+  } = {}
+  definitions.items = itemDefinition(
+    itemSource(makeItems(8)),
+    'test-items',
+    () => ({ edit: [], actions: [] }), // no `add`
+    () => definitions.parts!,
+    '/items',
+  )
+  definitions.parts = partDefinition(partSource(), () => definitions.items!)
+  renderAt(
+    `/items?open=${ITEM_001}`,
+    <Collection definition={definitions.items} />,
+  )
+  const aside = await panel('Item 001')
+  seeSections()
+  const section = (await within(aside).findByText('Parts')).closest('section')!
+  await within(section).findByText('7')
+  expect(
+    within(section).queryByRole('button', { name: '+ Link or add' }),
+  ).toBeNull()
+})

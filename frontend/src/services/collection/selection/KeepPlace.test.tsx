@@ -32,7 +32,7 @@ const names = () =>
       (row) =>
         row.querySelector<HTMLInputElement>('input[aria-label="Name"]')!.value,
     )
-const line = () => screen.queryByText('Changed records keep their place.')
+const line = () => screen.queryByText(/^After a change, /)
 
 async function setStatus(from: string, to: string) {
   await reachRow(
@@ -60,8 +60,9 @@ test('in a sorted list, a changed record keeps its place until Sort now', async 
   // Item 001 becomes valid: sorted, it would go down among the valid ones.
   await setStatus('Draft', 'Valid')
   await waitFor(() => expect(source.items()[0].status).toBe('valid'))
+  // In the collection's words, with how many changed.
   expect(
-    await screen.findByText('Changed records keep their place.'),
+    await screen.findByText('After a change, 1 item keeps its place.'),
   ).toBeInTheDocument()
   expect(names()).toEqual(before)
 
@@ -75,8 +76,9 @@ test('in a filtered list, a record that no longer matches stays until the list i
   show('/items?f.status=draft')
   await screen.findByText('2 of 6 items')
   await setStatus('Draft', 'Valid')
+  // In the collection's words, with how many changed.
   expect(
-    await screen.findByText('Changed records keep their place.'),
+    await screen.findByText('After a change, 1 item keeps its place.'),
   ).toBeInTheDocument()
   expect(names()).toEqual(['Item 001', 'Item 004'])
 

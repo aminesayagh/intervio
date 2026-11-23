@@ -340,6 +340,8 @@ export function itemDefinition(
                 label: 'parts',
                 collection: parts,
                 scope: (item: Item) => ({ item: [item.id] }),
+                // A part linked to this item: its item is this one.
+                link: (item: Item) => ({ item: item.id }),
               },
             ]
           : []),

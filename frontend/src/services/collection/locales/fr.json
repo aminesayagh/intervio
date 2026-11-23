@@ -135,12 +135,16 @@
     "restoreFailed": "La restauration a échoué pour {{what}}."
   },
   "held": {
-    "text": "Les éléments modifiés gardent leur place.",
+    "text_one": "Après modification, {{what}} garde sa place.",
+    "text_other": "Après modification, {{what}} gardent leur place.",
     "sort": "Trier maintenant"
   },
   "section": {
     "showAll": "Tout afficher",
-    "empty": "Aucun pour le moment."
+    "empty": "Aucun pour le moment.",
+    "linkOrAdd": "+ Lier ou ajouter",
+    "nothingToLink": "Rien à lier.",
+    "link": "Lien"
   },
   "scope": {
     "remove": "Retirer « {{label}} »"

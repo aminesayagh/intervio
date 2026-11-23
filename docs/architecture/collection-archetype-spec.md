@@ -120,7 +120,7 @@ type Rights = {
 
 `PropertyDefinition` has an id, a label key, a value getter and a kind: `text`, `longText`, `date`, `select` (with options), `person`, `chip`, `switch` or `custom` (a render function). An editable property also has a `validate` function returning an `ERROR_…` key or nothing.
 
-`SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so.
+`SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so. **Built (2026-11-23, decision 143):** `link: (record) => patch` says how a record of the linked collection becomes linked (for parts, `{ item: id }`); with it, and `rights.add` naming the section (or no rights at all), the section shows "+ Link or add" (`record/LinkOrAdd.tsx`): a `PopoverDialog` with a search over the records the patch would change (the others are already linked), saved through the shared record actions, and the collection's "+ Add …", which drills into the scoped list with `?new=1`.
 
 `FilterDefinition` has an id, a label key, its options (fixed, or loaded once), and whether several can be chosen.
 
@@ -504,7 +504,7 @@ Decision 134; screens 60 to 63.
 Decision 136; screens 65, 66.
 
 - **The order is held:** after an edit, the table keeps showing the loaded records in the order it had, with their new values, even when one no longer matches the sort or a filter. The background refetch updates the values and the total, not the positions.
-- **The line:** while a record is out of order, a line at the right of the toolbar says "Changed records keep their place." with **Sort now**.
+- **The line:** while a record is out of order, a line at the right of the toolbar says, in the collection's words, how many changed records keep their place ("After a change, 2 items keep their place.") with **Sort now**.
 - **Sorted again** when the person presses Sort now, changes the sort, search or filters, clears the selection, opens another record, or reloads the page.
 
 
@@ -621,7 +621,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
 - A section names a collection and a scope (`collection: () => definition`, `scope: (record) => filters`); it loads the first records as that list does, so "Show all" opens a list already in the cache. A collection's `scopes` show as chips, its `basePath` is where "Show all" goes.
 - The view stack is in session storage; a history entry pushed by a drill carries its depth (`drill`), kept when the address changes in place, so the strips show only on a page reached by drilling.
 - Linked records open in the panel with tabs (decision 137): the address keeps the chain (`?linked={key}:{id},…`).
-- Not built yet: a section passes no `context` to its collection, and `opensAsPage` (a record with its own page) waits for the first collection that needs it (notice, points 3 and 4). Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
+- Built since (2026-11-23): a section's `context` reaches its list (`SectionDefinition.context`), and `opensAsPage` opens a record people work inside on its own page from a section (a link on the full page); in the showcase, a part of kind Bearing stands for one. Not built yet: a record opened from a section in the panel, and "Show all", get no context (notice, point 3). Built since: a linked record's More actions (shared record actions, spec 8.3) and, below 1024 px, the top bar's "‹" (decision 128).
 
 
 - **In the panel:**

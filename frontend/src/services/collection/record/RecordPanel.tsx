@@ -195,6 +195,7 @@ export function RecordPanel<T, C>({
                 report={report}
                 focusTitle={focusTitle}
                 layout="panel"
+                context={context}
               />
             </div>
           )}

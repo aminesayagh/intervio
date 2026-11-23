@@ -7,26 +7,31 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactElement } from 'react'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '../../i18n'
 import { usePath } from '../../navigation'
 import { Collection } from '../Collection'
 import type { CollectionDefinition } from '../definition'
 import { itemSource, makeItems, type Item } from '../testing/items'
-import { stubElementSizes } from '../testing/layout'
+import { setScreenWidth, stubElementSizes } from '../testing/layout'
 import { partDefinition, partSource, type Part } from '../testing/parts'
 import { seeSections } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { Folds } from './Folded'
+import { Show, useTopBarBack } from '../../ui-kit'
 import { itemDefinition } from '../testing/testDefinition'
 
 beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  setScreenWidth(1600) // one test narrows the screen
+})
 
 const ITEM_001 = '00000000-0000-7000-8000-000000000001'
 
 /** Two collections linked to each other, each at its own address, as in the app. */
-function show(url: string) {
+function show(url: string, beside?: ReactElement) {
   const items = itemSource(makeItems(8))
   const parts = partSource()
   const definitions: {
@@ -51,7 +56,13 @@ function show(url: string) {
       <Collection key="items" definition={definitions.items!} />
     )
   }
-  renderAt(url, <Pages />)
+  renderAt(
+    url,
+    <>
+      <Pages />
+      {beside}
+    </>,
+  )
   return { items, parts }
 }
 
@@ -297,4 +308,30 @@ test('the full page offers Retry when its record fails to load', async () => {
   expect(
     await screen.findByRole('heading', { name: 'Item 001' }),
   ).toBeInTheDocument()
+})
+
+/** Draws the ‹ the top bar would show (the board layout reads the same store). */
+function BackProbe() {
+  const back = useTopBarBack()
+  return (
+    <Show when={back}>
+      {(up) => (
+        <button type="button" onClick={up.run}>
+          {up.label}
+        </button>
+      )}
+    </Show>
+  )
+}
+
+test('on a narrow screen, the top bar’s ‹ goes up to the view left', async () => {
+  setScreenWidth(900)
+  show(`/items?open=${ITEM_001}`, <BackProbe />)
+  await showAllParts()
+  await screen.findByText('Linked to: Item 001')
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Back to Items · Item 001' }),
+  )
+  expect(await panel('Item 001')).toBeInTheDocument()
+  expect(window.location.pathname).toBe('/items')
 })

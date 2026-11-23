@@ -21,20 +21,6 @@ Two terms used below:
 - **Why:** the definition needs to say "this record has its own page at this address" (`opensAsPage`), and the first collection that needs it, interventions, is not on the collection component yet.
 - **Next:** add `opensAsPage` with the interventions collection.
 
-### 5. Below 1024 px, no way up one level of strips
-
-- **Today:** on a narrow window the strips are hidden (decision 128), and only the browser's Back goes up a level.
-- **Why:** decision 128 says "‹" goes up one level there, but no wireframe shows where that "‹" sits (beside the page title, in the top bar…).
-- **Next:** decide its place on the wireframes, then build it.
-
-## From the shared record actions (2026-11-23)
-
-### 7. A section moves a changed linked record at once
-
-- **Today:** a part changed from an item's panel moves at once to its new place in that item's Parts section (when the change touches its sort), where a list on screen would keep it in place (decision 136).
-- **Why:** a section shows only its first five records and has no "Sort now"; keep-place was left to lists.
-- **Next:** decide whether a section keeps a changed record in place too (and how it is sorted again), then build it with `useRecordChanges`, as the list does.
-
 ## From moving the address to nuqs (2026-11-23)
 
 ### 8. Pages are still matched by hand

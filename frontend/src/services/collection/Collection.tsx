@@ -29,6 +29,7 @@ import {
   cn,
   Column,
   foldSidebar,
+  offerBack,
   Icon,
   Match,
   Row,
@@ -713,14 +714,25 @@ export function Collection<T, C = void>({
   )
   // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
   // Returning to one takes it and the views after it off the stack.
-  const strips: Fold[] =
-    mode === 'narrow'
-      ? []
-      : currentViews().map((view, index) => ({
-          name: view.name,
-          open: () => navigate(view.address, { state: { drill: index } }),
-        }))
+  const views: Fold[] = currentViews().map((view, index) => ({
+    name: view.name,
+    open: () => navigate(view.address, { state: { drill: index } }),
+  }))
+  const strips = mode === 'narrow' ? [] : views
   const hasStrips = strips.length > 0
+  // Narrow: no strips; the top bar's ‹ goes up one level, as the last strip would.
+  const up = mode === 'narrow' ? views.at(-1) : undefined
+  const upName = up?.name
+  const upOpen = up?.open
+  useEffect(() => {
+    if (!upName || !upOpen) return
+    return offerBack({
+      label: t('collection:folds.back', { name: upName }),
+      run: upOpen,
+    })
+    // A new function each render: the address and the name say which view it opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upName, t])
   // Medium width: the sidebar folds while a panel or a strip shows (spec 9, 12.1).
   useEffect(() => {
     foldSidebar(mode === 'medium' && (panelShown || hasStrips))

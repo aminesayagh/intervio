@@ -121,7 +121,8 @@ function Router() {
   }
 
   useEffect(() => {
-    if (keepAddress) saveReturnTo(window.location.pathname + window.location.search)
+    if (keepAddress)
+      saveReturnTo(window.location.pathname + window.location.search)
     if (redirect) navigate(redirect, { replace: true })
     // A logged-in user has arrived: the saved page works once, so it is dropped.
     else if (user) dropReturnTo()

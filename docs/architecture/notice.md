@@ -29,12 +29,6 @@ Two terms used below:
 
 ## From the shared record actions (2026-11-23)
 
-### 6. Stepping back from a linked record redraws the whole table
-
-- **Today:** closing a linked record (×, a tab, Back, or archiving it) makes every row and cell of the list draw again (React Scan shows it).
-- **Why:** each record tab before the panel takes 32 px from the list (`tabsWidth`); when the last tab leaves, the list is wider, so the columns that fit change and the table is rebuilt. It comes from step 12, not from the record actions.
-- **Next:** keep the list's width the same while tabs come and go (the tabs take their room from the panel, or the columns are worked out without them), then check with React Scan that only the panel draws again.
-
 ### 7. A section moves a changed linked record at once
 
 - **Today:** a part changed from an item's panel moves at once to its new place in that item's Parts section (when the change touches its sort), where a list on screen would keep it in place (decision 136).
@@ -51,8 +45,8 @@ Two terms used below:
 
 ## From the performance review (2026-11-23)
 
-### 9. Opening and closing a record are over the 100 ms budget
+### 9. Opening a record shows its content after about 360 ms
 
-- **Today:** measured in a production build of the showcase (`VITE_SHOWCASE=1`, this WSL machine, median of 5): opening a record about 600 ms, closing about 250 ms, archiving about 330 ms, sorting about 215 ms, the next record (↓) about 140 ms, selecting a row about 90 ms. The same within noise on `main` (before step 12), at the end of step 12, and after the record actions and nuqs: these changes cost nothing, and the gap was already there.
-- **Why:** opening or closing the panel changes the table's width. React Aria's virtualized table watches its size and, on a change, draws every visible row again in one synchronous render (`flushSync` in its `ScrollView`, about 200 ms), then the columns that fit change and render again. Each row is costly because it mounts React Aria's checkbox, buttons and focus handling, not because of one slow component of ours.
-- **Next, to decide:** (a) keep the table's width while the panel opens and closes (the panel covers the list's right side, the columns change once when it settles), which changes how it looks; (b) make rows lighter (the selection checkbox and the cell buttons asleep until the row is reached, as the editors already are); (c) merge the resize render and the column change into one. Measure each on a production build before keeping it, and on a faster machine to know how much is this one.
+- **Today:** after the table work of 2026-11-23 (fixed column widths, the table no longer rendering when the open record changes; spec 8, 9), measured in a production build on this machine, before → after: opening a record 490 → 362 ms until its content shows (main thread blocked 225 → 62 ms; the panel itself starts sliding in after about 60 ms), closing 211 → 129 ms (blocked 260 → 67 ms), archiving 333 → 260 ms (blocked 473 → 165 ms). Next record (↓) about 100 ms, sort about 125 ms, select a row about 70 ms: unchanged.
+- **Why the rest:** the table is out of it now. Opening a record waits for the panel's own content: React renders it in small slices while the panel slides in (its values come one render after it opens), about 300 ms of JavaScript for the date pickers, number fields, the description and the sections.
+- **Next:** make the panel's content lighter, as the table's cells are: values shown as text, their editors mounted when the person reaches them; then measure again on a production build, and on a faster machine to know how much is this one.

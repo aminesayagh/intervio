@@ -64,6 +64,7 @@ export function useCollectionState(
   const tabKey = `intervio.collection.${key}.list`
   const sortKey = `intervio.collection.${key}.sort`
   const ids = filters.join(',')
+  const keptIds = kept.join(',')
   const parsers = useMemo(
     () => ({
       ...listParsers(ids ? ids.split(',') : []),
@@ -131,22 +132,8 @@ export function useCollectionState(
     (id: string, chosen: string[]) => void setValues({ [`f.${id}`]: chosen }),
     [setValues],
   )
-  return {
-    listing,
-    query,
-    setSearch: (search: string) => void setValues({ q: search.trim() }),
-    setFilter,
-    clear: () =>
-      void setValues({
-        q: '',
-        ...Object.fromEntries(
-          filters
-            .filter((id) => !kept.includes(id))
-            .map((id) => [`f.${id}`, []]),
-        ),
-      }),
-    /** A sort chosen, or null to go back to the default order. */
-    setSort: (sort: Sort | null) => {
+  const setSort = useCallback(
+    (sort: Sort | null) => {
       write(
         () => localStorage,
         sortKey,
@@ -154,5 +141,32 @@ export function useCollectionState(
       )
       void setValues({ sort })
     },
+    [setValues, sortKey],
+  )
+  const setSearch = useCallback(
+    (search: string) => void setValues({ q: search.trim() }),
+    [setValues],
+  )
+  const clear = useCallback(
+    () =>
+      void setValues({
+        q: '',
+        ...Object.fromEntries(
+          (ids ? ids.split(',') : [])
+            .filter((id) => !keptIds.split(',').includes(id))
+            .map((id) => [`f.${id}`, []]),
+        ),
+      }),
+    [setValues, ids, keptIds],
+  )
+  // The same functions from one render to the next: the table doesn't render again.
+  return {
+    listing,
+    query,
+    setSearch,
+    setFilter,
+    clear,
+    /** A sort chosen, or null to go back to the default order. */
+    setSort,
   }
 }

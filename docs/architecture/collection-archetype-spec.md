@@ -95,7 +95,6 @@ type CollectionDefinition<T, C = undefined> = {
   defaultSort: ListQuery['sort']
   card: (record: T) => CardContent      // type chip, title, detail line, status, avatar
   columns: ColumnDefinition<T>[]        // the full table; a column that shows a property names it, and is edited like it (7.3)
-  columnPriority: string[]              // column ids by importance; beside the panel, the table shows those that fit, name first
 
   // Panel and full page
   panel: {
@@ -446,6 +445,7 @@ There is no creation form: a new record is the normal record view, created as so
   - Inside table cells, `Show`, `Switch` and `Variant` change views without a fade (`NoFadeInside` in `ui-kit/views/Show.tsx`): hundreds of fades re-rendered with every row.
   - A date, a period or a number in a cell shows as text until its row is under the pointer or the focus; then its editor mounts in its place, looking the same (`values/Asleep.tsx`). The text takes the focus, so the keyboard reaches the editor as before. In the panel, editors are always mounted.
   - Opening and closing a record don't do everything in one render: the panel's values come one render after it opens (its slide-in hides the wait), and columns that come back when it closes are added in the next render (`useDeferredValue`). Values already in the table don't render again when the columns change (`memo`).
+  - The table doesn't render when the open record changes (2026-11-23): `RecordTable` is memoized and gets only stable props (the marks store, memoized objects, stable setters), and the panel's width no longer reaches it (fixed column widths). Cells don't listen to React Aria's table state, which changes whenever the focus enters or leaves the table: they read it from a box kept up to date (`LatestState` in `ui-kit/aria/Table.tsx`). A test (`list/Rerender.test.tsx`) fails if opening a record, or the next one, renders the table.
   - React Scan outlines re-renders in `make dev`; `VITE_SHOWCASE=1 vite build` measures the showcase in a production build.
 - **Loading more:** when the last drawn item is within the last 5 records loaded, and there is a next page and none is loading, it calls `fetchNextPage`. There is no separate marker.
 - **While a page loads:** a loading row shows placeholder rows under the list.
@@ -513,10 +513,10 @@ Decision 136; screens 63, 64.
 | `medium` | Sidebar · list | Rail (57 px) · list beside the panel · panel. The sidebar folds for as long as the panel is open; the user's saved sidebar choice does not change |
 | `narrow` | Top bar · list as rows (name, detail line, status) · one "Filters" button | The panel is the whole screen, with "‹ {collection}" to go back one level |
 
-- **List beside the panel:** the table shows the columns of `columnPriority` that fit its width (name first, at least 160 px per column); cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
+- **List beside the panel:** the table keeps every column at its width (`column.width`, 200 px when not given) and scrolls sideways when they don't fit; the selection checkbox and the name stay pinned on the left (decision 138). Cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
 - **Panel animation:** it slides in from the right in 200 ms, `easeOut`, with Motion. With reduced motion, there is no animation (like the sidebar).
 
-**Built so far (step 11):** layout modes, the divider, the saved width and columns by priority (`definition.columnPriority`, at least 160 px each) are built. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. Not yet: on narrow screens the list keeps the table (with the columns that fit) rather than rows with a detail line, and the toolbar wraps instead of folding into one "Filters" button.
+**Built so far (step 11):** layout modes, the divider and the saved width are built. Columns by priority were replaced (2026-11-23) by fixed widths with a horizontal scroll and pinned name (decision 138): `ui-kit/aria/tableLayout.ts` subclasses React Aria's `TableLayout` so the table lays its rows out again only when its height changes (not when the panel changes its width), and pins every column up to the row header. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. Not yet: on narrow screens the list keeps the table (scrolling sideways) rather than rows with a detail line, and the toolbar wraps instead of folding into one "Filters" button.
 
 ### 9.1 Resizing the list and the panel
 
@@ -540,7 +540,7 @@ Decision 136; screens 63, 64.
   - dragging and the arrow keys change the width within the limits, and a double-click resets it;
   - after closing and reopening, the panel has the saved width;
   - a saved extreme width reopens at the limit;
-  - the table shows fewer columns when the panel grows, keeping the name.
+  - the columns keep their widths as the panel opens and grows, and the name stays pinned.
 
 ## 10. Keyboard and accessibility
 

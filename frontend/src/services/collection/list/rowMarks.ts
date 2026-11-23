@@ -23,7 +23,7 @@ export type Marks = {
   saveShared?: (...args: never[]) => Promise<void>
 }
 
-type Store = {
+export type MarksStore = {
   get: () => Marks
   /** The rows the pointer or the focus reached: their cells mount their editors. */
   isAwake: (id: Id) => boolean
@@ -31,11 +31,11 @@ type Store = {
   subscribe: (listener: () => void) => () => void
 }
 
-const MarksContext = createContext<Store | null>(null)
+const MarksContext = createContext<MarksStore | null>(null)
 export const MarksProvider = MarksContext.Provider
 
 /** The store, given the latest marks after each render. */
-export function useMarksStore(marks: Marks): Store {
+export function useMarksStore(marks: Marks): MarksStore {
   const [store] = useState(() => {
     let value = marks
     // ponytail: rows stay awake until the table leaves; enough for a session's hovering.
@@ -66,7 +66,7 @@ export function useMarksStore(marks: Marks): Store {
 
 /** One mark, read from the store: the component renders again only when it changes. */
 export function useMark<R extends string | boolean | null>(
-  read: (marks: Marks, store: Store) => R,
+  read: (marks: Marks, store: MarksStore) => R,
 ): R {
   const store = useMarks()
   return useSyncExternalStore(store.subscribe, () => read(store.get(), store))

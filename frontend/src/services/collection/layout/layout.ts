@@ -28,8 +28,6 @@ export const PANEL = {
   default: 560,
   step: 16,
   savedMax: 720,
-  /** At least this much room per table column (spec 9). */
-  column: 160,
 }
 
 const clamp = (value: number, min: number, max: number) =>
@@ -53,3 +51,6 @@ export const openingWidth = (saved: number, space: number) =>
     clamp(saved, PANEL.min, Math.min(PANEL.savedMax, space * 0.6)),
     space,
   )
+
+/** A table column's width when its definition gives none (spec 9). */
+export const COLUMN_WIDTH = 200

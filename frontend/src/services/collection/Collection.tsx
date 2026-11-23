@@ -4,7 +4,6 @@ import {
   useEffect,
   useLayoutEffect,
   memo,
-  useDeferredValue,
   useMemo,
   useRef,
   useState,
@@ -29,7 +28,6 @@ import {
   Cell,
   cn,
   Column,
-  SELECTION_WIDTH,
   foldSidebar,
   Icon,
   Match,
@@ -59,6 +57,7 @@ import { RecordPage } from './record/RecordPage'
 import {
   clampPanel,
   openingWidth,
+  COLUMN_WIDTH,
   PANEL,
   panelLimits,
   useLayoutMode,
@@ -82,7 +81,7 @@ import {
   useMark,
   useMarks,
   useMarksStore,
-  type Marks,
+  type MarksStore,
 } from './list/rowMarks'
 import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
 import { ValueField } from './values/ValueField'
@@ -373,10 +372,13 @@ export function Collection<T, C = void>({
     setHold(null)
   }
   /** Clearing the selection sorts the list again (spec 8.6). */
-  const select = (keys: ReadonlySet<Id>) => {
-    if (keys.size === 0 && selected.size > 0) release()
-    setSelected(keys)
-  }
+  const select = useCallback(
+    (keys: ReadonlySet<Id>) => {
+      if (keys.size === 0 && selected.size > 0) release()
+      setSelected(keys)
+    },
+    [selected, release],
+  )
   // Opening another record sorts the list again.
   const [heldFor, setHeldFor] = useState(openId)
   if (openId !== heldFor) {
@@ -611,15 +613,16 @@ export function Collection<T, C = void>({
 
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
-  const more: More = {
-    canLoadMore:
-      list.hasNextPage &&
-      !list.isFetchingNextPage &&
-      !list.isFetchNextPageError,
-    loadMore,
-    loading: list.isFetchingNextPage,
-    hasMore: list.hasNextPage && !list.isFetchNextPageError,
-  }
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError } = list
+  const more = useMemo<More>(
+    () => ({
+      canLoadMore: hasNextPage && !isFetchingNextPage && !isFetchNextPageError,
+      loadMore,
+      loading: isFetchingNextPage,
+      hasMore: hasNextPage && !isFetchNextPageError,
+    }),
+    [hasNextPage, isFetchingNextPage, isFetchNextPageError, loadMore],
+  )
 
   // "12 of 42 items" needs the collection's whole total: one small cached request.
   const all = useQuery({
@@ -711,50 +714,30 @@ export function Collection<T, C = void>({
     foldSidebar(mode === 'medium' && (panelShown || hasStrips))
     return () => foldSidebar(false)
   }, [mode, panelShown, hasStrips])
-  // The table's columns: as many as fit, in the collection's priority (spec 9).
-  // Tabs before the panel take their room from the list (at most 2 show).
-  const tabsWidth = Math.min(chain.length, 2) * 32
-  const listWidth =
-    (panelShown && mode !== 'narrow'
-      ? space - panelWidth - 8 - tabsWidth
-      : space) -
-    24 -
-    (selectable ? SELECTION_WIDTH : 0)
-  const priority =
-    definition.columnPriority ?? definition.columns.map((column) => column.id)
-  // The same ids keep the same array, so the table's columns (and the fields being
-  // edited in them) are not rebuilt on every render.
-  // In priority order, while their widths fit (a column without one takes at least
-  // PANEL.column); the first always shows. So every column shown is in view.
-  const shownKey = (() => {
-    if (!space) return priority.join(',')
-    const widths = new Map(
-      definition.columns.map((column) => [
-        column.id,
-        column.width ?? PANEL.column,
-      ]),
-    )
-    const fitting: string[] = []
-    let used = 0
-    for (const id of priority) {
-      used += widths.get(id) ?? PANEL.column
-      if (fitting.length > 0 && used > listWidth) break
-      fitting.push(id)
-    }
-    return fitting.join(',')
-  })()
-  // Columns that come back (the panel closes) are added in the next render, so the
-  // panel leaves first; both in one render were over 200 ms in a production build.
-  // Columns that no longer fit leave at once: the narrower table would lay them out
-  // for nothing.
-  const deferredKey = useDeferredValue(shownKey)
-  const columnsKey =
-    shownKey.split(',').length < deferredKey.split(',').length
-      ? shownKey
-      : deferredKey
-  const shownColumns = useMemo(() => columnsKey.split(','), [columnsKey])
   const narrowPanel = mode === 'narrow' && panelShown
   const back = narrowPanel ? t(definition.i18n.title) : undefined
+
+  // What the rows show besides their record (the open one, the selection), read from
+  // a store: a change renders only the rows concerned, never the table (spec 8, 9).
+  const marksStore = useMarksStore({
+    openId: definition.panel ? openId : null,
+    selected,
+    note: t('collection:selection.appliesTo', {
+      what: countOf(selectedRecords.length),
+    }),
+    saveShared: saveOnSelection,
+  })
+  const selection = useMemo(
+    () => (selectable ? { keys: selected, onChange: select } : undefined),
+    [selectable, selected, select],
+  )
+  // The open record's row stays in view (after ↑ / ↓, or a link).
+  useEffect(() => {
+    if (!openId) return
+    scrollRef.current
+      ?.querySelector(`[data-key="${CSS.escape(openId)}"]`)
+      ?.scrollIntoView?.({ block: 'nearest' })
+  }, [openId])
 
   if (pageId && definition.panel)
     return (
@@ -893,20 +876,9 @@ export function Collection<T, C = void>({
                 save={save}
                 report={report}
                 canEdit={canEdit}
-                openId={definition.panel ? openId : null}
-                shown={shownColumns}
                 onOpen={definition.panel ? open : undefined}
-                selection={
-                  selectable ? { keys: selected, onChange: select } : undefined
-                }
-                marks={{
-                  openId: definition.panel ? openId : null,
-                  selected,
-                  note: t('collection:selection.appliesTo', {
-                    what: countOf(selectedRecords.length),
-                  }),
-                  saveShared: saveOnSelection,
-                }}
+                selection={selection}
+                store={marksStore}
               />
             </Match>
           </Switch>
@@ -1022,7 +994,14 @@ export function Collection<T, C = void>({
  * (`onRowAction`); a sortable header sorts through the address; the columns are the
  * ones that fit, by priority.
  */
-function RecordTable<T, C>({
+const RecordTable = memo(RecordTableOf) as typeof RecordTableOf
+
+/**
+ * Rendered again only when its own props change: opening, switching or closing a
+ * record reaches the rows through the store, so the table, and React Aria's state
+ * every cell listens to, stay as they are.
+ */
+function RecordTableOf<T, C>({
   definition,
   items,
   label,
@@ -1033,11 +1012,9 @@ function RecordTable<T, C>({
   save,
   report,
   canEdit,
-  openId,
   onOpen,
-  shown,
   selection,
-  marks,
+  store,
 }: {
   definition: CollectionDefinition<T, C>
   items: T[]
@@ -1050,41 +1027,26 @@ function RecordTable<T, C>({
   save: SaveChange<T>
   report: ReportInvalid<T>
   canEdit: (record: T, id: string) => boolean
-  /** The record open in the panel: its row is marked. */
-  openId: Id | null
   /** Set when a row opens its record in the panel. */
   onOpen?: (id: Id) => void
-  /** The ids of the columns that fit, by priority. */
-  shown: string[]
   /** Set when rows can be selected (spec 8.5): the selected ids. */
   selection?: {
     keys: ReadonlySet<Id>
     onChange: (keys: ReadonlySet<Id>) => void
   }
   /** The open row and the selection, as the rows and cells read them (rowMarks). */
-  marks: Marks
+  store: MarksStore
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  // The same array while the same columns fit: a new one would rebuild every row.
-  const columns = useMemo(
-    () => definition.columns.filter((column) => shown.includes(column.id)),
-    [definition.columns, shown],
-  )
-  const store = useMarksStore(marks)
+  // Every column, at its own width: the table scrolls sideways when they don't fit,
+  // and the panel opening or closing changes nothing in it (spec 9).
+  const { columns } = definition
   /** The pointer or the focus reached a row: its cells mount their editors. */
   function wakeRow(event: { target: EventTarget }) {
     const row = (event.target as Element).closest?.('[role="row"][data-key]')
     const id = row?.getAttribute('data-key')
     if (id) store.wake(id)
   }
-
-  // The open record's row stays in view (after ↑ / ↓, or a link).
-  useEffect(() => {
-    if (!openId) return
-    scrollRef.current
-      ?.querySelector(`[data-key="${CSS.escape(openId)}"]`)
-      ?.scrollIntoView?.({ block: 'nearest' })
-  }, [openId, scrollRef])
 
   /**
    * Three presses on a header: its first direction, then reversed, then back to the
@@ -1140,7 +1102,7 @@ function RecordTable<T, C>({
                   id={column.id}
                   isRowHeader={column.id === columns[0]?.id}
                   allowsSorting={Boolean(column.sort)}
-                  width={column.width ?? '1fr'}
+                  width={column.width ?? COLUMN_WIDTH}
                 >
                   {t(column.label)}
                 </Column>
@@ -1320,11 +1282,7 @@ function CellValueOf<T, C>({
   )
 }
 
-/**
- * Rendered again only when its own props change: when the panel opens or closes, the
- * table's columns change and every row is built again, but the values already shown
- * stay as they are.
- */
+/** Rendered again only when its own props change, not with its row. */
 const CellValue = memo(CellValueOf) as typeof CellValueOf
 
 /** Grey rows where records will be: six on the first load, two while more load. */

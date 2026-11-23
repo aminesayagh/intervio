@@ -1,4 +1,10 @@
-import { useContext } from 'react'
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  type ContextType,
+} from 'react'
 import type {
   FocusEvent,
   KeyboardEvent,
@@ -34,7 +40,6 @@ export {
   type Key,
   ResizableTableContainer,
   TableBody,
-  TableLayout,
   Virtualizer,
   type Selection,
   type SortDescriptor,
@@ -54,17 +59,39 @@ export function Table({
   /** The element that scrolls (the virtualized table scrolls itself). */
   ref?: Ref<HTMLDivElement>
 }) {
+  const state = useRef<TableState>(null)
   return (
-    <AriaTable
-      {...props}
-      ref={ref as unknown as Ref<HTMLTableElement>}
-      className={cn(
-        // It fills what its column leaves (a flex item), and scrolls inside.
-        'scroll-quiet min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
-        className,
-      )}
-    />
+    <LatestState value={state}>
+      <AriaTable
+        {...props}
+        ref={ref as unknown as Ref<HTMLTableElement>}
+        className={cn(
+          // It fills what its column leaves (a flex item), and scrolls inside.
+          'scroll-quiet min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
+          className,
+        )}
+      />
+    </LatestState>
   )
+}
+
+type TableState = ContextType<typeof TableStateContext>
+/**
+ * The table's state, as of its last render, for the cells' event handlers. React Aria's
+ * state changes whenever the table gains or loses the focus (opening a record moves
+ * it to the panel): a cell reading it from its context would render again each time,
+ * every visible cell at once. This box stays the same, so cells don't.
+ */
+const LatestState = createContext<{ current: TableState }>({ current: null })
+
+/** Inside the table, where React Aria's state is: keeps the box up to date. */
+function KeepLatestState() {
+  const state = useContext(TableStateContext)
+  const latestRef = useContext(LatestState)
+  useLayoutEffect(() => {
+    latestRef.current = state
+  })
+  return null
 }
 
 /** Width of the checkbox column, when rows can be selected. */
@@ -101,7 +128,7 @@ export function TableHeader<T extends object>({
         <AriaColumn
           width={SELECTION_WIDTH}
           minWidth={SELECTION_WIDTH}
-          className="flex h-8 items-center px-3 outline-none"
+          className="flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] outline-none"
         >
           {selectionMode === 'multiple' && <Checkbox slot="selection" />}
         </AriaColumn>
@@ -129,13 +156,14 @@ export function Column({
     <AriaColumn
       {...props}
       className={cn(
-        'group/column relative flex h-8 items-center px-3 text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'group/column relative flex h-8 items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         props.allowsSorting && 'cursor-pointer data-[hovered]:text-foreground',
         className,
       )}
     >
       {({ allowsSorting, sortDirection }) => (
         <span className="flex items-center gap-1">
+          <KeepLatestState />
           <span className={cn('truncate', sortDirection && 'text-foreground')}>
             {children}
           </span>
@@ -162,6 +190,13 @@ export function Column({
 }
 
 /**
+ * The row's background, painted by each of its cells, opaque: pinned cells cover the
+ * columns scrolling under them. Plain, hovered, then selected, open or focused.
+ */
+const ROW_BACKGROUND =
+  'bg-background group-data-[hovered]:bg-[color-mix(in_srgb,var(--default)_50%,var(--background))] group-data-[selected]:bg-default group-data-[current]:bg-default group-data-[focus-visible]:bg-default'
+
+/**
  * A record's row: a pointer when it opens the record, marked when `current`, shaded
  * when selected. When the table selects rows, it starts with its checkbox.
  */
@@ -185,15 +220,22 @@ export function Row<T extends object>({
       className={cn(
         // The virtualizer puts the row in a box of its height: it fills it, so its
         // background (open, selected, hovered) shows.
-        'group h-full border-b border-border outline-none data-[focus-visible]:bg-default data-[href]:cursor-pointer data-[selected]:bg-default',
-        props.onAction &&
-          'cursor-pointer data-[hovered]:bg-[color-mix(in_srgb,var(--default)_50%,transparent)]',
-        current && 'bg-default shadow-[inset_3px_0_0_var(--foreground)]',
+        // Its cells paint its background (see Cell): the pinned ones cover the columns
+        // that scroll under them, and the open row's mark sits on the first one.
+        'group h-full border-b border-border outline-none data-[href]:cursor-pointer',
+        props.onAction && 'cursor-pointer',
+        current &&
+          '[&>*:first-child>*]:shadow-[inset_3px_0_0_var(--foreground)]',
         className,
       )}
     >
       {selectionBehavior === 'toggle' && (
-        <AriaCell className="flex h-full items-center px-3 outline-none">
+        <AriaCell
+          className={cn(
+            'flex h-full items-center px-3 outline-none',
+            ROW_BACKGROUND,
+          )}
+        >
           <Checkbox slot="selection" />
         </AriaCell>
       )}
@@ -241,10 +283,10 @@ function keepFocusInControls(event: FocusEvent) {
  * arrows before the field could, in the capture phase.
  */
 function useFieldKeepsArrows() {
-  const state = useContext(TableStateContext)
+  const stateRef = useContext(LatestState)
   const set = (event: FocusEvent, on: boolean) => {
     if ((event.target as HTMLElement).closest(TEXT_ENTRY))
-      state?.setKeyboardNavigationDisabled(on)
+      stateRef.current?.setKeyboardNavigationDisabled(on)
   }
   return {
     onFocusCapture: (event: FocusEvent) => set(event, true),
@@ -292,6 +334,7 @@ export function Cell({
       {...props}
       className={cn(
         'flex h-full items-center overflow-hidden px-3 outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        ROW_BACKGROUND,
         className,
       )}
     >

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '../../navigation'
-import { Match, Show, Switch } from '../../ui-kit'
+import { Button, Match, Show, Switch } from '../../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from '../definition'
 import type { MenuAction } from '../../ui-kit'
 import { RecordBody, RecordPlaceholders } from './RecordBody'
@@ -103,9 +103,12 @@ export function RecordPage<T, C>({
           </div>
         </Match>
         <Match when={query.isError && !record}>
-          <p role="alert" className="py-16">
-            {t('collection:panel.error')}
-          </p>
+          <div role="alert" className="flex flex-col items-start gap-3 py-16">
+            <p>{t('collection:panel.error')}</p>
+            <Button onPress={() => query.refetch()}>
+              {t('collection:error.retry')}
+            </Button>
+          </div>
         </Match>
         <Match when={!record}>
           <RecordPlaceholders label={t('collection:panel.loading')} />

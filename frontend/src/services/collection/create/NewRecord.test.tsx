@@ -115,3 +115,31 @@ test('a refresh keeps what was typed in a new record', async () => {
     within(aside).getByRole('button', { name: 'Status: Outdated' }),
   ).toBeInTheDocument()
 })
+
+test('what is typed while the record is being created is saved on it', async () => {
+  const source = show()
+  const aside = await startNew()
+  source.settings.latencyMs = 800
+  const name = within(aside).getByRole('textbox', { name: 'Title' })
+  await userEvent.type(name, 'Gasket{Enter}') // ready: the creation starts
+  await userEvent.type(name, 's{Enter}') // typed before it comes back
+  await waitFor(() => expect(source.items()[0].name).toBe('Gaskets'), {
+    timeout: 3000,
+  })
+})
+
+test('without a way to remove records, "Record created" offers no Undo', async () => {
+  const source = itemSource(makeItems(5))
+  const definition = itemDefinition(source)
+  definition.source = { ...source, remove: undefined }
+  renderAt('/items', <Collection definition={definition} basePath="/items" />)
+  const aside = await startNew()
+  await userEvent.type(
+    within(aside).getByRole('textbox', { name: 'Title' }),
+    'Kept{Enter}',
+  )
+  expect((await screen.findAllByText('Record created')).length).toBeGreaterThan(
+    0,
+  )
+  expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull()
+})

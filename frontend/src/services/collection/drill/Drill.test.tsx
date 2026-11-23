@@ -261,3 +261,40 @@ test('a linked part is archived from the item’s panel: the panel goes back, th
   await userEvent.click(await screen.findByRole('button', { name: 'Undo' }))
   expect(await within(section).findByText('7')).toBeInTheDocument()
 })
+
+test('a section that fails to load says so, with Retry', async () => {
+  const { parts } = show(`/items?open=${ITEM_001}`)
+  parts.settings.failing = true
+  const aside = await panel('Item 001')
+  seeSections()
+  const section = (await within(aside).findByText('Parts')).closest('section')!
+  expect(
+    await within(section).findByText('Records could not be loaded.'),
+  ).toBeInTheDocument()
+  parts.settings.failing = false
+  await userEvent.click(within(section).getByRole('button', { name: 'Retry' }))
+  expect(
+    await within(section).findByRole('button', { name: 'Filter 1, Item 001' }),
+  ).toBeInTheDocument()
+})
+
+test('on the full page, a linked record links to its own page', async () => {
+  show(`/items/${ITEM_001}`)
+  await screen.findByRole('heading', { name: 'Item 001' })
+  seeSections()
+  const link = await screen.findByRole('link', { name: 'Filter 1, Item 001' })
+  expect(link.getAttribute('href')).toMatch(/^\/parts\/[0-9a-f-]+$/)
+})
+
+test('the full page offers Retry when its record fails to load', async () => {
+  const { items } = show(`/items/${ITEM_001}`)
+  items.settings.failing = true
+  expect(
+    await screen.findByRole('button', { name: 'Retry' }, { timeout: 3000 }),
+  ).toBeInTheDocument()
+  items.settings.failing = false
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+  expect(
+    await screen.findByRole('heading', { name: 'Item 001' }),
+  ).toBeInTheDocument()
+})

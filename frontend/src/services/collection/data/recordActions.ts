@@ -71,7 +71,7 @@ export function useRecordActions<T, C>(
       const words = { field: field?.label, name: nameOf(record) }
       try {
         const updated = await source.update(id, patch, context)
-        cache.updated(queryClient, key, updated, getId)
+        cache.updated(queryClient, key, updated, getId, context)
         announce({ key, id, kind: 'updated', record: updated })
         void cache.refresh(queryClient, key)
         if (valueKey) dismissKey(valueKey)
@@ -79,7 +79,9 @@ export function useRecordActions<T, C>(
         const status = refusal instanceof ApiError ? refusal.status : 0
         if (status === 403) {
           // No right any more: reload the record and the lists, so their rights are current.
-          void queryClient.invalidateQueries({ queryKey: keys.record(key, id) })
+          void queryClient.invalidateQueries({
+            queryKey: keys.records(key, id),
+          })
           void cache.refresh(queryClient, key)
           notify({
             tone: 'error',
@@ -245,7 +247,8 @@ export function useRecordActions<T, C>(
 
     /**
      * Creates a record (spec 7.5): it goes on top of the list it was created in, and
-     * "Record created" offers Undo. A failure is the caller's to report.
+     * "Record created" offers Undo when the collection can remove records. A failure
+     * is the caller's to report.
      */
     async function create(draft: Partial<T>, listKey: readonly unknown[]) {
       if (!source.create) throw new Error(`${key} cannot be created`)
@@ -253,13 +256,15 @@ export function useRecordActions<T, C>(
       const id = getId(created)
       cache.created(queryClient, listKey, created)
       announce({ key, id, kind: 'created', record: created })
+      // Undo removes it: only offered when the collection can remove records.
+      const remove = source.remove
       notify({
         tone: 'confirm',
         text: t('collection:message.created'),
-        action: {
+        action: remove && {
           label: t('collection:message.undo'),
           run: () =>
-            void Promise.resolve(source.remove?.(id, context))
+            void remove(id, context)
               .then(() => gone(id, created))
               .catch(() =>
                 notify({

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, cn, Icon, Show } from '../../ui-kit'
+import { Link } from '../../navigation'
+import { Button, cn, Icon, Match, Show, Switch } from '../../ui-kit'
 import { useCollectionQuery } from '../data/collectionQuery'
 import type {
   AnyCollection,
@@ -245,8 +246,10 @@ function Section({
   viewName: string
 }) {
   const { t } = useTranslation([linked.i18n.namespace, 'collection'])
-  // In the panel, a linked record opens there (decision 137); on the full page it is text.
+  // In the panel, a linked record opens there (decision 137); on the full page, its
+  // own full page opens.
   const openLinked = useOpenLinked()
+  const linkedPath = linked.basePath ?? `/${linked.key}`
   // ponytail: the linked collection gets no context; add one to the section when a
   // real collection needs it.
   const list = useCollectionQuery({
@@ -279,32 +282,68 @@ function Section({
           </Button>
         </Show>
       </h3>
-      <ul className="mt-2 flex flex-col">
-        {list.items.slice(0, PREVIEW).map((item) => (
-          <li
-            key={linked.getId(item)}
-            className="flex items-center gap-2 border-b border-border py-2"
+      <Switch className="mt-2">
+        <Match when={list.isPending}>
+          <span
+            role="status"
+            aria-label={t('collection:loading')}
+            className="flex flex-col gap-2 py-2"
           >
-            <Show
-              as="span"
-              when={openLinked}
-              className="min-w-0 flex-1 truncate"
-              fallback={linked.panel?.title(item) ?? linked.getId(item)}
+            <span className="block h-4 w-48 rounded-[var(--field-radius)] bg-default" />
+            <span className="block h-4 w-36 rounded-[var(--field-radius)] bg-default" />
+          </span>
+        </Match>
+        <Match when={list.isError && !list.data}>
+          <p role="alert" className="flex items-center gap-3 py-2 text-muted">
+            {t('collection:error.list')}
+            <Button
+              size="sm"
+              look="secondary"
+              onPress={() => void list.refetch()}
             >
-              {(open) => (
-                <button
-                  type="button"
-                  onClick={() => open(linked.key, linked.getId(item))}
-                  className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+              {t('collection:error.retry')}
+            </Button>
+          </p>
+        </Match>
+        <Match when={list.items.length === 0}>
+          <p className="py-2 text-muted">{t('collection:section.empty')}</p>
+        </Match>
+        <Match when={list.items.length > 0}>
+          <ul className="flex flex-col">
+            {list.items.slice(0, PREVIEW).map((item) => (
+              <li
+                key={linked.getId(item)}
+                className="flex items-center gap-2 border-b border-border py-2"
+              >
+                <Show
+                  as="span"
+                  when={openLinked}
+                  className="min-w-0 flex-1 truncate"
+                  fallback={
+                    <Link
+                      href={`${linkedPath}/${encodeURIComponent(linked.getId(item))}`}
+                      className="block max-w-full truncate outline-none hover:underline focus-visible:underline"
+                    >
+                      {linked.panel?.title(item) ?? linked.getId(item)}
+                    </Link>
+                  }
                 >
-                  {linked.panel?.title(item) ?? linked.getId(item)}
-                </button>
-              )}
-            </Show>
-            {linked.panel?.type(item)}
-          </li>
-        ))}
-      </ul>
+                  {(open) => (
+                    <button
+                      type="button"
+                      onClick={() => open(linked.key, linked.getId(item))}
+                      className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+                    >
+                      {linked.panel?.title(item) ?? linked.getId(item)}
+                    </button>
+                  )}
+                </Show>
+                {linked.panel?.type(item)}
+              </li>
+            ))}
+          </ul>
+        </Match>
+      </Switch>
     </section>
   )
 }

@@ -139,7 +139,8 @@
     "sort": "Sort now"
   },
   "section": {
-    "showAll": "Show all"
+    "showAll": "Show all",
+    "empty": "None yet."
   },
   "scope": {
     "remove": "Remove “{{label}}”"

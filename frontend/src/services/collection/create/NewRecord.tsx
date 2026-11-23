@@ -42,7 +42,11 @@ export function NewRecord<T, C>({
   panel: PanelDefinition<T>
   /** The collection's defaults, with the active filters' values. */
   defaults: Partial<T>
-  onCreated: (draft: Partial<T>) => Promise<void>
+  /**
+   * Creates the record from the draft; `latest` gives the draft as it is when the
+   * record comes back, so values typed meanwhile are saved on it.
+   */
+  onCreated: (draft: Partial<T>, latest: () => Partial<T>) => Promise<void>
   onClose: () => void
   /** Narrow screens: the collection's name, for the way back. */
   back?: string
@@ -54,6 +58,8 @@ export function NewRecord<T, C>({
     ...read<T>(storageKey),
   }))
   const creating = useRef(false)
+  // The draft as typed so far, for values typed while the record is being created.
+  const latest = useRef(draft)
   const record = draft as T
 
   const scope = `${definition.key}:new`
@@ -65,7 +71,7 @@ export function NewRecord<T, C>({
     if (creating.current) return
     creating.current = true
     try {
-      await onCreated(next)
+      await onCreated(next, () => latest.current)
       keep(storageKey, null)
     } catch {
       notify({
@@ -85,7 +91,8 @@ export function NewRecord<T, C>({
 
   /** A value set in the draft; once the draft is ready, it is created. */
   function change(patch: Partial<T>) {
-    const next = { ...draft, ...patch }
+    const next = { ...latest.current, ...patch }
+    latest.current = next
     setDraft(next)
     keep(storageKey, next)
     if (definition.create?.ready(next)) void create(next)

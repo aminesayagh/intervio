@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { DataSource, Id, ListQuery, SortDirection } from './types'
+import type { DataSource, Id, Sort, SortDirection } from './types'
 
 /** One table column (spec 4). Its label is a translation key in the collection's namespace. */
 export type ColumnDefinition<T> = {
@@ -13,6 +13,11 @@ export type ColumnDefinition<T> = {
    * direction it takes when first chosen (a date usually starts newest first).
    */
   sort?: SortDirection
+  /**
+   * Offered in the Filter menu (decision 149), with the operators of its field's
+   * type (a text "contains", a number "greater than"…); the data source filters it.
+   */
+  filter?: boolean
   /** How the value is edited in its cell (spec 7.3.0); without it, it is read only. */
   field?: FieldDefinition<T>
   /**
@@ -310,7 +315,8 @@ export type CollectionDefinition<T, C = void> = {
   }
   getId: (record: T) => Id
   source: DataSource<T, C>
-  defaultSort: ListQuery['sort']
+  /** The order when no sort is chosen. */
+  defaultSort: Sort
   columns: ColumnDefinition<T>[]
   /**
    * A record as a row, on narrow screens (spec 9, decision 121): the line under its

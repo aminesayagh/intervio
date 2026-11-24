@@ -80,7 +80,7 @@ function LinkSearch({
     key: linked.key,
     source: linked.source,
     context,
-    listing: { search: search.trim(), filters: {}, sort: linked.defaultSort },
+    listing: { search: search.trim(), filters: {}, sort: [linked.defaultSort] },
   })
   // Already linked: the linking change would change nothing on it.
   const linkedAlready = (record: unknown) =>

@@ -166,5 +166,38 @@
   },
   "filters": "Filters",
   "sortTitle": "Sort",
-  "new": "New"
+  "new": "New",
+  "filter": {
+    "title": "Filter",
+    "none": "No filter: every record shows.",
+    "add": "Add a filter",
+    "field": "Field",
+    "operator": "Condition",
+    "choose": "Choose…",
+    "value": "Value",
+    "remove": "Remove the filter on {{name}}",
+    "yes": "Yes",
+    "no": "No",
+    "op": {
+      "is": "is",
+      "not": "is not",
+      "contains": "contains",
+      "gt": "greater than",
+      "lt": "less than",
+      "date": {
+        "is": "on",
+        "gt": "after",
+        "lt": "before"
+      }
+    }
+  },
+  "sort": {
+    "title": "Sort",
+    "none": "Default order.",
+    "add": "Add a sort",
+    "column": "Sort column {{n}}",
+    "asc": "Ascending",
+    "desc": "Descending",
+    "remove": "Remove the sort by {{name}}"
+  }
 }

@@ -12,11 +12,19 @@ export type Page<T> = {
 
 export type SortDirection = 'asc' | 'desc'
 
+/** One level of a sort: a column and its direction. */
+export type Sort = { by: string; direction: SortDirection }
+
 /** What a list asks for: the address's search, filters and sort, and where to continue. */
 export type ListQuery = {
   search: string
-  filters: Record<string, string[]> // filter id → chosen option ids
-  sort: { by: string; direction: SortDirection }
+  /**
+   * The filter rules: `{id}` → the values it is one of, or `{id}.{operator}` → its
+   * value (`quantity.gt` → ['5']), operators in `listing/rules.ts`.
+   */
+  filters: Record<string, string[]>
+  /** The sort levels, the first one first; never empty. */
+  sort: Sort[]
   cursor: string | null
   /** The page after the cursor (the default), or the one before it (scrolling up). */
   direction?: 'after' | 'before'

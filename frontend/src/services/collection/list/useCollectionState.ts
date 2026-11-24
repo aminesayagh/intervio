@@ -6,33 +6,17 @@ import {
   useQueryStates,
 } from '../../navigation'
 import { listParsers, sortParser } from '../address'
-import type { ListQuery } from '../types'
-
-type Sort = ListQuery['sort']
+import { formatSort } from '../listing/rules'
+import type { Sort } from '../types'
 
 /**
- * The list as the person set it: search, filters, and the sort they chose, or null
- * for the collection's default order (no header marked, nothing in the address).
+ * The list as the person set it: search, filter rules (see `listing/rules`), and the
+ * sort levels they chose, or none for the collection's default order.
  */
 export type Listing = {
   search: string
   filters: Record<string, string[]>
-  sort: Sort | null
-}
-
-/**
- * The sort after choosing a column (its header, or the narrow screen's Filters):
- * its first direction, then reversed, then the collection's default order (null).
- */
-export function nextSort(
-  sort: Sort | null,
-  by: string,
-  first: Sort['direction'],
-): Sort | null {
-  if (sort?.by !== by) return { by, direction: first }
-  if (sort.direction === first)
-    return { by, direction: first === 'asc' ? 'desc' : 'asc' }
-  return null
+  sort: Sort[]
 }
 
 /** True when a search or a filter narrows the list. */
@@ -70,7 +54,7 @@ export function useCollectionState(
     filters = [],
     kept = [],
   }: {
-    /** The ids of the collection's filters and scopes: their f.{id} parameters. */
+    /** The collection's rule keys and scope ids: their f.{key} parameters. */
     filters?: string[]
     /** Filters "Clear filters" keeps: the scopes, which only their chip removes. */
     kept?: string[]
@@ -97,7 +81,7 @@ export function useCollectionState(
   useLayoutEffect(() => {
     const listed =
       values.q !== '' ||
-      values.sort !== null ||
+      values.sort.length > 0 ||
       filters.some((id) => chosen(id).length > 0)
     if (listed) return
     const saved = read(() => sessionStorage, tabKey)
@@ -139,22 +123,27 @@ export function useCollectionState(
     [values, ids],
   )
   const query = useMemo(
-    () => ({ ...listing, sort: listing.sort ?? defaultSort }),
+    () => ({
+      ...listing,
+      sort: listing.sort.length ? listing.sort : [defaultSort],
+    }),
     [listing, defaultSort],
   )
 
-  const setFilter = useCallback(
-    (id: string, chosen: string[]) => void setValues({ [`f.${id}`]: chosen }),
+  /** Sets several filter rules at once (an empty list removes one). */
+  const setFilters = useCallback(
+    (patch: Record<string, string[]>) =>
+      void setValues(
+        Object.fromEntries(
+          Object.entries(patch).map(([key, chosen]) => [`f.${key}`, chosen]),
+        ),
+      ),
     [setValues],
   )
   const setSort = useCallback(
-    (sort: Sort | null) => {
-      write(
-        () => localStorage,
-        sortKey,
-        sort ? `${sort.by}:${sort.direction}` : null,
-      )
-      void setValues({ sort })
+    (sort: Sort[]) => {
+      write(() => localStorage, sortKey, sort.length ? formatSort(sort) : null)
+      void setValues({ sort: sort.length ? sort : null })
     },
     [setValues, sortKey],
   )
@@ -179,9 +168,9 @@ export function useCollectionState(
     listing,
     query,
     setSearch,
-    setFilter,
+    setFilters,
     clear,
-    /** A sort chosen, or null to go back to the default order. */
+    /** The sort levels chosen, or none to go back to the default order. */
     setSort,
   }
 }

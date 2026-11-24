@@ -1,4 +1,5 @@
 import { api } from '../../http'
+import { formatSort } from '../listing/rules'
 import type { DataSource, Id, ListQuery, ManyUpdated, Page } from '../types'
 
 type Route = (id: Id) => string
@@ -56,7 +57,7 @@ export function listParams(
   if (query.search.trim()) params.set(names.search, query.search.trim())
   for (const [id, values] of Object.entries(query.filters))
     if (values.length) params.set(names.filterPrefix + id, values.join(','))
-  params.set(names.sort, `${query.sort.by}:${query.sort.direction}`)
+  params.set(names.sort, formatSort(query.sort))
   if (query.cursor)
     params.set(
       query.direction === 'before' ? names.before : names.cursor,

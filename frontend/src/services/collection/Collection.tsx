@@ -89,13 +89,10 @@ import {
   useMarksStore,
   type MarksStore,
 } from './list/rowMarks'
-import type { Id, ListQuery, ReportInvalid, SaveChange } from './types'
+import type { Id, ReportInvalid, SaveChange, Sort } from './types'
+import { filterFields, nextSort, ruleKeys } from './listing/rules'
 import { ValueField } from './values/ValueField'
-import {
-  isNarrowed,
-  nextSort,
-  useCollectionState,
-} from './list/useCollectionState'
+import { isNarrowed, useCollectionState } from './list/useCollectionState'
 
 addTranslations('collection', { en, fr })
 
@@ -138,10 +135,13 @@ export function Collection<T, C = void>({
   const basePath = basePathProp ?? listPathOf(definition, context as C)
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const scrollRef = useRef<HTMLDivElement>(null)
+  // What the Filter menu offers, and each rule's f.{key} in the address (decision 149).
+  const fields = useMemo(() => filterFields(definition), [definition])
   const state = useCollectionState(definition.key, definition.defaultSort, {
-    filters: [...(definition.filters ?? []), ...(definition.scopes ?? [])].map(
-      (filter) => filter.id,
-    ),
+    filters: [
+      ...ruleKeys(fields),
+      ...(definition.scopes ?? []).map((scope) => scope.id),
+    ],
     kept: definition.scopes?.map((scope) => scope.id),
   })
   const { listing } = state
@@ -399,21 +399,15 @@ export function Collection<T, C = void>({
     },
   })
   const selectable = Boolean(definition.actions?.length) && !narrowScreen
-  // The sort sits in the Filters panel there, as the rows have no headers.
-  const narrowToolbar = useMemo(
+  // The columns the Sort menu offers, with the direction each starts in.
+  const sortables = useMemo(
     () =>
-      narrowScreen
-        ? {
-            sorts: definition.columns.flatMap((column) =>
-              column.sort
-                ? [{ id: column.id, label: column.label, first: column.sort }]
-                : [],
-            ),
-            onSort: state.setSort,
-          }
-        : undefined,
-    // The definition, not its columns: those are read only on narrow screens.
-    [narrowScreen, definition, state.setSort],
+      definition.columns.flatMap((column) =>
+        column.sort
+          ? [{ id: column.id, label: column.label, first: column.sort }]
+          : [],
+      ),
+    [definition],
   )
   const [selected, setSelected] = useState<ReadonlySet<Id>>(() => new Set())
   // A new search, filter or sort clears the selection.
@@ -881,13 +875,14 @@ export function Collection<T, C = void>({
             <Match when={narrowed || list.items.length > 0 || !list.isSuccess}>
               <Toolbar
                 namespace={definition.i18n.namespace}
-                filters={definition.filters ?? []}
+                fields={fields}
+                sortables={sortables}
                 scopes={definition.scopes}
                 listing={listing}
                 onSearch={state.setSearch}
-                onFilter={state.setFilter}
+                onFilters={state.setFilters}
+                onSort={state.setSort}
                 onClear={state.clear}
-                narrow={narrowToolbar}
               />
             </Match>
           </Switch>
@@ -1124,9 +1119,9 @@ function RecordTableOf<T, C>({
   label: string
   scrollRef: RefObject<HTMLDivElement | null>
   more: More
-  /** The sort chosen, or null for the default order (no header marked). */
-  sort: ListQuery['sort'] | null
-  onSort: (sort: ListQuery['sort'] | null) => void
+  /** The sort levels chosen, none for the default order; the header marks the first. */
+  sort: Sort[]
+  onSort: (sort: Sort[]) => void
   save: SaveChange<T>
   report: ReportInvalid<T>
   canEdit: (record: T, id: string) => boolean
@@ -1175,11 +1170,11 @@ function RecordTableOf<T, C>({
             ref={scrollRef}
             aria-label={label}
             sortDescriptor={
-              sort
+              sort[0]
                 ? {
-                    column: sort.by,
+                    column: sort[0].by,
                     direction:
-                      sort.direction === 'asc' ? 'ascending' : 'descending',
+                      sort[0].direction === 'asc' ? 'ascending' : 'descending',
                   }
                 : undefined
             }

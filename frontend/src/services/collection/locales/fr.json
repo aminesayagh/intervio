@@ -166,5 +166,38 @@
   },
   "filters": "Filtres",
   "sortTitle": "Tri",
-  "new": "Nouveau"
+  "new": "Nouveau",
+  "filter": {
+    "title": "Filtrer",
+    "none": "Aucun filtre : tous les éléments s’affichent.",
+    "add": "Ajouter un filtre",
+    "field": "Champ",
+    "operator": "Condition",
+    "choose": "Choisir…",
+    "value": "Valeur",
+    "remove": "Retirer le filtre sur {{name}}",
+    "yes": "Oui",
+    "no": "Non",
+    "op": {
+      "is": "est",
+      "not": "n’est pas",
+      "contains": "contient",
+      "gt": "supérieur à",
+      "lt": "inférieur à",
+      "date": {
+        "is": "le",
+        "gt": "après",
+        "lt": "avant"
+      }
+    }
+  },
+  "sort": {
+    "title": "Trier",
+    "none": "Ordre par défaut.",
+    "add": "Ajouter un tri",
+    "column": "Colonne de tri {{n}}",
+    "asc": "Croissant",
+    "desc": "Décroissant",
+    "remove": "Retirer le tri par {{name}}"
+  }
 }

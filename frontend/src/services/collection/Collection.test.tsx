@@ -58,6 +58,10 @@ test('the first page shows a header row and the first items', async () => {
   // React Aria counts the rows loaded (the first page of 30, and the header).
   expect(table).toHaveAttribute('aria-rowcount', '31')
   expect(within(table).getByDisplayValue('Item 001')).toBeInTheDocument()
+  // Each row is numbered in the list's order (decision 150).
+  const rows = within(table).getAllByRole('row')
+  expect(within(rows[1]).getAllByRole('gridcell')[0]).toHaveTextContent('1')
+  expect(within(rows[2]).getAllByRole('gridcell')[0]).toHaveTextContent('2')
   // Only the visible rows are drawn, never a later page.
   expect(screen.queryByDisplayValue('Item 031')).not.toBeInTheDocument()
 })

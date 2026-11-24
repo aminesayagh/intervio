@@ -45,6 +45,7 @@ export function FilterMenu({
     .filter((rule) => fieldOf(rule.id) && rule.values.length > 0)
   // A rule added, waiting for its value: not in the address yet.
   const [draft, setDraft] = useState<Rule | null>(null)
+  const shown = draft ? [...rules, draft] : rules
 
   function change(rule: Rule, next: Rule) {
     if (rule === draft && next.values.length === 0) return setDraft(next)
@@ -60,13 +61,16 @@ export function FilterMenu({
     if (rule === draft) setDraft(null)
     else onFilters({ [ruleKey(rule.id, rule.op)]: [] })
   }
+  // One rule per field (decision 149): a field already in a rule isn't offered again.
+  const used = (except?: Rule) =>
+    new Set(shown.filter((r) => r !== except).map((r) => r.id))
+  const free = fields.filter((field) => !used().has(field.id))
   function add() {
-    const [field] = fields
+    const [field] = free
     setDraft({ id: field.id, op: OPERATORS[field.kind][0], values: [] })
   }
 
   const label = t('filter.title')
-  const shown = draft ? [...rules, draft] : rules
   return (
     <PopoverDialog
       label={label}
@@ -83,14 +87,12 @@ export function FilterMenu({
         <p className="text-muted">{t('filter.none')}</p>
       </Show>
       <ul className="flex flex-col gap-2">
-        {shown.map((rule) => (
-          <li
-            key={rule === draft ? '\0draft' : ruleKey(rule.id, rule.op)}
-            className="flex items-center gap-1"
-          >
+        {/* By place: a new rule keeps its line (and the focus) once it applies. */}
+        {shown.map((rule, index) => (
+          <li key={index} className="flex items-center gap-1">
             <RuleLine
               namespace={namespace}
-              fields={fields}
+              fields={fields.filter((f) => !used(rule).has(f.id))}
               rule={rule}
               field={fieldOf(rule.id)!}
               onChange={(next) => change(rule, next)}
@@ -99,7 +101,7 @@ export function FilterMenu({
           </li>
         ))}
       </ul>
-      <Show when={draft === null && fields.length > 0}>
+      <Show when={draft === null && free.length > 0}>
         <Button size="sm" look="ghost" onPress={add} className="self-start">
           <Plus size={14} />
           {t('filter.add')}
@@ -208,6 +210,7 @@ function RuleValue({
   )
   const typed = (type: 'text' | 'number' | 'date') => () => (
     <TypedValue
+      key={ruleKey(rule.id, rule.op)}
       type={type}
       label={label}
       value={rule.values[0] ?? ''}
@@ -310,12 +313,10 @@ function Pick({
 }
 
 /** "is", "contains", "greater than"; for a date "on", "after", "before". */
-function opLabel(
-  t: (key: string) => string,
-  kind: FilterKind,
-  op: Operator,
-) {
+function opLabel(t: (key: string) => string, kind: FilterKind, op: Operator) {
   return t(
-    kind === 'date' ? `collection:filter.op.date.${op}` : `collection:filter.op.${op}`,
+    kind === 'date'
+      ? `collection:filter.op.date.${op}`
+      : `collection:filter.op.${op}`,
   )
 }

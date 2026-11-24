@@ -36,7 +36,9 @@ export function SortMenu({
   )
   const set = (index: number, level: Sort | null) =>
     onSort(
-      sort.flatMap((current, i) => (i === index ? (level ? [level] : []) : [current])),
+      sort.flatMap((current, i) =>
+        i === index ? (level ? [level] : []) : [current],
+      ),
     )
   const label = t('collection:sort.title')
   return (
@@ -76,7 +78,10 @@ export function SortMenu({
                   <ChoiceMenu
                     label={t('collection:sort.column', { n: index + 1 })}
                     mode="single"
-                    options={choices.map((c) => ({ id: c.id, label: t(c.label) }))}
+                    options={choices.map((c) => ({
+                      id: c.id,
+                      label: t(c.label),
+                    }))}
                     selected={[level.by]}
                     onChange={([by]) => {
                       const next = sortables.find((c) => c.id === by)
@@ -95,9 +100,12 @@ export function SortMenu({
                   })
                 }
               >
-                {createElement(level.direction === 'asc' ? ArrowUp : ArrowDown, {
-                  size: 14,
-                })}
+                {createElement(
+                  level.direction === 'asc' ? ArrowUp : ArrowDown,
+                  {
+                    size: 14,
+                  },
+                )}
                 {t(`collection:sort.${level.direction}`)}
               </Button>
               <Button

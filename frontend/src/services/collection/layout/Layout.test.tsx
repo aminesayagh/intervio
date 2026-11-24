@@ -152,27 +152,23 @@ test('on a narrow screen the list is rows: name, detail line and status, no chec
   expect(screen.queryByRole('columnheader')).toBeNull()
 })
 
-test('on a narrow screen one Filters button holds the sort and the filters', async () => {
+test('on a narrow screen the Filter and Sort menus stay, the sort with them', async () => {
   setScreenWidth(900)
   renderAt(
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(5)))} />,
   )
   await screen.findByRole('row', { name: 'Item 001' })
-  expect(screen.queryByRole('button', { name: 'Status' })).toBeNull()
-  await userEvent.click(screen.getByRole('button', { name: 'Filters' }))
-  const panel = await screen.findByRole('dialog', { name: 'Filters' })
-
-  await userEvent.click(within(panel).getByRole('button', { name: /Name/ }))
-  await waitFor(() => expect(window.location.search).toBe('?sort=name:asc'))
-
-  await userEvent.click(within(panel).getByRole('checkbox', { name: 'Valid' }))
-  await waitFor(() =>
-    expect(window.location.search).toContain('f.status=valid'),
+  // The rows have no headers there: the Sort menu is the way to sort.
+  await userEvent.click(screen.getByRole('button', { name: 'Sort' }))
+  const menu = await screen.findByRole('dialog', { name: 'Sort' })
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Add a sort' }),
   )
-  // Closed, its button says how many filters are chosen.
+  await waitFor(() => expect(window.location.search).toBe('?sort=name:asc'))
   await userEvent.keyboard('{Escape}')
-  expect(
-    await screen.findByRole('button', { name: 'Filters' }),
-  ).toHaveTextContent('Filters (1)')
+  expect(await screen.findByRole('button', { name: 'Sort' })).toHaveTextContent(
+    'Sort (1)',
+  )
+  expect(screen.getByRole('button', { name: 'Filter' })).toBeInTheDocument()
 })

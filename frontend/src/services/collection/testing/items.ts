@@ -123,13 +123,16 @@ export function itemSource(items = makeItems(300)) {
   return memorySource(items, {
     searchText: (item) => `${item.name} ${item.description}`,
     filterValue: (item, filterId) =>
-      filterId === 'status'
-        ? item.status
-        : filterId === 'owner'
-          ? item.owner
-          : filterId === 'linkedTo'
-            ? item.linkedTo
-            : undefined,
+      ({
+        status: item.status,
+        owner: item.owner,
+        linkedTo: item.linkedTo,
+        name: item.name,
+        quantity: item.quantity,
+        active: item.active,
+        tags: item.tags,
+        due: item.due,
+      })[filterId],
     sortValue: (item, by) =>
       by === 'name'
         ? item.name

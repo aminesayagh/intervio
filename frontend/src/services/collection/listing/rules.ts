@@ -8,7 +8,8 @@ import type { Sort, SortDirection } from '../types'
  */
 
 /** What a filterable column holds, which decides its operators and its value input. */
-export type FilterKind = 'text' | 'number' | 'date' | 'choice' | 'tags' | 'check'
+export type FilterKind =
+  'text' | 'number' | 'date' | 'choice' | 'tags' | 'check'
 
 export type Operator = 'is' | 'not' | 'contains' | 'gt' | 'lt'
 
@@ -92,7 +93,8 @@ export function filterFields<T, C>(
 }
 
 /** A record's value for a rule: one value, several (tags, linked ids), or none. */
-export type FilterValue = string | number | boolean | null | undefined | string[]
+export type FilterValue =
+  string | number | boolean | null | undefined | string[]
 
 /** Whether a value passes a rule (memory sources; the backend does the same). */
 export function matches(value: FilterValue, op: Operator, chosen: string[]) {

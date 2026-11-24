@@ -13,7 +13,7 @@ import type { Page } from '../types'
 const listing = {
   search: '',
   filters: {},
-  sort: { by: 'updated', direction: 'desc' as const },
+  sort: [{ by: 'updated', direction: 'desc' as const }],
 }
 const getId = (item: Item) => item.id
 

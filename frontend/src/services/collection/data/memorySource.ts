@@ -64,7 +64,9 @@ export function memorySource<T extends { id: Id }>(
   function list(query: ListQuery): Page<T> {
     const search = query.search.trim().toLowerCase()
     // A key per level, then the id (in the last level's direction): a total order.
-    const signs = query.sort.map((level) => (level.direction === 'asc' ? 1 : -1))
+    const signs = query.sort.map((level) =>
+      level.direction === 'asc' ? 1 : -1,
+    )
     const key = (item: T): (string | number)[] => [
       ...query.sort.map((level) => options.sortValue(item, level.by)),
       item.id,
@@ -96,9 +98,7 @@ export function memorySource<T extends { id: Id }>(
     let start: number
     let page: T[]
     if (cursor && query.direction === 'before') {
-      const end = matching.findIndex(
-        (item) => order(key(item), cursor) >= 0,
-      )
+      const end = matching.findIndex((item) => order(key(item), cursor) >= 0)
       const stop = end === -1 ? matching.length : end
       start = Math.max(0, stop - pageSize)
       page = matching.slice(start, stop)

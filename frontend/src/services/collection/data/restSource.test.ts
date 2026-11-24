@@ -21,7 +21,7 @@ const csrf = http.get(
 const query: ListQuery = {
   search: ' pump ',
   filters: { status: ['valid', 'draft'], owner: [] },
-  sort: { by: 'updated', direction: 'desc' },
+  sort: [{ by: 'updated', direction: 'desc' }],
   cursor: 'abc',
 }
 

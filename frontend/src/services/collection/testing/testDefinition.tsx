@@ -390,6 +390,7 @@ export function itemDefinition(
       {
         id: 'name',
         label: 'columns.name',
+        filter: true,
         width: 260,
         sort: 'asc',
         cell: (item) => item.name,
@@ -425,6 +426,7 @@ export function itemDefinition(
       {
         id: 'quantity',
         label: 'columns.quantity',
+        filter: true,
         width: 110,
         sort: 'asc',
         cell: (item) => item.quantity ?? <span className="text-muted">—</span>,
@@ -433,6 +435,7 @@ export function itemDefinition(
       {
         id: 'active',
         label: 'columns.active',
+        filter: true,
         width: 90,
         cell: (item) => (item.active ? 'Yes' : 'No'),
         field: active,
@@ -440,6 +443,7 @@ export function itemDefinition(
       {
         id: 'tags',
         label: 'columns.tags',
+        filter: true,
         width: 220,
         cell: (item) => <Tags tags={item.tags} />,
         field: tags,
@@ -447,6 +451,7 @@ export function itemDefinition(
       {
         id: 'due',
         label: 'columns.due',
+        filter: true,
         width: 150,
         cell: dueDay,
         field: due,

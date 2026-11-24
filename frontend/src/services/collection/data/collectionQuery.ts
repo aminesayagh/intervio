@@ -126,7 +126,18 @@ export const cache = {
     /** The context it was saved from (spec 4). */
     context?: unknown,
   ) {
-    const id = getId(record)
+    cache.updatedMany(client, key, [record], getId, context)
+  },
+
+  /** Several records changed at once (spec 8.5): one pass over the loaded pages. */
+  updatedMany<T>(
+    client: QueryClient,
+    key: string,
+    records: T[],
+    getId: (record: T) => Id,
+    context?: unknown,
+  ) {
+    const changed = new Map(records.map((record) => [getId(record), record]))
     // In the context it was saved from; lists and records of other contexts reload
     // (cache.refresh, and below), as they may show it with other rights.
     client.setQueriesData<Pages<T>>(
@@ -136,17 +147,17 @@ export const cache = {
           ...data,
           pages: data.pages.map((page) => ({
             ...page,
-            items: page.items.map((item) =>
-              getId(item) === id ? record : item,
-            ),
+            items: page.items.map((item) => changed.get(getId(item)) ?? item),
           })),
         },
     )
-    client.setQueryData(keys.record(key, id, context), record)
-    void client.invalidateQueries({
-      queryKey: keys.records(key, id),
-      predicate: (query) => query.queryKey[3] !== (context ?? null),
-    })
+    for (const [id, record] of changed) {
+      client.setQueryData(keys.record(key, id, context), record)
+      void client.invalidateQueries({
+        queryKey: keys.records(key, id),
+        predicate: (query) => query.queryKey[3] !== (context ?? null),
+      })
+    }
   },
 
   removed<T>(

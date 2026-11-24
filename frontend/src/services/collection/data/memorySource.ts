@@ -20,6 +20,8 @@ export type MemorySettings = {
   failing: boolean
   /** Changes are refused as no longer allowed (403), until this is turned off. */
   forbidden: boolean
+  /** Records a change on several refuses (403), one by one (tests). */
+  refused: Set<Id>
 }
 
 /**
@@ -38,6 +40,7 @@ export function memorySource<T extends { id: Id }>(
     failNext: false,
     failing: false,
     forbidden: false,
+    refused: new Set(),
   }
   const pageSize = options.pageSize ?? 30
 
@@ -134,6 +137,22 @@ export function memorySource<T extends { id: Id }>(
         const updated = { ...find(id), ...patch, id }
         items = items.map((item) => (item.id === id ? updated : item))
         return updated
+      }),
+    updateMany: (ids, patch) =>
+      answer(() => {
+        const updated: T[] = []
+        const failed: { id: Id; code: string }[] = []
+        for (const id of ids) {
+          const item = items.find((candidate) => candidate.id === id)
+          if (settings.forbidden || settings.refused.has(id))
+            failed.push({ id, code: 'ERROR_FORBIDDEN' })
+          else if (!item || archived.has(id))
+            failed.push({ id, code: 'ERROR_NOT_FOUND' })
+          else updated.push({ ...item, ...patch, id })
+        }
+        const changed = new Map(updated.map((item) => [item.id, item]))
+        items = items.map((item) => changed.get(item.id) ?? item)
+        return { updated, failed }
       }),
     remove: (id) =>
       answer(() => {

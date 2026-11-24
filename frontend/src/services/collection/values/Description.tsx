@@ -13,7 +13,14 @@ import {
   TabPanel,
   Tabs,
 } from '../../ui-kit'
+import { notify } from '../../notifications'
 import { ErrorText } from '../parts'
+import {
+  EditorText,
+  PlateEditor,
+  type MarkdownFailure,
+} from './description/PlateEditor'
+import { Toolbar } from './description/Toolbar'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6). */
@@ -60,11 +67,14 @@ export function Description({
   value,
   editable,
   storageKey,
+  scope,
   save,
   label,
 }: {
   value: string
   editable: boolean
+  /** The record's notifications scope (a failure is reported there). */
+  scope: string
   /** Its name, when it is not the description (a rich text value, spec 7.3.0). */
   label?: string
   /** Where the tab keeps text not saved yet (spec 6.1). */
@@ -85,6 +95,7 @@ export function Description({
             initial={value}
             label={name}
             storageKey={storageKey}
+            scope={scope}
             save={save}
             onLeave={() => setEditing(false)}
           />
@@ -136,10 +147,11 @@ function keep(key: string, text: string | null) {
   }
 }
 
-/** Markdown typed in place: Write and Preview, a small toolbar, saved by itself. */
+/** The description edited formatted: Write and Preview, a small toolbar, saved by itself. */
 function Editor({
   initial,
   storageKey,
+  scope,
   save,
   onLeave,
   label,
@@ -147,24 +159,20 @@ function Editor({
   label: string
   initial: string
   storageKey: string
+  scope: string
   save: (text: string) => Promise<void>
   onLeave: () => void
 }) {
   const { t } = useTranslation('collection')
   const [text, setText] = useState(() => read(storageKey) ?? initial)
-  const field = useRef<HTMLTextAreaElement>(null)
+  // The text the record holds: the same text again is never sent.
+  const saved = useRef(initial)
   const autosave = useAutosave(async (next) => {
-    await save(next)
+    if (next !== saved.current) await save(next)
+    saved.current = next
     keep(storageKey, null) // saved: nothing left to keep
   })
   const tooLong = text.length > MAX_LENGTH
-
-  // The field appears with the cursor after the text, ready to add to it. (A callback
-  // ref: React Aria's tab panel mounts its content a render later than the editor.)
-  const placeField = useCallback((element: HTMLTextAreaElement | null) => {
-    field.current = element
-    element?.setSelectionRange(element.value.length, element.value.length)
-  }, [])
 
   function change(next: string) {
     setText(next)
@@ -172,38 +180,25 @@ function Editor({
     if (next.length <= MAX_LENGTH) autosave.change(next)
   }
 
-  /** Wraps the selection in Markdown, or starts its line with a marker. */
-  function format(
-    kind: 'bold' | 'italic' | 'heading' | 'list' | 'numbered' | 'link',
-  ) {
-    const element = field.current
-    if (!element) return
-    const { selectionStart: start, selectionEnd: end, value } = element
-    const chosen = value.slice(start, end)
-    let next: string
-    let cursor = end
-    if (kind === 'bold' || kind === 'italic') {
-      const mark = kind === 'bold' ? '**' : '_'
-      next = value.slice(0, start) + mark + chosen + mark + value.slice(end)
-      cursor = end + mark.length * 2
-    } else if (kind === 'link') {
-      const label = chosen || t('description.linkText')
-      next = `${value.slice(0, start)}[${label}](https://)${value.slice(end)}`
-      cursor = start + label.length + 11
-    } else {
-      const marker = kind === 'heading' ? '## ' : kind === 'list' ? '- ' : '1. '
-      const line = value.lastIndexOf('\n', start - 1) + 1
-      next = value.slice(0, line) + marker + value.slice(line)
-      cursor = end + marker.length
-    }
-    change(next)
-    requestAnimationFrame(() => {
-      element.focus()
-      element.setSelectionRange(cursor, cursor)
-    })
-  }
+  // Text Plate can't read or write is never saved, nor half saved: it says so.
+  const fail = useCallback(
+    (failure: MarkdownFailure) => {
+      notify({
+        tone: 'error',
+        text: t(
+          failure === 'parse'
+            ? 'description.unreadable'
+            : 'description.unwritable',
+        ),
+        scope,
+        key: `${storageKey}:markdown`,
+      })
+      if (failure === 'parse') onLeave()
+    },
+    [t, scope, storageKey, onLeave],
+  )
 
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === 'Escape') {
       event.preventDefault()
       void autosave.flush()
@@ -211,64 +206,40 @@ function Editor({
     }
   }
 
-  const tools = [
-    ['bold', 'B'],
-    ['italic', 'I'],
-    ['heading', 'H'],
-    ['list', '•'],
-    ['numbered', '1.'],
-    ['link', t('description.link')],
-  ] as const
-
   return (
     <div className="flex flex-col gap-1">
-      <Tabs>
-        <div className="flex items-center gap-2 border-b border-border">
-          <TabList aria-label={label}>
-            {(['write', 'preview'] as const).map((id) => (
-              <Tab key={id} id={id}>
-                {t(`description.${id}`)}
-              </Tab>
-            ))}
-          </TabList>
-          <div className="ms-auto flex">
-            {tools.map(([kind, label]) => (
-              <Button
-                key={kind}
-                look="ghost"
-                size="sm"
-                aria-label={t(`description.${kind}`)}
-                onPress={() => format(kind)}
-                className="px-2"
-              >
-                {label}
-              </Button>
-            ))}
+      <PlateEditor initial={text} onChange={change} onFailure={fail}>
+        <Tabs>
+          <div className="flex items-center gap-2 border-b border-border">
+            <TabList aria-label={label}>
+              {(['write', 'preview'] as const).map((id) => (
+                <Tab key={id} id={id}>
+                  {t(`description.${id}`)}
+                </Tab>
+              ))}
+            </TabList>
+            <Toolbar scope={scope} />
           </div>
-        </div>
-        <TabPanel id="write">
-          <textarea
-            ref={placeField}
-            autoFocus
-            aria-label={label}
-            aria-invalid={tooLong || undefined}
-            value={text}
-            rows={Math.max(4, text.split('\n').length + 1)}
-            onChange={(event) => change(event.target.value)}
-            onBlur={() => void autosave.flush()}
-            onKeyDown={onKeyDown}
-            className="mt-2 w-full resize-none rounded-[var(--field-radius)] border border-border bg-surface px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
-          />
-        </TabPanel>
-        <TabPanel id="preview" className="pt-2">
-          <Show
-            when={text}
-            fallback={<p className="text-muted">{t('description.empty')}</p>}
-          >
-            <MarkdownView text={text} />
-          </Show>
-        </TabPanel>
-      </Tabs>
+          <TabPanel id="write">
+            {/* On a wrapper: Slate passes these on only once its own checks pass. */}
+            <div onBlur={() => void autosave.flush()} onKeyDown={onKeyDown}>
+              <EditorText
+                autoFocus
+                aria-label={label}
+                aria-invalid={tooLong || undefined}
+              />
+            </div>
+          </TabPanel>
+          <TabPanel id="preview" className="pt-2">
+            <Show
+              when={text}
+              fallback={<p className="text-muted">{t('description.empty')}</p>}
+            >
+              <MarkdownView text={text} />
+            </Show>
+          </TabPanel>
+        </Tabs>
+      </PlateEditor>
       <div
         aria-live="polite"
         className="flex min-h-6 items-center justify-end gap-2 text-xs text-muted"

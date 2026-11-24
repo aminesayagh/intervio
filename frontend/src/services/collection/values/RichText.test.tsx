@@ -4,6 +4,7 @@ import { afterEach, beforeAll, expect, test } from 'vitest'
 import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
+import { clearEditor, typeIn } from '../testing/plate'
 import { stubElementSizes } from '../testing/layout'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
@@ -45,8 +46,10 @@ test('the panel edits it like the description, and it saves by itself', async ()
     within(aside).getByRole('button', { name: 'Edit Notes' }),
   )
   const field = await within(aside).findByRole('textbox', { name: 'Notes' })
-  await userEvent.clear(field)
-  await userEvent.type(field, 'Bearings **greased**')
+  await clearEditor(field)
+  await typeIn(field, 'Bearings ')
+  await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
+  await typeIn(field, 'greased')
   await waitFor(
     () => expect(source.items()[2].notes).toBe('Bearings **greased**'),
     {

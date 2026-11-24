@@ -71,6 +71,11 @@ const checksDefinition = checkDefinition(checks, {
   key: 'showcase-checks',
   itemsPath: '/dev/collection',
 })
+
+/** The answer delay the page starts with: enough to see the loading states. */
+const START_DELAY: Latency = '300'
+for (const source of [full, empty, parts, checks])
+  source.settings.latencyMs = Number(START_DELAY)
 /** An item's checks page: the item's id from the address is the list's context. */
 const CHECKS_PATH = /^\/dev\/collection\/([^/]+)\/checks(?:\/|$)/
 
@@ -102,7 +107,7 @@ export default function CollectionShowcase() {
 
 function ItemsShowcase() {
   const queryClient = useQueryClient()
-  const [latency, setLatency] = useState<Latency>('0')
+  const [latency, setLatency] = useState<Latency>(START_DELAY)
   const [failing, setFailing] = useState(false)
   const [items, setItems] = useState<'full' | 'empty'>('full')
   const [allowed, setAllowed] = useState<RightsChoice>(rightsChoice)

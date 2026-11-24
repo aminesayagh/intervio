@@ -388,25 +388,27 @@ There is no creation form: a new record is the normal record view, created as so
 ### 7.6 The description (Markdown)
 
 - **Place:** under the properties, before the sections, in the panel and on the full page. It's labeled "Description".
-- **Shown** with `react-markdown` and `remark-gfm`:
-  - headings, paragraphs, bold, italic, lists, check lists, links, tables and code;
-  - **raw HTML is not rendered** (react-markdown's default), and links open in a new tab with `rel="noopener noreferrer"`;
-  - headings are styled one step smaller than the panel's title;
-  - empty, it shows "Add a description" to someone who may edit it, and nothing to someone who may not.
+- **Shown in its editor from the start** (decision 146): a rich-text editor (Plate, headless, drawn with the ui-kit) showing the formatted text. There is no separate view to click into, no Write or Preview tab, and the Markdown source is never shown.
+  - It shows headings, paragraphs, bold, italic, lists, numbered lists and links. Raw HTML is never rendered, and links open in a new tab with `rel="noopener noreferrer"`.
+  - Headings are styled one step smaller than the panel's title.
+  - Empty, it shows "Add a description" to someone who may edit it, and nothing to someone who may not.
+  - Without `description` in `rights.edit`, the same editor is read-only.
+- **Stored as Markdown:** the editor reads the Markdown string it receives and writes one back (Plate's Markdown plugin, with GFM). The backend only ever sees the string.
+- **Markdown the editor can't keep** is rewritten on the first edit; opening alone never changes it. Accepted for now (decided 2026-11-24): images stay in the Markdown but aren't shown in the editor, and an image inside a line splits that line into separate blocks (#36), raw HTML blocks are altered (#37), checklists lose their ticks (#38), and a single line break becomes a hard break (#39). Tables, quotes, code, strikethrough and nested lists are kept.
 - **Editing** (when `description` is in `rights.edit`):
-  - The editing cue (7.3.1) covers the whole block, and clicking it opens the editor in place.
-  - **Write tab:** a text field that grows with its content and holds the Markdown source.
-  - **Preview tab:** the result, shown exactly as it will be.
-  - **Toolbar:** bold, italic, heading, list, numbered list, link. Each inserts the Markdown syntax around the selection.
+  - The person writes in the description directly; the editing cue (7.3.1) shows on hover.
+  - **Toolbar:** bold, italic, heading, list, numbered list, link. It shows while the cursor is in the description, and formats the text directly.
   - **Autosave:** there is no Save or Cancel button. The description saves 1 second after the person stops typing, and at once when the editor loses focus or the panel closes.
-    - A status under the field says "Saving…", then "Saved".
+    - Opening a description never saves it: only a change the person makes does. The editor may write the same Markdown differently (`-` for `*`), so the saved string is compared with the last one saved.
+    - A status under the editor says "Saving…", then "Saved".
+    - If the text can't be converted to Markdown, nothing is sent and a notification says why.
     - On failure, it says "Not saved" with Retry, and the text stays in the editor and in session storage until a save succeeds, so a refresh doesn't lose it.
     - Saves are sent one at a time; only the latest text is sent after a running save.
-    - Undo while writing is the text field's own (Ctrl/Cmd+Z).
-    - Escape leaves the editor and shows the formatted description; nothing is lost, since it is saved.
+    - Undo while writing is the editor's own (Ctrl/Cmd+Z).
+    - Escape leaves the editor; nothing is lost, since it is saved.
     - Closing the panel while a save has failed asks "Your last changes to the description are not saved." (Retry · Leave anyway).
   - On a new record, the description counts as input (7.5); it is kept in the tab until the record is created, then saved with it.
-- **Limit:** 20,000 characters, checked on both sides (`ERROR_DESCRIPTION_TOO_LONG`). The backend stores it as `text`. Existing `description` columns limited to 2,000 characters are widened when a collection adopts the archetype.
+- **Limit:** 20,000 characters of Markdown (the string sent), checked on both sides (`ERROR_DESCRIPTION_TOO_LONG`). The backend stores it as `text`. Existing `description` columns limited to 2,000 characters are widened when a collection adopts the archetype.
 - **Files** aren't embedded in the description. They have their own section.
 
 ### 7.7 View and edit, value by value

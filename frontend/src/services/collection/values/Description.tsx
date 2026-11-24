@@ -1,65 +1,38 @@
-import { useCallback, useRef, useState, type KeyboardEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import {
-  Button,
-  cn,
-  Match,
-  Show,
-  Switch,
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs,
-} from '../../ui-kit'
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+} from 'react'
+import { useTranslation } from 'react-i18next'
+import { notify } from '../../notifications'
+import { Button, Match, Show, Switch } from '../../ui-kit'
 import { ErrorText } from '../parts'
+import {
+  EditorText,
+  PlateEditor,
+  type MarkdownFailure,
+} from './description/PlateEditor'
+import { AIProposal, DescriptionAI } from './description/AskAI'
+import { Toolbar } from './description/Toolbar'
 import { useAutosave } from './useAutosave'
 
-/** The longest description accepted (spec 7.6). */
+/** The longest description accepted (spec 7.6), in Markdown characters. */
 const MAX_LENGTH = 20_000
 
 /**
- * Markdown, formatted: headings, lists, check lists, tables, links (new tab). Raw HTML
- * is never rendered.
- */
-export function MarkdownView({ text }: { text: string }) {
-  return (
-    <div
-      className={cn(
-        'min-w-0 break-words [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:text-muted',
-        '[&_code]:rounded-[var(--field-radius)] [&_code]:bg-default [&_code]:px-1 [&_h1]:text-lg [&_h1]:font-medium [&_h2]:text-base [&_h2]:font-medium [&_h3]:font-medium',
-        '[&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:ps-5 [&_ul]:list-disc [&_ul]:ps-5 [&_ul:has(input)]:list-none [&_ul:has(input)]:ps-0',
-        '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-start',
-        '[&>*+*]:mt-2',
-      )}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        skipHtml
-        components={{
-          a: ({ href, children }) => (
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              {children}
-            </a>
-          ),
-        }}
-      >
-        {text}
-      </ReactMarkdown>
-    </div>
-  )
-}
-
-/**
- * A record's description in the panel (spec 7.6): shown formatted; when the person
- * may change it, a click (or Enter) opens the editor in place. The editor saves by
- * itself a moment after typing stops, and keeps unsaved text in the browser tab.
+ * A record's description in the panel (spec 7.6, decision 146): shown in its editor
+ * from the start, formatted. With the right to change it, the person writes in it
+ * directly; it saves by itself a moment after typing stops, and keeps unsaved text in
+ * the browser tab. Without the right, the same editor is read-only.
  */
 export function Description({
   value,
   editable,
   storageKey,
+  scope,
   save,
   label,
 }: {
@@ -69,54 +42,21 @@ export function Description({
   label?: string
   /** Where the tab keeps text not saved yet (spec 6.1). */
   storageKey: string
+  /** The record's notifications scope (a failure is reported there). */
+  scope: string
   save: (text: string) => Promise<void>
 }) {
   const { t } = useTranslation('collection')
-  const [editing, setEditing] = useState(false)
-  const name = label ?? t('description.label')
-
   if (!value && !editable) return null
   return (
-    <section>
-      <h3 className="mb-1 text-muted">{name}</h3>
-      <Switch>
-        <Match when={editing}>
-          <Editor
-            initial={value}
-            label={name}
-            storageKey={storageKey}
-            save={save}
-            onLeave={() => setEditing(false)}
-          />
-        </Match>
-        <Match when={editable}>
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={
-              label
-                ? t('description.editLabel', { label })
-                : t('description.edit')
-            }
-            onClick={() => setEditing(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') setEditing(true)
-            }}
-            className="-mx-2 cursor-text rounded-[var(--field-radius)] px-2 py-1 outline-none hover:bg-default focus-visible:bg-default"
-          >
-            <Show
-              when={value}
-              fallback={<p className="text-muted">{t('description.add')}</p>}
-            >
-              <MarkdownView text={value} />
-            </Show>
-          </div>
-        </Match>
-        <Match when={true}>
-          <MarkdownView text={value} />
-        </Match>
-      </Switch>
-    </section>
+    <Editor
+      value={value}
+      editable={editable}
+      label={label ?? t('description.label')}
+      storageKey={storageKey}
+      scope={scope}
+      save={save}
+    />
   )
 }
 
@@ -136,35 +76,83 @@ function keep(key: string, text: string | null) {
   }
 }
 
-/** Markdown typed in place: Write and Preview, a small toolbar, saved by itself. */
 function Editor({
-  initial,
-  storageKey,
-  save,
-  onLeave,
+  value,
+  editable,
   label,
+  storageKey,
+  scope,
+  save,
 }: {
+  value: string
+  editable: boolean
   label: string
-  initial: string
   storageKey: string
+  scope: string
   save: (text: string) => Promise<void>
-  onLeave: () => void
 }) {
   const { t } = useTranslation('collection')
-  const [text, setText] = useState(() => read(storageKey) ?? initial)
-  const field = useRef<HTMLTextAreaElement>(null)
+  const [text, setText] = useState(() =>
+    editable ? (read(storageKey) ?? value) : value,
+  )
+  // The text the record holds: the same text again is never sent.
+  const saved = useRef(value)
   const autosave = useAutosave(async (next) => {
-    await save(next)
+    if (next !== saved.current) await save(next)
+    saved.current = next
     keep(storageKey, null) // saved: nothing left to keep
   })
   const tooLong = text.length > MAX_LENGTH
 
-  // The field appears with the cursor after the text, ready to add to it. (A callback
-  // ref: React Aria's tab panel mounts its content a render later than the editor.)
-  const placeField = useCallback((element: HTMLTextAreaElement | null) => {
-    field.current = element
-    element?.setSelectionRange(element.value.length, element.value.length)
-  }, [])
+  // A draft kept in the tab from an earlier visit is saved now, its status shown:
+  // the editor counts what it opens with as no edit.
+  const restored = useRef(text !== value)
+  useEffect(() => {
+    if (!restored.current) return
+    restored.current = false
+    if (text.length <= MAX_LENGTH) autosave.change(text)
+  }, [text, autosave])
+
+  // The toolbar shows while the cursor is in the description (its link field, in a
+  // popover outside the page's flow, counts as inside: React's focus events reach
+  // here from it). Leaving saves at once.
+  const [cursorIn, setCursorIn] = useState(false)
+  const inside = useRef(false)
+  const area = useRef<HTMLElement>(null)
+  function onFocus(event: FocusEvent) {
+    inside.current = event.target !== event.currentTarget
+    setCursorIn(inside.current)
+  }
+  function onBlur() {
+    inside.current = false
+    setTimeout(() => {
+      if (inside.current) return // focus moved within: the toolbar, its link field
+      setCursorIn(false)
+      void autosave.flush()
+    })
+  }
+  // A newer text from the record (another person's edit) replaces the one shown,
+  // unless the person is in it or has a change not saved yet. A new editor opens it.
+  const [opened, setOpened] = useState(0)
+  useEffect(() => {
+    if (value === saved.current || inside.current || text !== saved.current)
+      return
+    saved.current = value
+    keep(storageKey, null)
+    setText(value)
+    setOpened((count) => count + 1)
+    // Only a new value from the record counts, not each keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
+  // Escape leaves the text: the focus goes back to the description itself. (In the
+  // link's popover, outside this element on the page, Escape only closes it.)
+  function onKeyDown(event: KeyboardEvent) {
+    const fromHere = area.current?.contains(event.target as Node)
+    if (event.key !== 'Escape' || !fromHere) return
+    event.preventDefault()
+    area.current?.focus()
+  }
 
   function change(next: string) {
     setText(next)
@@ -172,131 +160,92 @@ function Editor({
     if (next.length <= MAX_LENGTH) autosave.change(next)
   }
 
-  /** Wraps the selection in Markdown, or starts its line with a marker. */
-  function format(
-    kind: 'bold' | 'italic' | 'heading' | 'list' | 'numbered' | 'link',
-  ) {
-    const element = field.current
-    if (!element) return
-    const { selectionStart: start, selectionEnd: end, value } = element
-    const chosen = value.slice(start, end)
-    let next: string
-    let cursor = end
-    if (kind === 'bold' || kind === 'italic') {
-      const mark = kind === 'bold' ? '**' : '_'
-      next = value.slice(0, start) + mark + chosen + mark + value.slice(end)
-      cursor = end + mark.length * 2
-    } else if (kind === 'link') {
-      const label = chosen || t('description.linkText')
-      next = `${value.slice(0, start)}[${label}](https://)${value.slice(end)}`
-      cursor = start + label.length + 11
-    } else {
-      const marker = kind === 'heading' ? '## ' : kind === 'list' ? '- ' : '1. '
-      const line = value.lastIndexOf('\n', start - 1) + 1
-      next = value.slice(0, line) + marker + value.slice(line)
-      cursor = end + marker.length
-    }
-    change(next)
-    requestAnimationFrame(() => {
-      element.focus()
-      element.setSelectionRange(cursor, cursor)
-    })
-  }
-
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      void autosave.flush()
-      onLeave()
-    }
-  }
-
-  const tools = [
-    ['bold', 'B'],
-    ['italic', 'I'],
-    ['heading', 'H'],
-    ['list', '•'],
-    ['numbered', '1.'],
-    ['link', t('description.link')],
-  ] as const
+  // Text Plate can't read is shown as it is, read-only; text it can't write is never
+  // saved, nor half saved. Either way, a notification says so.
+  const fail = useCallback(
+    (failure: MarkdownFailure) =>
+      notify({
+        tone: 'error',
+        text: t(
+          failure === 'parse'
+            ? 'description.unreadable'
+            : 'description.unwritable',
+        ),
+        scope,
+        key: `${storageKey}:markdown`,
+      }),
+    [t, scope, storageKey],
+  )
 
   return (
-    <div className="flex flex-col gap-1">
-      <Tabs>
-        <div className="flex items-center gap-2 border-b border-border">
-          <TabList aria-label={label}>
-            {(['write', 'preview'] as const).map((id) => (
-              <Tab key={id} id={id}>
-                {t(`description.${id}`)}
-              </Tab>
-            ))}
-          </TabList>
-          <div className="ms-auto flex">
-            {tools.map(([kind, label]) => (
-              <Button
-                key={kind}
-                look="ghost"
-                size="sm"
-                aria-label={t(`description.${kind}`)}
-                onPress={() => format(kind)}
-                className="px-2"
-              >
-                {label}
-              </Button>
-            ))}
+    <section
+      ref={area}
+      tabIndex={-1}
+      aria-label={label}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      // Captured: Plate's own Escape handling stops the key before it bubbles here.
+      onKeyDownCapture={onKeyDown}
+      className="flex flex-col outline-none"
+    >
+      <PlateEditor
+        key={opened}
+        initial={text}
+        onChange={change}
+        onFailure={fail}
+        fallback={
+          <>
+            <h3 className="mb-1 text-muted">{label}</h3>
+            <p className="break-words whitespace-pre-wrap">{text}</p>
+          </>
+        }
+      >
+        <DescriptionAI scope={scope}>
+          <div className="mb-1 flex min-h-8 items-center gap-2">
+            <h3 className="text-muted">{label}</h3>
+            <Show when={editable && cursorIn} className="ms-auto">
+              <Toolbar scope={scope} />
+            </Show>
           </div>
-        </div>
-        <TabPanel id="write">
-          <textarea
-            ref={placeField}
-            autoFocus
+          <EditorText
             aria-label={label}
             aria-invalid={tooLong || undefined}
-            value={text}
-            rows={Math.max(4, text.split('\n').length + 1)}
-            onChange={(event) => change(event.target.value)}
-            onBlur={() => void autosave.flush()}
-            onKeyDown={onKeyDown}
-            className="mt-2 w-full resize-none rounded-[var(--field-radius)] border border-border bg-surface px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
+            readOnly={!editable}
+            placeholder={t('description.add')}
           />
-        </TabPanel>
-        <TabPanel id="preview" className="pt-2">
-          <Show
-            when={text}
-            fallback={<p className="text-muted">{t('description.empty')}</p>}
-          >
-            <MarkdownView text={text} />
-          </Show>
-        </TabPanel>
-      </Tabs>
-      <div
-        aria-live="polite"
-        className="flex min-h-6 items-center justify-end gap-2 text-xs text-muted"
-      >
-        <Switch>
-          <Match when={tooLong}>
-            <ErrorText>{t('description.tooLong')}</ErrorText>
-          </Match>
-          <Match when={autosave.status === 'failed'}>
-            <ErrorText className="flex items-center gap-2">
-              {t('description.failed')}
-              <Button
-                look="ghost"
-                size="sm"
-                onPress={() => void autosave.retry()}
-              >
-                {t('error.retry')}
-              </Button>
-            </ErrorText>
-          </Match>
-          <Match when={autosave.status === 'saving'}>
-            <span>{t('description.saving')}</span>
-          </Match>
-          <Match when={autosave.status === 'saved'}>
-            <span>{t('description.saved')}</span>
-          </Match>
-        </Switch>
-      </div>
-    </div>
+          <AIProposal />
+        </DescriptionAI>
+      </PlateEditor>
+      <Show when={editable}>
+        <div
+          aria-live="polite"
+          className="flex min-h-6 items-center justify-end gap-2 text-xs text-muted"
+        >
+          <Switch>
+            <Match when={tooLong}>
+              <ErrorText>{t('description.tooLong')}</ErrorText>
+            </Match>
+            <Match when={autosave.status === 'failed'}>
+              <ErrorText className="flex items-center gap-2">
+                {t('description.failed')}
+                <Button
+                  look="ghost"
+                  size="sm"
+                  onPress={() => void autosave.retry()}
+                >
+                  {t('error.retry')}
+                </Button>
+              </ErrorText>
+            </Match>
+            <Match when={autosave.status === 'saving'}>
+              <span>{t('description.saving')}</span>
+            </Match>
+            <Match when={autosave.status === 'saved'}>
+              <span>{t('description.saved')}</span>
+            </Match>
+          </Switch>
+        </div>
+      </Show>
+    </section>
   )
 }

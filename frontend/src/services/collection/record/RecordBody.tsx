@@ -13,6 +13,7 @@ import { listPathOf } from '../definition'
 import { drill } from '../drill/viewStack'
 import { useOpenLinked } from './linked'
 import { listAddress } from '../address'
+import { recordScope } from '../data/recordActions'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
@@ -130,6 +131,7 @@ export function RecordBody<T, C>({
               value={description.value(shown)}
               editable={canEdit(shown, 'description')}
               storageKey={`intervio.collection.${definition.key}.${id}.description`}
+              scope={recordScope(definition.key, id)}
               save={(text) =>
                 save(shown, description.patch(text), {
                   label: t('collection:description.label'),
@@ -150,6 +152,7 @@ export function RecordBody<T, C>({
               value={field.value(shown)}
               editable={canEdit(shown, property.id)}
               storageKey={`intervio.collection.${definition.key}.${id}.${property.id}`}
+              scope={recordScope(definition.key, id)}
               save={(text) =>
                 save(shown, field.patch(text), {
                   label: t(property.label),

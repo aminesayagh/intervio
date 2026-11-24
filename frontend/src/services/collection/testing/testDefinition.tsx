@@ -21,15 +21,7 @@ import type {
   TextField,
 } from '../definition'
 import type { DataSource } from '../types'
-import {
-  Avatar,
-  Day,
-  Period,
-  StatusChip,
-  Tags,
-  TypeChip,
-  UpdatedOn,
-} from './ItemParts'
+import { Avatar, Day, Period, StatusChip, Tags, TypeChip } from './ItemParts'
 import { itemSource, OWNERS, STATUSES, TAGS, type Item } from './items'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -219,7 +211,6 @@ export function itemDefinition(
       type: () => <TypeChip />,
       title: (item) => item.name,
       titleEdit: name,
-      subtitle: (item) => <UpdatedOn iso={item.updatedAt} />,
       properties: [
         {
           id: 'status',

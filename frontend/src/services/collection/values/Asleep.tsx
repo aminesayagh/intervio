@@ -1,4 +1,5 @@
-import { cn, Icon } from '../../ui-kit'
+import { Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+import { cn } from '../../ui-kit'
 
 /**
  * The value as text, looking like its editor at rest. It takes the focus, so the
@@ -55,16 +56,16 @@ const AFTER = {
   none: null,
   calendar: (
     <span className="flex p-0.5 text-muted">
-      <Icon name="lucide/calendar" size={12} />
+      <Calendar size={12} />
     </span>
   ),
   steps: (
     <span className="absolute end-1 flex flex-col gap-px text-muted">
       <span className="flex h-[11px] w-4 items-center justify-center">
-        <Icon name="lucide/chevron-up" size={10} />
+        <ChevronUp size={10} />
       </span>
       <span className="flex h-[11px] w-4 items-center justify-center">
-        <Icon name="lucide/chevron-down" size={10} />
+        <ChevronDown size={10} />
       </span>
     </span>
   ),

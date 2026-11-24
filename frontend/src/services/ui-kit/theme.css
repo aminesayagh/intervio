@@ -132,3 +132,9 @@ html {
     scrollbar-color: var(--muted) transparent;
   }
 }
+
+/* Lucide icons (lucide-react) sit in the line like text and never shrink in a row. */
+svg.lucide {
+  display: inline-block;
+  flex-shrink: 0;
+}

@@ -1,5 +1,7 @@
+import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { cn, Icon } from '../../ui-kit'
+import { cn } from '../../ui-kit'
 import type { FieldDefinition } from '../definition'
 import { AvatarImage } from './AvatarCell'
 import { FileList } from './FileCell'
@@ -90,7 +92,11 @@ export function StillValue<T>({
       )
     case 'icon': {
       const name = definition.value(record)
-      const shown = name ? <Icon name={`lucide/${name}`} size={16} /> : none
+      const shown = name ? (
+        <DynamicIcon name={name as IconName} size={16} />
+      ) : (
+        none
+      )
       return (
         <button type="button" data-asleep className={menu}>
           <span className="flex">{shown}</span>
@@ -99,7 +105,7 @@ export function StillValue<T>({
     }
     case 'checkbox': {
       const on = definition.value(record)
-      const check = on ? <Icon name="lucide/check" size={12} /> : null
+      const check = on ? <Check size={12} /> : null
       return (
         <span
           data-asleep
@@ -235,7 +241,7 @@ function StillCell<T>({
     }
     case 'checkbox': {
       const on = definition.value(record)
-      const check = on ? <Icon name="lucide/check" size={12} /> : null
+      const check = on ? <Check size={12} /> : null
       return (
         <span
           role="checkbox"

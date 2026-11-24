@@ -1,5 +1,6 @@
+import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button, Icon } from '../../ui-kit'
+import { Button } from '../../ui-kit'
 
 /**
  * The toolbar while rows are selected (spec 8.5): how many, the actions allowed on at
@@ -36,7 +37,7 @@ export function SelectionBar({
         aria-label={t('selection.clear')}
         onPress={onClear}
       >
-        <Icon name="lucide/x" size={14} />
+        <X size={14} />
       </Button>
     </div>
   )

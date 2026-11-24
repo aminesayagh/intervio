@@ -1,5 +1,12 @@
+import {
+  ExternalLink,
+  Mail,
+  MapPin,
+  Phone,
+  type LucideIcon,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { cn, Icon, Show } from '../../ui-kit'
+import { cn, Show } from '../../ui-kit'
 import type { LinkField, TextField } from '../definition'
 import { EditableCell } from './EditableCell'
 
@@ -10,7 +17,7 @@ const kinds: Record<
   Kind,
   {
     input: 'text' | 'url' | 'email' | 'tel'
-    icon: string
+    icon: LucideIcon
     invalid: string
     href: (value: string) => string
     normalize: (value: string) => string
@@ -20,7 +27,7 @@ const kinds: Record<
 > = {
   url: {
     input: 'url',
-    icon: 'lucide/external-link',
+    icon: ExternalLink,
     invalid: 'collection:fields.url',
     href: (value) => value,
     // "intervio.com" is a web address too: it gets https://.
@@ -39,7 +46,7 @@ const kinds: Record<
   },
   email: {
     input: 'email',
-    icon: 'lucide/mail',
+    icon: Mail,
     invalid: 'collection:fields.email',
     href: (value) => `mailto:${value}`,
     normalize: (value) => value,
@@ -48,7 +55,7 @@ const kinds: Record<
   },
   location: {
     input: 'text',
-    icon: 'lucide/map-pin',
+    icon: MapPin,
     invalid: '',
     // Any address is accepted; the map finds it (OpenStreetMap, no key needed).
     href: (value) =>
@@ -59,7 +66,7 @@ const kinds: Record<
   },
   phone: {
     input: 'tel',
-    icon: 'lucide/phone',
+    icon: Phone,
     invalid: 'collection:fields.phone',
     href: (value) => `tel:${value.replace(/[^\d+]/g, '')}`,
     normalize: (value) => value,
@@ -169,7 +176,7 @@ export function OpenLink({
             'opacity-0 group-focus-within/link:opacity-100 group-hover/link:opacity-100 focus-visible:opacity-100',
         )}
       >
-        <Icon name={rule.icon} size={14} />
+        <rule.icon size={14} />
       </a>
     </Show>
   )

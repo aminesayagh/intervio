@@ -1,9 +1,9 @@
+import { Ellipsis } from 'lucide-react'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ActionMenu,
   Button,
-  Icon,
   Match,
   MenuPopover,
   MenuTrigger,
@@ -34,7 +34,7 @@ export function MoreActions({
         aria-label={t('actions.more')}
         className="px-2"
       >
-        <Icon name="lucide/ellipsis" size={16} />
+        <Ellipsis size={16} />
       </Button>
       <MenuPopover minWidth={200}>
         <ActionMenu

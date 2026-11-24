@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import {
   Button,
   Input,
@@ -5,7 +6,6 @@ import {
   type NumberFieldProps,
 } from 'react-aria-components'
 import { cn } from '../cn'
-import { Icon } from '../Icon'
 
 const step =
   'flex h-[11px] w-4 cursor-pointer items-center justify-center rounded-[2px] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-1 data-[focus-visible]:outline-foreground data-[disabled]:cursor-default data-[disabled]:opacity-40'
@@ -49,10 +49,10 @@ export function NumberInput({
         )}
       >
         <Button slot="increment" className={step}>
-          <Icon name="lucide/chevron-up" size={10} />
+          <ChevronUp size={10} />
         </Button>
         <Button slot="decrement" className={step}>
-          <Icon name="lucide/chevron-down" size={10} />
+          <ChevronDown size={10} />
         </Button>
       </span>
     </AriaNumberField>

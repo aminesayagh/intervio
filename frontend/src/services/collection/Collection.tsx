@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   useCallback,
@@ -30,7 +31,6 @@ import {
   Column,
   foldSidebar,
   offerBack,
-  Icon,
   Match,
   Row,
   RowCollection,
@@ -1260,7 +1260,7 @@ function RecordTableOf<T, C>({
                                   onClick={() => openRecord(id)}
                                   className="-my-1 flex shrink-0 cursor-pointer items-center rounded-[var(--field-radius)] bg-default p-1.5 text-muted opacity-0 outline-none group-hover:opacity-100 group-focus-within:opacity-100 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
                                 >
-                                  <Icon name="lucide/chevron-right" size={16} />
+                                  <ChevronRight size={16} />
                                 </button>
                               </span>
                             )}

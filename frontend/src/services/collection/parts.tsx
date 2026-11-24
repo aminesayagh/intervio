@@ -1,5 +1,6 @@
+import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Button, cn, Icon, Show } from '../ui-kit'
+import { Button, cn, Show } from '../ui-kit'
 
 /** Pieces of the collection itself, built from the ui-kit's React Aria components. */
 
@@ -32,7 +33,7 @@ export function PanelClose({
           onPress={onClose}
           className="px-2"
         >
-          <Icon name="lucide/x" size={16} />
+          <X size={16} />
         </Button>
       }
     >

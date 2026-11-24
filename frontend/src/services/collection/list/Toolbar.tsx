@@ -1,10 +1,17 @@
-import { useRef, useState } from 'react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  Search,
+  X,
+} from 'lucide-react'
+import { createElement, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
   Checkbox,
   ChoiceMenu,
-  Icon,
   MenuPopover,
   MenuTrigger,
   PopoverDialog,
@@ -148,7 +155,7 @@ function SearchField({
   return (
     <label className="relative flex w-[320px] max-w-full items-center">
       <span className="pointer-events-none absolute start-3 flex text-muted">
-        <Icon name="lucide/search" size={16} />
+        <Search size={16} />
       </span>
       <input
         type="search"
@@ -197,7 +204,7 @@ function FiltersPanel({
       trigger={
         <Button size="sm" aria-label={label}>
           {chosen ? `${label} (${chosen})` : label}
-          <Icon name="lucide/chevron-down" size={14} />
+          <ChevronDown size={14} />
         </Button>
       }
     >
@@ -218,16 +225,14 @@ function FiltersPanel({
                 }
               >
                 {t(sort.label)}
-                <Icon
-                  name={
-                    direction === 'asc'
-                      ? 'lucide/arrow-up'
-                      : direction === 'desc'
-                        ? 'lucide/arrow-down'
-                        : 'lucide/arrow-up-down'
-                  }
-                  size={12}
-                />
+                {createElement(
+                  direction === 'asc'
+                    ? ArrowUp
+                    : direction === 'desc'
+                      ? ArrowDown
+                      : ArrowUpDown,
+                  { size: 12 },
+                )}
               </Button>
             )
           })}
@@ -283,7 +288,7 @@ function FilterMenu({
     <MenuTrigger>
       <Button size="sm" aria-label={label}>
         {chosen.length ? `${label} (${chosen.length})` : label}
-        <Icon name="lucide/chevron-down" size={14} />
+        <ChevronDown size={14} />
       </Button>
       <MenuPopover>
         <ChoiceMenu
@@ -335,7 +340,7 @@ function ScopeChip({
         onClick={onRemove}
         className="flex cursor-pointer items-center rounded-[var(--field-radius)] p-1 text-muted outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-foreground"
       >
-        <Icon name="lucide/x" size={14} />
+        <X size={14} />
       </button>
     </span>
   )

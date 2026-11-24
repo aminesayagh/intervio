@@ -1,3 +1,4 @@
+import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { useState } from 'react'
 import {
   Dialog,
@@ -7,7 +8,6 @@ import {
   Popover,
 } from 'react-aria-components'
 import { useTranslation } from 'react-i18next'
-import { Icon } from '../Icon'
 import { Show } from '../views/Show'
 import { Button, FieldButton } from './Button'
 import { TextInput } from './TextField'
@@ -58,7 +58,7 @@ export function IconPicker({
           className="flex"
           fallback={<span className="text-muted">—</span>}
         >
-          {(name) => <Icon name={`lucide/${name}`} size={16} />}
+          {(name) => <DynamicIcon name={name as IconName} size={16} />}
         </Show>
       </FieldButton>
       <Popover
@@ -98,7 +98,7 @@ export function IconPicker({
                 aria-label={words(name)}
                 className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--field-radius)] outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-foreground data-[hovered]:bg-default data-[selected]:bg-foreground data-[selected]:text-background"
               >
-                <Icon name={`lucide/${name}`} size={16} />
+                <DynamicIcon name={name as IconName} size={16} />
               </ListBoxItem>
             ))}
           </ListBox>

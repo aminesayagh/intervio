@@ -29,11 +29,7 @@
   },
   "description": {
     "label": "Description",
-    "edit": "Modifier la description",
     "add": "Ajouter une description",
-    "write": "Écrire",
-    "preview": "Aperçu",
-    "empty": "Rien à afficher pour l’instant.",
     "bold": "Gras",
     "italic": "Italique",
     "heading": "Titre",
@@ -52,8 +48,7 @@
     "unsavedTitle": "Quitter sans enregistrer ?",
     "unsavedText": "Vos dernières modifications de la description ne sont pas enregistrées. Elles restent dans cet onglet jusqu’à votre retour.",
     "leave": "Quitter quand même",
-    "keepEditing": "Continuer",
-    "editLabel": "Modifier {{label}}"
+    "keepEditing": "Continuer"
   },
   "actions": {
     "more": "Plus d’actions",

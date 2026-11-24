@@ -3,18 +3,17 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../i18n'
 import { Collection } from '../Collection'
-import { MarkdownView } from './Description'
+import { Description } from './Description'
 import { itemSource, makeItems } from '../testing/items'
 import {
   clearEditor,
-  editorOf,
+  enter,
   markdownOf,
   replaceText,
   selectAll,
@@ -27,34 +26,33 @@ import { itemDefinition } from '../testing/testDefinition'
 beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
-test('Markdown is shown formatted, and raw HTML is not rendered', () => {
+test('read-only, it is shown formatted, raw HTML is not rendered, and links open in a new tab', () => {
   const { container } = render(
-    <MarkdownView
-      text={
-        '**Bold** <b>raw</b>\n\n- one\n- [x] done\n\n[site](https://example.com)'
+    <Description
+      value={
+        '**Bold** <b>raw</b>\n\n- one\n- two\n\n[site](https://example.com)'
       }
+      editable={false}
+      storageKey="test"
+      scope="test"
+      save={async () => {}}
     />,
   )
   expect(container.querySelector('strong')).toHaveTextContent('Bold')
   expect(container.querySelector('b')).toBeNull()
   expect(screen.getAllByRole('listitem')).toHaveLength(2)
-  expect(screen.getByRole('checkbox')).toBeChecked()
-  expect(screen.getByRole('link', { name: 'site' })).toHaveAttribute(
-    'target',
-    '_blank',
-  )
+  const link = screen.getByRole('link', { name: 'site' })
+  expect(link).toHaveAttribute('target', '_blank')
+  expect(link).toHaveAttribute('rel', 'noopener noreferrer')
 })
 
-async function openDescription() {
-  const source = itemSource(makeItems(3))
+async function openRecord(source = itemSource(makeItems(3))) {
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await userEvent.click(
     await screen.findByRole('button', { name: 'Open Item 001' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 001' })
-  await userEvent.click(
-    within(aside).getByRole('button', { name: 'Edit the description' }),
-  )
+  // The description is in its editor from the start: nothing to click into.
   const field = await within(aside).findByRole('textbox', {
     name: 'Description',
   })
@@ -67,20 +65,10 @@ test('opening and leaving never saves, even text Plate writes its own way', asyn
   items[0].description = '* Seals\n* Bearings\n\nKeep it *soft*'
   const source = itemSource(items)
   const update = vi.spyOn(source, 'update')
-  renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await userEvent.click(
-    await screen.findByRole('button', { name: 'Open Item 001' }),
-  )
-  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
-  await userEvent.click(
-    within(aside).getByRole('button', { name: 'Edit the description' }),
-  )
-  const field = await within(aside).findByRole('textbox', {
-    name: 'Description',
-  })
-  fireEvent.blur(field)
+  const { field } = await openRecord(source)
+  await enter(field)
   fireEvent.keyDown(field, { key: 'Escape' })
-  await waitFor(() => expect(field).not.toBeInTheDocument())
+  fireEvent.focusOut(field)
   await new Promise((done) => setTimeout(done, 1200))
   expect(update).not.toHaveBeenCalled()
   expect(source.items()[0].description).toBe(
@@ -88,8 +76,9 @@ test('opening and leaving never saves, even text Plate writes its own way', asyn
   )
 })
 
-test('the description saves by itself, says Saved, and Escape shows it formatted', async () => {
-  const { source, aside, field } = await openDescription()
+test('the description saves by itself, says Saved, and Escape leaves the text', async () => {
+  const { source, aside, field } = await openRecord()
+  await enter(field)
   await clearEditor(field)
   await typeIn(field, 'Seals ')
   await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
@@ -98,18 +87,16 @@ test('the description saves by itself, says Saved, and Escape shows it formatted
     await within(aside).findByText('Saved', undefined, { timeout: 3000 }),
   ).toBeInTheDocument()
   expect(source.items()[0].description).toBe('Seals **checked**')
+  expect(within(field).getByText('checked').closest('strong')).not.toBeNull()
 
   fireEvent.keyDown(field, { key: 'Escape' })
-  // The editor shows "checked" bold too: wait for it to close first.
-  await waitFor(() => expect(field).not.toBeInTheDocument())
-  expect(await within(aside).findByText('checked')).toHaveProperty(
-    'tagName',
-    'STRONG',
+  expect(document.activeElement).toBe(
+    within(aside).getByRole('region', { name: 'Description' }),
   )
 })
 
 test('a failed save says Not saved, keeps the text, and Retry saves it', async () => {
-  const { source, aside, field } = await openDescription()
+  const { source, aside, field } = await openRecord()
   source.settings.failing = true
   await typeIn(field, ' more')
   expect(
@@ -125,23 +112,23 @@ test('a failed save says Not saved, keeps the text, and Retry saves it', async (
   )
 })
 
-test('Preview shows the text formatted, and Bold wraps the selection', async () => {
-  const { aside, field } = await openDescription()
+test('it is edited in place, the toolbar shows with the cursor in it, and Bold wraps the selection', async () => {
+  const { aside, field } = await openRecord()
+  expect(field).toHaveAttribute('contenteditable', 'true')
+  expect(within(aside).queryByRole('tab')).toBeNull()
+  expect(within(aside).queryByRole('button', { name: 'Bold' })).toBeNull()
+
+  await enter(field)
   await clearEditor(field)
   await typeIn(field, 'pump')
   await selectAll(field)
   await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
   expect(markdownOf(field)).toBe('**pump**')
-
-  await userEvent.click(within(aside).getByRole('tab', { name: 'Preview' }))
-  expect(await within(aside).findByText('pump')).toHaveProperty(
-    'tagName',
-    'STRONG',
-  )
+  expect(within(field).getByText('pump').closest('strong')).not.toBeNull()
 })
 
 test('a description over 20,000 characters is refused, and not saved', async () => {
-  const { source, aside, field } = await openDescription()
+  const { source, aside, field } = await openRecord()
   await replaceText(field, 'x'.repeat(20_001))
   expect(
     within(aside).getByText(
@@ -152,7 +139,7 @@ test('a description over 20,000 characters is refused, and not saved', async () 
   expect(source.items()[0].description).toBe(makeItems(1)[0].description)
 })
 
-test('without the right, the description is shown but not editable', async () => {
+test('without the right, the same editor is read-only', async () => {
   const source = itemSource(makeItems(3))
   renderAt(
     '/items',
@@ -164,16 +151,24 @@ test('without the right, the description is shown but not editable', async () =>
     await screen.findByRole('button', { name: 'Open Item 001' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 001' })
-  expect(
-    within(aside).getByText('Item 001', { selector: 'strong' }),
-  ).toBeInTheDocument()
-  expect(
-    within(aside).queryByRole('button', { name: 'Edit the description' }),
-  ).toBeNull()
+  // Read-only, Slate gives the text no textbox role: it is found as the editor.
+  const field = within(
+    within(aside).getByRole('region', { name: 'Description' }),
+  ).getByLabelText('Description')
+  expect(field).toHaveAttribute('contenteditable', 'false')
+  expect(within(field).getByText('Item 001').closest('strong')).not.toBeNull()
+  await enter(field)
+  expect(within(aside).queryByRole('button', { name: 'Bold' })).toBeNull()
 })
 
-test('the editor opens with the cursor after the text', async () => {
-  const { field } = await openDescription()
-  const editor = editorOf(field)
-  expect(editor.selection?.focus).toEqual(editor.api.end([]))
+test('empty, it invites a description when editable, and shows nothing when not', () => {
+  const props = { value: '', storageKey: 'x', scope: 'x', save: async () => {} }
+  const { unmount } = render(<Description {...props} editable />)
+  expect(screen.getByRole('textbox', { name: 'Description' })).toHaveAttribute(
+    'aria-placeholder',
+    'Add a description',
+  )
+  unmount()
+  const { container } = render(<Description {...props} editable={false} />)
+  expect(container).toBeEmptyDOMElement()
 })

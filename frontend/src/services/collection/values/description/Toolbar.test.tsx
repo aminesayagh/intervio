@@ -3,20 +3,27 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test } from 'vitest'
 import '../../../i18n'
 import '../../index'
-import { markdownOf, selectAll, typeIn } from '../../testing/plate'
+import { enter, markdownOf, selectAll, typeIn } from '../../testing/plate'
 import { EditorText, PlateEditor } from './PlateEditor'
 import { Toolbar } from './Toolbar'
 
 afterEach(cleanup)
 
-function renderEditor(initial = '') {
+async function renderEditor(initial = '') {
   render(
-    <PlateEditor initial={initial} onChange={() => {}} onFailure={() => {}}>
+    <PlateEditor
+      initial={initial}
+      onChange={() => {}}
+      onFailure={() => {}}
+      fallback={null}
+    >
       <Toolbar scope="test" />
       <EditorText aria-label="Description" />
     </PlateEditor>,
   )
-  return screen.getByRole('textbox', { name: 'Description' })
+  const field = screen.getByRole('textbox', { name: 'Description' })
+  await enter(field)
+  return field
 }
 
 test.each([
@@ -24,13 +31,13 @@ test.each([
   ['List', '- Pump'],
   ['Numbered list', '1. Pump'],
 ])('%s formats the line', async (name, markdown) => {
-  const field = renderEditor('Pump')
+  const field = await renderEditor('Pump')
   await userEvent.click(screen.getByRole('button', { name }))
   expect(markdownOf(field)).toBe(markdown)
 })
 
 test('Link puts the address on the selection', async () => {
-  const field = renderEditor()
+  const field = await renderEditor()
   await typeIn(field, 'manual')
   await selectAll(field)
   await userEvent.click(screen.getByRole('button', { name: 'Link' }))

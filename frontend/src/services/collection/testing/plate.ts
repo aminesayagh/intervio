@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react'
+import { act, fireEvent } from '@testing-library/react'
 import type { SlateEditor } from 'platejs'
 import { ELEMENT_TO_NODE } from 'slate-dom'
 import { toMarkdown } from '../values/description/plugins'
@@ -15,9 +15,20 @@ export function editorOf(field: HTMLElement) {
   return editor as unknown as SlateEditor
 }
 
-/** Types text where the cursor is. */
+/** Puts the cursor at the end of the text, as a click there does (the toolbar shows). */
+export async function enter(field: HTMLElement) {
+  const editor = editorOf(field)
+  fireEvent.focusIn(field)
+  await act(async () => editor.tf.select(editor.api.end([])))
+}
+
+/** Types text where the cursor is (at the end when it isn't in the text yet). */
 export async function typeIn(field: HTMLElement, text: string) {
-  await act(async () => editorOf(field).tf.insertText(text))
+  const editor = editorOf(field)
+  await act(async () => {
+    if (!editor.selection) editor.tf.select(editor.api.end([]))
+    editor.tf.insertText(text)
+  })
 }
 
 /** Empties the editor, the cursor left in it. */

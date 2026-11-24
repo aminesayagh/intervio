@@ -36,9 +36,11 @@ export function parseMarkdown(
   markdown: string,
 ): Converted<Value> {
   try {
+    const data = editor.getApi(MarkdownPlugin).markdown.deserialize(markdown)
+    // Empty, one empty paragraph: where the cursor (and the placeholder) go.
     return {
       ok: true,
-      data: editor.getApi(MarkdownPlugin).markdown.deserialize(markdown),
+      data: data.length ? data : [{ type: 'p', children: [{ text: '' }] }],
     }
   } catch (error) {
     return { ok: false, error }
@@ -50,10 +52,11 @@ export function parseMarkdown(
  * it is '' (Plate writes an empty paragraph as a zero-width space).
  */
 export function serializeMarkdown(editor: SlateEditor): Converted<string> {
-  if (editor.api.isEmpty()) return { ok: true, data: '' }
   try {
     const markdown = editor.getApi(MarkdownPlugin).markdown.serialize()
-    return { ok: true, data: markdown.replace(/\n+$/, '') }
+    // Judged on the text written, not the editor: an image alone holds no text.
+    const empty = markdown.replace(/\u200b/g, '').trim() === ''
+    return { ok: true, data: empty ? '' : markdown.replace(/\n+$/, '') }
   } catch (error) {
     return { ok: false, error }
   }

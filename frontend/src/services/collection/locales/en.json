@@ -29,11 +29,7 @@
   },
   "description": {
     "label": "Description",
-    "edit": "Edit the description",
     "add": "Add a description",
-    "write": "Write",
-    "preview": "Preview",
-    "empty": "Nothing to preview yet.",
     "bold": "Bold",
     "italic": "Italic",
     "heading": "Heading",
@@ -52,8 +48,7 @@
     "unsavedTitle": "Leave without saving?",
     "unsavedText": "Your last changes to the description are not saved. They stay in this tab until you come back.",
     "leave": "Leave anyway",
-    "keepEditing": "Keep editing",
-    "editLabel": "Edit {{label}}"
+    "keepEditing": "Keep editing"
   },
   "actions": {
     "more": "More actions",

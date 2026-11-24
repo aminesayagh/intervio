@@ -529,8 +529,9 @@ export function Collection<T, C = void>({
     keepSelected(await actions.runMany(action, records, keepSelected))
   }
   /**
-   * A shared value changed on a selected row (decision 135): saved on every selected
-   * record the person may change, one at a time. Afterwards one message says on how
+   * A shared value changed on a selected row (decision 135, 147): saved on every
+   * selected record the person may change, in one request when the source has
+   * `updateMany`, otherwise one at a time. Afterwards one message says on how
    * many, with Undo (each record gets its own previous value back); records that
    * failed keep their value and stay selected, with Retry. A failure on the row
    * edited is rethrown, so its field puts its value back.
@@ -547,17 +548,24 @@ export function Collection<T, C = void>({
       patch: (value: never) => Partial<T>
     }
     const targets = records.filter((record) => canEdit(record, column.id))
+    const beforeOf = (record: T) => field.patch(field.value(record) as never)
     const failed: T[] = []
     const changed: { record: T; before: Partial<T> }[] = []
-    for (const record of targets) {
-      const before = field.patch(field.value(record) as never)
-      try {
-        await save(record, patch)
-        changed.push({ record, before })
-      } catch {
-        failed.push(record)
+    if (actions.saveMany) {
+      const refused = await actions.saveMany(targets, patch)
+      for (const record of targets)
+        if (refused.includes(record)) failed.push(record)
+        else changed.push({ record, before: beforeOf(record) })
+    } else
+      for (const record of targets) {
+        const before = beforeOf(record)
+        try {
+          await save(record, patch)
+          changed.push({ record, before })
+        } catch {
+          failed.push(record)
+        }
       }
-    }
     const what = countOf(records.length)
     const messageKey = `${key}:shared:${column.id}`
     // The records changed: one message with Undo, even when others failed.
@@ -575,8 +583,35 @@ export function Collection<T, C = void>({
         action: {
           label: t('collection:message.undo'),
           run: () => {
-            for (const { record, before } of changed)
-              void save(record, before, { label }).catch(() => {})
+            const { saveMany } = actions
+            if (!saveMany) {
+              for (const { record, before } of changed)
+                void save(record, before, { label }).catch(() => {})
+              return
+            }
+            // One request per previous value (a checkbox: at most two).
+            const groups = new Map<
+              string,
+              { before: Partial<T>; records: T[] }
+            >()
+            for (const { record, before } of changed) {
+              const same = JSON.stringify(before)
+              const group = groups.get(same) ?? { before, records: [] }
+              group.records.push(record)
+              groups.set(same, group)
+            }
+            for (const { before, records } of groups.values())
+              void saveMany(records, before).then((refused) => {
+                if (refused.length > 0)
+                  notify({
+                    tone: 'error',
+                    text: t('collection:selection.notChanged', {
+                      field: label,
+                      what: countOf(refused.length),
+                    }),
+                    scope: key,
+                  })
+              })
           },
         },
         scope: key,

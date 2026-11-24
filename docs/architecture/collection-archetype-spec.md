@@ -499,7 +499,7 @@ Decision 134; screens 60 to 63.
 - **Confirmation:** the action's confirmation, in the plural; when some selected records don't allow it, the title says how many it applies to ("Archive 2 of 3 records?") and the text names one record left out.
 - **Running:** each record goes through the data source's `archive` or `remove`, one at a time. Those that succeed leave the list; those that fail stay selected, and one message says so (the record's name when one failed, the count otherwise), with Retry for them.
 - **Changes of view:** a new search, filter or sort clears the selection.
-- **Changing several at once** (decision 135; screens 64, 65): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. Records without the right, or whose save fails, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value. Failed records stay selected, with Retry.
+- **Changing several at once** (decision 135; screens 64, 65): a value changed on a selected row is saved on every selected row, for the types several records can share (single select, multi select, checkbox, date, date range, number, owner; a column can opt out with `bulk: false`). The single and multi select menus say "Applies to 3 items" (in the collection's words); a checkbox, a number or a date has no menu, so the message after the change says it. The change is sent in **one request** when the data source has `updateMany` (decision 147), and the list updates and reloads once; otherwise each record is saved on its own. Records without the right, or that are refused or fail, keep their value. Afterwards one message: "Status changed on 3 records." (or "on 2 of 3"), with Undo, which puts back each record's own previous value (one request per previous value). Failed records stay selected, with Retry.
 
 ### 8.6 A changed record keeps its place
 
@@ -573,6 +573,8 @@ type DataSource<T, C> = {
   one: (id: Id, context: C) => Promise<T>
   create?: (values: Partial<T>, context: C) => Promise<T>
   update?: (id: Id, patch: Partial<T>, context: C) => Promise<T>
+  updateMany?: (ids: Id[], patch: Partial<T>, context: C) =>          // one change on several records (8.5)
+    Promise<{ updated: T[]; failed: { id: Id; code: string }[] }>
   remove?: (id: Id, context: C) => Promise<void>
   archive?: (id: Id, context: C) => Promise<void>
   restore?: (id: Id, context: C) => Promise<void>   // Undo of an archive
@@ -598,6 +600,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
 | `one` | `GET {path}/{id}` | `routes.one`, `toRecord` |
 | `create` | `POST {path}` | `routes.create` |
 | `update` | `PATCH {path}/{id}` | `routes.update`, `method` |
+| `updateMany` | `PATCH {path}{routes.updateMany}` with `{ ids, patch }` → `{ updated, failed: [{ id, code }] }`. Only when `routes.updateMany` is set (decision 147). | `routes.updateMany`, `toRecord` |
 | `remove` | `DELETE {path}/{id}` | `routes.remove` |
 | `archive` | `POST {path}/{id}/archive` | `routes.archive` |
 | `restore` | `POST {path}/{id}/restore` | `routes.restore` |

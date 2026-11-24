@@ -319,10 +319,37 @@ export function useRecordActions<T, C>(
       }
     }
 
+    /**
+     * One change on several records in a single request (spec 8.5), when the source
+     * has `updateMany`: the lists update and reload once. Returns the records it
+     * refused; a request that fails refuses them all. Without `updateMany`, undefined.
+     */
+    const saveMany =
+      source.updateMany &&
+      (async (records: T[], patch: Partial<T>): Promise<T[]> => {
+        let result
+        try {
+          result = await source.updateMany!(records.map(getId), patch, context)
+        } catch {
+          return records
+        }
+        cache.updatedMany(queryClient, key, result.updated, getId, context)
+        for (const record of result.updated)
+          announce({ key, id: getId(record), kind: 'updated', record })
+        const refused = new Map(result.failed.map((f) => [f.id, f.code]))
+        // Removed by someone else meanwhile: gone, like a single save (404).
+        for (const record of records)
+          if (refused.get(getId(record)) === 'ERROR_NOT_FOUND')
+            gone(getId(record), record)
+        void cache.refresh(queryClient, key)
+        return records.filter((record) => refused.has(getId(record)))
+      })
+
     return {
       canEdit,
       allowed,
       save,
+      saveMany,
       report,
       act,
       runMany,

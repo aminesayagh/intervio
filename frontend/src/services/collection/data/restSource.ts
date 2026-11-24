@@ -1,5 +1,5 @@
 import { api } from '../../http'
-import type { DataSource, Id, ListQuery, Page } from '../types'
+import type { DataSource, Id, ListQuery, ManyUpdated, Page } from '../types'
 
 type Route = (id: Id) => string
 
@@ -17,6 +17,12 @@ export type RestOptions<T, C> = {
     one?: Route
     create?: string
     update?: Route
+    /**
+     * One change on several records (spec 8.5): PATCH { ids, patch }, answered with
+     * { updated, failed: [{ id, code }] }. Not set by default: only a backend that has
+     * the route gets it, and the others save each record on its own.
+     */
+    updateMany?: string
     remove?: Route
     archive?: Route
     restore?: Route
@@ -119,6 +125,15 @@ export function restSource<T, C = void>(
           body: { json: patch },
         }),
       ),
+    ...(routes.updateMany !== undefined && {
+      updateMany: async (ids: Id[], patch: Partial<T>, context: C) => {
+        const body = await api<ManyUpdated<unknown>>(
+          url(context, routes.updateMany!),
+          { method: 'PATCH', body: { json: { ids, patch } } },
+        )
+        return { updated: body.updated.map(toRecord), failed: body.failed }
+      },
+    }),
     remove: async (id, context) => {
       await api(url(context, remove(id)), { method: 'DELETE' })
     },

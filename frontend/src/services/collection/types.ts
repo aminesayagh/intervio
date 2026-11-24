@@ -31,9 +31,21 @@ export type DataSource<T, C = void> = {
   one: (id: Id, context: C) => Promise<T>
   create?: (values: Partial<T>, context: C) => Promise<T>
   update?: (id: Id, patch: Partial<T>, context: C) => Promise<T>
+  /** One change on several records, in one request (spec 8.5). Without it, each is saved on its own. */
+  updateMany?: (
+    ids: Id[],
+    patch: Partial<T>,
+    context: C,
+  ) => Promise<ManyUpdated<T>>
   remove?: (id: Id, context: C) => Promise<void>
   archive?: (id: Id, context: C) => Promise<void>
   restore?: (id: Id, context: C) => Promise<void>
+}
+
+/** The answer to a change on several records: those changed, and those refused with their code. */
+export type ManyUpdated<T> = {
+  updated: T[]
+  failed: { id: Id; code: string }[]
 }
 
 /** Saves a change to one value; `field` names it for the messages (decision 132). */

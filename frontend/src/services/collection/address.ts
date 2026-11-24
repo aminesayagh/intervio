@@ -6,26 +6,23 @@ import {
   parseAsString,
 } from '../navigation'
 import { formatChain, parseChain, type Step } from './record/linked'
-import type { ListQuery } from './types'
+import { formatSort, parseSort } from './listing/rules'
+import type { Sort } from './types'
 
 /**
  * What a collection keeps in the address (spec 6.1), as nuqs parsers: the list
  * (q, sort, f.{filter}) and the panel (open, new, linked).
  */
 
-type Sort = ListQuery['sort']
-
-/** `sort=name:asc`: a sort chosen; anything else is none (the default order). */
-export const sortParser = createParser<Sort>({
+/** `sort=status:asc,updated:desc`: the sort levels chosen; none is the default order. */
+export const sortParser = createParser<Sort[]>({
   parse: (value) => {
-    const [by, direction] = value.split(':')
-    return by && (direction === 'asc' || direction === 'desc')
-      ? { by, direction }
-      : null
+    const sort = parseSort(value)
+    return sort.length ? sort : null
   },
-  serialize: (sort) => `${sort.by}:${sort.direction}`,
-  eq: (a, b) => a.by === b.by && a.direction === b.direction,
-})
+  serialize: formatSort,
+  eq: (a, b) => formatSort(a) === formatSort(b),
+}).withDefault([])
 
 /** `linked=parts:id,items:id`: the linked records opened after the panel's (decision 137). */
 export const chainParser = createParser<Step[]>({
@@ -37,7 +34,7 @@ export const chainParser = createParser<Step[]>({
   eq: (a, b) => formatChain(a) === formatChain(b),
 }).withDefault([])
 
-/** The list's parameters, for a collection with these filter (and scope) ids. */
+/** The list's parameters, for a collection with these rule keys (and scope ids). */
 export const listParsers = (filterIds: string[]) => ({
   q: parseAsString.withDefault(''),
   sort: sortParser,

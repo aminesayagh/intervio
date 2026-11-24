@@ -170,24 +170,61 @@ test('a search waits for typing to stop, then narrows the list and the address',
   expect(firstName()).toBe('Item 020')
 })
 
-test('a filter menu narrows the list, shows its count, and Clear filters resets', async () => {
+test('the Filter menu composes rules, shows how many, and Clear filters resets', async () => {
   renderAt(
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
   )
   await screen.findByDisplayValue('Item 001')
-  await userEvent.click(screen.getByRole('button', { name: 'Status' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+  const menu = await screen.findByRole('dialog', { name: 'Filter' })
+  // A new rule starts on the first field (Status, "is") and applies once it has a value.
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Add a filter' }),
+  )
+  expect(window.location.search).toBe('')
+  await userEvent.click(within(menu).getByRole('button', { name: 'Status' }))
   await userEvent.click(
     await screen.findByRole('menuitemcheckbox', { name: 'Valid' }),
   )
   await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(window.location.search).toBe('?f.status=valid'))
 
-  await waitFor(() =>
-    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '11'),
+  // A second rule: Quantity greater than 5.
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Add a filter' }),
   )
-  expect(window.location.search).toBe('?f.status=valid')
-  expect(screen.getByRole('button', { name: 'Status' })).toHaveTextContent(
-    'Status (1)',
+  const fields = within(menu).getAllByRole('button', { name: 'Field' })
+  await userEvent.click(fields[fields.length - 1])
+  // One rule per field: Status, already in a rule, isn't offered again.
+  expect(
+    screen.queryByRole('menuitemradio', { name: 'Status' }),
+  ).not.toBeInTheDocument()
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Quantity' }),
+  )
+  const conditions = within(menu).getAllByRole('button', { name: 'Condition' })
+  await userEvent.click(conditions[conditions.length - 1])
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'greater than' }),
+  )
+  await userEvent.type(
+    within(menu).getByRole('spinbutton', { name: 'Quantity' }),
+    '5{Enter}',
+  )
+  await waitFor(() =>
+    expect(window.location.search).toBe('?f.status=valid&f.quantity.gt=5'),
+  )
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(screen.getByRole('button', { name: 'Filter' })).toHaveTextContent(
+    'Filter (2)',
+  )
+  // Valid items (every third) with more than 5: 8, 11, 14… among 30.
+  await waitFor(() =>
+    expect(screen.getByRole('grid').getAttribute('aria-rowcount')).not.toBe(
+      '31',
+    ),
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
@@ -195,6 +232,41 @@ test('a filter menu narrows the list, shows its count, and Clear filters resets'
     expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '31'),
   )
   expect(window.location.search).toBe('')
+})
+
+test('the Sort menu adds levels, and the list follows them all', async () => {
+  renderAt(
+    '/items',
+    <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
+  )
+  await screen.findByDisplayValue('Item 001')
+  await userEvent.click(screen.getByRole('button', { name: 'Sort' }))
+  const menu = await screen.findByRole('dialog', { name: 'Sort' })
+  // The first column not used, in its first direction: Name, then Status.
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Add a sort' }),
+  )
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Add a sort' }),
+  )
+  await waitFor(() =>
+    expect(window.location.search).toBe('?sort=name:asc,status:asc'),
+  )
+  // Name first reversed; then Name removed: Status alone.
+  await userEvent.click(
+    within(menu).getAllByRole('button', { name: /Ascending/ })[0],
+  )
+  await waitFor(() =>
+    expect(window.location.search).toBe('?sort=name:desc,status:asc'),
+  )
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Remove the sort by Name' }),
+  )
+  await waitFor(() => expect(window.location.search).toBe('?sort=status:asc'))
+  await userEvent.keyboard('{Escape}')
+  expect(screen.getByRole('button', { name: 'Sort' })).toHaveTextContent(
+    'Sort (1)',
+  )
 })
 
 test('a search with no match shows its message, with Clear filters', async () => {

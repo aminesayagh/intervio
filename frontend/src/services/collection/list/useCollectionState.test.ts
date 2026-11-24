@@ -28,11 +28,11 @@ test('reads search, filters and sort from the address, with defaults for the res
   expect(result.current.listing).toEqual({
     search: 'pump',
     filters: { status: ['valid', 'draft'] },
-    sort: { by: 'name', direction: 'asc' },
+    sort: [{ by: 'name', direction: 'asc' }],
   })
   // No sort, or a wrong one: none chosen, the default order applies.
   expect(sortParser.parse('bad')).toBeNull()
-  expect(isNarrowed({ search: '', filters: { owner: [] }, sort: null })).toBe(
+  expect(isNarrowed({ search: '', filters: { owner: [] }, sort: [] })).toBe(
     false,
   )
 })
@@ -44,24 +44,33 @@ test('a scoped list’s address holds only its scope', () => {
 test('changes replace the address, and the sort is remembered', async () => {
   const before = window.history.length
   const { result } = render()
-  act(() => result.current.setFilter('status', ['valid']))
+  act(() => result.current.setFilters({ status: ['valid'] }))
   act(() => result.current.setSearch(' pump '))
-  act(() => result.current.setSort({ by: 'name', direction: 'asc' }))
+  act(() =>
+    result.current.setSort([
+      { by: 'name', direction: 'asc' },
+      { by: 'updated', direction: 'desc' },
+    ]),
+  )
   await waitFor(() =>
-    expect(window.location.search).toBe('?f.status=valid&q=pump&sort=name:asc'),
+    expect(window.location.search).toBe(
+      '?f.status=valid&q=pump&sort=name:asc,updated:desc',
+    ),
   )
   expect(window.history.length).toBe(before)
   expect(localStorage.getItem('intervio.collection.items.sort')).toBe(
-    'name:asc',
+    'name:asc,updated:desc',
   )
 
   act(() => result.current.clear())
-  await waitFor(() => expect(window.location.search).toBe('?sort=name:asc'))
+  await waitFor(() =>
+    expect(window.location.search).toBe('?sort=name:asc,updated:desc'),
+  )
 
   // Back to the default order: the sort leaves the address and is forgotten.
-  act(() => result.current.setSort(null))
+  act(() => result.current.setSort([]))
   await waitFor(() => expect(window.location.search).toBe(''))
-  expect(result.current.query.sort).toEqual(defaultSort)
+  expect(result.current.query.sort).toEqual([defaultSort])
   expect(localStorage.getItem('intervio.collection.items.sort')).toBeNull()
 })
 
@@ -82,10 +91,9 @@ test('without a saved state, a bare address takes the last sort chosen', async (
   localStorage.setItem('intervio.collection.items.sort', 'name:asc')
   const { result } = render()
   await waitFor(() =>
-    expect(result.current.listing.sort).toEqual({
-      by: 'name',
-      direction: 'asc',
-    }),
+    expect(result.current.listing.sort).toEqual([
+      { by: 'name', direction: 'asc' },
+    ]),
   )
 })
 

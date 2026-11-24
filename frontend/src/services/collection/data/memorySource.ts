@@ -1,11 +1,12 @@
 import { ApiError } from '../../http'
+import { passes, type FilterValue } from '../listing/rules'
 import type { DataSource, Id, ListQuery, Page } from '../types'
 
 type Options<T> = {
   /** The text a search looks in (name and description, as on the backend). */
   searchText: (item: T) => string
   /** The value of an item for a filter id, or several values (a list of linked ids). */
-  filterValue?: (item: T, filterId: string) => string | string[] | undefined
+  filterValue?: (item: T, filterId: string) => FilterValue
   /** The value an item is sorted by, for a sort id. */
   sortValue: (item: T, by: string) => string | number
   pageSize?: number
@@ -60,18 +61,22 @@ export function memorySource<T extends { id: Id }>(
     return item
   }
 
-  function compare(a: [string | number, Id], b: [string | number, Id]) {
-    if (a[0] !== b[0]) return a[0] < b[0] ? -1 : 1
-    return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0
-  }
-
   function list(query: ListQuery): Page<T> {
     const search = query.search.trim().toLowerCase()
-    const sign = query.sort.direction === 'asc' ? 1 : -1
-    const key = (item: T): [string | number, Id] => [
-      options.sortValue(item, query.sort.by),
+    // A key per level, then the id (in the last level's direction): a total order.
+    const signs = query.sort.map((level) =>
+      level.direction === 'asc' ? 1 : -1,
+    )
+    const key = (item: T): (string | number)[] => [
+      ...query.sort.map((level) => options.sortValue(item, level.by)),
       item.id,
     ]
+    const order = (a: (string | number)[], b: (string | number)[]) => {
+      for (let i = 0; i < a.length; i++)
+        if (a[i] !== b[i])
+          return (signs[i] ?? signs[signs.length - 1]) * (a[i] < b[i] ? -1 : 1)
+      return 0
+    }
     const matching = items
       .filter((item) => !archived.has(item.id))
       .filter(
@@ -79,34 +84,27 @@ export function memorySource<T extends { id: Id }>(
           !search || options.searchText(item).toLowerCase().includes(search),
       )
       .filter((item) =>
-        Object.entries(query.filters).every(([filterId, chosen]) => {
-          if (chosen.length === 0) return true
-          const value = options.filterValue?.(item, filterId)
-          const values = Array.isArray(value) ? value : [value]
-          return values.some((v) => v !== undefined && chosen.includes(v))
-        }),
+        passes(query.filters, (id) => options.filterValue?.(item, id)),
       )
-      .sort((a, b) => sign * compare(key(a), key(b)))
+      .sort((a, b) => order(key(a), key(b)))
 
     // Pages by cursor (spec 11): a cursor is a record's sort value and id, so a page
     // starts right after (or ends right before) it, whatever changed since.
     const cursor = query.cursor
-      ? (JSON.parse(atob(query.cursor)) as [string | number, Id])
+      ? (JSON.parse(atob(query.cursor)) as (string | number)[])
       : null
     const encode = (item: T | undefined) =>
       item ? btoa(JSON.stringify(key(item))) : null
     let start: number
     let page: T[]
     if (cursor && query.direction === 'before') {
-      const end = matching.findIndex(
-        (item) => sign * compare(key(item), cursor) >= 0,
-      )
+      const end = matching.findIndex((item) => order(key(item), cursor) >= 0)
       const stop = end === -1 ? matching.length : end
       start = Math.max(0, stop - pageSize)
       page = matching.slice(start, stop)
     } else {
       start = cursor
-        ? matching.findIndex((item) => sign * compare(key(item), cursor) > 0)
+        ? matching.findIndex((item) => order(key(item), cursor) > 0)
         : 0
       if (start === -1) start = matching.length
       page = matching.slice(start, start + pageSize)

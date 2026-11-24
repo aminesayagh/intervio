@@ -292,7 +292,7 @@ function Section({
     key: linked.key,
     source: linked.source,
     context,
-    listing: { search: '', filters: scope, sort: linked.defaultSort },
+    listing: { search: '', filters: scope, sort: [linked.defaultSort] },
   })
   const total = list.total ?? list.items.length
   const address = listAddress(linkedPath, scope)

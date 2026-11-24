@@ -90,9 +90,8 @@ type CollectionDefinition<T, C = undefined> = {
   actions?: ActionDefinition<T, C>[] // archive, remove…; each with its own confirmation
 
   // List
-  filters: FilterDefinition[]
-  sorts: { by: string; label: string }[]
-  defaultSort: ListQuery['sort']
+  filters: FilterDefinition[]          // fixed filters (their options); columns add theirs with `filter: true`
+  defaultSort: Sort                     // the order when no sort level is chosen; a column with `sort` is sortable
   card: (record: T) => CardContent      // type chip, title, detail line, status, avatar
   row?: { detail?: (record: T) => ReactNode; status?: (record: T) => ReactNode } // narrow screens: the line under the name, the status
   columns: ColumnDefinition<T>[]        // the full table; a column that shows a property names it, and is edited like it (7.3)
@@ -122,7 +121,7 @@ type Rights = {
 
 `SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so. **Built (2026-11-23, decision 143):** `link: (record) => patch` says how a record of the linked collection becomes linked (for parts, `{ item: id }`); with it, and `rights.add` naming the section (or no rights at all), the section shows "+ Link or add" (`record/LinkOrAdd.tsx`): a `PopoverDialog` with a search over the records the patch would change (the others are already linked), saved through the shared record actions, and the collection's "+ Add …", which drills into the scoped list with `?new=1`.
 
-`FilterDefinition` has an id, a label key, its options (fixed, or loaded once), and whether several can be chosen.
+`FilterDefinition` has an id, a label key and its options (fixed, or loaded once). **Filter and sort rules (decision 149):** the logic lives in `collection/listing/` apart from any screen: `rules.ts` says which fields the Filter menu offers (`filterFields`: the fixed filters, then each column with `filter: true`, of the kind its field's type gives), the conditions of each kind (`OPERATORS`), how a rule is written (`ruleKey`: `status`, `quantity.gt`) and checked in memory (`matches`, `passes`), and how sort levels are written (`formatSort`, `parseSort`) and changed by a header (`nextSort`). `FilterMenu.tsx` and `SortMenu.tsx` are the two menus on top of it.
 
 Usage:
 
@@ -155,7 +154,7 @@ One public component, `Collection`. Its parts are internal and are not used on t
 |---|---|
 | `Collection` | Reads the state (section 6), chooses the layout (section 9), renders the parts below |
 | `CollectionHeader` | Title, total, main action |
-| `CollectionToolbar` | Search, filter menus with counts, "Clear filters" |
+| `CollectionToolbar` | Search, the Filter and Sort menus with counts, "Clear filters" |
 | `CollectionList` | Cards or table; the marked record; the loading row; empty, no-result and error states |
 | `RecordPanel` | Top bar, panel history (Back), view or creation; loading and unavailable states |
 | `RecordView` | Title, subtitle, properties, description, sections, activity; used by the panel and the full page |
@@ -194,12 +193,12 @@ Hooks, each in its own file and tested on its own:
 Address format, on the collection's base path:
 
 ```
-/resources?q=pump&f.type=document,equipment&f.status=valid&sort=updated:desc&open=0192…
+/resources?q=pump&f.type=document,equipment&f.quantity.gt=5&sort=status:asc,updated:desc&open=0192…
 /interventions/0192…/resources?open=0193…
 /resources?new
 ```
 
-Filters use one parameter per filter (`f.{id}`), with chosen options separated by commas. Default values are left out of the address.
+Filters use one parameter per rule: `f.{field}` for "is one of", with the chosen values separated by commas, and `f.{field}.{condition}` for the others (`not`, `contains`, `gt`, `lt`), with their value. The sort is its levels in order, separated by commas. Default values are left out of the address.
 
 ### 6.2 Coming back to a collection
 
@@ -518,12 +517,12 @@ Decision 136; screens 65, 66.
 |---|---|---|
 | `wide` | Sidebar · list | Sidebar · list beside the panel · panel (560 px by default, resizable: 9.1) |
 | `medium` | Sidebar · list | Rail (57 px) · list beside the panel · panel. The sidebar folds for as long as the panel is open; the user's saved sidebar choice does not change |
-| `narrow` | Top bar · list as rows (name, detail line, status) · one "Filters" button | The panel is the whole screen, with "‹ {collection}" to go back one level |
+| `narrow` | Top bar · list as rows (name, detail line, status) · the Filter and Sort menus | The panel is the whole screen, with "‹ {collection}" to go back one level |
 
 - **List beside the panel:** the table keeps every column at its width (`column.width`, 200 px when not given) and scrolls sideways when they don't fit; the selection checkbox and the name stay pinned on the left (decision 138). Cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
 - **Panel animation:** it slides in from the right in 200 ms, `easeOut`, with Motion. With reduced motion, there is no animation (like the sidebar).
 
-**Built so far (step 11):** layout modes, the divider and the saved width are built. Columns by priority were replaced (2026-11-23) by fixed widths with a horizontal scroll and pinned name (decision 138): `ui-kit/aria/tableLayout.ts` subclasses React Aria's `TableLayout` so the table lays its rows out again only when its height changes (not when the panel changes its width), and pins every column up to the row header. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. **Narrow screens (built 2026-11-23, decision 121):** the list is rows (`list/RecordRows.tsx`, React Aria's GridList, virtualized: `RowList` in `ui-kit/aria/List.tsx`): the name, the line under it (`definition.row.detail`, else the panel's subtitle) and the status (`definition.row.status`); a row opens its record; no selection. The toolbar shows one "Filters" button (`FiltersPanel` in `list/Toolbar.tsx`, a `PopoverDialog`): the sort (the sortable columns, cycling as their headers do: `nextSort`), each filter's check boxes, Clear filters. The toolbar stays while a new sort or filter loads; it is hidden only for a collection with no records at all.
+**Built so far (step 11):** layout modes, the divider and the saved width are built. Columns by priority were replaced (2026-11-23) by fixed widths with a horizontal scroll and pinned name (decision 138): `ui-kit/aria/tableLayout.ts` subclasses React Aria's `TableLayout` so the table lays its rows out again only when its height changes (not when the panel changes its width), and pins every column up to the row header. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. **Narrow screens (built 2026-11-23, decision 121):** the list is rows (`list/RecordRows.tsx`, React Aria's GridList, virtualized: `RowList` in `ui-kit/aria/List.tsx`): the name, the line under it (`definition.row.detail`, else the panel's subtitle) and the status (`definition.row.status`); a row opens its record; no selection. The toolbar shows the same Filter and Sort menus as on wide screens (decision 149); the Sort menu is the way to sort, as the rows have no headers. The toolbar stays while a new sort or filter loads; it is hidden only for a collection with no records at all.
 
 ### 9.1 Resizing the list and the panel
 
@@ -598,7 +597,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
 
 | Call | Default route | Can be overridden with |
 |---|---|---|
-| `list` | `GET {path}?q=&f.{id}=a,b&sort={by}:{asc\|desc}&cursor=&limit=30` → `{ items, nextCursor, total }` | `routes.list`, `params`, `toPage` |
+| `list` | `GET {path}?q=&f.{id}=a,b&f.{id}.{condition}=v&sort={by}:{asc\|desc},…&cursor=&limit=30` → `{ items, nextCursor, total }` | `routes.list`, `params`, `toPage` |
 | `one` | `GET {path}/{id}` | `routes.one`, `toRecord` |
 | `create` | `POST {path}` | `routes.create` |
 | `update` | `PATCH {path}/{id}` | `routes.update`, `method` |
@@ -640,7 +639,7 @@ const resources = restSource<Resource, { interventionId: Id }>({
   sections: [{ id: 'linked', label: '…', collection: linkedDefinition, scope: (record) => ({ linkedTo: [record.id] }), preview: 5 }]
   ```
 
-- **The scope filter** is a filter like the others, kept in the address. It shows as a chip ("Linked to: {parent name}", with ×) before the filter menus. A record created in a scoped list gets the parent link from `create.defaults`, which receives the active filters.
+- **The scope filter** is a filter like the others, kept in the address. It shows as a chip ("Linked to: {parent name}", with ×) before the Filter menu. A record created in a scoped list gets the parent link from `create.defaults`, which receives the active filters.
 - **The strips (the views left behind):**
   - Each drill pushes the view being left onto a **view stack** in session storage. A view is its address and its saved state: scroll position, panel history.
   - Each stacked view shows as a strip, 32 px wide, after the sidebar:
@@ -723,7 +722,7 @@ The wrapper is tested once, through a **test collection**, never through a real 
 
 | Subject | Cases |
 |---|---|
-| Address ↔ state (`useCollectionState`) | Reads and writes search, filters (`f.{id}`), sort, `open` and `new`; leaves defaults out of the address; restores from session storage when the address is bare; replaces on search, filter and sort, pushes on open and `new` |
+| Address ↔ state (`useCollectionState`) | Reads and writes search, filter rules (`f.{key}`), sort levels, `open` and `new`; leaves defaults out of the address; restores from session storage when the address is bare; replaces on search, filter and sort, pushes on open and `new` |
 | `restSource` | Builds the default routes and parameters; uses overridden routes, parameters, `toPage` and `toRecord`; turns error responses into `ApiError` with the code and field |
 | Cache updates (`useCollectionQuery`) | Create adds on top and adds 1 to the total; edit replaces the record in every page; archive and remove take it out and subtract 1 |
 | Layout mode | 1440 → wide, 1024 → medium, 1023 → narrow |

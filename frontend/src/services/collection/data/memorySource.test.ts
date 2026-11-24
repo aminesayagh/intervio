@@ -7,7 +7,7 @@ import type { ListQuery } from '../types'
 const query = (over: Partial<ListQuery> = {}): ListQuery => ({
   search: '',
   filters: {},
-  sort: { by: 'updated', direction: 'desc' },
+  sort: [{ by: 'updated', direction: 'desc' }],
   cursor: null,
   ...over,
 })
@@ -28,14 +28,17 @@ test('pages of 30 with a total, until the last page', async () => {
 test('a record created between two pages neither repeats nor skips one', async () => {
   const source = itemSource(makeItems(60))
   const first = await source.list(
-    query({ sort: { by: 'name', direction: 'asc' } }),
+    query({ sort: [{ by: 'name', direction: 'asc' }] }),
   )
   await source.create!(
     { name: 'Item 000', status: 'draft' } as never,
     undefined,
   )
   const second = await source.list(
-    query({ sort: { by: 'name', direction: 'asc' }, cursor: first.nextCursor }),
+    query({
+      sort: [{ by: 'name', direction: 'asc' }],
+      cursor: first.nextCursor,
+    }),
   )
   const names = [...first.items, ...second.items].map((item) => item.name)
   expect(new Set(names).size).toBe(60)
@@ -48,11 +51,11 @@ test('search, filters and sort', async () => {
   const valid = await source.list(query({ filters: { status: ['valid'] } }))
   expect(valid.items.every((item) => item.status === 'valid')).toBe(true)
   const byName = await source.list(
-    query({ sort: { by: 'name', direction: 'desc' } }),
+    query({ sort: [{ by: 'name', direction: 'desc' }] }),
   )
   expect(byName.items[0].name).toBe('Item 030')
   const byQuantity = await source.list(
-    query({ sort: { by: 'quantity', direction: 'asc' } }),
+    query({ sort: [{ by: 'quantity', direction: 'asc' }] }),
   )
   expect(byQuantity.items[0].quantity).toBe(1)
   expect(byQuantity.items.at(-1)!.quantity).toBeNull()

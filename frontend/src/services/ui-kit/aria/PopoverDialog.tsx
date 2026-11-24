@@ -8,12 +8,17 @@ import { Dialog, DialogTrigger, Popover } from 'react-aria-components'
 export function PopoverDialog({
   trigger,
   label,
+  width = 300,
+  placement = 'bottom start',
   children,
 }: {
   /** The button that opens it (a ui-kit Button). */
   trigger: ReactElement
   /** The panel's name, for assistive technologies. */
   label: string
+  /** Its width in px (narrower on a small screen). */
+  width?: number
+  placement?: 'bottom start' | 'bottom end'
   /** Its content, or a function given `close`, to close it after a choice. */
   children: ReactNode | ((close: () => void) => ReactNode)
 }) {
@@ -21,9 +26,10 @@ export function PopoverDialog({
     <DialogTrigger>
       {trigger}
       <Popover
-        placement="bottom start"
+        placement={placement}
         offset={4}
-        className="w-[300px] max-w-[calc(100vw-32px)] rounded-[var(--field-radius)] border border-border bg-surface p-3 text-sm shadow-md outline-none"
+        style={{ width }}
+        className="max-w-[calc(100vw-32px)] rounded-[var(--field-radius)] border border-border bg-surface p-3 text-sm shadow-md outline-none"
       >
         <Dialog aria-label={label} className="flex flex-col gap-4 outline-none">
           {({ close }) =>

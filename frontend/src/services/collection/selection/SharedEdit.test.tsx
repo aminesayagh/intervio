@@ -13,13 +13,25 @@ beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
 // Item 001 is a draft, Item 002 valid, Item 003 outdated.
-function show(rights?: Parameters<typeof itemDefinition>[2]) {
+function show(
+  rights?: Parameters<typeof itemDefinition>[2],
+  { bulk = true } = {},
+) {
   const source = itemSource(makeItems(6))
+  const calls = { update: 0, updateMany: 0 }
+  // Counts the requests; without `bulk`, a source that saves each record on its own.
+  const counted: typeof source = {
+    ...source,
+    update: (...args) => (calls.update++, source.update!(...args)),
+    updateMany: bulk
+      ? (...args) => (calls.updateMany++, source.updateMany!(...args))
+      : undefined,
+  }
   renderAt(
     '/items',
-    <Collection definition={itemDefinition(source, 'test-items', rights)} />,
+    <Collection definition={itemDefinition(counted, 'test-items', rights)} />,
   )
-  return source
+  return Object.assign(source, { calls })
 }
 /** Selects a row by its checkbox, once the pointer reached the row (decision 139). */
 const select = async (name: string) => {
@@ -116,8 +128,61 @@ test('records the person may not change keep their value', async () => {
   expect(status(source).slice(0, 3)).toEqual(['outdated', 'valid', 'outdated'])
 })
 
-test('a record whose save fails keeps its value and stays selected, with Retry; the others can be undone', async () => {
+test('saved on every selected row in one request, and undone in one', async () => {
   const source = show()
+  await select('Item 001')
+  await select('Item 002')
+  await select('Item 003')
+  await userEvent.click(
+    (await row(1)).getByRole('button', { name: 'Status: Draft' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Outdated' }),
+  )
+  await waitFor(() =>
+    expect(status(source).slice(0, 3)).toEqual([
+      'outdated',
+      'outdated',
+      'outdated',
+    ]),
+  )
+  expect(source.calls).toEqual({ update: 0, updateMany: 1 })
+  // Undo: one request per previous value (draft, valid; outdated had no change).
+  await userEvent.click(await screen.findByRole('button', { name: 'Undo' }))
+  await waitFor(() =>
+    expect(status(source).slice(0, 3)).toEqual(['draft', 'valid', 'outdated']),
+  )
+  expect(source.calls.update).toBe(0)
+})
+
+test('in one request, a record refused keeps its value and stays selected, with Retry', async () => {
+  const source = show()
+  source.settings.refused.add(source.items()[1].id)
+  await select('Item 001')
+  await select('Item 002')
+  await select('Item 003')
+  await userEvent.click(
+    (await row(1)).getByRole('button', { name: 'Status: Draft' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'Outdated' }),
+  )
+  expect(
+    await screen.findByText("“Status” couldn't be changed on 1 item."),
+  ).toBeInTheDocument()
+  expect(status(source).slice(0, 3)).toEqual(['outdated', 'valid', 'outdated'])
+  expect(
+    within(screen.getByRole('toolbar', { name: 'Selected records' })).getByText(
+      '1 selected',
+    ),
+  ).toBeInTheDocument()
+  source.settings.refused.clear()
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+  await waitFor(() => expect(status(source)[1]).toBe('outdated'))
+})
+
+test('without a request for several, each is saved on its own: a failure keeps its value and stays selected, with Retry; the others can be undone', async () => {
+  const source = show(undefined, { bulk: false })
   await select('Item 001')
   await select('Item 002')
   await select('Item 003')

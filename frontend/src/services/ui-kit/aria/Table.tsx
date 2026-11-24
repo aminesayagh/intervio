@@ -208,6 +208,7 @@ const STILL_BOX =
 export function Row<T extends object>({
   current = false,
   selectionAsleep = false,
+  number = null,
   className,
   columns,
   children,
@@ -219,6 +220,11 @@ export function Row<T extends object>({
    * React Aria's checkbox is the costliest part of a row, and every row has one.
    */
   selectionAsleep?: boolean
+  /**
+   * The row's number, shown in the checkbox column; the checkbox takes its place
+   * when the row is pointed at, focused or selected.
+   */
+  number?: number | null
   className?: string
   children: (column: T) => ReactElement
 }) {
@@ -249,7 +255,18 @@ export function Row<T extends object>({
         >
           <Show
             as="span"
-            className="flex"
+            when={number !== null}
+            className="w-4 text-center text-xs text-muted tabular-nums group-data-[focus-visible]:hidden group-data-[hovered]:hidden group-data-[selected]:hidden"
+          >
+            {number}
+          </Show>
+          <Show
+            as="span"
+            className={cn(
+              'flex',
+              number !== null &&
+                'hidden group-data-[focus-visible]:flex group-data-[hovered]:flex group-data-[selected]:flex',
+            )}
             when={!selectionAsleep}
             fallback={
               // In a box as the real one's label (inline-flex), so it sits as it does.

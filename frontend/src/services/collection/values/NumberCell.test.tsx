@@ -67,7 +67,8 @@ test('until its row is hovered or focused, the quantity is text; the focus wakes
   await screen.findByDisplayValue('Item 001')
   const row = within(within(screen.getByRole('grid')).getAllByRole('row')[2])
   expect(row.queryByRole('textbox', { name: 'Quantity' })).toBeNull()
-  const text = row.getByText('2')
+  // The last "2": the row's own number comes first, in the checkbox column.
+  const text = row.getAllByText('2').at(-1)!
   act(() => text.focus())
   const field = await row.findByRole('textbox', { name: 'Quantity' })
   expect(field).toHaveFocus()

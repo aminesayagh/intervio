@@ -21,6 +21,8 @@ export type Marks = {
   /** "Applies to 3 items", shown by the editor of a shared value. */
   note: string
   saveShared?: (...args: never[]) => Promise<void>
+  /** Each row's number in the list as shown, from 1 (shown in the checkbox column). */
+  positions: ReadonlyMap<Id, number>
 }
 
 export type MarksStore = {
@@ -65,7 +67,7 @@ export function useMarksStore(marks: Marks): MarksStore {
 }
 
 /** One mark, read from the store: the component renders again only when it changes. */
-export function useMark<R extends string | boolean | null>(
+export function useMark<R extends string | number | boolean | null>(
   read: (marks: Marks, store: MarksStore) => R,
 ): R {
   const store = useMarks()

@@ -796,6 +796,12 @@ export function Collection<T, C = void>({
 
   // What the rows show besides their record (the open one, the selection), read from
   // a store: a change renders only the rows concerned, never the table (spec 8, 9).
+  // Each row's number (decision 150): its place in the list as shown.
+  const positions = useMemo(
+    () =>
+      new Map(shownItems.map((record, index) => [getId(record), index + 1])),
+    [shownItems, getId],
+  )
   const marksStore = useMarksStore({
     openId: definition.panel ? openId : null,
     selected,
@@ -803,6 +809,7 @@ export function Collection<T, C = void>({
       what: countOf(selectedRecords.length),
     }),
     saveShared: saveOnSelection,
+    positions,
   })
   const selection = useMemo(
     () => (selectable ? { keys: selected, onChange: select } : undefined),
@@ -1295,7 +1302,15 @@ function MarkedRow<T extends object>(
   const asleep = useMark(
     (marks, store) => !store.isAwake(props.id) && !marks.selected.has(props.id),
   )
-  return <Row {...props} current={current} selectionAsleep={asleep} />
+  const number = useMark((marks) => marks.positions.get(props.id) ?? null)
+  return (
+    <Row
+      {...props}
+      current={current}
+      selectionAsleep={asleep}
+      number={number}
+    />
+  )
 }
 
 type SaveShared<T> = (

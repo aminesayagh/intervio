@@ -800,4 +800,11 @@ The wrapper is built in small steps. Each step ends with something that can be *
 
 0. **Views other than the table.** The cards view is set aside from the first build (decided 2026-11-21, during step 3): the wrapper shows a table only. How to offer several views (cards and others) is designed later; until then, the rules about cards in this document are on hold.
 1. ~~Restoring after a refresh is limited to 5 pages.~~ Replaced by decision 144: one page is loaded, whatever the depth.
-2. **Session storage is per browser tab.** A record opened in a new tab starts from its address only, with no panel history. That's proposed as acceptable.
+2. ~~Session storage is per browser tab.~~ Accepted (2026-11-23): a record opened in a new tab starts from its address only, with no panel history and no remembered scroll.
+3. **Later goal: the collection as a public React library** (set 2026-11-23, not scheduled). Intervio becomes one user of it. Decided so far:
+   - **Home:** a package in this repository's pnpm workspace (`packages/collection`), published to npm from there.
+   - **Look:** it ships today's style as its own compiled `styles.css`, driven by CSS variables the host sets (Intervio sets its tokens).
+   - **Audience:** public from the start: semantic versioning (Changesets), public docs (installation, the definition API of section 4, the data source contract), the showcase as a live demo, and only what `index.ts` exports is public.
+   - **Ties to cut** (2026-11-23 count): `ui-kit` (36 imports: its Table, List, Menu, pickers, Show/Switch, Icon move into the library), `navigation` (12: a small router adapter, with a React Router one shipped), `notifications` (4) and `http` (7: passed in through a `CollectionProvider`), `i18n` (4: i18next stays a peer dependency, the library ships its English and French texts), the 19 Lucide icons (bundled with their license), and the shell's hooks (sidebar folding, the narrow ‹: passed through the provider). TanStack Query stays a peer dependency.
+   - **Phases, one pull request each:** (1) cut the ties in place inside `frontend/`; (2) create the package, build it (Vite library mode: ESM, types, `styles.css`) and switch Intervio to `@…/collection`; (3) the standalone showcase as the demo; (4) README, Changesets, an npm publish job, license.
+   - **Still to choose before publishing:** the package name and npm scope, and the license.

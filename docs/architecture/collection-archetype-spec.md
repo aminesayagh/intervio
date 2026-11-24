@@ -394,7 +394,7 @@ There is no creation form: a new record is the normal record view, created as so
   - Empty, it shows "Add a description" to someone who may edit it, and nothing to someone who may not.
   - Without `description` in `rights.edit`, the same editor is read-only.
 - **Stored as Markdown:** the editor reads the Markdown string it receives and writes one back (Plate's Markdown plugin, with GFM). The backend only ever sees the string.
-- **Markdown the editor can't keep** is rewritten on the first edit; opening alone never changes it. Accepted for now (decided 2026-11-24): images are dropped (#36), raw HTML blocks are altered (#37), checklists lose their ticks (#38), and a single line break becomes a hard break (#39). Tables, quotes, code, strikethrough and nested lists are kept.
+- **Markdown the editor can't keep** is rewritten on the first edit; opening alone never changes it. Accepted for now (decided 2026-11-24): images stay in the Markdown but aren't shown in the editor, and an image inside a line splits that line into separate blocks (#36), raw HTML blocks are altered (#37), checklists lose their ticks (#38), and a single line break becomes a hard break (#39). Tables, quotes, code, strikethrough and nested lists are kept.
 - **Editing** (when `description` is in `rights.edit`):
   - The person writes in the description directly; the editing cue (7.3.1) shows on hover.
   - **Toolbar:** bold, italic, heading, list, numbered list, link. It shows while the cursor is in the description, and formats the text directly.

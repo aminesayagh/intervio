@@ -15,6 +15,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { notify } from '../../../notifications'
 import { Button, PopoverDialog, TextInput } from '../../../ui-kit'
+import { AskAIButton } from './AskAI'
 
 /** The six formats of spec 7.6, each applied to the editor's selection. */
 const tools: [
@@ -81,6 +82,7 @@ export function Toolbar({ scope }: { scope: string }) {
           />
         )}
       </PopoverDialog>
+      <AskAIButton />
     </div>
   )
 }

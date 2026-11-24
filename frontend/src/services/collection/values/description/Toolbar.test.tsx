@@ -5,6 +5,7 @@ import '../../../i18n'
 import '../../index'
 import { enter, markdownOf, selectAll, typeIn } from '../../testing/plate'
 import { EditorText, PlateEditor } from './PlateEditor'
+import { DescriptionAI } from './AskAI'
 import { Toolbar } from './Toolbar'
 
 afterEach(cleanup)
@@ -17,8 +18,10 @@ async function renderEditor(initial = '') {
       onFailure={() => {}}
       fallback={null}
     >
-      <Toolbar scope="test" />
-      <EditorText aria-label="Description" />
+      <DescriptionAI>
+        <Toolbar scope="test" />
+        <EditorText aria-label="Description" />
+      </DescriptionAI>
     </PlateEditor>,
   )
   const field = screen.getByRole('textbox', { name: 'Description' })

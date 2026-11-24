@@ -14,6 +14,7 @@ import {
   PlateEditor,
   type MarkdownFailure,
 } from './description/PlateEditor'
+import { AIProposal, DescriptionAI } from './description/AskAI'
 import { Toolbar } from './description/Toolbar'
 import { useAutosave } from './useAutosave'
 
@@ -174,18 +175,21 @@ function Editor({
           </>
         }
       >
-        <div className="mb-1 flex min-h-8 items-center gap-2">
-          <h3 className="text-muted">{label}</h3>
-          <Show when={editable && cursorIn} className="ms-auto">
-            <Toolbar scope={scope} />
-          </Show>
-        </div>
-        <EditorText
-          aria-label={label}
-          aria-invalid={tooLong || undefined}
-          readOnly={!editable}
-          placeholder={t('description.add')}
-        />
+        <DescriptionAI>
+          <div className="mb-1 flex min-h-8 items-center gap-2">
+            <h3 className="text-muted">{label}</h3>
+            <Show when={editable && cursorIn} className="ms-auto">
+              <Toolbar scope={scope} />
+            </Show>
+          </div>
+          <EditorText
+            aria-label={label}
+            aria-invalid={tooLong || undefined}
+            readOnly={!editable}
+            placeholder={t('description.add')}
+          />
+          <AIProposal />
+        </DescriptionAI>
       </PlateEditor>
       <Show when={editable}>
         <div

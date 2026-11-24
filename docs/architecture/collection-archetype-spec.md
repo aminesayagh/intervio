@@ -55,7 +55,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 | Linked records | One panel at a time, with a Back link; records with their own page open that page | 115 |
 | Editing | In place: text saves when the field is left; set choices → menu that saves at once; a refused or failed change is a message | 116, 132 |
 | More actions | Open full page, Copy link · Archive, Remove (with confirmation) | 117 |
-| Creating | "+ Add" opens the record view with defaults; it is created automatically once its required fields are filled; Undo for 5 s | 125 |
+| Creating | "New" opens the record view with defaults; it is created automatically once its required fields are filled; Undo for 5 s | 125 |
 | Modals | Only for confirmations: discarding input, removing | 125 |
 | Widths | ≥ 1440 side by side · 1024–1439 sidebar folds while the panel is open · < 1024 the panel is a page | 121, 124 |
 | Drilling into linked records | "Show all {n}" opens them as the main list, filtered to the parent; the previous view folds into a 32 px strip | 127, 128 |
@@ -356,7 +356,7 @@ Decision 132; screens 67 to 75. The **notifications service** (`services/notific
 There is no creation form: a new record is the normal record view, created as soon as it can stand on its own (decision 125).
 
 - **Opening:**
-  - "+ Add" (header, or the empty state) opens the panel and pushes `?new`.
+  - "New" (header, or the empty state) opens the panel and pushes `?new`.
   - The top bar shows "Not saved yet" and close only.
   - The name field is open and focused, with the placeholder "Name".
 - **Defaults** come from `create.defaults(context, filters, currentUser)`:
@@ -383,7 +383,7 @@ There is no creation form: a new record is the normal record view, created as so
   - with nothing typed, the panel closes and nothing is asked;
   - with something typed, "Discard this new record?" asks Keep editing or Discard.
 - **The server never holds incomplete records.** Required columns stay required.
-- **No creation:** a collection without `create` shows no "+ Add".
+- **No creation:** a collection without `create` shows no "New".
 
 ### 7.6 The description (Markdown)
 
@@ -424,7 +424,7 @@ There is no creation form: a new record is the normal record view, created as so
   - any other value is plain text;
   - a section shows "+ Link or add" only when it's in `rights.add`;
   - more actions lists only the actions in `rights.actions`, plus Open full page and Copy link, which are always there;
-  - "+ Add" in the list header shows only when the person may create, which the collection decides from its context.
+  - "New" in the list header shows only when the person may create, which the collection decides from its context.
 - **View only:** when `rights.edit`, `rights.add` and `rights.actions` are all empty, the top bar shows "View only" next to the type chip, and Share is hidden. Favorite stays, because it's personal.
 - **The server is the authority.** Every change is checked again. A refused change (`403`, `ERROR_FORBIDDEN`) puts the previous value back and shows the message under the value. The record is then reloaded, so its rights are current.
 - **Tests (added to 15.4):**
@@ -457,7 +457,7 @@ There is no creation form: a new record is the normal record view, created as so
 - **Loading more:** when the last drawn item is within the last 5 records loaded, and there is a next page and none is loading, it calls `fetchNextPage`. There is no separate marker.
 - **While a page loads:** a loading row shows placeholder rows under the list.
 - **When a page fails:** a row "More records could not be loaded." with Retry. The records already loaded stay.
-- **The end of the list** shows nothing more. The header shows the total ("42 records"); with active search or filters, it shows "12 of 42 records".
+- **The end of the list** shows nothing more. The header shows no total (decision 148).
 - **Scrolling:** the list and the panel scroll separately; the page itself does not scroll in the side-by-side layout.
 
 ### 8.2 List states
@@ -465,7 +465,7 @@ There is no creation form: a new record is the normal record view, created as so
 | State | Shows |
 |---|---|
 | First load | Six placeholder cards or rows |
-| Empty collection (no search, no filter) | Empty title and text, and "+ Add"; no toolbar |
+| Empty collection (no search, no filter) | Empty title and text, and "New"; no toolbar |
 | No results | "No records match your search" with Clear filters |
 | Error | "Records could not be loaded." with Retry |
 
@@ -735,12 +735,12 @@ Each line is one test with the test collection and MSW. Together they cover ever
 | Area | The test checks that… |
 |---|---|
 | **List** | the first page shows 30 items and the total; scrolling near the end loads the next 30 once; a failed page shows Retry, and Retry loads it; the end of the list loads nothing more |
-| **Search and filters** | typing waits 250 ms, then shows only matching items and "n of 42"; a filter shows its count on its button; "Clear filters" resets both; no results shows its message |
+| **Search and filters** | typing waits 250 ms, then shows only matching items; a filter shows its count on its button; "Clear filters" resets both; no results shows its message |
 | **Sort** | clicking a column header sorts through the server and updates the address; a third click goes back to the default order; the last sort is remembered |
 | **Panel** | clicking an item opens it, marks it and adds `?open`; clicking another switches; × and the browser's Back both close it and agree; a `404` shows "no longer available", and the item leaves the list |
 | **Linked records** | an item of a section opens in the same panel and the record left folds into a tab; a tab opens its record again; × and Back go back one step; a third step folds the older records into the first tab's menu; a linked record with its own page navigates there |
 | **Edit in place** | a text field saves when left and with Enter, puts the value back with Escape; a refused or failed change puts the value back and shows its message; a menu value saves on choice and comes back on error; no field shows for a value not in `rights.edit` |
-| **Creation** | "+ Add" shows the defaults and "Not saved yet"; filling the name creates the item once; it appears on top, open, with "Record created · Undo"; Undo removes it; leaving with nothing typed asks nothing; leaving with input asks, and Discard creates nothing |
+| **Creation** | "New" shows the defaults and "Not saved yet"; filling the name creates the item once; it appears on top, open, with "Record created · Undo"; Undo removes it; leaving with nothing typed asks nothing; leaving with input asks, and Discard creates nothing |
 | **Actions** | Remove asks, then removes and closes; Copy link copies the record's address |
 | **Refresh** | re-rendering at the same address with the saved session state brings back the search, filters, open item, panel history, scroll position and a new record's typed values |
 | **Layout** | at 1200 px, opening the panel folds the sidebar and closing unfolds it; at 900 px, the panel is a page with "‹ Records" |

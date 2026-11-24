@@ -65,7 +65,7 @@ test('selected rows put their count and actions in the toolbar; × brings the se
 
 test('the header checkbox selects the loaded rows only', async () => {
   show(75)
-  await screen.findByText('75 items')
+  await screen.findByDisplayValue('Item 001')
   await userEvent.click(screen.getByRole('checkbox', { name: 'Select All' }))
   // The first page: 30 of the 75.
   expect(within(toolbar()).getByText('30 selected')).toBeInTheDocument()
@@ -86,7 +86,9 @@ test('Archive asks first, in the plural, then the records leave the list', async
     within(dialog).getByRole('button', { name: 'Archive 2 items' }),
   )
   await waitFor(() => expect(archived('Item 001', 'Item 003')).toBe(true))
-  expect(await screen.findByText('6 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '7'),
+  )
   await waitFor(() => expect(screen.getByRole('searchbox')).toBeInTheDocument())
 })
 

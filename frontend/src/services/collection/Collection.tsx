@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   useCallback,
   useEffect,
@@ -724,34 +724,6 @@ export function Collection<T, C = void>({
     [hasNextPage, isFetchingNextPage, isFetchNextPageError, loadMore],
   )
 
-  // "12 of 42 items" needs the collection's whole total: one small cached request.
-  const all = useQuery({
-    queryKey: [definition.key, 'total', context ?? null],
-    queryFn: async () =>
-      (
-        await definition.source.list(
-          {
-            search: '',
-            filters: {},
-            sort: definition.defaultSort,
-            cursor: null,
-          },
-          context as C,
-        )
-      ).total,
-    enabled: narrowed,
-  })
-
-  const count =
-    list.total === undefined
-      ? t('collection:countUnknown', { count: list.items.length })
-      : narrowed && all.data !== undefined
-        ? t('collection:narrowedCount', {
-            shown: list.total,
-            all: t(definition.i18n.count, { count: all.data }),
-          })
-        : t(definition.i18n.count, { count: list.total })
-
   // Layout (spec 9): the room for the list and the panel, the panel's width, the mode.
   const mode = useLayoutMode()
   const reduceMotion = useReducedMotion()
@@ -887,22 +859,15 @@ export function Collection<T, C = void>({
           narrowPanel && 'hidden',
         )}
       >
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-          <h1 id={`${definition.key}-title`} className="text-xl font-medium">
+        {/* One row: the title, the search and filters (or the selection), then Add. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <h1
+            id={`${definition.key}-title`}
+            className="me-2 text-base font-medium"
+          >
             {t(definition.i18n.title)}
           </h1>
-          <span aria-live="polite" className="text-muted">
-            {list.data ? count : null}
-          </span>
-          <Show as="span" when={canCreate} className="ms-auto">
-            <Button look="primary" onPress={startNew}>
-              {definition.create ? t(definition.create.add) : null}
-            </Button>
-          </Show>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Switch className="min-w-0 flex-1">
+          <Switch className="ms-auto min-w-0">
             <Match when={selectedRecords.length > 0}>
               <SelectionBar
                 count={selectedRecords.length}
@@ -929,7 +894,7 @@ export function Collection<T, C = void>({
           {/* A changed record keeps its place until the list is sorted again (spec 8.6). */}
           <Show
             when={outOfOrder}
-            className="ms-auto flex items-center gap-3 text-muted"
+            className="flex items-center gap-3 text-muted"
           >
             {/* In the collection's words: "After a change, 2 items keep their place." */}
             <span aria-live="polite">
@@ -940,6 +905,11 @@ export function Collection<T, C = void>({
             </span>
             <Button size="sm" onPress={release}>
               {t('collection:held.sort')}
+            </Button>
+          </Show>
+          <Show as="span" when={canCreate}>
+            <Button size="sm" look="primary" onPress={startNew}>
+              {t('collection:new')}
             </Button>
           </Show>
         </div>
@@ -980,7 +950,7 @@ export function Collection<T, C = void>({
                 <p className="text-muted">{t(definition.i18n.empty.text)}</p>
                 <Show when={canCreate} className="mt-3">
                   <Button look="primary" onPress={startNew}>
-                    {definition.create ? t(definition.create.add) : null}
+                    {t('collection:new')}
                   </Button>
                 </Show>
               </div>

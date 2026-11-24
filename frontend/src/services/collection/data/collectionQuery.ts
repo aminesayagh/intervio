@@ -52,6 +52,13 @@ export function useCollectionQuery<T, C>({
 }) {
   const query = useInfiniteQuery({
     queryKey: keys.list(key, context, listing),
+    // A new search, filter or sort keeps the rows in view until the new ones arrive,
+    // instead of placeholders: only within one context (another parent's rows never show).
+    placeholderData: (previous: Pages<T> | undefined, previousQuery) =>
+      JSON.stringify(previousQuery?.queryKey[2]) ===
+      JSON.stringify(context ?? null)
+        ? previous
+        : undefined,
     queryFn: ({ pageParam }) =>
       source.list(
         {

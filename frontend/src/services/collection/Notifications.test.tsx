@@ -47,7 +47,9 @@ test('a change to a record removed meanwhile refreshes the list, closes the pane
       screen.queryByRole('complementary', { name: 'Item 002' }),
     ).toBeNull(),
   )
-  await waitFor(() => expect(screen.getByText('4 items')).toBeInTheDocument())
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '5'),
+  )
 })
 
 test('opening another record takes the previous record’s notifications away', async () => {
@@ -66,9 +68,7 @@ test('opening another record takes the previous record’s notifications away', 
 
 test('a new record that fails to be created keeps what was typed, and Retry creates it', async () => {
   const source = show()
-  await userEvent.click(
-    await screen.findByRole('button', { name: '+ Add item' }),
-  )
+  await userEvent.click(await screen.findByRole('button', { name: 'New' }))
   const aside = await screen.findByRole('complementary', { name: '+ Add item' })
   source.settings.failNext = true
   await userEvent.type(
@@ -109,7 +109,9 @@ test('an action that fails says so, with Retry', async () => {
     await screen.findByText("Item 002 couldn't be archived."),
   ).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-  await waitFor(() => expect(screen.getByText('4 items')).toBeInTheDocument())
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '5'),
+  )
 })
 
 test('a link that cannot be copied says so', async () => {
@@ -134,9 +136,7 @@ test('a link that cannot be copied says so', async () => {
 
 test('an Undo that fails says the record stays', async () => {
   const source = show()
-  await userEvent.click(
-    await screen.findByRole('button', { name: '+ Add item' }),
-  )
+  await userEvent.click(await screen.findByRole('button', { name: 'New' }))
   const aside = await screen.findByRole('complementary', { name: '+ Add item' })
   await userEvent.type(
     within(aside).getByRole('textbox', { name: 'Title' }),

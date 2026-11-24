@@ -54,7 +54,7 @@ test('Remove asks first; confirming removes the record and closes the panel', as
     ).not.toBeInTheDocument(),
   )
   expect(screen.queryByDisplayValue('Item 002')).not.toBeInTheDocument()
-  expect(screen.getByText('4 items')).toBeInTheDocument()
+  expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '5')
 })
 
 test('Cancel keeps the record', async () => {
@@ -83,7 +83,9 @@ test('Archive takes the record out of the list', async () => {
       name: 'Archive',
     }),
   )
-  await waitFor(() => expect(screen.getByText('4 items')).toBeInTheDocument())
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '5'),
+  )
   await expect(source.one(id(2))).rejects.toMatchObject({ status: 404 })
 })
 

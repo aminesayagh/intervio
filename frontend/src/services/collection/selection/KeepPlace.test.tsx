@@ -46,7 +46,7 @@ async function setStatus(from: string, to: string) {
 
 test('in a sorted list, a changed record keeps its place until Sort now', async () => {
   const source = show('/items?sort=status:asc')
-  await screen.findByText('6 items')
+  await screen.findByDisplayValue('Item 001')
   const before = [
     'Item 001',
     'Item 004',
@@ -74,7 +74,9 @@ test('in a sorted list, a changed record keeps its place until Sort now', async 
 
 test('in a filtered list, a record that no longer matches stays until the list is sorted again', async () => {
   show('/items?f.status=draft')
-  await screen.findByText('2 of 6 items')
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '3'),
+  )
   await setStatus('Draft', 'Valid')
   // In the collection's words, with how many changed.
   expect(
@@ -88,7 +90,7 @@ test('in a filtered list, a record that no longer matches stays until the list i
 
 test('a change that keeps the order shows no line', async () => {
   const source = show('/items?sort=status:asc')
-  await screen.findByText('6 items')
+  await screen.findByDisplayValue('Item 001')
   // A quantity changes, not the status the list is sorted by.
   const row = within(screen.getByRole('grid')).getAllByRole('row')[2]
   await userEvent.hover(row)

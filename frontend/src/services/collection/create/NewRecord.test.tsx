@@ -24,9 +24,7 @@ function show(url = '/items') {
 }
 
 async function startNew() {
-  await userEvent.click(
-    await screen.findByRole('button', { name: '+ Add item' }),
-  )
+  await userEvent.click(await screen.findByRole('button', { name: 'New' }))
   return screen.findByRole('complementary', { name: '+ Add item' })
 }
 
@@ -45,7 +43,7 @@ test('a new record is created once named, goes on top, and opens', async () => {
     await screen.findByRole('complementary', { name: 'Pump seals' }),
   ).toBeInTheDocument()
   expect(window.location.search).toContain(`open=${source.items()[0].id}`)
-  expect(screen.getByText('6 items')).toBeInTheDocument()
+  expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '7')
   expect(screen.getAllByText('Record created').length).toBeGreaterThan(0)
 })
 

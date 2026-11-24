@@ -35,7 +35,7 @@ function show() {
 
 test('selecting a row renders that row again, not the others', async () => {
   const count = show()
-  await screen.findByText('8 items')
+  await screen.findByDisplayValue('Item 001')
   // The pointer reaches the two rows first: their checkboxes wake (decision 139).
   await reachRow(await screen.findByDisplayValue('Item 001'))
   await reachRow(await screen.findByDisplayValue('Item 002'))
@@ -68,7 +68,7 @@ test('opening a record, and the next one, doesn’t render the table again', asy
     },
   })
   renderAt('/items', <Collection definition={definition} />)
-  await screen.findByText('8 items')
+  await screen.findByDisplayValue('Item 001')
   renders = 0
   await userEvent.click(
     await screen.findByRole('button', { name: 'Open Item 001' }),
@@ -85,7 +85,7 @@ test('a row builds its controls only once it is reached', async () => {
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(8)))} />,
   )
-  await screen.findByText('8 items')
+  await screen.findByDisplayValue('Item 001')
   const row = screen
     .getByRole('grid')
     .querySelector<HTMLElement>('[role="row"][data-key]')!

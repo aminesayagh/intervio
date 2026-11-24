@@ -90,6 +90,8 @@ test('"Show all" opens the list at its parent\'s address, asked within it', asyn
     expect(window.location.pathname).toBe(`/items/${ITEM_001}/checks`),
   )
   // The list of Item 001's seven checks, and none of another item's.
-  expect(await screen.findByText('7 checks')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '8'),
+  )
   expect(checks.asked.every((context) => context?.item === ITEM_001)).toBe(true)
 })

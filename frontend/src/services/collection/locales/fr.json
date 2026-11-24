@@ -1,5 +1,4 @@
 {
-  "countUnknown": "{{count}}+ éléments",
   "loading": "Chargement des éléments",
   "noResults": {
     "title": "Aucun élément ne correspond à votre recherche",
@@ -12,7 +11,6 @@
   },
   "search": "Rechercher",
   "clearFilters": "Effacer les filtres",
-  "narrowedCount": "{{shown}} sur {{all}}",
   "sortBy": "Trier par {{column}}",
   "panel": {
     "label": "Élément",
@@ -167,5 +165,6 @@
     "back": "Revenir à {{name}}"
   },
   "filters": "Filtres",
-  "sortTitle": "Tri"
+  "sortTitle": "Tri",
+  "new": "Nouveau"
 }

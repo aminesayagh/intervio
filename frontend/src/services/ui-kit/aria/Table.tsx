@@ -1,3 +1,5 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import { createElement } from 'react'
 import {
   createContext,
   useContext,
@@ -31,7 +33,6 @@ import {
   type TableProps,
 } from 'react-aria-components'
 import { cn } from '../cn'
-import { Icon } from '../Icon'
 import { NoFadeInside, Show } from '../views/Show'
 import { Checkbox } from './Checkbox'
 
@@ -168,17 +169,17 @@ export function Column({
             {children}
           </span>
           <Show as="span" when={allowsSorting} className="flex shrink-0">
-            <Icon
-              name={
-                sortDirection === 'ascending'
-                  ? 'lucide/arrow-up'
-                  : sortDirection === 'descending'
-                    ? 'lucide/arrow-down'
-                    : 'lucide/arrow-up-down'
-              }
-              size={12}
-              className={sortDirection ? 'text-foreground' : undefined}
-            />
+            {createElement(
+              sortDirection === 'ascending'
+                ? ArrowUp
+                : sortDirection === 'descending'
+                  ? ArrowDown
+                  : ArrowUpDown,
+              {
+                size: 12,
+                className: sortDirection ? 'text-foreground' : undefined,
+              },
+            )}
           </Show>
           <Show as="span" when={resizable} className="contents">
             <AriaColumnResizer className="absolute inset-y-1 end-0 w-1.5 cursor-col-resize touch-none rounded-full outline-none data-[focus-visible]:bg-foreground data-[hovered]:bg-border data-[resizing]:bg-foreground" />

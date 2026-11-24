@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   Menu,
@@ -8,7 +9,6 @@ import {
   type Selection,
 } from 'react-aria-components'
 import { cn } from '../cn'
-import { Icon } from '../Icon'
 import { Show } from '../views/Show'
 
 export { MenuTrigger } from 'react-aria-components'
@@ -78,7 +78,7 @@ export function ChoiceMenu({
             <>
               <span className="flex size-4 shrink-0 items-center justify-center">
                 <Show as="span" when={isSelected} className="flex">
-                  <Icon name="lucide/check" size={14} />
+                  <Check size={14} />
                 </Show>
               </span>
               {option.label}

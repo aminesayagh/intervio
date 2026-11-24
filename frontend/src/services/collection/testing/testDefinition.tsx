@@ -1,8 +1,8 @@
+import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { addTranslations } from '../../i18n'
 import { AvatarImage } from '../values/AvatarCell'
 import { FileCount, FileList } from '../values/FileCell'
 import { memorySrc, memoryUpload } from './memoryFiles'
-import { Icon } from '../../ui-kit'
 import { firstLine } from '../values/markdown'
 import type {
   AnyCollection,
@@ -102,7 +102,7 @@ const icon: IconField<Item> = {
 }
 const iconOf = (item: Item) =>
   item.icon ? (
-    <Icon name={`lucide/${item.icon}`} size={16} />
+    <DynamicIcon name={item.icon as IconName} size={16} />
   ) : (
     <span className="text-muted">—</span>
   )

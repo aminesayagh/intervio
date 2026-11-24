@@ -1,14 +1,8 @@
+import { File as FileIcon, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatSize } from '../../files'
-import {
-  Button,
-  DropZone,
-  FileTrigger,
-  Icon,
-  Show,
-  Variant,
-} from '../../ui-kit'
+import { Button, DropZone, FileTrigger, Show, Variant } from '../../ui-kit'
 import type { FileField, StoredFile } from '../definition'
 
 /** The kinds of files a file field takes by default, as the files service does. */
@@ -58,7 +52,7 @@ export function FileList({
           key={file.id}
           className="group/file flex min-w-0 items-center gap-2 py-1"
         >
-          <Icon name="lucide/file" size={14} className="text-muted" />
+          <FileIcon size={14} className="text-muted" />
           <a
             href={src(file)}
             target="_blank"
@@ -78,7 +72,7 @@ export function FileList({
                 onClick={() => remove(file)}
                 className="flex cursor-pointer rounded-[var(--field-radius)] p-1 text-muted opacity-0 outline-none group-hover/file:opacity-100 hover:bg-default hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
               >
-                <Icon name="lucide/x" size={12} />
+                <X size={12} />
               </button>
             )}
           </Show>

@@ -1,7 +1,8 @@
+import { Maximize2 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
-import { Button, cn, Icon, Match, Show, Switch } from '../../ui-kit'
+import { Button, cn, Match, Show, Switch } from '../../ui-kit'
 import { useCollectionQuery } from '../data/collectionQuery'
 import type {
   AnyCollection,
@@ -310,7 +311,7 @@ function Section({
             onPress={() => drill(address, viewName)}
           >
             {t('collection:section.showAll')}
-            <Icon name="lucide/maximize-2" size={14} />
+            <Maximize2 size={14} />
           </Button>
         </Show>
       </h3>

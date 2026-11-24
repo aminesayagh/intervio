@@ -1,6 +1,6 @@
 /**
  * The icons an icon field offers by default (spec 7.3.0): Lucide icons that suit
- * maintenance work, copied in public/icons/lucide. A definition may pass its own.
+ * maintenance work, by their lucide-react names. A definition may pass its own.
  */
 export const ICON_CHOICES = [
   'wrench',

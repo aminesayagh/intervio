@@ -1,4 +1,9 @@
 import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import {
   DatePicker as AriaDatePicker,
   Button,
   Calendar,
@@ -14,7 +19,6 @@ import {
   type DateValue,
 } from 'react-aria-components'
 import { cn } from '../cn'
-import { Icon } from '../Icon'
 
 const iconButton =
   'flex cursor-pointer items-center justify-center rounded-[var(--field-radius)] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-2 data-[focus-visible]:outline-foreground'
@@ -60,7 +64,7 @@ export function DatePicker<T extends DateValue>({
               'opacity-0 group-focus-within/date:opacity-100 group-hover/date:opacity-100 data-[focus-visible]:opacity-100',
           )}
         >
-          <Icon name="lucide/calendar" size={12} />
+          <CalendarIcon size={12} />
         </Button>
       </Group>
       <Popover
@@ -72,11 +76,11 @@ export function DatePicker<T extends DateValue>({
           <Calendar>
             <header className="mb-2 flex items-center justify-between gap-2">
               <Button slot="previous" className={cn(iconButton, 'size-7')}>
-                <Icon name="lucide/chevron-left" size={14} />
+                <ChevronLeft size={14} />
               </Button>
               <Heading className="font-medium" />
               <Button slot="next" className={cn(iconButton, 'size-7')}>
-                <Icon name="lucide/chevron-right" size={14} />
+                <ChevronRight size={14} />
               </Button>
             </header>
             <CalendarGrid className="border-separate border-spacing-0.5">

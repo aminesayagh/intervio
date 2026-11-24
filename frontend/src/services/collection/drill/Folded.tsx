@@ -1,8 +1,8 @@
+import { ChevronLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   ActionMenu,
   Button,
-  Icon,
   MenuPopover,
   MenuTrigger,
   Show,
@@ -44,7 +44,7 @@ export function Folds({
             aria-label={olderName(older.length)}
             className={`${look} h-full rounded-none px-0`}
           >
-            <Icon name="lucide/chevron-left" size={14} />
+            <ChevronLeft size={14} />
             <Name text={olderName(older.length)} />
           </Button>
           <MenuPopover minWidth={220}>
@@ -66,7 +66,7 @@ export function Folds({
           onClick={fold.open}
           className={look}
         >
-          <Icon name="lucide/chevron-left" size={14} />
+          <ChevronLeft size={14} />
           <Name text={fold.name} />
         </button>
       ))}

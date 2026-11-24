@@ -1,10 +1,10 @@
+import { Check, Minus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   Checkbox as AriaCheckbox,
   type CheckboxProps,
 } from 'react-aria-components'
 import { cn } from '../cn'
-import { Icon } from '../Icon'
 import { Variant } from '../views/Show'
 
 /**
@@ -37,8 +37,8 @@ export function Checkbox({
               value={isIndeterminate ? 'some' : isSelected ? 'on' : 'off'}
               className="flex"
               views={{
-                on: () => <Icon name="lucide/check" size={12} />,
-                some: () => <Icon name="lucide/minus" size={12} />,
+                on: () => <Check size={12} />,
+                some: () => <Minus size={12} />,
               }}
             />
           </span>

@@ -31,9 +31,9 @@ export function PanelClose({
           size="sm"
           aria-label={label}
           onPress={onClose}
-          className="px-2"
+          className="h-7 min-w-7 px-1.5"
         >
-          <X size={16} />
+          <X size={14} />
         </Button>
       }
     >

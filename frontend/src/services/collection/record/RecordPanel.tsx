@@ -32,9 +32,9 @@ export function MoreActions({
         look="ghost"
         size="sm"
         aria-label={t('actions.more')}
-        className="px-2"
+        className="h-7 min-w-7 px-1.5"
       >
-        <Ellipsis size={16} />
+        <Ellipsis size={14} />
       </Button>
       <MenuPopover minWidth={200}>
         <ActionMenu
@@ -116,7 +116,8 @@ export function RecordPanel<T, C>({
       aria-label={record ? panel.title(record) : t('collection:panel.label')}
       className="scroll-quiet relative flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
-      <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 bg-background pt-4 lg:h-[4.5rem] lg:pt-6">
+      {/* Its line runs across the whole panel (decision 152): -ms/-me undo the padding. */}
+      <div className="sticky top-0 z-10 -ms-8 -me-6 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background ps-8 pe-6 pt-4 lg:h-[4.5rem] lg:pt-6">
         <Show as="span" when={visible}>
           {(loaded) => panel.type(loaded)}
         </Show>

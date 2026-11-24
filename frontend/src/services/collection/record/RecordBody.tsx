@@ -58,7 +58,7 @@ export function RecordBody<T, C>({
           'grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start gap-12',
       )}
     >
-      <div className="flex flex-col gap-6 pt-2 pb-8">
+      <div className="flex flex-col gap-6">
         <div>
           <h2
             ref={focusTitle}
@@ -123,6 +123,22 @@ export function RecordBody<T, C>({
               </div>
             ))}
         </dl>
+
+        {/* The properties end here; the texts follow (decision 152). In the panel the
+        line runs across it, as the top bar's does. */}
+        <Show
+          when={
+            panel.description ||
+            panel.properties.some((p) => p.field?.type === 'richText')
+          }
+        >
+          <div
+            className={cn(
+              'border-t border-border',
+              layout === 'panel' && '-ms-8 -me-6',
+            )}
+          />
+        </Show>
 
         <Show when={panel.description}>
           {(description) => (

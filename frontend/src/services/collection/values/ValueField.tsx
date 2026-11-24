@@ -259,12 +259,17 @@ export function ValueField<T>({
           ),
         checkbox: () =>
           field?.type === 'checkbox' && (
-            <CheckboxCell
-              record={record}
-              edit={field}
-              label={label}
-              save={save}
-            />
+            // In the panel, as tall as the other values' controls.
+            <span
+              className={cn('flex', look === 'panel' && 'h-7 items-center')}
+            >
+              <CheckboxCell
+                record={record}
+                edit={field}
+                label={label}
+                save={save}
+              />
+            </span>
           ),
         // Without the right, a yes-or-no value is still a checkbox, read only.
         checkboxRead: () =>

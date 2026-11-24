@@ -89,7 +89,9 @@ test('"Show all" opens the linked list, scoped to the record by a chip', async (
   show(`/items?open=${ITEM_001}`)
   await showAllParts()
   expect(await screen.findByText('Linked to: Item 001')).toBeInTheDocument()
-  expect(await screen.findByText(/^7 of \d+ parts$/)).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '8'),
+  )
   expect(window.location.pathname).toBe('/parts')
 })
 
@@ -105,15 +107,13 @@ test('removing the chip shows the whole collection; Clear filters keeps it', asy
   await userEvent.click(
     screen.getByRole('button', { name: 'Remove “Linked to: Item 001”' }),
   )
-  expect(await screen.findByText(/^\d+ parts$/)).toBeInTheDocument()
+  await waitFor(() => expect(window.location.search).toBe(''))
   expect(screen.queryByText('Linked to: Item 001')).not.toBeInTheDocument()
 })
 
 test('a record created in a scoped list is linked to the parent', async () => {
   const { parts } = show(`/parts?f.item=${ITEM_001}`)
-  await userEvent.click(
-    await screen.findByRole('button', { name: '+ Add part' }),
-  )
+  await userEvent.click(await screen.findByRole('button', { name: 'New' }))
   const aside = await panel('+ Add part')
   await userEvent.type(
     within(aside).getByRole('textbox', { name: 'Title' }),

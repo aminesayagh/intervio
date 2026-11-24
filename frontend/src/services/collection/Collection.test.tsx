@@ -29,12 +29,12 @@ function scrollToEnd() {
   act(() => reachListEnd())
 }
 
-test('the first page shows a header row and the first items, with the total', async () => {
+test('the first page shows a header row and the first items', async () => {
   renderAt(
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
   )
-  expect(await screen.findByText('42 items')).toBeInTheDocument()
+  expect(await screen.findByDisplayValue('Item 001')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Items' })).toBeInTheDocument()
   const table = screen.getByRole('grid', { name: 'Items' })
   const headers = within(table)
@@ -83,7 +83,6 @@ test('an empty collection shows its own empty message', async () => {
   expect(
     screen.getByText('Add the first one to find it here later.'),
   ).toBeInTheDocument()
-  expect(screen.getByText('0 items')).toBeInTheDocument()
 })
 
 test('a failed first page shows Retry, and Retry loads it', async () => {
@@ -96,7 +95,9 @@ test('a failed first page shows Retry, and Retry loads it', async () => {
 
   source.settings.failing = false
   await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-  await waitFor(() => expect(screen.getByText('3 items')).toBeInTheDocument())
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '4'),
+  )
   expect(
     screen.queryByText('Records could not be loaded.'),
   ).not.toBeInTheDocument()
@@ -111,7 +112,7 @@ test('scrolling near the end loads the next page once, until the end', async () 
     return list(query)
   }
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('75 items')
+  await screen.findByDisplayValue('Item 001')
   expect(calls).toBe(1)
 
   scrollToEnd()
@@ -127,7 +128,7 @@ test('scrolling near the end loads the next page once, until the end', async () 
 test('a failed next page keeps the loaded items and offers Retry', async () => {
   const source = itemSource(makeItems(75))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('75 items')
+  await screen.findByDisplayValue('Item 001')
   source.settings.failing = true
   scrollToEnd()
   expect(
@@ -156,13 +157,15 @@ test('a search waits for typing to stop, then narrows the list and the address',
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
   )
-  await screen.findByText('42 items')
+  await screen.findByDisplayValue('Item 001')
   await userEvent.type(
     screen.getByRole('searchbox', { name: 'Search' }),
     'item 02',
   )
   expect(window.location.search).toBe('') // not yet: 250 ms after the last key
-  expect(await screen.findByText('10 of 42 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '11'),
+  )
   expect(window.location.search).toBe('?q=item+02')
   expect(firstName()).toBe('Item 020')
 })
@@ -172,21 +175,25 @@ test('a filter menu narrows the list, shows its count, and Clear filters resets'
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
   )
-  await screen.findByText('30 items')
+  await screen.findByDisplayValue('Item 001')
   await userEvent.click(screen.getByRole('button', { name: 'Status' }))
   await userEvent.click(
     await screen.findByRole('menuitemcheckbox', { name: 'Valid' }),
   )
   await userEvent.keyboard('{Escape}')
 
-  expect(await screen.findByText('10 of 30 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '11'),
+  )
   expect(window.location.search).toBe('?f.status=valid')
   expect(screen.getByRole('button', { name: 'Status' })).toHaveTextContent(
     'Status (1)',
   )
 
   await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
-  expect(await screen.findByText('30 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '31'),
+  )
   expect(window.location.search).toBe('')
 })
 
@@ -203,7 +210,9 @@ test('a search with no match shows its message, with Clear filters', async () =>
   await userEvent.click(
     screen.getAllByRole('button', { name: 'Clear filters' })[0],
   )
-  expect(await screen.findByText('5 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '6'),
+  )
 })
 
 test('a column header sorts, then reverses, then goes back to the default order', async () => {
@@ -211,7 +220,7 @@ test('a column header sorts, then reverses, then goes back to the default order'
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
   )
-  await screen.findByText('42 items')
+  await screen.findByDisplayValue('Item 001')
   expect(screen.getByRole('columnheader', { name: /Updated/ })).toHaveAttribute(
     'aria-sort',
     'none',
@@ -247,7 +256,9 @@ test('an address opens the list it describes', async () => {
     '/items?q=item&f.status=draft&sort=name:desc',
     <Collection definition={itemDefinition(itemSource(makeItems(30)))} />,
   )
-  expect(await screen.findByText('10 of 30 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '11'),
+  )
   expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('item')
   expect(firstName()).toBe('Item 028')
 })
@@ -257,10 +268,12 @@ test('the search field keeps a trailing space while the search is trimmed', asyn
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
   )
-  await screen.findByText('42 items')
+  await screen.findByDisplayValue('Item 001')
   const field = screen.getByRole('searchbox', { name: 'Search' })
   await userEvent.type(field, 'item 02 ')
-  expect(await screen.findByText('10 of 42 items')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '11'),
+  )
   expect(window.location.search).toBe('?q=item+02')
   expect(field).toHaveValue('item 02 ')
 
@@ -274,7 +287,7 @@ test('the default column cycles the same way: chosen, reversed, then no sort', a
     '/items',
     <Collection definition={itemDefinition(itemSource(makeItems(42)))} />,
   )
-  await screen.findByText('42 items')
+  await screen.findByDisplayValue('Item 001')
   const header = () => screen.getByRole('columnheader', { name: /Updated/ })
   const button = () => screen.getByRole('columnheader', { name: /Updated/ })
   expect(header()).toHaveAttribute('aria-sort', 'none')
@@ -361,7 +374,7 @@ test('a save the server refuses puts the name back, with a message', async () =>
 test('a status is chosen from its chip, and saved at once', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('5 items')
+  await screen.findByDisplayValue('Item 001')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
   await reachRow(rows[1])
   await userEvent.click(
@@ -380,7 +393,7 @@ test('a status is chosen from its chip, and saved at once', async () => {
 test('a status the server refuses goes back, with a message', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('5 items')
+  await screen.findByDisplayValue('Item 001')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
   await reachRow(rows[2])
   source.settings.failing = true
@@ -403,7 +416,7 @@ test('a status the server refuses goes back, with a message', async () => {
 test('an owner is chosen from its cell, and saved at once', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('5 items')
+  await screen.findByDisplayValue('Item 001')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
   await reachRow(rows[1])
   await userEvent.click(

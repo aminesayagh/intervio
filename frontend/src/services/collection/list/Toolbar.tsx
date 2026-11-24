@@ -153,9 +153,9 @@ function SearchField({
   }
 
   return (
-    <label className="relative flex w-[320px] max-w-full items-center">
-      <span className="pointer-events-none absolute start-3 flex text-muted">
-        <Search size={16} />
+    <label className="relative flex w-60 max-w-full items-center">
+      <span className="pointer-events-none absolute start-2.5 flex text-muted">
+        <Search size={14} />
       </span>
       <input
         type="search"
@@ -163,7 +163,7 @@ function SearchField({
         placeholder={t('search')}
         value={text}
         onChange={(event) => type(event.target.value)}
-        className="h-9 w-full rounded-[var(--field-radius)] border border-border bg-surface ps-9 pe-3 outline-none focus-visible:border-foreground"
+        className="h-8 w-full rounded-[var(--field-radius)] border border-border bg-surface ps-8 pe-3 outline-none focus-visible:border-foreground"
       />
     </label>
   )

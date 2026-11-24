@@ -1,5 +1,4 @@
 {
-  "countUnknown": "{{count}}+ records",
   "loading": "Loading records",
   "noResults": {
     "title": "No records match your search",
@@ -12,7 +11,6 @@
   },
   "search": "Search",
   "clearFilters": "Clear filters",
-  "narrowedCount": "{{shown}} of {{all}}",
   "sortBy": "Sort by {{column}}",
   "panel": {
     "label": "Record",
@@ -167,5 +165,6 @@
     "back": "Back to {{name}}"
   },
   "filters": "Filters",
-  "sortTitle": "Sort"
+  "sortTitle": "Sort",
+  "new": "New"
 }

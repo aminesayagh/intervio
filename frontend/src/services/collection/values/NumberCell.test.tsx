@@ -22,7 +22,7 @@ afterEach(cleanup)
 async function quantityOf(row: number) {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('5 items')
+  await screen.findByDisplayValue('Item 001')
   const rows = within(screen.getByRole('grid')).getAllByRole('row')
   // Under the pointer, the row's cells show their editors.
   await userEvent.hover(rows[row])
@@ -64,7 +64,7 @@ test('an emptied quantity saves no value; one below the minimum is kept at it', 
 test('until its row is hovered or focused, the quantity is text; the focus wakes it', async () => {
   const source = itemSource(makeItems(5))
   renderAt('/items', <Collection definition={itemDefinition(source)} />)
-  await screen.findByText('5 items')
+  await screen.findByDisplayValue('Item 001')
   const row = within(within(screen.getByRole('grid')).getAllByRole('row')[2])
   expect(row.queryByRole('textbox', { name: 'Quantity' })).toBeNull()
   const text = row.getByText('2')

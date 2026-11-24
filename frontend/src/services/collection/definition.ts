@@ -347,11 +347,11 @@ export type CollectionDefinition<T, C = void> = {
   /** The actions of the More actions menu, after Open full page and Copy link. */
   actions?: ActionDefinition[]
   /**
-   * Set when records can be created (spec 7.5): "+ Add" opens a new record in the
+   * Set when records can be created (spec 7.5): "New" opens a new record in the
    * panel with these defaults, created as soon as it is ready.
    */
   create?: {
-    /** "+ Add …" and "New …": translation keys in the collection's namespace. */
+    /** "+ Add …" (a linked section) and "New …": translation keys in the collection's namespace. */
     add: string
     defaults: (context: C) => Partial<T>
     /** True when the new record has what it needs to be created (its name, often). */

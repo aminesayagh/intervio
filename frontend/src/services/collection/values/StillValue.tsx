@@ -110,7 +110,10 @@ export function StillValue<T>({
         <span
           data-asleep
           tabIndex={0}
-          className="inline-flex cursor-pointer items-center rounded-[3px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          className={cn(
+            'inline-flex cursor-pointer items-center rounded-[3px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground',
+            look === 'panel' && 'h-7',
+          )}
         >
           <span
             className={cn(

@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -49,7 +50,7 @@ export function Description({
   if (!value && !editable) return null
   return (
     <Editor
-      initial={value}
+      value={value}
       editable={editable}
       label={label ?? t('description.label')}
       storageKey={storageKey}
@@ -76,14 +77,14 @@ function keep(key: string, text: string | null) {
 }
 
 function Editor({
-  initial,
+  value,
   editable,
   label,
   storageKey,
   scope,
   save,
 }: {
-  initial: string
+  value: string
   editable: boolean
   label: string
   storageKey: string
@@ -92,16 +93,25 @@ function Editor({
 }) {
   const { t } = useTranslation('collection')
   const [text, setText] = useState(() =>
-    editable ? (read(storageKey) ?? initial) : initial,
+    editable ? (read(storageKey) ?? value) : value,
   )
   // The text the record holds: the same text again is never sent.
-  const saved = useRef(initial)
+  const saved = useRef(value)
   const autosave = useAutosave(async (next) => {
     if (next !== saved.current) await save(next)
     saved.current = next
     keep(storageKey, null) // saved: nothing left to keep
   })
   const tooLong = text.length > MAX_LENGTH
+
+  // A draft kept in the tab from an earlier visit is saved now, its status shown:
+  // the editor counts what it opens with as no edit.
+  const restored = useRef(text !== value)
+  useEffect(() => {
+    if (!restored.current) return
+    restored.current = false
+    if (text.length <= MAX_LENGTH) autosave.change(text)
+  }, [text, autosave])
 
   // The toolbar shows while the cursor is in the description (its link field, in a
   // popover outside the page's flow, counts as inside: React's focus events reach
@@ -121,6 +131,20 @@ function Editor({
       void autosave.flush()
     })
   }
+  // A newer text from the record (another person's edit) replaces the one shown,
+  // unless the person is in it or has a change not saved yet. A new editor opens it.
+  const [opened, setOpened] = useState(0)
+  useEffect(() => {
+    if (value === saved.current || inside.current || text !== saved.current)
+      return
+    saved.current = value
+    keep(storageKey, null)
+    setText(value)
+    setOpened((count) => count + 1)
+    // Only a new value from the record counts, not each keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
   // Escape leaves the text: the focus goes back to the description itself. (In the
   // link's popover, outside this element on the page, Escape only closes it.)
   function onKeyDown(event: KeyboardEvent) {
@@ -165,17 +189,18 @@ function Editor({
       className="flex flex-col outline-none"
     >
       <PlateEditor
+        key={opened}
         initial={text}
         onChange={change}
         onFailure={fail}
         fallback={
           <>
             <h3 className="mb-1 text-muted">{label}</h3>
-            <p className="break-words whitespace-pre-wrap">{initial}</p>
+            <p className="break-words whitespace-pre-wrap">{text}</p>
           </>
         }
       >
-        <DescriptionAI>
+        <DescriptionAI scope={scope}>
           <div className="mb-1 flex min-h-8 items-center gap-2">
             <h3 className="text-muted">{label}</h3>
             <Show when={editable && cursorIn} className="ms-auto">

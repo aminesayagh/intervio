@@ -1,8 +1,13 @@
 import { useChat } from '@ai-sdk/react'
 import type { ChatTransport, UIMessage } from 'ai'
 import { Sparkles } from 'lucide-react'
-import { RangeApi, type TRange } from 'platejs'
-import { createPlateEditor, Plate, useEditorRef } from 'platejs/react'
+import { RangeApi } from 'platejs'
+import {
+  createPlateEditor,
+  Plate,
+  useEditorRef,
+  type PlateEditor,
+} from 'platejs/react'
 import {
   createContext,
   useContext,
@@ -13,6 +18,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import { notify } from '../../../notifications'
 import { Button, PopoverDialog, Show, TextInput } from '../../../ui-kit'
 import { ErrorText } from '../../parts'
 import { EditorText } from './PlateEditor'
@@ -33,22 +39,29 @@ type AI = {
 }
 const AIContext = createContext<AI | null>(null)
 
+type RangeRef = ReturnType<PlateEditor['api']['rangeRef']>
+
 /**
  * The description's AI: a free prompt about the selection (or the whole text), its
  * answer proposed under the text. Only Accept changes the text, which then saves
  * the usual way; the AI never saves by itself.
  */
 export function DescriptionAI({
+  scope,
   transport = defaultTransport,
   children,
 }: {
+  /** The record's notifications scope (a failure is reported there). */
+  scope: string
   transport?: ChatTransport<UIMessage>
   children: ReactNode
 }) {
+  const { t } = useTranslation('collection')
   const editor = useEditorRef()
   const chat = useChat({ transport })
-  // Where the answer goes: the selection when the question was asked.
-  const target = useRef<TRange | null>(null)
+  // Where the answer goes: the selection when the question was asked, followed
+  // through the edits made while the AI answers.
+  const target = useRef<RangeRef | null>(null)
 
   const last = chat.messages.at(-1)
   const proposal =
@@ -59,6 +72,8 @@ export function DescriptionAI({
       : ''
 
   function clear() {
+    target.current?.unref()
+    target.current = null
     void chat.stop()
     chat.setMessages([])
     chat.clearError()
@@ -68,7 +83,8 @@ export function DescriptionAI({
     ask(prompt) {
       const selection = editor.selection
       const editing = !!selection && !RangeApi.isCollapsed(selection)
-      target.current = editing ? selection : null
+      target.current?.unref()
+      target.current = editing ? editor.api.rangeRef(selection) : null
       const ctx: DescriptionContext = {
         children: editor.children,
         selection,
@@ -82,10 +98,20 @@ export function DescriptionAI({
     failed: chat.status === 'error',
     accept() {
       const parsed = parseMarkdown(editor, proposal)
-      if (!parsed.ok) return clear()
+      if (!parsed.ok) {
+        notify({
+          tone: 'error',
+          text: t('description.aiFailed'),
+          scope,
+          key: `${scope}:ai`,
+        })
+        return clear()
+      }
+      // The selection asked about, where it is now (gone if it was deleted).
+      const range = target.current?.current
       editor.tf.focus()
-      if (target.current) {
-        editor.tf.select(target.current)
+      if (range) {
+        editor.tf.select(range)
         editor.tf.insertFragment(parsed.data)
       } else if (editor.api.isEmpty()) {
         editor.tf.replaceNodes(parsed.data, { at: [], children: true })

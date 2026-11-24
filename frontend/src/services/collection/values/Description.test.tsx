@@ -172,3 +172,42 @@ test('empty, it invites a description when editable, and shows nothing when not'
   const { container } = render(<Description {...props} editable={false} />)
   expect(container).toBeEmptyDOMElement()
 })
+
+test('a draft kept in the tab is saved when the description opens again', async () => {
+  sessionStorage.setItem('draft-key', 'Seals **checked**')
+  const save = vi.fn(async () => {})
+  render(
+    <Description
+      value="Seals"
+      editable
+      storageKey="draft-key"
+      scope="test"
+      save={save}
+    />,
+  )
+  expect(
+    await screen.findByText('Saved', undefined, { timeout: 3000 }),
+  ).toBeInTheDocument()
+  expect(save).toHaveBeenCalledWith('Seals **checked**')
+  expect(sessionStorage.getItem('draft-key')).toBeNull()
+})
+
+test('a newer text from the record replaces the one shown, unless the person is in it', async () => {
+  const props = {
+    editable: true,
+    storageKey: 'newer',
+    scope: 'test',
+    save: async () => {},
+  }
+  const { rerender } = render(<Description {...props} value="Seals" />)
+  rerender(<Description {...props} value="Seals and bearings" />)
+  expect(markdownOf(screen.getByRole('textbox', { name: 'Description' }))).toBe(
+    'Seals and bearings',
+  )
+
+  await enter(screen.getByRole('textbox', { name: 'Description' }))
+  rerender(<Description {...props} value="Something else" />)
+  expect(markdownOf(screen.getByRole('textbox', { name: 'Description' }))).toBe(
+    'Seals and bearings',
+  )
+})

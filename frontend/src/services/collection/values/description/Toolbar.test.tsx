@@ -18,7 +18,7 @@ async function renderEditor(initial = '') {
       onFailure={() => {}}
       fallback={null}
     >
-      <DescriptionAI>
+      <DescriptionAI scope="test">
         <Toolbar scope="test" />
         <EditorText aria-label="Description" />
       </DescriptionAI>

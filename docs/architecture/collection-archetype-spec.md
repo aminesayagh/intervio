@@ -156,6 +156,7 @@ One public component, `Collection`. Its parts are internal and are not used on t
 | `CollectionHeader` | Title, total, main action |
 | `CollectionToolbar` | Search, the Filter and Sort menus with counts, "Clear filters" |
 | Row numbers (decision 150) | Each row's place in the list shown (`positions` in the row marks store, so only the rows whose number changes render again), drawn by the ui-kit `Row` in the checkbox column; the checkbox replaces it on hover, focus or selection |
+| Empty values in the panel (decision 151) | `ValueField` shows "Add {label}" for an empty value the person may set (`look="panel"`); pressed, its control is built awake and its first control is clicked (a menu, a picker) or focused (a field); leaving it empty shows the button again, unless the focus went to the control's own popover |
 | `CollectionList` | Cards or table; the marked record; the loading row; empty, no-result and error states |
 | `RecordPanel` | Top bar, panel history (Back), view or creation; loading and unavailable states |
 | `RecordView` | Title, subtitle, properties, description, sections, activity; used by the panel and the full page |

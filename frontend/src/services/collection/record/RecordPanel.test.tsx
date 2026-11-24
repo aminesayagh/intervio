@@ -207,9 +207,9 @@ test('a change refused as no longer allowed says so, and the value comes back', 
 test('the panel builds no editor until a value is reached; Tab reaches one and types in it', async () => {
   show()
   await userEvent.click(
-    await screen.findByRole('button', { name: 'Open Item 001' }),
+    await screen.findByRole('button', { name: 'Open Item 002' }),
   )
-  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  const aside = await screen.findByRole('complementary', { name: 'Item 002' })
   expect(within(aside).queryByRole('spinbutton')).toBeNull()
   expect(within(aside).queryByRole('textbox', { name: 'Quantity' })).toBeNull()
   // Nor any other: no checkbox, no menu, no link field (the title stays a field).

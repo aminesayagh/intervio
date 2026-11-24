@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react'
+import { Plus } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Checkbox, cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import type { FieldDefinition, LinkField } from '../definition'
@@ -22,6 +24,29 @@ const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
   field.type === 'email' ||
   field.type === 'phone' ||
   field.type === 'location'
+
+/**
+ * True when a value has nothing yet (decision 151). Values with their own way to start
+ * (a checkbox, files, a picture, a rich text) are never "empty" here.
+ */
+function isEmpty<T>(field: FieldDefinition<T>, record: T) {
+  switch (field.type) {
+    case 'checkbox':
+    case 'file':
+    case 'avatar':
+    case 'richText':
+      return false
+    default: {
+      const value: unknown = field.value(record)
+      return (
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0)
+      )
+    }
+  }
+}
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -53,7 +78,32 @@ export function ValueField<T>({
   /** A text the definition refuses: the collection reports it (decision 132). */
   onInvalid?: (reason: string) => void
 }) {
+  const { t } = useTranslation('collection')
   const awake = useAwake()
+  // In the panel, an empty value the person may set is "Add Quantity" (decision 151):
+  // pressed, its own control shows and opens (a menu) or takes the focus (a field).
+  const [adding, setAdding] = useState(false)
+  const box = useRef<HTMLSpanElement>(null)
+  const empty = look === 'panel' && allowed && field && isEmpty(field, record)
+  useEffect(() => {
+    if (!adding) return
+    const control = box.current?.querySelector<HTMLElement>(
+      'input, [role=spinbutton], button, [data-asleep]',
+    )
+    if (control instanceof HTMLButtonElement) control.click()
+    else control?.focus()
+  }, [adding])
+  if (empty && !adding)
+    return (
+      <button
+        type="button"
+        onClick={() => setAdding(true)}
+        className="inline-flex h-6 items-center gap-1 rounded-[var(--field-radius)] border border-border px-2 text-xs text-muted outline-none hover:text-foreground focus-visible:border-foreground"
+      >
+        <Plus size={12} />
+        {t('empty.add', { name: label })}
+      </button>
+    )
   const link = () =>
     field &&
     isLink(field) && (
@@ -71,6 +121,7 @@ export function ValueField<T>({
   // control is built when the pointer or the focus comes to it (in the table, to its row).
   if (
     !awake &&
+    !adding &&
     allowed &&
     field &&
     (look === 'panel' ? STILL : STILL_IN_TABLE).has(field.type)
@@ -85,7 +136,7 @@ export function ValueField<T>({
         look={look}
       />
     )
-  return (
+  const view = (
     <Variant
       as="span"
       className={cn('block min-w-0', look === 'cell' && 'truncate')}
@@ -237,5 +288,24 @@ export function ValueField<T>({
         read: () => read(record),
       }}
     />
+  )
+  if (look !== 'panel') return view
+  return (
+    <span
+      ref={box}
+      className="contents"
+      // Left with nothing set (not for its own menu or calendar): back to "Add …".
+      onBlur={(event) => {
+        const next = event.relatedTarget as Element | null
+        if (
+          empty &&
+          !box.current?.contains(next) &&
+          !next?.closest('[data-trigger]')
+        )
+          setAdding(false)
+      }}
+    >
+      {view}
+    </span>
   )
 }

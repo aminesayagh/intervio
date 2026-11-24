@@ -1,5 +1,6 @@
-import { act, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { expect } from 'vitest'
 import { reachListEnd } from './layout'
 
 /**
@@ -11,13 +12,25 @@ export function seeSections() {
 }
 
 /**
- * The pointer reached a value of the panel: its editor wakes (decision 139). Returns
- * the value's box, to look for the editor in it.
+ * The pointer reached a value of the panel: its editor wakes (decision 139). An empty
+ * one is "Add …" (decision 151): it is pressed, and a menu it opens is closed again,
+ * so the test finds the editor as for a value. Returns the value's box.
  */
 export async function reachValue(panel: HTMLElement, label: string) {
   const term = within(panel).getByText(label, { selector: 'dt' })
   const box = term.nextElementSibling!.firstElementChild as HTMLElement
   await userEvent.hover(box)
+  const add = within(box).queryByRole('button', { name: `Add ${label}` })
+  if (add) {
+    await userEvent.click(add)
+    await waitFor(() =>
+      expect(
+        within(box).queryByRole('button', { name: `Add ${label}` }),
+      ).toBeNull(),
+    )
+    if (screen.queryByRole('menu') || screen.queryByRole('dialog'))
+      await userEvent.keyboard('{Escape}')
+  }
   return box
 }
 

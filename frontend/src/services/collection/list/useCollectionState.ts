@@ -6,7 +6,13 @@ import {
   useQueryStates,
 } from '../../navigation'
 import { listParsers, sortParser } from '../address'
-import { formatSort } from '../listing/rules'
+import {
+  applied,
+  formatSort,
+  plainOf,
+  ruleCount,
+  type FilterGroup,
+} from '../listing/rules'
 import type { Sort } from '../types'
 
 /**
@@ -16,13 +22,16 @@ import type { Sort } from '../types'
 export type Listing = {
   search: string
   filters: Record<string, string[]>
+  /** Composed rules the plain filters can't say: "or", groups (decision 161). */
+  where: FilterGroup | null
   sort: Sort[]
 }
 
 /** True when a search or a filter narrows the list. */
 export const isNarrowed = (listing: Listing) =>
   listing.search.trim() !== '' ||
-  Object.values(listing.filters).some((values) => values.length > 0)
+  Object.values(listing.filters).some((values) => values.length > 0) ||
+  (listing.where !== null && ruleCount(listing.where) > 0)
 
 function read(storage: () => Storage, key: string) {
   try {
@@ -82,6 +91,7 @@ export function useCollectionState(
     const listed =
       values.q !== '' ||
       values.sort.length > 0 ||
+      values.filter !== null ||
       filters.some((id) => chosen(id).length > 0)
     if (listed) return
     const saved = read(() => sessionStorage, tabKey)
@@ -118,6 +128,7 @@ export function useCollectionState(
           ])
           .filter(([, options]) => options.length > 0),
       ),
+      where: values.filter,
       sort: values.sort,
     }),
     [values, ids],
@@ -140,6 +151,25 @@ export function useCollectionState(
       ),
     [setValues],
   )
+  /**
+   * Sets the Filter menu's rules: as plain `f.{key}` when they can be written so, else
+   * as one `filter` (decision 161). The scopes stay as they are.
+   */
+  const setRules = useCallback(
+    (group: FilterGroup) => {
+      const kept = keptIds.split(',')
+      const plain = plainOf(group)
+      void setValues({
+        ...Object.fromEntries(
+          (ids ? ids.split(',') : [])
+            .filter((id) => !kept.includes(id))
+            .map((id) => [`f.${id}`, plain?.[id] ?? []]),
+        ),
+        filter: plain ? null : applied(group),
+      })
+    },
+    [setValues, ids, keptIds],
+  )
   const setSort = useCallback(
     (sort: Sort[]) => {
       write(() => localStorage, sortKey, sort.length ? formatSort(sort) : null)
@@ -155,6 +185,7 @@ export function useCollectionState(
     () =>
       void setValues({
         q: '',
+        filter: null,
         ...Object.fromEntries(
           (ids ? ids.split(',') : [])
             .filter((id) => !keptIds.split(',').includes(id))
@@ -169,6 +200,7 @@ export function useCollectionState(
     query,
     setSearch,
     setFilters,
+    setRules,
     clear,
     /** The sort levels chosen, or none to go back to the default order. */
     setSort,

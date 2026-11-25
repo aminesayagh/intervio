@@ -18,6 +18,7 @@ export const keys = {
       context ?? null,
       listing.search,
       listing.filters,
+      listing.where ?? null,
       listing.sort,
     ] as const,
   /** A record as one context shows it (its values and rights there). */

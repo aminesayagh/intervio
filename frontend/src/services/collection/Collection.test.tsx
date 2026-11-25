@@ -200,10 +200,6 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
   )
   const fields = within(menu).getAllByRole('button', { name: 'Field' })
   await userEvent.click(fields[fields.length - 1])
-  // One rule per field: Status, already in a rule, isn't offered again.
-  expect(
-    screen.queryByRole('menuitemradio', { name: 'Status' }),
-  ).not.toBeInTheDocument()
   await userEvent.click(
     await screen.findByRole('menuitemradio', { name: 'Quantity' }),
   )
@@ -215,6 +211,35 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
   await userEvent.type(
     within(menu).getByRole('spinbutton', { name: 'Quantity' }),
     '5{Enter}',
+  )
+  await waitFor(() =>
+    expect(window.location.search).toBe('?f.status=valid&f.quantity.gt=5'),
+  )
+  // "or" between them (decision 161): the plain rules can't say it, one `filter` does.
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Join rules with' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'or' }),
+  )
+  await waitFor(() =>
+    expect(new URLSearchParams(window.location.search).get('filter')).toBe(
+      JSON.stringify({
+        join: 'or',
+        rules: [
+          { id: 'status', op: 'is', values: ['valid'] },
+          { id: 'quantity', op: 'gt', values: ['5'] },
+        ],
+      }),
+    ),
+  )
+  expect(window.location.search).not.toContain('f.status')
+  // Back to "and": the short form again.
+  await userEvent.click(
+    within(menu).getByRole('button', { name: 'Join rules with' }),
+  )
+  await userEvent.click(
+    await screen.findByRole('menuitemradio', { name: 'and' }),
   )
   await waitFor(() =>
     expect(window.location.search).toBe('?f.status=valid&f.quantity.gt=5'),

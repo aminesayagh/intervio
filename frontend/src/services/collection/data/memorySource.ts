@@ -1,5 +1,5 @@
 import { ApiError } from '../../http'
-import { passes, type FilterValue } from '../listing/rules'
+import { passes, passesGroup, type FilterValue } from '../listing/rules'
 import type { DataSource, Id, ListQuery, Page } from '../types'
 
 type Options<T> = {
@@ -83,8 +83,11 @@ export function memorySource<T extends { id: Id }>(
         (item) =>
           !search || options.searchText(item).toLowerCase().includes(search),
       )
-      .filter((item) =>
-        passes(query.filters, (id) => options.filterValue?.(item, id)),
+      .filter(
+        (item) =>
+          passes(query.filters, (id) => options.filterValue?.(item, id)) &&
+          (!query.where ||
+            passesGroup(query.where, (id) => options.filterValue?.(item, id))),
       )
       .sort((a, b) => order(key(a), key(b)))
 

@@ -11,6 +11,7 @@ import {
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -238,10 +239,17 @@ export function AIProposal() {
     editor.children = parsed.ok ? parsed.data : []
     return editor
   }, [ai.proposal])
+  // The proposal sits under the text, often below the panel's fold: bring it into
+  // view when the AI starts writing and when it is done.
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    box.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+  }, [ai.busy])
 
   return (
     <Show when={ai.proposal || ai.busy}>
       <div
+        ref={box}
         role="group"
         aria-label={t('description.aiProposal')}
         className="mt-2 rounded-[var(--field-radius)] border border-border px-2 py-1"

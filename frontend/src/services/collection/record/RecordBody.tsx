@@ -1,4 +1,4 @@
-import { Maximize2 } from 'lucide-react'
+import { Link2, Maximize2 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, navigate } from '../../navigation'
@@ -18,6 +18,7 @@ import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { LinkOrAdd } from './LinkOrAdd'
+import { FoldTitle } from '../parts'
 import { Properties } from './Properties'
 
 /**
@@ -213,8 +214,9 @@ function Sections<T, C>({
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   // The strip of the view left names it: "Records · Pump specification" (spec 12.1).
   const viewName = `${t(definition.i18n.title)} · ${panel.title(record)}`
+  // Spaced as the record's other parts, the texts (decision 159).
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {panel.sections?.map((section) => (
         <Section
           key={section.id}
@@ -235,7 +237,7 @@ function Sections<T, C>({
           }
         />
       ))}
-    </>
+    </div>
   )
 }
 
@@ -276,17 +278,16 @@ function Section({
   })
   const total = list.total ?? list.items.length
   const address = listAddress(linkedPath, scope)
+  // Folded away by its title's triangle (decision 159).
+  const [folded, setFolded] = useState(false)
   return (
-    <section className="border-t border-border pt-4">
-      <h3 className="flex items-baseline gap-2 font-medium">
-        {label}
-        <Show
-          as="span"
-          when={list.data}
-          className="text-xs font-normal text-muted"
-        >
-          {total}
-        </Show>
+    <section className="group/part">
+      <FoldTitle
+        icon={<Link2 size={14} />}
+        label={label}
+        folded={folded}
+        onFold={() => setFolded(!folded)}
+      >
         <Show as="span" when={total > PREVIEW} className="ms-auto">
           <Button
             size="sm"
@@ -297,88 +298,90 @@ function Section({
             <Maximize2 size={14} />
           </Button>
         </Show>
-      </h3>
-      <Switch className="mt-2">
-        <Match when={list.isPending}>
-          <span
-            role="status"
-            aria-label={t('collection:loading')}
-            className="flex flex-col gap-2 py-2"
-          >
-            <span className="block h-4 w-48 rounded-[var(--field-radius)] bg-default" />
-            <span className="block h-4 w-36 rounded-[var(--field-radius)] bg-default" />
-          </span>
-        </Match>
-        <Match when={list.isError && !list.data}>
-          <p role="alert" className="flex items-center gap-3 py-2 text-muted">
-            {t('collection:error.list')}
-            <Button
-              size="sm"
-              look="secondary"
-              onPress={() => void list.refetch()}
+      </FoldTitle>
+      <Show when={!folded} className="mt-2">
+        <Switch>
+          <Match when={list.isPending}>
+            <span
+              role="status"
+              aria-label={t('collection:loading')}
+              className="flex flex-col gap-2"
             >
-              {t('collection:error.retry')}
-            </Button>
-          </p>
-        </Match>
-        <Match when={list.items.length === 0}>
-          <p className="py-2 text-muted">{t('collection:section.empty')}</p>
-        </Match>
-        <Match when={list.items.length > 0}>
-          <ul className="flex flex-col">
-            {list.items.slice(0, PREVIEW).map((item) => (
-              <li
-                key={linked.getId(item)}
-                className="flex items-center gap-2 border-b border-border py-2"
+              <span className="block h-4 w-48 rounded-[var(--field-radius)] bg-default" />
+              <span className="block h-4 w-36 rounded-[var(--field-radius)] bg-default" />
+            </span>
+          </Match>
+          <Match when={list.isError && !list.data}>
+            <p role="alert" className="flex items-center gap-3 text-muted">
+              {t('collection:error.list')}
+              <Button
+                size="sm"
+                look="secondary"
+                onPress={() => void list.refetch()}
               >
-                <Show
-                  as="span"
-                  when={openLinked}
-                  className="min-w-0 flex-1 truncate"
-                  fallback={
-                    <Link
-                      href={
-                        linked.opensAsPage?.(item, context) ??
-                        `${linkedPath}/${encodeURIComponent(linked.getId(item))}`
-                      }
-                      className="block max-w-full truncate outline-none hover:underline focus-visible:underline"
-                    >
-                      {linked.panel?.title(item) ?? linked.getId(item)}
-                    </Link>
-                  }
+                {t('collection:error.retry')}
+              </Button>
+            </p>
+          </Match>
+          <Match when={list.items.length === 0}>
+            <p className="text-muted">{t('collection:section.empty')}</p>
+          </Match>
+          <Match when={list.items.length > 0}>
+            <ul className="-mt-2 flex flex-col">
+              {list.items.slice(0, PREVIEW).map((item) => (
+                <li
+                  key={linked.getId(item)}
+                  className="flex items-center gap-2 border-b border-border py-2"
                 >
-                  {(open) => (
-                    <button
-                      type="button"
-                      // A record people work inside opens its page (screen 51);
-                      // Back returns here. Any other opens in this panel (137).
-                      onClick={() => {
-                        const page = linked.opensAsPage?.(item, context)
-                        if (page) navigate(page)
-                        else open(linked.key, linked.getId(item))
-                      }}
-                      className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
-                    >
-                      {linked.panel?.title(item) ?? linked.getId(item)}
-                    </button>
-                  )}
-                </Show>
-                {linked.panel?.type(item)}
-              </li>
-            ))}
-          </ul>
-        </Match>
-      </Switch>
-      <Show when={link} className="mt-1 flex">
-        {(patch) => (
-          <LinkOrAdd
-            linked={linked}
-            context={context}
-            patch={patch}
-            listAddress={address}
-            viewName={viewName}
-          />
-        )}
+                  <Show
+                    as="span"
+                    when={openLinked}
+                    className="min-w-0 flex-1 truncate"
+                    fallback={
+                      <Link
+                        href={
+                          linked.opensAsPage?.(item, context) ??
+                          `${linkedPath}/${encodeURIComponent(linked.getId(item))}`
+                        }
+                        className="block max-w-full truncate outline-none hover:underline focus-visible:underline"
+                      >
+                        {linked.panel?.title(item) ?? linked.getId(item)}
+                      </Link>
+                    }
+                  >
+                    {(open) => (
+                      <button
+                        type="button"
+                        // A record people work inside opens its page (screen 51);
+                        // Back returns here. Any other opens in this panel (137).
+                        onClick={() => {
+                          const page = linked.opensAsPage?.(item, context)
+                          if (page) navigate(page)
+                          else open(linked.key, linked.getId(item))
+                        }}
+                        className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
+                      >
+                        {linked.panel?.title(item) ?? linked.getId(item)}
+                      </button>
+                    )}
+                  </Show>
+                  {linked.panel?.type(item)}
+                </li>
+              ))}
+            </ul>
+          </Match>
+        </Switch>
+        <Show when={link} className="mt-1 flex">
+          {(patch) => (
+            <LinkOrAdd
+              linked={linked}
+              context={context}
+              patch={patch}
+              listAddress={address}
+              viewName={viewName}
+            />
+          )}
+        </Show>
       </Show>
     </section>
   )

@@ -136,7 +136,7 @@ export function RecordPanel<T, C>({
     <aside
       onScroll={scrolled}
       aria-label={record ? panel.title(record) : t('collection:panel.label')}
-      className="scroll-quiet relative flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
+      className="relative flex h-full w-full flex-col overflow-y-auto border-s border-border ps-8 pe-6"
     >
       {/* Its line runs across the whole panel (decision 152): -ms/-me undo the padding. */}
       <div

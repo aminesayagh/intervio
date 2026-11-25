@@ -95,7 +95,9 @@
         "label": "Fix spelling and grammar",
         "prompt": "Fix the spelling and grammar only; change nothing else."
       }
-    }
+    },
+    "hide": "Hide {{name}}",
+    "show": "Show {{name}}"
   },
   "actions": {
     "more": "More actions",

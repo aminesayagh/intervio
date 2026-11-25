@@ -37,18 +37,9 @@ const tools: [
   ['numbered', ListOrdered, (editor) => toggleNumberedList(editor)],
 ]
 
-/** The description editor's toolbar, beside its label. */
-export function Toolbar({ scope }: { scope: string }) {
-  return (
-    <div className="ms-auto flex">
-      <Tools scope={scope} />
-    </div>
-  )
-}
-
 /**
- * The same tools over the selected text (Plate's floating toolbar): they apply to
- * that part only. Kept open while its link or AI panel is in use (their popovers
+ * The editor's tools over the selected text (Plate's floating toolbar): they apply
+ * to that part only. Kept open while its link or AI panel is in use (their popovers
  * carry Plate's ignore class).
  */
 export function FloatingToolbar({ scope }: { scope: string }) {

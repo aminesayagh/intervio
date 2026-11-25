@@ -3,6 +3,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -80,11 +81,13 @@ test('the description saves by itself, says Saved, and Escape leaves the text', 
   const { source, aside, field } = await openRecord()
   await enter(field)
   await clearEditor(field)
-  await typeIn(field, 'Seals ')
-  await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
   await typeIn(field, 'checked')
+  await selectAll(field)
+  await userEvent.click(
+    within(screen.getByRole('toolbar')).getByRole('button', { name: 'Bold' }),
+  )
   await vi.waitFor(
-    () => expect(source.items()[0].description).toBe('Seals **checked**'),
+    () => expect(source.items()[0].description).toBe('**checked**'),
     { timeout: 3000 },
   )
   expect(within(field).getByText('checked').closest('strong')).not.toBeNull()
@@ -114,7 +117,7 @@ test('a failed save says Not saved, keeps the text, and Retry saves it', async (
   expect(within(aside).queryByText('Not saved')).toBeNull()
 })
 
-test('it is edited in place, the toolbar shows with the cursor in it, and Bold wraps the selection', async () => {
+test('it is edited in place, the tools float over a selection, and Bold wraps it', async () => {
   const { aside, field } = await openRecord()
   expect(field).toHaveAttribute('contenteditable', 'true')
   expect(within(aside).queryByRole('tab')).toBeNull()
@@ -123,8 +126,12 @@ test('it is edited in place, the toolbar shows with the cursor in it, and Bold w
   await enter(field)
   await clearEditor(field)
   await typeIn(field, 'pump')
+  // No tools with the cursor alone: they come over the selected text.
+  expect(screen.queryByRole('button', { name: 'Bold' })).toBeNull()
   await selectAll(field)
-  await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
+  await userEvent.click(
+    within(screen.getByRole('toolbar')).getByRole('button', { name: 'Bold' }),
+  )
   expect(markdownOf(field)).toBe('**pump**')
   expect(within(field).getByText('pump').closest('strong')).not.toBeNull()
 })
@@ -212,4 +219,27 @@ test('a newer text from the record replaces the one shown, unless the person is 
   expect(markdownOf(screen.getByRole('textbox', { name: 'Description' }))).toBe(
     'Seals and bearings',
   )
+})
+
+test('the triangle before its title folds the text away and shows it again', async () => {
+  render(
+    <Description
+      value="Seals **checked**"
+      editable
+      storageKey="fold"
+      scope="test"
+      save={async () => {}}
+    />,
+  )
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Hide Description' }),
+  )
+  await waitFor(() =>
+    expect(screen.queryByRole('textbox', { name: 'Description' })).toBeNull(),
+  )
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Show Description' }),
+  )
+  const field = await screen.findByRole('textbox', { name: 'Description' })
+  expect(markdownOf(field)).toBe('Seals **checked**')
 })

@@ -80,7 +80,7 @@ test('Escape drops the AI proposal and leaves the text as it was', async () => {
 })
 
 async function ask(prompt: string) {
-  // The header's button (first in the page): it asks with or without a selection.
+  // The floating toolbar's button, over the selected text.
   await userEvent.click(screen.getAllByRole('button', { name: 'Ask AI' })[0])
   await userEvent.type(
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
@@ -141,6 +141,7 @@ test('a proposal the editor cannot read is reported, not applied', async () => {
   )
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
+  await selectAll(field)
   await ask('Rewrite it')
   await userEvent.keyboard('{Enter}')
   expect(markdownOf(field)).toBe(TEXT)

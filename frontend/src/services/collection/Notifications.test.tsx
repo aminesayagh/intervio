@@ -148,7 +148,7 @@ test('an Undo that fails says the record stays', async () => {
   const linked = (await within(jack).findByText('Linked items')).closest(
     'section',
   )!
-  await waitFor(() => expect(linked.textContent).toMatch(/\d/))
+  await within(linked).findByText('None yet.')
   source.settings.failNext = true
   await userEvent.click(screen.getByRole('button', { name: 'Undo' }))
   expect(

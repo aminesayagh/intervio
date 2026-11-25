@@ -76,12 +76,14 @@ async function showAllParts() {
   )
 }
 
-test('a section shows its first five linked records and their count', async () => {
+test('a section shows its first five linked records, and Show all for the others', async () => {
   show(`/items?open=${ITEM_001}`)
   const aside = await panel('Item 001')
   seeSections()
   const section = (await within(aside).findByText('Parts')).closest('section')!
-  expect(await within(section).findByText('7')).toBeInTheDocument()
+  expect(
+    await within(section).findByRole('button', { name: /Show all/ }),
+  ).toBeInTheDocument()
   expect(within(section).getAllByRole('listitem')).toHaveLength(5)
 })
 
@@ -262,15 +264,19 @@ test('a linked part is archived from the item’s panel: the panel goes back, th
   expect(within(dialog).getByText('Archive this part?')).toBeInTheDocument()
   await userEvent.click(within(dialog).getByRole('button', { name: 'Archive' }))
 
-  // One step back, to the item, whose Parts section counts one part less.
+  // One step back, to the item, whose Parts section no longer lists it.
   const item = await panel('Item 001')
   seeSections()
   const section = (await within(item).findByText('Parts')).closest('section')!
-  expect(await within(section).findByText('6')).toBeInTheDocument()
+  await waitFor(() =>
+    expect(within(section).queryByText('Filter 1, Item 001')).toBeNull(),
+  )
   expect(screen.queryByRole('navigation', { name: 'Records left' })).toBeNull()
 
   await userEvent.click(await screen.findByRole('button', { name: 'Undo' }))
-  expect(await within(section).findByText('7')).toBeInTheDocument()
+  expect(
+    await within(section).findByText('Filter 1, Item 001'),
+  ).toBeInTheDocument()
 })
 
 test('a section that fails to load says so, with Retry', async () => {
@@ -388,7 +394,7 @@ async function linkOrAdd() {
   const aside = await panel('Item 001')
   seeSections()
   const section = (await within(aside).findByText('Parts')).closest('section')!
-  await within(section).findByText('7')
+  await within(section).findByText('Filter 1, Item 001')
   await userEvent.click(
     within(section).getByRole('button', { name: '+ Link or add' }),
   )
@@ -397,7 +403,7 @@ async function linkOrAdd() {
 
 test('"+ Link or add" links an existing record found by its name', async () => {
   const { parts } = show(`/items?open=${ITEM_001}`)
-  const section = await linkOrAdd()
+  await linkOrAdd()
   const dialog = await screen.findByRole('dialog', { name: '+ Link or add' })
   await userEvent.type(
     within(dialog).getByRole('textbox', { name: 'Search' }),
@@ -411,8 +417,6 @@ test('"+ Link or add" links an existing record found by its name', async () => {
       parts.items().find((part) => part.name === 'Filter 1, Item 004')?.item,
     ).toBe(ITEM_001),
   )
-  // The section counts it now.
-  expect(await within(section).findByText('8')).toBeInTheDocument()
 })
 
 test('"+ Link or add" adds a new record, created linked', async () => {
@@ -452,7 +456,7 @@ test('without the right to add in a section, there is no "+ Link or add"', async
   const aside = await panel('Item 001')
   seeSections()
   const section = (await within(aside).findByText('Parts')).closest('section')!
-  await within(section).findByText('7')
+  await within(section).findByText('Filter 1, Item 001')
   expect(
     within(section).queryByRole('button', { name: '+ Link or add' }),
   ).toBeNull()

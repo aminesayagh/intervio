@@ -85,7 +85,7 @@ export function EditorText({
       {...props}
       readOnly={readOnly}
       className={cn(
-        '-mx-2 min-w-0 rounded-[var(--field-radius)] px-2 py-1 break-words outline-none',
+        'min-w-0 break-words outline-none',
         !readOnly && 'cursor-text',
         '[&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:text-muted',
         '[&_code]:rounded-[var(--field-radius)] [&_code]:bg-default [&_code]:px-1 [&_h1]:text-lg [&_h1]:font-medium [&_h2]:text-lg [&_h2]:font-medium [&_h3]:font-medium',

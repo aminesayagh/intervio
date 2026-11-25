@@ -7,9 +7,6 @@ import { useRecordActions } from '../data/recordActions'
 import type { AnyCollection } from '../definition'
 import { drill } from '../drill/viewStack'
 
-/** How many records the search shows at once. */
-const SHOWN = 8
-
 /**
  * "+ Link or add" under a section (spec 7, decided 2026-11-23): a small panel with a
  * search over the linked collection's records not linked yet (picking one links it,
@@ -87,14 +84,13 @@ function LinkSearch({
     Object.entries(patch).every(
       ([name, value]) => (record as Record<string, unknown>)[name] === value,
     )
-  const results = list.items
-    .filter((record) => !linkedAlready(record))
-    .slice(0, SHOWN)
+  const results = list.items.filter((record) => !linkedAlready(record))
   const name = (record: unknown) =>
     linked.panel?.title(record) ?? linked.getId(record)
 
+  // One tight column: the search, its results and "+ Add …" belong together.
   return (
-    <>
+    <div className="flex flex-col gap-1">
       <TextInput
         aria-label={t('collection:search')}
         placeholder={t('collection:search')}
@@ -115,7 +111,19 @@ function LinkSearch({
           </p>
         }
       >
-        <ul className="-mx-1 flex flex-col">
+        <ul
+          className="flex max-h-72 flex-col overflow-y-auto"
+          // Near its end, the next page loads: scrolling goes on through every record.
+          onScroll={(event) => {
+            const ul = event.currentTarget
+            if (
+              ul.scrollHeight - ul.scrollTop - ul.clientHeight < 40 &&
+              list.hasNextPage &&
+              !list.isFetchingNextPage
+            )
+              void list.fetchNextPage()
+          }}
+        >
           {results.map((record) => (
             <li key={linked.getId(record)}>
               <button
@@ -128,7 +136,7 @@ function LinkSearch({
                       })
                       .then(onLinked, () => {}) // a failure says so (its message)
                 }
-                className="w-full cursor-pointer truncate rounded-[var(--field-radius)] px-1 py-1.5 text-start outline-none hover:bg-default focus-visible:bg-default"
+                className="w-full cursor-pointer truncate rounded-[var(--field-radius)] px-2 py-1.5 text-start outline-none hover:bg-default focus-visible:bg-default"
               >
                 {name(record)}
               </button>
@@ -136,16 +144,17 @@ function LinkSearch({
           ))}
         </ul>
       </Show>
-      <Show when={linked.create && linked.source.create}>
+      <Show when={linked.create && linked.source.create} className="flex">
+        {/* As wide as the results, its pointer background inside the box. */}
         <Button
           size="sm"
           look="ghost"
-          className="-ms-3 self-start"
+          className="w-full justify-start px-2 font-normal"
           onPress={onAdd}
         >
           {t(linked.create?.add ?? '')}
         </Button>
       </Show>
-    </>
+    </div>
   )
 }

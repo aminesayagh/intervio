@@ -8,15 +8,16 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { notify } from '../../notifications'
+import { LetterText } from 'lucide-react'
 import { Button, Match, Show, Switch } from '../../ui-kit'
-import { ErrorText } from '../parts'
+import { ErrorText, FoldTitle } from '../parts'
 import {
   EditorText,
   PlateEditor,
   type MarkdownFailure,
 } from './description/PlateEditor'
 import { AIProposal, DescriptionAI } from './description/AskAI'
-import { FloatingToolbar, Toolbar } from './description/Toolbar'
+import { FloatingToolbar } from './description/Toolbar'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6), in Markdown characters. */
@@ -113,21 +114,20 @@ function Editor({
     if (text.length <= MAX_LENGTH) autosave.change(text)
   }, [text, autosave])
 
-  // The toolbar shows while the cursor is in the description (its link field, in a
-  // popover outside the page's flow, counts as inside: React's focus events reach
+  // Whether the cursor is in the description (the floating toolbar's link field, in
+  // a popover outside the page's flow, counts as inside: React's focus events reach
   // here from it). Leaving saves at once.
-  const [cursorIn, setCursorIn] = useState(false)
   const inside = useRef(false)
+  // Folded away by its title's triangle; the text stays here, ready to show again.
+  const [collapsed, setCollapsed] = useState(false)
   const area = useRef<HTMLElement>(null)
   function onFocus(event: FocusEvent) {
     inside.current = event.target !== event.currentTarget
-    setCursorIn(inside.current)
   }
   function onBlur() {
     inside.current = false
     setTimeout(() => {
       if (inside.current) return // focus moved within: the toolbar, its link field
-      setCursorIn(false)
       void autosave.flush()
     })
   }
@@ -186,63 +186,60 @@ function Editor({
       onBlur={onBlur}
       // Captured: Plate's own Escape handling stops the key before it bubbles here.
       onKeyDownCapture={onKeyDown}
-      className="flex flex-col outline-none"
+      className="group/part flex flex-col outline-none"
     >
-      <PlateEditor
-        key={opened}
-        initial={text}
-        onChange={change}
-        onFailure={fail}
-        fallback={
-          <>
-            <h3 className="mb-1 text-muted">{label}</h3>
-            <p className="break-words whitespace-pre-wrap">{text}</p>
-          </>
-        }
+      <FoldTitle
+        icon={<LetterText size={14} />}
+        label={label}
+        folded={collapsed}
+        onFold={() => setCollapsed(!collapsed)}
       >
-        <DescriptionAI scope={scope}>
-          <div className="mb-1 flex min-h-8 items-center gap-2">
-            <h3 className="text-muted">{label}</h3>
-            <Show when={editable && cursorIn} className="ms-auto">
-              <Toolbar scope={scope} />
-            </Show>
+        {/* Its status, at the end of the row: saving, not saved, too long. */}
+        <Show as="span" when={editable} className="ms-auto">
+          <div aria-live="polite" className="flex items-center gap-2 text-xs">
+            <Switch>
+              <Match when={tooLong}>
+                <ErrorText>{t('description.tooLong')}</ErrorText>
+              </Match>
+              <Match when={autosave.status === 'failed'}>
+                <ErrorText className="flex items-center gap-2">
+                  {t('description.failed')}
+                  <Button
+                    look="ghost"
+                    size="sm"
+                    onPress={() => void autosave.retry()}
+                  >
+                    {t('error.retry')}
+                  </Button>
+                </ErrorText>
+              </Match>
+              <Match when={autosave.status === 'saving'}>
+                <span>{t('description.saving')}</span>
+              </Match>
+            </Switch>
           </div>
-          <EditorText
-            aria-label={label}
-            aria-invalid={tooLong || undefined}
-            readOnly={!editable}
-            placeholder={t('description.add')}
-          />
-          <FloatingToolbar scope={scope} />
-          <AIProposal />
-        </DescriptionAI>
-      </PlateEditor>
-      <Show when={editable}>
-        <div
-          aria-live="polite"
-          className="flex min-h-6 items-center justify-end gap-2 text-xs text-muted"
+        </Show>
+      </FoldTitle>
+      <Show when={!collapsed} className="mt-2">
+        <PlateEditor
+          key={opened}
+          initial={text}
+          onChange={change}
+          onFailure={fail}
+          fallback={<p className="break-words whitespace-pre-wrap">{text}</p>}
         >
-          <Switch>
-            <Match when={tooLong}>
-              <ErrorText>{t('description.tooLong')}</ErrorText>
-            </Match>
-            <Match when={autosave.status === 'failed'}>
-              <ErrorText className="flex items-center gap-2">
-                {t('description.failed')}
-                <Button
-                  look="ghost"
-                  size="sm"
-                  onPress={() => void autosave.retry()}
-                >
-                  {t('error.retry')}
-                </Button>
-              </ErrorText>
-            </Match>
-            <Match when={autosave.status === 'saving'}>
-              <span>{t('description.saving')}</span>
-            </Match>
-          </Switch>
-        </div>
+          <DescriptionAI scope={scope}>
+            {/* The tools float over a selection only (decision 159). */}
+            <EditorText
+              aria-label={label}
+              aria-invalid={tooLong || undefined}
+              readOnly={!editable}
+              placeholder={t('description.add')}
+            />
+            <FloatingToolbar scope={scope} />
+            <AIProposal />
+          </DescriptionAI>
+        </PlateEditor>
       </Show>
     </section>
   )

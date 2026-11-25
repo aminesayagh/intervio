@@ -68,7 +68,7 @@ export function Table({
         ref={ref as unknown as Ref<HTMLTableElement>}
         className={cn(
           // It fills what its column leaves (a flex item), and scrolls inside.
-          'scroll-quiet min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
+          'min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
           className,
         )}
       />

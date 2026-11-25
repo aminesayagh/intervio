@@ -95,7 +95,9 @@
         "label": "Corriger l’orthographe et la grammaire",
         "prompt": "Corrige seulement l’orthographe et la grammaire ; ne change rien d’autre."
       }
-    }
+    },
+    "hide": "Masquer {{name}}",
+    "show": "Afficher {{name}}"
   },
   "actions": {
     "more": "Plus d’actions",

@@ -32,7 +32,7 @@ export function RowList<T extends object>({
         {...props}
         ref={ref}
         className={cn(
-          'scroll-quiet min-h-0 w-full flex-1 overflow-auto outline-none',
+          'min-h-0 w-full flex-1 overflow-auto outline-none',
           className,
         )}
       />

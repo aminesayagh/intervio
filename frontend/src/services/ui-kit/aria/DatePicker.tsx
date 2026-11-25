@@ -19,6 +19,7 @@ import {
   type DateValue,
 } from 'react-aria-components'
 import { cn } from '../cn'
+import { chip } from './styles'
 
 const iconButton =
   'flex cursor-pointer items-center justify-center rounded-[var(--field-radius)] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-2 data-[focus-visible]:outline-foreground'
@@ -38,20 +39,20 @@ export function DatePicker<T extends DateValue>({
       {...props}
       className={cn(
         'group/date flex min-w-0',
-        look === 'panel' && '-ms-2 w-fit max-w-full',
+        look === 'panel' && 'w-fit max-w-full',
       )}
     >
       <Group
         className={cn(
           'flex min-w-0 items-center gap-1 rounded-[var(--field-radius)]',
-          look === 'panel' && 'px-2 py-1 data-[focus-within]:bg-default',
+          look === 'panel' && chip,
         )}
       >
         <DateInput className="flex min-w-0 tabular-nums">
           {(segment) => (
             <DateSegment
               segment={segment}
-              className="rounded-[2px] px-px outline-none data-[focused]:bg-foreground data-[focused]:text-background data-[placeholder]:text-muted data-[type=literal]:px-0"
+              className="-mx-px rounded-[2px] px-px outline-none data-[focused]:bg-foreground data-[focused]:text-background data-[placeholder]:text-muted data-[type=literal]:mx-0 data-[type=literal]:px-0"
             />
           )}
         </DateInput>

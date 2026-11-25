@@ -17,9 +17,8 @@ import { recordScope } from '../data/recordActions'
 import { Description } from '../values/Description'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
-import { ValueField } from '../values/ValueField'
-import { WakeOnReach } from '../values/WakeOnReach'
 import { LinkOrAdd } from './LinkOrAdd'
+import { Properties } from './Properties'
 
 /**
  * A record's content, the same in the panel and on the full page (spec 7, 13): title,
@@ -95,50 +94,15 @@ export function RecordBody<T, C>({
           </Show>
         </div>
 
-        <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
-          {panel.properties
-            .filter((property) => property.field?.type !== 'richText')
-            .map((property) => (
-              <div key={property.id} className="contents">
-                <dt className="text-muted">{t(property.label)}</dt>
-                <dd className="min-w-0">
-                  <WakeOnReach>
-                    <ValueField
-                      record={shown}
-                      field={property.field}
-                      allowed={canEdit(shown, property.id)}
-                      read={property.value}
-                      label={t(property.label)}
-                      namespace={definition.i18n.namespace}
-                      save={(patch) =>
-                        save(shown, patch, { label: t(property.label) })
-                      }
-                      onInvalid={(reason) =>
-                        report(shown, t(property.label), reason)
-                      }
-                      look="panel"
-                    />
-                  </WakeOnReach>
-                </dd>
-              </div>
-            ))}
-        </dl>
-
-        {/* The properties end here; the texts follow (decision 152). In the panel the
-        line runs across it, as the top bar's does. */}
-        <Show
-          when={
-            panel.description ||
-            panel.properties.some((p) => p.field?.type === 'richText')
-          }
-        >
-          <div
-            className={cn(
-              'border-t border-border',
-              layout === 'panel' && '-ms-8 -me-6',
-            )}
-          />
-        </Show>
+        <Properties
+          definition={definition}
+          panel={panel}
+          record={shown}
+          canEdit={canEdit}
+          save={save}
+          report={report}
+          layout={layout}
+        />
 
         <Show when={panel.description}>
           {(description) => (

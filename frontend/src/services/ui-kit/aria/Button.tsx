@@ -1,6 +1,6 @@
 import { Button as AriaButton, type ButtonProps } from 'react-aria-components'
 import { cn } from '../cn'
-import { focusRing } from './styles'
+import { chip, focusRing } from './styles'
 
 const buttonLook = {
   primary:
@@ -52,8 +52,7 @@ export function FieldButton({
       className={cn(
         'flex max-w-full cursor-pointer rounded-[var(--field-radius)]',
         focusRing,
-        look === 'panel' &&
-          '-mx-2 px-2 py-1 data-[hovered]:bg-default data-[pressed]:bg-default',
+        look === 'panel' && chip,
         className,
       )}
     />

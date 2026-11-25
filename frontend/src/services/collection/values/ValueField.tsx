@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Checkbox, cn, Variant } from '../../ui-kit'
+import { addLook, Checkbox, cn, Variant } from '../../ui-kit'
 import { ChoiceCell } from './ChoiceCell'
 import type { FieldDefinition, LinkField } from '../definition'
 import { EditableCell } from './EditableCell'
@@ -15,7 +15,7 @@ import { LinkCell, LinkValue } from './LinkCell'
 import { firstLine } from './markdown'
 import { MultiChoiceCell } from './MultiChoiceCell'
 import { NumberCell } from './NumberCell'
-import { STILL, STILL_IN_TABLE } from './still'
+import { isEmpty, STILL, STILL_IN_TABLE } from './still'
 import { StillValue } from './StillValue'
 import { useAwake } from './awake'
 
@@ -24,29 +24,6 @@ const isLink = <T,>(field: FieldDefinition<T>): field is LinkField<T> =>
   field.type === 'email' ||
   field.type === 'phone' ||
   field.type === 'location'
-
-/**
- * True when a value has nothing yet (decision 151). Values with their own way to start
- * (a checkbox, files, a picture, a rich text) are never "empty" here.
- */
-function isEmpty<T>(field: FieldDefinition<T>, record: T) {
-  switch (field.type) {
-    case 'checkbox':
-    case 'file':
-    case 'avatar':
-    case 'richText':
-      return false
-    default: {
-      const value: unknown = field.value(record)
-      return (
-        value === null ||
-        value === undefined ||
-        value === '' ||
-        (Array.isArray(value) && value.length === 0)
-      )
-    }
-  }
-}
 
 /**
  * One value of a record, wherever it shows (table cell, panel, new record): its text
@@ -98,7 +75,8 @@ export function ValueField<T>({
       <button
         type="button"
         onClick={() => setAdding(true)}
-        className="inline-flex h-6 items-center gap-1 rounded-[var(--field-radius)] border border-border px-2 text-xs text-muted outline-none hover:text-foreground focus-visible:border-foreground"
+        data-empty
+        className={addLook}
       >
         <Plus size={12} />
         {t('empty.add', { name: label })}
@@ -159,6 +137,7 @@ export function ValueField<T>({
               namespace={namespace}
               save={save}
               look={look}
+              fit={look === 'panel'} // a chip, as wide as its text
               onInvalid={onInvalid}
             />
           ),

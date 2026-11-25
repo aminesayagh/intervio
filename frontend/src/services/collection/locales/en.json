@@ -23,7 +23,11 @@
     "title": "Title",
     "resize": "Resize the panel",
     "back": "Back to {{name}}",
-    "name": "Name"
+    "name": "Name",
+    "fold": "Fold the properties",
+    "unfold": "Show the properties",
+    "expand": "Expand",
+    "reduce": "Back beside the list"
   },
   "description": {
     "label": "Description",
@@ -142,7 +146,6 @@
     "uploadFailed": "The file couldn't be uploaded.",
     "files_one": "{{count}} file",
     "files_other": "{{count}} files",
-    "addFiles": "+ Add files",
     "removeFile": "Remove {{name}}",
     "fileType": "{{name}} isn't a document this field takes.",
     "fileSize": "{{name}} is over {{size}} MB."

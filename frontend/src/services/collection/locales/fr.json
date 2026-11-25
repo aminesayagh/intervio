@@ -23,7 +23,11 @@
     "title": "Titre",
     "resize": "Redimensionner le panneau",
     "back": "Retour à {{name}}",
-    "name": "Nom"
+    "name": "Nom",
+    "fold": "Replier les propriétés",
+    "unfold": "Afficher les propriétés",
+    "expand": "Agrandir",
+    "reduce": "Revenir à côté de la liste"
   },
   "description": {
     "label": "Description",
@@ -142,7 +146,6 @@
     "uploadFailed": "Le fichier n’a pas pu être téléversé.",
     "files_one": "{{count}} fichier",
     "files_other": "{{count}} fichiers",
-    "addFiles": "+ Ajouter des fichiers",
     "removeFile": "Retirer {{name}}",
     "fileType": "{{name}} n’est pas un document accepté ici.",
     "fileSize": "{{name}} dépasse {{size}} Mo."

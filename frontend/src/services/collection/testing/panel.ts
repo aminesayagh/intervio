@@ -20,13 +20,12 @@ export async function reachValue(panel: HTMLElement, label: string) {
   const term = within(panel).getByText(label, { selector: 'dt' })
   const box = term.nextElementSibling!.firstElementChild as HTMLElement
   await userEvent.hover(box)
-  const add = within(box).queryByRole('button', { name: `Add ${label}` })
+  // The empty value's button, not the files' "Add Files" (the same words).
+  const add = box.querySelector<HTMLElement>('button[data-empty]')
   if (add) {
     await userEvent.click(add)
     await waitFor(() =>
-      expect(
-        within(box).queryByRole('button', { name: `Add ${label}` }),
-      ).toBeNull(),
+      expect(box.querySelector('button[data-empty]')).toBeNull(),
     )
     if (screen.queryByRole('menu') || screen.queryByRole('dialog'))
       await userEvent.keyboard('{Escape}')

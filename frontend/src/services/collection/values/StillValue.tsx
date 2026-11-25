@@ -1,7 +1,7 @@
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
-import { Check } from 'lucide-react'
+import { Check, ImageUp, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { cn } from '../../ui-kit'
+import { addLook, chip, cn } from '../../ui-kit'
 import type { FieldDefinition } from '../definition'
 import { AvatarImage } from './AvatarCell'
 import { FileList } from './FileCell'
@@ -9,11 +9,12 @@ import { OpenLink } from './LinkCell'
 import type { ReactNode } from 'react'
 
 /** The text field's panel look, at rest. */
-const field =
-  'cursor-text rounded-[var(--field-radius)] px-2 py-1 outline-none focus-visible:bg-default'
+const field = cn(chip, 'cursor-text outline-none')
 /** The menu button's panel look (FieldButton), at rest. */
-const menu =
-  '-mx-2 flex max-w-full cursor-pointer rounded-[var(--field-radius)] px-2 py-1 outline-none hover:bg-default focus-visible:outline-2 focus-visible:outline-foreground'
+const menu = cn(
+  chip,
+  'flex max-w-full cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-foreground',
+)
 /** A small ghost button (Button look="ghost" size="sm"), at rest. */
 const ghost =
   'inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--field-radius)] px-3 font-medium outline-none hover:bg-default focus-visible:outline-2 focus-visible:outline-foreground'
@@ -60,7 +61,7 @@ export function StillValue<T>({
         <span
           data-asleep
           tabIndex={0}
-          className={cn('-mx-2 block truncate', field)}
+          className={cn('block w-fit max-w-full truncate', field)}
         >
           {definition.value(record) || ' '}
         </span>
@@ -75,7 +76,7 @@ export function StillValue<T>({
           <span
             data-asleep
             tabIndex={0}
-            className={cn(field, '-ms-2 block min-w-16 truncate pe-4')}
+            className={cn(field, 'block min-w-16 truncate pe-4')}
           >
             {value || ' '}
           </span>
@@ -129,32 +130,39 @@ export function StillValue<T>({
     case 'avatar': {
       const file = definition.value(record)
       const remove = file ? (
-        <button type="button" tabIndex={-1} className={ghost}>
-          {t('fields.remove')}
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label={t('fields.remove')}
+          className={cn(ghost, 'px-2')}
+        >
+          <Trash2 size={14} />
         </button>
       ) : null
       return (
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-2">
           <AvatarImage edit={definition} file={file} look="panel" />
-          <button type="button" data-asleep className={ghost}>
-            {t(file ? 'fields.replace' : 'fields.uploadShort')}
-          </button>
-          {remove}
+          <span className="flex">
+            <button
+              type="button"
+              data-asleep
+              aria-label={t(file ? 'fields.replace' : 'fields.uploadShort')}
+              className={cn(ghost, 'px-2')}
+            >
+              <ImageUp size={14} />
+            </button>
+            {remove}
+          </span>
         </span>
       )
     }
     case 'file':
       return (
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <FileList files={definition.value(record)} src={definition.src} />
-          {/* 3 px more above than the real button's mt-1: the drop zone's hidden
-          button adds a line's descent before it. */}
-          <button
-            type="button"
-            data-asleep
-            className={cn(ghost, '-ms-3 mt-[7px]')}
-          >
-            {t('fields.addFiles')}
+          <button type="button" data-asleep className={addLook}>
+            <Plus size={12} />
+            {t('empty.add', { name: label })}
           </button>
         </div>
       )

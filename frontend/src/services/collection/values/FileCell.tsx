@@ -1,8 +1,15 @@
-import { File as FileIcon, X } from 'lucide-react'
+import { File as FileIcon, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatSize } from '../../files'
-import { Button, DropZone, FileTrigger, Show, Variant } from '../../ui-kit'
+import {
+  addLook,
+  Button,
+  cn,
+  DropZone,
+  FileTrigger,
+  Show,
+  Variant,
+} from '../../ui-kit'
 import type { FileField, StoredFile } from '../definition'
 
 /** The kinds of files a file field takes by default, as the files service does. */
@@ -46,11 +53,11 @@ export function FileList({
 }) {
   const { t } = useTranslation('collection')
   return (
-    <ul className="flex flex-col">
+    <ul className="contents">
       {files.map((file) => (
         <li
           key={file.id}
-          className="group/file flex min-w-0 items-center gap-2 py-1"
+          className="group/file flex h-6 max-w-full min-w-0 items-center gap-1.5 rounded-[var(--field-radius)] border border-border px-1.5"
         >
           <FileIcon size={14} className="text-muted" />
           <a
@@ -61,16 +68,13 @@ export function FileList({
           >
             {file.name}
           </a>
-          <span className="shrink-0 text-xs text-muted">
-            {formatSize(file.sizeBytes)}
-          </span>
-          <Show as="span" when={onRemove} className="ms-auto flex">
+          <Show as="span" when={onRemove} className="flex">
             {(remove) => (
               <button
                 type="button"
                 aria-label={t('fields.removeFile', { name: file.name })}
                 onClick={() => remove(file)}
-                className="flex cursor-pointer rounded-[var(--field-radius)] p-1 text-muted opacity-0 outline-none group-hover/file:opacity-100 hover:bg-default hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
+                className="-me-1 flex cursor-pointer rounded-[var(--field-radius)] p-0.5 text-muted opacity-0 outline-none group-hover/file:opacity-100 hover:bg-default hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-foreground"
               >
                 <X size={12} />
               </button>
@@ -84,7 +88,7 @@ export function FileList({
 
 /**
  * Files attached to the record (spec 7.3.0): in the panel, the list with a remove
- * button on each, "+ Add files" (several at once), and files can be dropped on it.
+ * button on each, "Add Files" (several at once), and files can be dropped on it.
  * Each file is checked (type, size), the good ones are uploaded with the
  * definition's `upload`, then saved together; a refused one is reported (decision
  * 132). In the table the count shows, and a click opens the record.
@@ -163,7 +167,11 @@ export function FileCell<T>({
               )
               void add(dropped)
             }}
-            className={busy ? 'opacity-50' : undefined}
+            // Side by side, wrapping when the line is full; Add Files comes last.
+            className={cn(
+              'flex flex-wrap items-center gap-2',
+              busy && 'opacity-50',
+            )}
           >
             <FileList files={files} src={edit.src} onRemove={remove} />
             <FileTrigger
@@ -175,10 +183,11 @@ export function FileCell<T>({
                 look="ghost"
                 size="sm"
                 isDisabled={busy}
-                className="-ms-3 mt-1"
+                className={addLook}
                 data-wake
               >
-                {t('fields.addFiles')}
+                <Plus size={12} />
+                {t('empty.add', { name: label })}
               </Button>
             </FileTrigger>
           </DropZone>

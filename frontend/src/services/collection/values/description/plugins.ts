@@ -2,15 +2,18 @@ import { BoldPlugin, H2Plugin, ItalicPlugin } from '@platejs/basic-nodes/react'
 import { LinkPlugin } from '@platejs/link/react'
 import { ListPlugin } from '@platejs/list-classic/react'
 import { MarkdownPlugin } from '@platejs/markdown'
+import { SlashInputPlugin, SlashPlugin } from '@platejs/slash-command/react'
 import type { SlateEditor, Value } from 'platejs'
 import { createPlateEditor } from 'platejs/react'
 import remarkGfm from 'remark-gfm'
 import { LinkElement } from './LinkElement'
+import { SlashInput } from './SlashInput'
 
 /**
  * The description editor's plugins: exactly the six toolbar features of spec 7.6
  * (bold, italic, heading, bullet list, numbered list, link), and Markdown in and out.
- * Headings are level 2, as the former Markdown toolbar wrote them.
+ * Headings are level 2, as the former Markdown toolbar wrote them. "/" at the start
+ * of a word opens the menu of blocks (never saved: it leaves the text when closed).
  */
 export const descriptionPlugins = [
   BoldPlugin,
@@ -18,6 +21,8 @@ export const descriptionPlugins = [
   H2Plugin,
   ListPlugin,
   LinkPlugin.withComponent(LinkElement),
+  SlashPlugin,
+  SlashInputPlugin.withComponent(SlashInput),
   MarkdownPlugin.configure({
     options: {
       remarkPlugins: [remarkGfm],

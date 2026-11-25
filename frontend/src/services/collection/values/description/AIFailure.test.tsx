@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import '../../../i18n'
@@ -38,12 +38,15 @@ test('the AI gets the text and the selection as Markdown; a refusal is a notific
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
   await selectAll(field)
-  await userEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
+  // The floating toolbar, over the selected text.
+  await userEvent.click(
+    within(screen.getByRole('toolbar')).getByRole('button', { name: 'Ask AI' }),
+  )
   await userEvent.type(
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     'Make it shorter',
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+  await userEvent.keyboard('{Enter}')
 
   await vi.waitFor(() =>
     expect(notify).toHaveBeenCalledWith(

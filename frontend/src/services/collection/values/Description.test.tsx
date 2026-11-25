@@ -83,10 +83,10 @@ test('the description saves by itself, says Saved, and Escape leaves the text', 
   await typeIn(field, 'Seals ')
   await userEvent.click(within(aside).getByRole('button', { name: 'Bold' }))
   await typeIn(field, 'checked')
-  expect(
-    await within(aside).findByText('Saved', undefined, { timeout: 3000 }),
-  ).toBeInTheDocument()
-  expect(source.items()[0].description).toBe('Seals **checked**')
+  await vi.waitFor(
+    () => expect(source.items()[0].description).toBe('Seals **checked**'),
+    { timeout: 3000 },
+  )
   expect(within(field).getByText('checked').closest('strong')).not.toBeNull()
 
   fireEvent.keyDown(field, { key: 'Escape' })
@@ -106,10 +106,12 @@ test('a failed save says Not saved, keeps the text, and Retry saves it', async (
 
   source.settings.failing = false
   await userEvent.click(within(aside).getByRole('button', { name: 'Retry' }))
-  expect(await within(aside).findByText('Saved')).toBeInTheDocument()
-  expect(source.items()[0].description).toBe(
-    `${makeItems(1)[0].description} more`,
+  await vi.waitFor(() =>
+    expect(source.items()[0].description).toBe(
+      `${makeItems(1)[0].description} more`,
+    ),
   )
+  expect(within(aside).queryByText('Not saved')).toBeNull()
 })
 
 test('it is edited in place, the toolbar shows with the cursor in it, and Bold wraps the selection', async () => {
@@ -185,10 +187,10 @@ test('a draft kept in the tab is saved when the description opens again', async 
       save={save}
     />,
   )
-  expect(
-    await screen.findByText('Saved', undefined, { timeout: 3000 }),
-  ).toBeInTheDocument()
-  expect(save).toHaveBeenCalledWith('Seals **checked**')
+  await vi.waitFor(
+    () => expect(save).toHaveBeenCalledWith('Seals **checked**'),
+    { timeout: 3000 },
+  )
   expect(sessionStorage.getItem('draft-key')).toBeNull()
 })
 

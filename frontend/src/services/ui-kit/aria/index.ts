@@ -13,8 +13,11 @@ export { ConfirmDialog } from './Dialog'
 export {
   ActionMenu,
   ChoiceMenu,
+  CommandMenu,
+  CommandSearch,
   MenuPopover,
   MenuTrigger,
+  type Command,
   type MenuAction,
 } from './Menu'
 export { NumberInput } from './NumberField'

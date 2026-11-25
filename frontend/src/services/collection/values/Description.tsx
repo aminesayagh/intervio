@@ -16,7 +16,7 @@ import {
   type MarkdownFailure,
 } from './description/PlateEditor'
 import { AIProposal, DescriptionAI } from './description/AskAI'
-import { Toolbar } from './description/Toolbar'
+import { FloatingToolbar, Toolbar } from './description/Toolbar'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6), in Markdown characters. */
@@ -213,6 +213,7 @@ function Editor({
             readOnly={!editable}
             placeholder={t('description.add')}
           />
+          <FloatingToolbar scope={scope} />
           <AIProposal />
         </DescriptionAI>
       </PlateEditor>
@@ -239,9 +240,6 @@ function Editor({
             </Match>
             <Match when={autosave.status === 'saving'}>
               <span>{t('description.saving')}</span>
-            </Match>
-            <Match when={autosave.status === 'saved'}>
-              <span>{t('description.saved')}</span>
             </Match>
           </Switch>
         </div>

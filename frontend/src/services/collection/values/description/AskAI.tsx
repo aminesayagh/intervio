@@ -1,6 +1,17 @@
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type ChatTransport, type UIMessage } from 'ai'
-import { Sparkles } from 'lucide-react'
+import {
+  ClipboardList,
+  FileText,
+  ListChecks,
+  Mail,
+  Minimize2,
+  Sparkles,
+  SpellCheck,
+  TriangleAlert,
+  WandSparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { RangeApi } from 'platejs'
 import {
   createPlateEditor,
@@ -15,13 +26,12 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { csrfHeaders } from '../../../http'
 import { notify } from '../../../notifications'
-import { Button, PopoverDialog, Show, TextInput } from '../../../ui-kit'
+import { Button, CommandSearch, PopoverDialog, Show } from '../../../ui-kit'
 import { EditorText } from './PlateEditor'
 import { descriptionPlugins, parseMarkdown, serializeMarkdown } from './plugins'
 import { simulatedTransport, type DescriptionContext } from './simulatedAI'
@@ -161,6 +171,26 @@ export function DescriptionAI({
     reject: clear,
   }
 
+  // While there is a proposal, Enter accepts it and Escape drops it (or stops the
+  // writing), wherever the focus is but in another field. Caught before the text
+  // (no new line) and the panel (Escape doesn't close it).
+  useEffect(() => {
+    if (!proposal && !ai.busy) return
+    function key(event: KeyboardEvent) {
+      const target = event.target as HTMLElement
+      const text = editor.api.toDOMNode(editor)
+      const field = target.closest('input, textarea, [contenteditable="true"]')
+      if (field && !text?.contains(target)) return
+      if (event.key === 'Escape') ai.reject()
+      else if (event.key === 'Enter' && proposal && !ai.busy) ai.accept()
+      else return
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    document.addEventListener('keydown', key, true)
+    return () => document.removeEventListener('keydown', key, true)
+  })
+
   return <AIContext.Provider value={ai}>{children}</AIContext.Provider>
 }
 
@@ -170,13 +200,14 @@ function useAI() {
   return ai
 }
 
-/** The toolbar's "Ask AI": a free prompt about the selection, or the whole text. */
+/** The toolbar's "Ask AI": a request about the selection, or the whole text. */
 export function AskAIButton() {
   const { t } = useTranslation('collection')
   const ai = useAI()
   return (
     <PopoverDialog
       label={t('description.askAI')}
+      width={340}
       trigger={
         <Button
           look="ghost"
@@ -190,7 +221,7 @@ export function AskAIButton() {
       }
     >
       {(close) => (
-        <PromptForm
+        <AIRequests
           onDone={(prompt) => {
             close()
             ai.ask(prompt)
@@ -201,34 +232,55 @@ export function AskAIButton() {
   )
 }
 
-function PromptForm({ onDone }: { onDone: (prompt: string) => void }) {
-  const { t } = useTranslation('collection')
-  const [prompt, setPrompt] = useState('')
+/** The requests offered, for managing interventions (their wording is in the locales). */
+const requests: [id: string, icon: LucideIcon][] = [
+  ['report', ClipboardList],
+  ['summary', FileText],
+  ['actions', ListChecks],
+  ['client', Mail],
+  ['risks', TriangleAlert],
+  ['improve', WandSparkles],
+  ['shorter', Minimize2],
+  ['spelling', SpellCheck],
+]
+const FREE = 'free'
 
-  function submit(event: FormEvent) {
-    event.preventDefault()
-    if (prompt.trim()) onDone(prompt.trim())
+/**
+ * What to ask: a field for one's own request, over the offered ones it filters.
+ * Enter asks the highlighted one; with nothing offered matching, the typed request.
+ */
+function AIRequests({ onDone }: { onDone: (prompt: string) => void }) {
+  const { t } = useTranslation('collection')
+  const [value, setValue] = useState('')
+  const typed = value.trim()
+  const offered = requests.map(([id, Icon]) => ({
+    id,
+    label: t(`description.prompts.${id}.label`),
+    icon: <Icon size={14} />,
+  }))
+  const free = {
+    id: FREE,
+    label: t('description.aiAsk', { prompt: typed }),
+    icon: <Sparkles size={14} />,
+    always: true,
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2">
-      <TextInput
-        look="panel"
-        autoFocus
-        aria-label={t('description.aiPrompt')}
-        placeholder={t('description.aiPlaceholder')}
-        value={prompt}
-        onChange={setPrompt}
-        className="mx-0 flex-1"
-      />
-      <Button type="submit" look="primary" size="sm">
-        {t('description.aiSend')}
-      </Button>
-    </form>
+    <CommandSearch
+      label={t('description.aiPrompt')}
+      placeholder={t('description.aiPlaceholder')}
+      empty={t('description.noMatch')}
+      commands={typed ? [...offered, free] : offered}
+      value={value}
+      onChange={setValue}
+      onAction={(id) =>
+        onDone(id === FREE ? typed : t(`description.prompts.${id}.prompt`))
+      }
+    />
   )
 }
 
-/** The AI's answer, formatted, under the text, with Accept and Reject. */
+/** The AI's answer, formatted, under the text: Enter accepts it, Escape drops it. */
 export function AIProposal() {
   const { t } = useTranslation('collection')
   const ai = useAI()
@@ -259,21 +311,13 @@ export function AIProposal() {
             <EditorText readOnly aria-label={t('description.aiProposal')} />
           </Plate>
         </Show>
-        <div className="flex min-h-8 items-center justify-end gap-2 text-xs text-muted">
-          <Show when={ai.busy}>
+        <div className="flex min-h-8 items-center justify-end text-xs text-muted">
+          <Show
+            when={ai.busy}
+            fallback={<span>{t('description.aiKeys')}</span>}
+          >
             <span>{t('description.aiWriting')}</span>
           </Show>
-          <Button look="ghost" size="sm" onPress={ai.reject}>
-            {t('description.aiReject')}
-          </Button>
-          <Button
-            look="primary"
-            size="sm"
-            isDisabled={ai.busy || !ai.proposal}
-            onPress={ai.accept}
-          >
-            {t('description.aiAccept')}
-          </Button>
         </div>
       </div>
     </Show>

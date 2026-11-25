@@ -43,8 +43,7 @@ export function DateRangePicker<T extends DateValue>({
       <Group
         className={cn(
           'flex min-w-0 items-center gap-1 rounded-[var(--field-radius)]',
-          look === 'panel' &&
-            'px-2 py-1 data-[focus-within]:bg-default data-[hovered]:bg-default',
+          look === 'panel' && 'px-2 py-1 data-[focus-within]:bg-default',
         )}
       >
         <DateInput slot="start" className="flex tabular-nums">

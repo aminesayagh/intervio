@@ -29,7 +29,9 @@ export function PopoverDialog({
         placement={placement}
         offset={4}
         style={{ width }}
-        className="max-w-[calc(100vw-32px)] rounded-[var(--field-radius)] border border-border bg-surface p-3 text-sm shadow-md outline-none"
+        // ponytail: Plate's floating toolbar ignores clicks in this class, so a
+        // popover opened from it keeps it open; no other effect.
+        className="ignore-click-outside/toolbar max-w-[calc(100vw-32px)] rounded-[var(--field-radius)] border border-border bg-surface p-3 text-sm shadow-md outline-none"
       >
         <Dialog aria-label={label} className="flex flex-col gap-4 outline-none">
           {({ close }) =>

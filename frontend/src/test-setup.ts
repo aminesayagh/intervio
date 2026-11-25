@@ -63,3 +63,13 @@ globalThis.IntersectionObserver ??= class {
       observer,
     ),
   )
+
+// jsdom lays nothing out, so a Range has no box: the description's floating toolbar
+// places itself over the selection's box, and an empty one is enough.
+Range.prototype.getBoundingClientRect ??= () => new DOMRect()
+Range.prototype.getClientRects ??= () =>
+  ({
+    length: 0,
+    item: () => null,
+    [Symbol.iterator]: [][Symbol.iterator],
+  }) as unknown as DOMRectList

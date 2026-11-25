@@ -37,7 +37,10 @@ async function askShorter() {
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
   await selectAll(field)
-  await userEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
+  // The floating toolbar, over the selected text.
+  await userEvent.click(
+    within(screen.getByRole('toolbar')).getByRole('button', { name: 'Ask AI' }),
+  )
   await userEvent.type(
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     'Make it shorter',
@@ -84,7 +87,8 @@ test('Reject drops the AI proposal and leaves the text as it was', async () => {
 })
 
 async function ask(prompt: string) {
-  await userEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
+  // The header's button (first in the page): it asks with or without a selection.
+  await userEvent.click(screen.getAllByRole('button', { name: 'Ask AI' })[0])
   await userEvent.type(
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     prompt,

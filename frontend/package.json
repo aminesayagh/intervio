@@ -20,6 +20,7 @@
     "@heroui/styles": "^3.2.7",
     "@internationalized/date": "3.12.4",
     "@platejs/basic-nodes": "53.0.0",
+    "@platejs/floating": "53.0.0",
     "@platejs/link": "53.3.5",
     "@platejs/list-classic": "53.0.0",
     "@platejs/markdown": "53.5.3",

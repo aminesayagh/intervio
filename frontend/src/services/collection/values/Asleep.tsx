@@ -41,7 +41,7 @@ export function Asleep({
       data-asleep
       tabIndex={0}
       className={cn(
-        'relative -ms-2 flex w-fit max-w-full cursor-text items-center gap-1 rounded-[var(--field-radius)] px-2 py-1 tabular-nums outline-none hover:bg-default focus-visible:bg-default',
+        'relative -ms-2 flex w-fit max-w-full cursor-text items-center gap-1 rounded-[var(--field-radius)] px-2 py-1 tabular-nums outline-none focus-visible:bg-default',
         icon === 'steps' && 'min-w-14 pe-6',
       )}
     >

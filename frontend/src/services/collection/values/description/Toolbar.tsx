@@ -1,3 +1,9 @@
+import {
+  flip,
+  offset,
+  useFloatingToolbar,
+  useFloatingToolbarState,
+} from '@platejs/floating'
 import { upsertLink } from '@platejs/link'
 import { toggleBulletedList, toggleNumberedList } from '@platejs/list-classic'
 import {
@@ -10,11 +16,12 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { KEYS, type SlateEditor } from 'platejs'
-import { useEditorRef } from 'platejs/react'
+import { useEditorId, useEditorRef, useEventEditorValue } from 'platejs/react'
 import { useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { notify } from '../../../notifications'
-import { Button, PopoverDialog, TextInput } from '../../../ui-kit'
+import { Button, PopoverDialog, Show, TextInput } from '../../../ui-kit'
 import { AskAIButton } from './AskAI'
 
 /** The six formats of spec 7.6, each applied to the editor's selection. */
@@ -30,16 +37,62 @@ const tools: [
   ['numbered', ListOrdered, (editor) => toggleNumberedList(editor)],
 ]
 
-/**
- * The description editor's toolbar. Its buttons keep the focus in the text
- * (`preventFocusOnPress`), so the selection they format stays where it was.
- */
+/** The description editor's toolbar, beside its label. */
 export function Toolbar({ scope }: { scope: string }) {
+  return (
+    <div className="ms-auto flex">
+      <Tools scope={scope} />
+    </div>
+  )
+}
+
+/**
+ * The same tools over the selected text (Plate's floating toolbar): they apply to
+ * that part only. Kept open while its link or AI panel is in use (their popovers
+ * carry Plate's ignore class).
+ */
+export function FloatingToolbar({ scope }: { scope: string }) {
+  const state = useFloatingToolbarState({
+    editorId: useEditorId(),
+    focusedEditorId: useEventEditorValue('focus'),
+    floatingOptions: {
+      placement: 'top',
+      strategy: 'fixed',
+      middleware: [offset(8), flip({ padding: 12 })],
+    },
+  })
+  const { clickOutsideRef, hidden, props, ref } = useFloatingToolbar(state)
+
+  // Over the page, so the panel's scrolling edge never cuts it. The fade sits
+  // inside the placed box: its transform would otherwise move the fixed position.
+  return createPortal(
+    <div ref={clickOutsideRef}>
+      <div ref={ref} {...props} className="z-50">
+        <Show when={!hidden}>
+          <div
+            role="toolbar"
+            className="flex rounded-[var(--field-radius)] border border-border bg-surface p-0.5 text-sm shadow-md"
+          >
+            <Tools scope={scope} />
+          </div>
+        </Show>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/**
+ * The tools. Their buttons keep the focus in the text (`preventFocusOnPress`), so
+ * the selection they format stays where it was.
+ */
+function Tools({ scope }: { scope: string }) {
   const { t } = useTranslation('collection')
   const editor = useEditorRef()
 
   return (
-    <div className="ms-auto flex">
+    <>
+      <AskAIButton />
       {tools.map(([kind, Icon, apply]) => (
         <Button
           key={kind}
@@ -82,8 +135,7 @@ export function Toolbar({ scope }: { scope: string }) {
           />
         )}
       </PopoverDialog>
-      <AskAIButton />
-    </div>
+    </>
   )
 }
 

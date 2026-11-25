@@ -37,7 +37,7 @@ export function NumberInput({
         className={cn(
           'w-full min-w-0 cursor-text bg-transparent p-0 pe-6 tabular-nums outline-none placeholder:text-muted',
           look === 'panel' &&
-            'w-auto min-w-14 rounded-[var(--field-radius)] px-2 py-1 pe-6 [field-sizing:content] hover:bg-default focus:bg-default',
+            'w-auto min-w-14 rounded-[var(--field-radius)] px-2 py-1 pe-6 [field-sizing:content] focus:bg-default',
         )}
       />
       <span

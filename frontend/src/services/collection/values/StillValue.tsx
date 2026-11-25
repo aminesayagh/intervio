@@ -10,7 +10,7 @@ import type { ReactNode } from 'react'
 
 /** The text field's panel look, at rest. */
 const field =
-  'cursor-text rounded-[var(--field-radius)] px-2 py-1 outline-none hover:bg-default focus-visible:bg-default'
+  'cursor-text rounded-[var(--field-radius)] px-2 py-1 outline-none focus-visible:bg-default'
 /** The menu button's panel look (FieldButton), at rest. */
 const menu =
   '-mx-2 flex max-w-full cursor-pointer rounded-[var(--field-radius)] px-2 py-1 outline-none hover:bg-default focus-visible:outline-2 focus-visible:outline-foreground'

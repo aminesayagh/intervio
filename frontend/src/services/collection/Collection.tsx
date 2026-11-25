@@ -368,7 +368,12 @@ export function Collection<T, C = void>({
     [definition],
   )
   // A new search, filter or sort clears the selection and sorts the list again.
-  const view = JSON.stringify([listing.search, listing.filters, listing.sort])
+  const view = JSON.stringify([
+    listing.search,
+    listing.filters,
+    listing.where,
+    listing.sort,
+  ])
   const { shownItems, outOfOrder, keptCount, keep, forget, release } =
     useHeldOrder(list.items, getId, view, openId)
   const { selected, select, drop, selectedRecords, bulkActions, saveShared } =
@@ -642,6 +647,7 @@ export function Collection<T, C = void>({
                 listing={listing}
                 onSearch={state.setSearch}
                 onFilters={state.setFilters}
+                onRules={state.setRules}
                 onSort={state.setSort}
                 onClear={state.clear}
               />

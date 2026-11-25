@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { keys } from '../data/collectionQuery'
 import type { ScopeDefinition } from '../definition'
 import { FilterMenu } from '../listing/FilterMenu'
-import type { FilterField } from '../listing/rules'
+import { groupOf, type FilterField, type FilterGroup } from '../listing/rules'
 import { SortMenu, type Sortable } from '../listing/SortMenu'
 import type { Sort } from '../types'
 import { isNarrowed, type Listing } from './useCollectionState'
@@ -26,6 +26,7 @@ export function Toolbar({
   listing,
   onSearch,
   onFilters,
+  onRules,
   onSort,
   onClear,
 }: {
@@ -36,6 +37,7 @@ export function Toolbar({
   listing: Listing
   onSearch: (search: string) => void
   onFilters: (patch: Record<string, string[]>) => void
+  onRules: (group: FilterGroup) => void
   onSort: (sort: Sort[]) => void
   onClear: () => void
 }) {
@@ -48,6 +50,20 @@ export function Toolbar({
       Object.entries(listing.filters).filter(([id]) => !scopeIds.has(id)),
     ),
   }
+  // The menu's rules: the plain ones, then the composed ones (a link may hold both).
+  const plain = groupOf(unscoped.filters)
+  const where = listing.where
+  const group: FilterGroup = !where
+    ? plain
+    : plain.rules.length === 0
+      ? where
+      : {
+          join: 'and',
+          rules: [
+            ...plain.rules,
+            ...(where.join === 'and' ? where.rules : [where]),
+          ],
+        }
   return (
     <div className="flex flex-wrap items-center gap-2">
       <SearchField value={listing.search} onSearch={onSearch} />
@@ -72,8 +88,8 @@ export function Toolbar({
         <FilterMenu
           namespace={namespace}
           fields={fields}
-          filters={unscoped.filters}
-          onFilters={onFilters}
+          group={group}
+          onRules={onRules}
         />
       </Show>
       <Show as="span" className="contents" when={sortables.length > 0}>

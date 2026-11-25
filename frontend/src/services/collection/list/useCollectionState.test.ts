@@ -28,13 +28,14 @@ test('reads search, filters and sort from the address, with defaults for the res
   expect(result.current.listing).toEqual({
     search: 'pump',
     filters: { status: ['valid', 'draft'] },
+    where: null,
     sort: [{ by: 'name', direction: 'asc' }],
   })
   // No sort, or a wrong one: none chosen, the default order applies.
   expect(sortParser.parse('bad')).toBeNull()
-  expect(isNarrowed({ search: '', filters: { owner: [] }, sort: [] })).toBe(
-    false,
-  )
+  expect(
+    isNarrowed({ search: '', filters: { owner: [] }, where: null, sort: [] }),
+  ).toBe(false)
 })
 
 test('a scoped list’s address holds only its scope', () => {

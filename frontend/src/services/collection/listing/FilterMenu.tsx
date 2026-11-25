@@ -11,103 +11,214 @@ import {
   Variant,
 } from '../../ui-kit'
 import {
+  applied,
+  isGroup,
   OPERATORS,
-  readRule,
+  ruleCount,
   ruleKey,
+  sameRules,
   type FilterField,
+  type FilterGroup,
   type FilterKind,
+  type Join,
   type Operator,
   type Rule,
 } from './rules'
 
 /**
- * The Filter menu (decision 149): the rules in force, one per line ("Quantity greater
- * than 5"), each with its field, operator and value; "+ Add a filter" starts a new one,
- * which applies once it has a value. Every rule must match.
+ * The Filter menu (decisions 149, 161): the rules in force, one per line ("Quantity
+ * greater than 5"), joined by "and" or "or", and groups of rules with their own word
+ * ("Status is Draft and (Owner is me or Quantity greater than 5)"). A new rule applies
+ * once it has a value.
  */
 export function FilterMenu({
   namespace,
   fields,
-  filters,
-  onFilters,
+  group,
+  onRules,
 }: {
   namespace: string
   fields: FilterField[]
-  /** The list's filters (rule key → values); scopes are among them, and left out here. */
-  filters: Record<string, string[]>
-  /** Sets several rule keys at once (an empty list removes one). */
-  onFilters: (patch: Record<string, string[]>) => void
+  /** The list's rules (scopes left out). */
+  group: FilterGroup
+  onRules: (group: FilterGroup) => void
 }) {
   const { t } = useTranslation('collection')
-  const fieldOf = (id: string) => fields.find((field) => field.id === id)
-  const rules = Object.entries(filters)
-    .map(([key, values]) => readRule(key, values))
-    .filter((rule) => fieldOf(rule.id) && rule.values.length > 0)
-  // A rule added, waiting for its value: not in the address yet.
-  const [draft, setDraft] = useState<Rule | null>(null)
-  const shown = draft ? [...rules, draft] : rules
-
-  function change(rule: Rule, next: Rule) {
-    if (rule === draft && next.values.length === 0) return setDraft(next)
-    if (rule === draft) setDraft(null)
-    const removed = ruleKey(rule.id, rule.op)
-    const added = ruleKey(next.id, next.op)
-    onFilters({
-      ...(removed !== added && rule !== draft && { [removed]: [] }),
-      [added]: next.values,
-    })
+  // The menu's own copy: a rule waiting for its value stays here, out of the address.
+  const [local, setLocal] = useState(group)
+  const [seen, setSeen] = useState(group)
+  // The address changed from elsewhere (Clear filters, a link): follow it.
+  if (!sameRules(group, seen)) {
+    setSeen(group)
+    if (!sameRules(group, local)) setLocal(group)
   }
-  function remove(rule: Rule) {
-    if (rule === draft) setDraft(null)
-    else onFilters({ [ruleKey(rule.id, rule.op)]: [] })
+  function change(next: FilterGroup) {
+    setLocal(next)
+    if (!sameRules(next, local)) onRules(applied(next))
   }
-  // One rule per field (decision 149): a field already in a rule isn't offered again.
-  const used = (except?: Rule) =>
-    new Set(shown.filter((r) => r !== except).map((r) => r.id))
-  const free = fields.filter((field) => !used().has(field.id))
-  function add() {
-    const [field] = free
-    setDraft({ id: field.id, op: OPERATORS[field.kind][0], values: [] })
-  }
-
+  const count = ruleCount(applied(group))
   const label = t('filter.title')
   return (
     <PopoverDialog
       label={label}
-      width={460}
+      width={560}
       placement="bottom end"
       trigger={
         <Button size="sm" aria-label={label}>
-          {rules.length ? `${label} (${rules.length})` : label}
+          {count ? `${label} (${count})` : label}
           <ChevronDown size={14} />
         </Button>
       }
     >
-      <Show when={shown.length === 0}>
+      <Show when={local.rules.length === 0}>
         <p className="text-muted">{t('filter.none')}</p>
       </Show>
-      <ul className="flex flex-col gap-2">
-        {/* By place: a new rule keeps its line (and the focus) once it applies. */}
-        {shown.map((rule, index) => (
-          <li key={index} className="flex items-center gap-1">
-            <RuleLine
-              namespace={namespace}
-              fields={fields.filter((f) => !used(rule).has(f.id))}
-              rule={rule}
-              field={fieldOf(rule.id)!}
-              onChange={(next) => change(rule, next)}
-              onRemove={() => remove(rule)}
-            />
-          </li>
-        ))}
-      </ul>
-      <Show when={draft === null && free.length > 0}>
-        <Button size="sm" look="ghost" onPress={add} className="self-start">
+      <Lines
+        namespace={namespace}
+        fields={fields}
+        group={local}
+        onChange={change}
+      />
+      <span className="flex gap-1">
+        <Button
+          size="sm"
+          look="ghost"
+          onPress={() => change(withRule(local, fields))}
+        >
           <Plus size={14} />
           {t('filter.add')}
         </Button>
-      </Show>
+        <Button
+          size="sm"
+          look="ghost"
+          onPress={() =>
+            change({
+              ...local,
+              rules: [
+                ...local.rules,
+                withRule({ join: 'and', rules: [] }, fields),
+              ],
+            })
+          }
+        >
+          <Plus size={14} />
+          {t('filter.addGroup')}
+        </Button>
+      </span>
     </PopoverDialog>
+  )
+}
+
+/** The group with a new rule at its end: the first field, its first condition, no value. */
+function withRule(group: FilterGroup, fields: FilterField[]): FilterGroup {
+  const [field] = fields
+  const rule: Rule = { id: field.id, op: OPERATORS[field.kind][0], values: [] }
+  return { ...group, rules: [...group.rules, rule] }
+}
+
+/**
+ * A group's lines: "Where" before the first, the group's word before the others (a
+ * choice on the second line, the same word after it), and a box for an inner group.
+ */
+function Lines({
+  namespace,
+  fields,
+  group,
+  onChange,
+}: {
+  namespace: string
+  fields: FilterField[]
+  group: FilterGroup
+  onChange: (group: FilterGroup) => void
+}) {
+  const { t } = useTranslation('collection')
+  const fieldOf = (id: string) => fields.find((field) => field.id === id)
+  const put = (index: number, item: Rule | FilterGroup | null) =>
+    onChange({
+      ...group,
+      rules: group.rules.flatMap((old, i) =>
+        i !== index ? [old] : item ? [item] : [],
+      ),
+    })
+  const joins: Join[] = ['and', 'or']
+  return (
+    <ul className="flex flex-col gap-2">
+      {/* By place: a new rule keeps its line (and the focus) once it applies. */}
+      {group.rules.map((item, index) => (
+        <li key={index} className="flex items-start gap-1">
+          <span className="flex h-8 w-16 shrink-0 items-center">
+            <Variant<'where' | 'choice' | 'word'>
+              value={index === 0 ? 'where' : index === 1 ? 'choice' : 'word'}
+              views={{
+                where: () => <span className="ps-2">{t('filter.where')}</span>,
+                choice: () => (
+                  <Pick
+                    label={t('filter.join')}
+                    text={t(`filter.${group.join}`)}
+                    options={joins.map((id) => ({
+                      id,
+                      label: t(`filter.${id}`),
+                    }))}
+                    selected={group.join}
+                    onChange={(join) =>
+                      onChange({ ...group, join: join as Join })
+                    }
+                  />
+                ),
+                word: () => (
+                  <span className="ps-2 text-muted">
+                    {t(`filter.${group.join}`)}
+                  </span>
+                ),
+              }}
+            />
+          </span>
+          <Show
+            when={isGroup(item) && item}
+            className="flex min-w-0 flex-1 items-center gap-1"
+            fallback={
+              <RuleLine
+                namespace={namespace}
+                fields={fields}
+                rule={item as Rule}
+                field={fieldOf((item as Rule).id) ?? fields[0]}
+                onChange={(next) => put(index, next)}
+                onRemove={() => put(index, null)}
+              />
+            }
+          >
+            {(inner) => (
+              <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-[var(--field-radius)] border border-border p-2">
+                <Lines
+                  namespace={namespace}
+                  fields={fields}
+                  group={inner}
+                  onChange={(next) => put(index, next)}
+                />
+                <span className="flex justify-between">
+                  <Button
+                    size="sm"
+                    look="ghost"
+                    onPress={() => put(index, withRule(inner, fields))}
+                  >
+                    <Plus size={14} />
+                    {t('filter.add')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    look="ghost"
+                    onPress={() => put(index, null)}
+                  >
+                    <X size={14} />
+                    {t('filter.removeGroup')}
+                  </Button>
+                </span>
+              </div>
+            )}
+          </Show>
+        </li>
+      ))}
+    </ul>
   )
 }
 

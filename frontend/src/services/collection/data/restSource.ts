@@ -1,5 +1,5 @@
 import { api } from '../../http'
-import { formatSort } from '../listing/rules'
+import { formatGroup, formatSort } from '../listing/rules'
 import type { DataSource, Id, ListQuery, ManyUpdated, Page } from '../types'
 
 type Route = (id: Id) => string
@@ -57,6 +57,8 @@ export function listParams(
   if (query.search.trim()) params.set(names.search, query.search.trim())
   for (const [id, values] of Object.entries(query.filters))
     if (values.length) params.set(names.filterPrefix + id, values.join(','))
+  // Composed rules (decision 161) go as one JSON parameter, as in the address.
+  if (query.where) params.set('filter', formatGroup(query.where))
   params.set(names.sort, formatSort(query.sort))
   if (query.cursor)
     params.set(

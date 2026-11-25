@@ -163,3 +163,115 @@ export function parseSort(text: string): Sort[] {
       : []
   })
 }
+
+/** How a group's rules combine: every one must match, or at least one. */
+export type Join = 'and' | 'or'
+
+/**
+ * Composed rules (decision 161): a group's rules and groups joined by one word. The
+ * top group may hold groups; those hold rules only (one level).
+ */
+export type FilterGroup = { join: Join; rules: (Rule | FilterGroup)[] }
+
+export const isGroup = (item: Rule | FilterGroup): item is FilterGroup =>
+  'rules' in item
+
+/** Leaves out what doesn't apply yet: rules without a value, and groups left empty. */
+export function applied(group: FilterGroup): FilterGroup {
+  const rules = group.rules.flatMap((item): (Rule | FilterGroup)[] => {
+    if (!isGroup(item)) return item.values.length ? [item] : []
+    const inner = applied(item)
+    return inner.rules.length ? [inner] : []
+  })
+  return { join: group.join, rules }
+}
+
+/** How many rules apply, for the menu's count ("Filter (3)"). */
+export const ruleCount = (group: FilterGroup): number =>
+  group.rules.reduce(
+    (count, item) => count + (isGroup(item) ? ruleCount(item) : 1),
+    0,
+  )
+
+/** True when a record passes a group: every rule, or one of them (none: it passes). */
+export function passesGroup(
+  group: FilterGroup,
+  valueOf: (id: string) => FilterValue,
+): boolean {
+  const { rules } = applied(group)
+  const check = (item: Rule | FilterGroup) =>
+    isGroup(item)
+      ? passesGroup(item, valueOf)
+      : matches(valueOf(item.id), item.op, item.values)
+  if (rules.length === 0) return true
+  return group.join === 'and' ? rules.every(check) : rules.some(check)
+}
+
+/** The plain rules (`f.{key}`) as a group: every one must match. */
+export const groupOf = (filters: Record<string, string[]>): FilterGroup => ({
+  join: 'and',
+  rules: Object.entries(filters)
+    .filter(([, values]) => values.length > 0)
+    .map(([key, values]) => readRule(key, values)),
+})
+
+/**
+ * The group as plain `f.{key}` rules when they can say it (every rule must match, no
+ * group, one rule per key), so simple links keep their short form; else null.
+ */
+export function plainOf(group: FilterGroup) {
+  const { join, rules } = applied(group)
+  const plain: Record<string, string[]> = {}
+  for (const item of rules) {
+    if (isGroup(item)) return null
+    const key = ruleKey(item.id, item.op)
+    if (key in plain) return null
+    plain[key] = item.values
+  }
+  return rules.length > 1 && join === 'or' ? null : plain
+}
+
+const OPS = new Set<string>(Object.values(OPERATORS).flat())
+
+/** Reads `filter=` (JSON) from an address; anything unreadable is left out. */
+export function parseGroup(text: string): FilterGroup | null {
+  try {
+    return readGroup(JSON.parse(text), 0)
+  } catch {
+    return null
+  }
+}
+
+function readGroup(value: unknown, depth: number): FilterGroup | null {
+  const v = value as Partial<FilterGroup> | null
+  if (!v || (v.join !== 'and' && v.join !== 'or') || !Array.isArray(v.rules))
+    return null
+  const rules = v.rules.flatMap((item: unknown): (Rule | FilterGroup)[] => {
+    if (item && typeof item === 'object' && 'rules' in item) {
+      // One level of groups: a group inside a group is left out.
+      const inner = depth === 0 ? readGroup(item, 1) : null
+      return inner ? [inner] : []
+    }
+    const rule = item as Partial<Rule> | null
+    const ok =
+      typeof rule?.id === 'string' &&
+      OPS.has(rule.op as string) &&
+      Array.isArray(rule.values) &&
+      rule.values.every((x) => typeof x === 'string')
+    return ok ? [{ id: rule.id!, op: rule.op!, values: rule.values! }] : []
+  })
+  return { join: v.join, rules }
+}
+
+export const formatGroup = (group: FilterGroup) => JSON.stringify(group)
+
+/** The same rules once in force, however written (order of plain rules, an unused join). */
+export function sameRules(a: FilterGroup, b: FilterGroup) {
+  const text = (group: FilterGroup) => {
+    const plain = plainOf(group)
+    return plain
+      ? JSON.stringify(Object.entries(plain).sort())
+      : formatGroup(applied(group))
+  }
+  return text(a) === text(b)
+}

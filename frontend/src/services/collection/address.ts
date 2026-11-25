@@ -6,12 +6,18 @@ import {
   parseAsString,
 } from '../navigation'
 import { formatChain, parseChain, type Step } from './record/linked'
-import { formatSort, parseSort } from './listing/rules'
+import {
+  formatGroup,
+  formatSort,
+  parseGroup,
+  parseSort,
+  type FilterGroup,
+} from './listing/rules'
 import type { Sort } from './types'
 
 /**
  * What a collection keeps in the address (spec 6.1), as nuqs parsers: the list
- * (q, sort, f.{filter}) and the panel (open, new, linked).
+ * (q, sort, f.{filter}, filter) and the panel (open, new, linked).
  */
 
 /** `sort=status:asc,updated:desc`: the sort levels chosen; none is the default order. */
@@ -23,6 +29,13 @@ export const sortParser = createParser<Sort[]>({
   serialize: formatSort,
   eq: (a, b) => formatSort(a) === formatSort(b),
 }).withDefault([])
+
+/** `filter={"join":"or",…}`: composed rules the plain `f.{key}` can't say (decision 161). */
+export const groupParser = createParser<FilterGroup>({
+  parse: parseGroup,
+  serialize: formatGroup,
+  eq: (a, b) => formatGroup(a) === formatGroup(b),
+})
 
 /** `linked=parts:id,items:id`: the linked records opened after the panel's (decision 137). */
 export const chainParser = createParser<Step[]>({
@@ -38,6 +51,7 @@ export const chainParser = createParser<Step[]>({
 export const listParsers = (filterIds: string[]) => ({
   q: parseAsString.withDefault(''),
   sort: sortParser,
+  filter: groupParser,
   ...Object.fromEntries(
     filterIds.map((id) => [
       `f.${id}`,

@@ -1,3 +1,5 @@
+import type { FilterGroup } from './listing/rules'
+
 /** A record's public identifier: its UUID v7. */
 export type Id = string
 
@@ -23,6 +25,8 @@ export type ListQuery = {
    * value (`quantity.gt` → ['5']), operators in `listing/rules.ts`.
    */
   filters: Record<string, string[]>
+  /** Composed rules ("or", groups), which must match too (decision 161). */
+  where?: FilterGroup | null
   /** The sort levels, the first one first; never empty. */
   sort: Sort[]
   cursor: string | null

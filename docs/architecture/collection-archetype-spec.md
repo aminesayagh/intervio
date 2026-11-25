@@ -121,7 +121,7 @@ type Rights = {
 
 `SectionDefinition` has a label key, a loader returning the linked records with a count, a renderer for one item, and an optional "+ Link or add" action. Each item opens in the same panel, or its page when `opensAsPage` says so. **Built (2026-11-23, decision 143):** `link: (record) => patch` says how a record of the linked collection becomes linked (for parts, `{ item: id }`); with it, and `rights.add` naming the section (or no rights at all), the section shows "+ Link or add" (`record/LinkOrAdd.tsx`): a `PopoverDialog` with a search over the records the patch would change (the others are already linked), saved through the shared record actions, and the collection's "+ Add …", which drills into the scoped list with `?new=1`.
 
-`FilterDefinition` has an id, a label key and its options (fixed, or loaded once). **Filter and sort rules (decision 149):** the logic lives in `collection/listing/` apart from any screen: `rules.ts` says which fields the Filter menu offers (`filterFields`: the fixed filters, then each column with `filter: true`, of the kind its field's type gives), the conditions of each kind (`OPERATORS`), how a rule is written (`ruleKey`: `status`, `quantity.gt`) and checked in memory (`matches`, `passes`), and how sort levels are written (`formatSort`, `parseSort`) and changed by a header (`nextSort`). `FilterMenu.tsx` and `SortMenu.tsx` are the two menus on top of it.
+`FilterDefinition` has an id, a label key and its options (fixed, or loaded once). **Filter and sort rules (decision 149):** the logic lives in `collection/listing/` apart from any screen: `rules.ts` says which fields the Filter menu offers (`filterFields`: the fixed filters, then each column with `filter: true`, of the kind its field's type gives), the conditions of each kind (`OPERATORS`), how a rule is written (`ruleKey`: `status`, `quantity.gt`) and checked in memory (`matches`, `passes`), and how sort levels are written (`formatSort`, `parseSort`) and changed by a header (`nextSort`). **Composed rules (decision 161):** a `FilterGroup` (`{ join: "and" | "or", rules }`, rules or one level of groups) is checked by `passesGroup`; `plainOf` gives the plain `f.{key}` form when it can say it, `applied` leaves out rules without a value, and `parseGroup`/`formatGroup` read and write the `filter` parameter. The list state holds it as `where` (`ListQuery.where`), checked as well as the plain filters. `FilterMenu.tsx` and `SortMenu.tsx` are the two menus on top of it.
 
 Usage:
 
@@ -200,7 +200,7 @@ Address format, on the collection's base path:
 /resources?new
 ```
 
-Filters use one parameter per rule: `f.{field}` for "is one of", with the chosen values separated by commas, and `f.{field}.{condition}` for the others (`not`, `contains`, `gt`, `lt`), with their value. The sort is its levels in order, separated by commas. Default values are left out of the address.
+Filters use one parameter per rule: `f.{field}` for "is one of", with the chosen values separated by commas, and `f.{field}.{condition}` for the others (`not`, `contains`, `gt`, `lt`), with their value. Rules joined by "or", grouped, or with two rules on one condition go instead in one `filter` parameter, as JSON (decision 161); the data source receives it as `filter` too. The sort is its levels in order, separated by commas. Default values are left out of the address.
 
 ### 6.2 Coming back to a collection
 

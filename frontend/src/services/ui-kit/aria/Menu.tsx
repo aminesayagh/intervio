@@ -1,10 +1,14 @@
 import { Check } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode, RefObject } from 'react'
 import {
+  Autocomplete,
+  Input,
   Menu,
   MenuItem as AriaMenuItem,
   Popover,
   Separator,
+  TextField,
+  useFilter,
   type Key,
   type Selection,
 } from 'react-aria-components'
@@ -125,5 +129,82 @@ export function ActionMenu({
       {danger.length > 0 && <Separator className="my-1 h-px bg-border" />}
       {danger.map(item)}
     </Menu>
+  )
+}
+
+/** One entry of a command menu, with its icon. */
+export type Command = { id: string; label: string; icon: ReactNode }
+
+/**
+ * A menu of commands filtered by typing (React Aria's Autocomplete), opened at
+ * `anchor`: the focus stays in its input, the arrows move in the menu and Enter runs
+ * the highlighted command. The input is invisible: the caller shows the typed text
+ * where it belongs (the description's "/" menu shows it in the line). It lives in
+ * the popover, outside any text editor, which would otherwise take its selection.
+ */
+export function CommandMenu({
+  label,
+  commands,
+  value,
+  onChange,
+  onAction,
+  empty,
+  anchor,
+  inputRef,
+  inputProps,
+}: {
+  label: string
+  commands: Command[]
+  value: string
+  onChange: (value: string) => void
+  onAction: (id: string) => void
+  /** Shown when nothing matches. */
+  empty: string
+  /** What the menu opens under. */
+  anchor: RefObject<HTMLElement | null>
+  inputRef: RefObject<HTMLInputElement | null>
+  /** The caller's own handlers on the input (keys, blur). */
+  inputProps?: HTMLAttributes<HTMLInputElement>
+}) {
+  const { contains } = useFilter({ sensitivity: 'base' })
+  return (
+    <Autocomplete filter={contains} inputValue={value} onInputChange={onChange}>
+      <Popover
+        triggerRef={anchor}
+        isOpen
+        isNonModal
+        trigger="MenuTrigger"
+        placement="bottom start"
+        offset={4}
+        style={{ minWidth: 200 }}
+        className="rounded-[var(--field-radius)] border border-border bg-surface p-1 text-sm shadow-md outline-none"
+      >
+        <TextField aria-label={label} autoFocus className="sr-only">
+          <Input {...inputProps} ref={inputRef} />
+        </TextField>
+        <Menu
+          aria-label={label}
+          items={commands}
+          onAction={(key) => onAction(String(key))}
+          renderEmptyState={() => (
+            <div className="px-2 py-1 text-muted">{empty}</div>
+          )}
+          className="max-h-[320px] overflow-auto outline-none"
+        >
+          {(command) => (
+            <AriaMenuItem
+              id={command.id}
+              textValue={command.label}
+              className={itemLook}
+            >
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                {command.icon}
+              </span>
+              {command.label}
+            </AriaMenuItem>
+          )}
+        </Menu>
+      </Popover>
+    </Autocomplete>
   )
 }

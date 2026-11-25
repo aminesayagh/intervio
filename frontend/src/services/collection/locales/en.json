@@ -33,6 +33,8 @@
     "heading": "Heading",
     "list": "List",
     "numbered": "Numbered list",
+    "blocks": "Turn into",
+    "noBlock": "No match",
     "link": "Link",
     "linkUrl": "Link address",
     "linkAdd": "Add",

@@ -33,6 +33,8 @@
     "heading": "Titre",
     "list": "Liste",
     "numbered": "Liste numérotée",
+    "blocks": "Transformer en",
+    "noBlock": "Aucun résultat",
     "link": "Lien",
     "linkUrl": "Adresse du lien",
     "linkAdd": "Ajouter",

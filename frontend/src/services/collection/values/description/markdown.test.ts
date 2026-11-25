@@ -41,6 +41,16 @@ test.each([
   ['#36 an image alone', '![Pump](https://example.com/pump.png)'],
   ['#37 raw HTML, as written', '<div class="note">\nCheck\n</div>'],
   ['#38 a checklist keeps its ticks', '- [x] Seals\n- [ ] Pump'],
+  [
+    "a callout (Plate's tag)",
+    '<callout icon="💡">Check the **seals** first</callout>',
+  ],
+  [
+    'a toggle (HTML details), nested',
+    '<details>\n<summary>Steps</summary>\n\nDrain the pump\n\n<details>\n<summary>Then</summary>\n\n- Seals\n\n</details>\n\n</details>',
+  ],
+  ['an empty toggle', '<details>\n<summary>Steps</summary>\n\n</details>'],
+  ['a code block', '```\nconst a = 1\n```'],
 ])('%s: kept unchanged after an edit', (_, markdown) => {
   expect(afterAnEdit(markdown)).toBe(markdown)
 })

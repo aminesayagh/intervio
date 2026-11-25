@@ -33,36 +33,32 @@ function afterAnEdit(markdown: string) {
   return toMarkdown(editor).replace(/^Edited\n\n/, '')
 }
 
-// Markdown the editor can't keep, accepted for now (spec 7.6): today's output is
-// pinned, so a Plate upgrade that changes it shows up here.
 test.each([
   [
-    '#36 an image inside a line splits it',
+    '#36 an image inside a line stays in it',
     'See ![Pump](https://example.com/pump.png) here',
-    'See&#x20;\n\n![Pump](https://example.com/pump.png)\n\n&#x20;here',
+  ],
+  ['#36 an image alone', '![Pump](https://example.com/pump.png)'],
+  ['#37 raw HTML, as written', '<div class="note">\nCheck\n</div>'],
+  ['#38 a checklist keeps its ticks', '- [x] Seals\n- [ ] Pump'],
+  [
+    "a callout (Plate's tag)",
+    '<callout icon="💡">Check the **seals** first</callout>',
   ],
   [
-    '#36 an image alone is kept',
-    '![Pump](https://example.com/pump.png)',
-    '![Pump](https://example.com/pump.png)',
+    'a toggle (HTML details), nested',
+    '<details>\n<summary>Steps</summary>\n\nDrain the pump\n\n<details>\n<summary>Then</summary>\n\n- Seals\n\n</details>\n\n</details>',
   ],
-  [
-    '#37 raw HTML blocks are altered',
-    '<div class="note">\nCheck\n</div>',
-    '<div className="note">\nCheck\n</div>',
-  ],
-  [
-    '#38 checklists lose their ticks',
-    '- [x] Seals\n- [ ] Pump',
-    '- Seals\n- Pump',
-  ],
-  [
-    '#39 a single line break becomes a hard break',
-    'line one\nline two',
-    'line one\\\nline two',
-  ],
-])('%s', (_, markdown, kept) => {
-  expect(afterAnEdit(markdown)).toBe(kept)
+  ['an empty toggle', '<details>\n<summary>Steps</summary>\n\n</details>'],
+  ['a code block', '```\nconst a = 1\n```'],
+])('%s: kept unchanged after an edit', (_, markdown) => {
+  expect(afterAnEdit(markdown)).toBe(markdown)
+})
+
+// Accepted (2026-11-25, #39): a single line break becomes a hard break, as Shift+Enter
+// makes. Pinned, so a Plate upgrade that changes it shows up here.
+test('#39 a single line break becomes a hard break', () => {
+  expect(afterAnEdit('line one\nline two')).toBe('line one\\\nline two')
 })
 
 test('tables, quotes, code, strikethrough and nested lists are kept', () => {

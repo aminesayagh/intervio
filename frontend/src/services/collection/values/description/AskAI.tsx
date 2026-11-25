@@ -20,7 +20,6 @@ import {
   type PlateEditor,
 } from 'platejs/react'
 import {
-  createContext,
   useContext,
   useEffect,
   useMemo,
@@ -35,6 +34,7 @@ import { Button, CommandSearch, PopoverDialog, Show } from '../../../ui-kit'
 import { EditorText } from './PlateEditor'
 import { descriptionPlugins, parseMarkdown, serializeMarkdown } from './plugins'
 import { simulatedTransport, type DescriptionContext } from './simulatedAI'
+import { AIContext, type AI } from './aiContext'
 
 // The backend's AI (decision 153); the tests answer in the browser instead.
 const defaultTransport: ChatTransport<UIMessage> =
@@ -53,15 +53,6 @@ function failure(error: Error) {
   if (code === 'ERROR_AI_UNAVAILABLE') return 'description.aiUnavailable'
   return 'description.aiFailed'
 }
-
-type AI = {
-  ask: (prompt: string) => void
-  proposal: string
-  busy: boolean
-  accept: () => void
-  reject: () => void
-}
-const AIContext = createContext<AI | null>(null)
 
 type RangeRef = ReturnType<PlateEditor['api']['rangeRef']>
 
@@ -98,6 +89,9 @@ export function DescriptionAI({
   // Where the answer goes: the selection when the question was asked, followed
   // through the edits made while the AI answers.
   const target = useRef<RangeRef | null>(null)
+  // The line the requests opened under, from the "/" menu; none when closed.
+  const requestAt = useRef<Element | null>(null)
+  const [requesting, setRequesting] = useState(false)
 
   const last = chat.messages.at(-1)
   const proposal =
@@ -141,6 +135,10 @@ export function DescriptionAI({
       }
       chat.setMessages([])
       void chat.sendMessage({ text: prompt }, { body: { ctx } })
+    },
+    request(at) {
+      requestAt.current = at
+      setRequesting(true)
     },
     proposal,
     busy: chat.status === 'submitted' || chat.status === 'streaming',
@@ -191,7 +189,25 @@ export function DescriptionAI({
     return () => document.removeEventListener('keydown', key, true)
   })
 
-  return <AIContext.Provider value={ai}>{children}</AIContext.Provider>
+  return (
+    <AIContext.Provider value={ai}>
+      {children}
+      <Show when={requesting}>
+        <PopoverDialog
+          label={t('description.askAI')}
+          width={340}
+          at={{ anchor: requestAt, onClose: () => setRequesting(false) }}
+        >
+          <AIRequests
+            onDone={(prompt) => {
+              setRequesting(false)
+              ai.ask(prompt)
+            }}
+          />
+        </PopoverDialog>
+      </Show>
+    </AIContext.Provider>
+  )
 }
 
 function useAI() {

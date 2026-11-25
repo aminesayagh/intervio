@@ -37,6 +37,12 @@
     "heading": "Titre",
     "list": "Liste",
     "numbered": "Liste numérotée",
+    "todo": "Liste de tâches",
+    "toggle": "Bloc repliable",
+    "code": "Bloc de code",
+    "table": "Tableau",
+    "quote": "Citation",
+    "callout": "Encadré",
     "blocks": "Transformer en",
     "link": "Lien",
     "linkUrl": "Adresse du lien",
@@ -97,7 +103,15 @@
       }
     },
     "hide": "Masquer {{name}}",
-    "show": "Afficher {{name}}"
+    "show": "Afficher {{name}}",
+    "ai": "Demander à l'IA",
+    "sectionAI": "IA",
+    "sectionBlocks": "Blocs de base",
+    "text": "Texte",
+    "heading1": "Titre 1",
+    "heading2": "Titre 2",
+    "heading3": "Titre 3",
+    "bulleted": "Liste à puces"
   },
   "actions": {
     "more": "Plus d’actions",

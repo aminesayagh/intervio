@@ -2,9 +2,11 @@ import { Check } from 'lucide-react'
 import type { HTMLAttributes, ReactNode, RefObject } from 'react'
 import {
   Autocomplete,
+  Header,
   Input,
   Menu,
   MenuItem as AriaMenuItem,
+  MenuSection,
   Popover,
   Separator,
   TextField,
@@ -80,7 +82,7 @@ export function ChoiceMenu({
         >
           {({ isSelected }) => (
             <>
-              <span className="flex size-4 shrink-0 items-center justify-center">
+              <span className="flex size-4 shrink-0 items-center justify-center text-muted">
                 <Show as="span" when={isSelected} className="flex">
                   <Check size={14} />
                 </Show>
@@ -134,20 +136,24 @@ export function ActionMenu({
 
 /**
  * One entry of a command menu, with its icon. An `always` one stays whatever is
- * typed (the "Ask: …" of a free request).
+ * typed (the "Ask: …" of a free request). Entries with a `section` are grouped
+ * under its title, in the order the sections first appear, a line between groups.
  */
 export type Command = {
   id: string
   label: string
   icon: ReactNode
   always?: boolean
+  section?: string
 }
 
-/** The filter of command menus: by label, accents and case aside. */
+/** The filter of command menus: by label, accents, case and punctuation aside ("todo" finds "To-do"). */
 function useCommandFilter() {
   const { contains } = useFilter({ sensitivity: 'base' })
+  const bare = (text: string) => text.replace(/[^\p{L}\p{N} ]/gu, '')
   return (text: string, input: string, node: { value: unknown }) =>
-    !!(node.value as Command | null)?.always || contains(text, input)
+    !!(node.value as Command | null)?.always ||
+    contains(bare(text), bare(input))
 }
 
 function CommandItems({
@@ -161,27 +167,48 @@ function CommandItems({
   onAction: (id: string) => void
   empty: string
 }) {
+  const item = (command: Command) => (
+    <AriaMenuItem
+      key={command.id}
+      id={command.id}
+      textValue={command.label}
+      value={command}
+      className={itemLook}
+    >
+      <span className="flex size-4 shrink-0 items-center justify-center text-muted">
+        {command.icon}
+      </span>
+      {command.label}
+    </AriaMenuItem>
+  )
+  const sections = [...new Set(commands.map((command) => command.section))]
   return (
     <Menu
       aria-label={label}
-      items={commands}
       onAction={(key) => onAction(String(key))}
       renderEmptyState={() => (
         <div className="px-2 py-1 text-muted">{empty}</div>
       )}
       className="max-h-[320px] overflow-auto outline-none"
     >
-      {(command) => (
-        <AriaMenuItem
-          id={command.id}
-          textValue={command.label}
-          className={itemLook}
-        >
-          <span className="flex size-4 shrink-0 items-center justify-center">
-            {command.icon}
-          </span>
-          {command.label}
-        </AriaMenuItem>
+      {sections.map((section) =>
+        section === undefined ? (
+          commands.filter((command) => !command.section).map(item)
+        ) : (
+          <MenuSection
+            key={section}
+            id={section}
+            // A line above each group but the first one shown (filtering may hide some).
+            className="mt-1 border-t border-border pt-1 first:mt-0 first:border-t-0 first:pt-0"
+          >
+            <Header className="px-2 pt-1.5 pb-1 text-xs font-medium text-muted">
+              {section}
+            </Header>
+            {commands
+              .filter((command) => command.section === section)
+              .map(item)}
+          </MenuSection>
+        ),
       )}
     </Menu>
   )
@@ -271,7 +298,7 @@ export function CommandMenu({
         trigger="MenuTrigger"
         placement="bottom start"
         offset={4}
-        style={{ minWidth: 200 }}
+        style={{ minWidth: 240 }}
         className="rounded-[var(--field-radius)] border border-border bg-surface p-1 text-sm shadow-md outline-none"
       >
         <TextField aria-label={label} autoFocus className="sr-only">

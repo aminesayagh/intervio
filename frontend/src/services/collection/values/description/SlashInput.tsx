@@ -1,6 +1,28 @@
 import { useComboboxInput } from '@platejs/combobox/react'
-import { toggleBulletedList, toggleNumberedList } from '@platejs/list-classic'
-import { Heading, List, ListOrdered } from 'lucide-react'
+import {
+  toggleBulletedList,
+  toggleNumberedList,
+  toggleTaskList,
+  unwrapList,
+} from '@platejs/list-classic'
+import { toggleCodeBlock } from '@platejs/code-block'
+import { insertTable } from '@platejs/table'
+import {
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  ListTodo,
+  Lightbulb,
+  ListCollapse,
+  Pilcrow,
+  Quote,
+  Table,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { KEYS, type SlateEditor } from 'platejs'
 import { PlateElement, type PlateElementProps } from 'platejs/react'
 import {
@@ -12,17 +34,70 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CommandMenu } from '../../../ui-kit'
+import { useOptionalAI } from './aiContext'
+import { TOGGLE } from './plugins'
 
-/** The blocks "/" offers: the editor's own (spec 7.6), applied to the current line. */
+/** A block that turns a list's line takes it out of the list first. */
+const outOfList =
+  (apply: (editor: SlateEditor) => void) => (editor: SlateEditor) => {
+    unwrapList(editor)
+    apply(editor)
+  }
+
+/**
+ * The blocks "/" offers, applied to the current line (a table, three by three,
+ * comes in after it, or in its place when it is empty).
+ */
 const blocks: [
-  kind: 'heading' | 'list' | 'numbered',
-  icon: typeof Heading,
+  kind: string,
+  icon: LucideIcon,
   apply: (editor: SlateEditor) => void,
 ][] = [
-  ['heading', Heading, (editor) => editor.tf.toggleBlock(KEYS.h2)],
-  ['list', List, (editor) => toggleBulletedList(editor)],
+  [
+    'text',
+    Pilcrow,
+    outOfList((editor) => editor.tf.setNodes({ type: KEYS.p })),
+  ],
+  ['heading1', Heading1, outOfList((editor) => editor.tf.toggleBlock(KEYS.h1))],
+  ['heading2', Heading2, outOfList((editor) => editor.tf.toggleBlock(KEYS.h2))],
+  ['heading3', Heading3, outOfList((editor) => editor.tf.toggleBlock(KEYS.h3))],
+  ['bulleted', List, (editor) => toggleBulletedList(editor)],
   ['numbered', ListOrdered, (editor) => toggleNumberedList(editor)],
+  ['todo', ListTodo, (editor) => toggleTaskList(editor)],
+  [
+    'toggle',
+    ListCollapse,
+    outOfList((editor) => editor.tf.wrapNodes({ type: TOGGLE, children: [] })),
+  ],
+  ['code', Code, outOfList((editor) => toggleCodeBlock(editor))],
+  [
+    'table',
+    Table,
+    (editor) => {
+      // In place of an empty line, after a line with text.
+      const line = editor.api.block()
+      insertTable(editor, { rowCount: 3, colCount: 3 }, { select: true })
+      if (line && !editor.api.string(line[1]).trim())
+        editor.tf.removeNodes({ at: line[1] })
+    },
+  ],
+  [
+    'quote',
+    Quote,
+    outOfList((editor) =>
+      // Wrapped, as Plate's own toggle sends the caret to the first block.
+      editor.tf.wrapNodes({ type: KEYS.blockquote, children: [] }),
+    ),
+  ],
+  [
+    'callout',
+    Lightbulb,
+    outOfList((editor) =>
+      editor.tf.setNodes({ type: KEYS.callout, icon: '💡' }),
+    ),
+  ],
 ]
+const AI = 'ai'
 
 /**
  * What "/" turns into (Plate's slash command): a small input where the typing
@@ -33,6 +108,7 @@ const blocks: [
 export function SlashInput(props: PlateElementProps) {
   const { t } = useTranslation('collection')
   const { editor, element } = props
+  const ai = useOptionalAI()
   // Where the typed text goes back if the menu is left: just before the "/".
   const [at] = useState(() => {
     const point = editor.api.before(editor.api.findPath(element) ?? [])
@@ -63,11 +139,13 @@ export function SlashInput(props: PlateElementProps) {
     removeInput()
     if (at?.current) editor.tf.select(at.current)
     then()
-    // Focused once the change is drawn: before, the browser puts the caret at the
-    // start of the text.
-    const caret = editor.selection
+    // Focused once the change is drawn (before, the browser puts the caret at the
+    // start of the text), where the change left the caret: followed until then.
+    const caret =
+      editor.selection && editor.api.pointRef(editor.selection.anchor)
     requestAnimationFrame(() => {
-      if (caret) editor.tf.select(caret)
+      const point = caret?.unref()
+      if (point) editor.tf.select(point)
       editor.tf.focus()
     })
   }
@@ -103,14 +181,35 @@ export function SlashInput(props: PlateElementProps) {
           onChange={setValue}
           inputRef={inputRef}
           inputProps={{ onKeyDown: keyDown, onBlur: blurred }}
-          commands={blocks.map(([kind, Icon]) => ({
-            id: kind,
-            label: t(`description.${kind}`),
-            icon: <Icon size={14} />,
-          }))}
-          onAction={(id) =>
+          commands={[
+            // Its requests, about the whole text, open under the line (decision 160).
+            ...(ai
+              ? [
+                  {
+                    id: AI,
+                    label: t('description.ai'),
+                    icon: <Sparkles size={14} />,
+                    section: t('description.sectionAI'),
+                  },
+                ]
+              : []),
+            ...blocks.map(([kind, Icon]) => ({
+              id: kind,
+              label: t(`description.${kind}`),
+              icon: <Icon size={14} />,
+              section: t('description.sectionBlocks'),
+            })),
+          ]}
+          onAction={(id) => {
             close(() => blocks.find(([kind]) => kind === id)?.[2](editor))
-          }
+            if (id !== AI || !ai) return
+            // After the caret is back (close's own frame): then the requests take it.
+            requestAnimationFrame(() => {
+              const line = editor.api.block()
+              const node = line && editor.api.toDOMNode(line[0])
+              if (node) ai.request(node)
+            })
+          }}
         />
       </span>
       {props.children}

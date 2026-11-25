@@ -37,6 +37,7 @@
     "heading": "Heading",
     "list": "List",
     "numbered": "Numbered list",
+    "todo": "To-do list",
     "blocks": "Turn into",
     "link": "Link",
     "linkUrl": "Link address",
@@ -97,7 +98,15 @@
       }
     },
     "hide": "Hide {{name}}",
-    "show": "Show {{name}}"
+    "show": "Show {{name}}",
+    "ai": "Ask AI",
+    "sectionAI": "AI",
+    "sectionBlocks": "Basic blocks",
+    "text": "Text",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "bulleted": "Bulleted list"
   },
   "actions": {
     "more": "More actions",

@@ -1,6 +1,20 @@
 import { useComboboxInput } from '@platejs/combobox/react'
-import { toggleBulletedList, toggleNumberedList } from '@platejs/list-classic'
-import { Heading, List, ListOrdered } from 'lucide-react'
+import {
+  toggleBulletedList,
+  toggleNumberedList,
+  toggleTaskList,
+} from '@platejs/list-classic'
+import {
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  ListTodo,
+  Pilcrow,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { KEYS, type SlateEditor } from 'platejs'
 import { PlateElement, type PlateElementProps } from 'platejs/react'
 import {
@@ -12,17 +26,23 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CommandMenu } from '../../../ui-kit'
+import { useOptionalAI } from './aiContext'
 
 /** The blocks "/" offers: the editor's own (spec 7.6), applied to the current line. */
 const blocks: [
-  kind: 'heading' | 'list' | 'numbered',
-  icon: typeof Heading,
+  kind: string,
+  icon: LucideIcon,
   apply: (editor: SlateEditor) => void,
 ][] = [
-  ['heading', Heading, (editor) => editor.tf.toggleBlock(KEYS.h2)],
-  ['list', List, (editor) => toggleBulletedList(editor)],
+  ['text', Pilcrow, (editor) => editor.tf.setNodes({ type: KEYS.p })],
+  ['heading1', Heading1, (editor) => editor.tf.toggleBlock(KEYS.h1)],
+  ['heading2', Heading2, (editor) => editor.tf.toggleBlock(KEYS.h2)],
+  ['heading3', Heading3, (editor) => editor.tf.toggleBlock(KEYS.h3)],
+  ['bulleted', List, (editor) => toggleBulletedList(editor)],
   ['numbered', ListOrdered, (editor) => toggleNumberedList(editor)],
+  ['todo', ListTodo, (editor) => toggleTaskList(editor)],
 ]
+const AI = 'ai'
 
 /**
  * What "/" turns into (Plate's slash command): a small input where the typing
@@ -33,6 +53,7 @@ const blocks: [
 export function SlashInput(props: PlateElementProps) {
   const { t } = useTranslation('collection')
   const { editor, element } = props
+  const ai = useOptionalAI()
   // Where the typed text goes back if the menu is left: just before the "/".
   const [at] = useState(() => {
     const point = editor.api.before(editor.api.findPath(element) ?? [])
@@ -103,14 +124,35 @@ export function SlashInput(props: PlateElementProps) {
           onChange={setValue}
           inputRef={inputRef}
           inputProps={{ onKeyDown: keyDown, onBlur: blurred }}
-          commands={blocks.map(([kind, Icon]) => ({
-            id: kind,
-            label: t(`description.${kind}`),
-            icon: <Icon size={14} />,
-          }))}
-          onAction={(id) =>
+          commands={[
+            // Its requests, about the whole text, open under the line (decision 160).
+            ...(ai
+              ? [
+                  {
+                    id: AI,
+                    label: t('description.ai'),
+                    icon: <Sparkles size={14} />,
+                    section: t('description.sectionAI'),
+                  },
+                ]
+              : []),
+            ...blocks.map(([kind, Icon]) => ({
+              id: kind,
+              label: t(`description.${kind}`),
+              icon: <Icon size={14} />,
+              section: t('description.sectionBlocks'),
+            })),
+          ]}
+          onAction={(id) => {
             close(() => blocks.find(([kind]) => kind === id)?.[2](editor))
-          }
+            if (id !== AI || !ai) return
+            // After the caret is back (close's own frame): then the requests take it.
+            requestAnimationFrame(() => {
+              const line = editor.api.block()
+              const node = line && editor.api.toDOMNode(line[0])
+              if (node) ai.request(node)
+            })
+          }}
         />
       </span>
       {props.children}

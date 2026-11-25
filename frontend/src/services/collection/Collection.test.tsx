@@ -174,6 +174,14 @@ test('a search waits for typing to stop, then narrows the list and the address',
   expect(firstName()).toBe('Item 020')
 })
 
+/** "+ Add", then "Add a filter" in its menu. */
+async function addFilter(menu: HTMLElement) {
+  await userEvent.click(within(menu).getByRole('button', { name: 'Add' }))
+  await userEvent.click(
+    await screen.findByRole('menuitem', { name: 'Add a filter' }),
+  )
+}
+
 test('the Filter menu composes rules, shows how many, and Clear filters resets', async () => {
   renderAt(
     '/items',
@@ -183,9 +191,7 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
   await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
   const menu = await screen.findByRole('dialog', { name: 'Filter' })
   // A new rule starts on the first field (Status, "is") and applies once it has a value.
-  await userEvent.click(
-    within(menu).getByRole('button', { name: 'Add a filter' }),
-  )
+  await addFilter(menu)
   expect(window.location.search).toBe('')
   await userEvent.click(within(menu).getByRole('button', { name: 'Status' }))
   await userEvent.click(
@@ -195,9 +201,7 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
   await waitFor(() => expect(window.location.search).toBe('?f.status=valid'))
 
   // A second rule: Quantity greater than 5.
-  await userEvent.click(
-    within(menu).getByRole('button', { name: 'Add a filter' }),
-  )
+  await addFilter(menu)
   const fields = within(menu).getAllByRole('button', { name: 'Field' })
   await userEvent.click(fields[fields.length - 1])
   await userEvent.click(
@@ -220,7 +224,7 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
     within(menu).getByRole('button', { name: 'Join rules with' }),
   )
   await userEvent.click(
-    await screen.findByRole('menuitemradio', { name: 'or' }),
+    await screen.findByRole('menuitemradio', { name: 'Or' }),
   )
   await waitFor(() =>
     expect(new URLSearchParams(window.location.search).get('filter')).toBe(
@@ -239,7 +243,7 @@ test('the Filter menu composes rules, shows how many, and Clear filters resets',
     within(menu).getByRole('button', { name: 'Join rules with' }),
   )
   await userEvent.click(
-    await screen.findByRole('menuitemradio', { name: 'and' }),
+    await screen.findByRole('menuitemradio', { name: 'And' }),
   )
   await waitFor(() =>
     expect(window.location.search).toBe('?f.status=valid&f.quantity.gt=5'),

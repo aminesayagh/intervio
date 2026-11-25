@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   memo,
   useMemo,
   useRef,
@@ -15,7 +14,7 @@ import {
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
-import { dismissScope, notify } from '../notifications'
+import { dismissScope } from '../notifications'
 import {
   currentAddress,
   currentSearch,
@@ -47,21 +46,14 @@ import { cache, keys, useCollectionQuery } from './data/collectionQuery'
 import { useRecordActions } from './data/recordActions'
 import { useRecordChanges } from './data/recordChanges'
 import { confirm } from './confirm/confirm'
-import type {
-  ActionDefinition,
-  CollectionDefinition,
-  ColumnDefinition,
-} from './definition'
+import type { CollectionDefinition, ColumnDefinition } from './definition'
 import { listPathOf } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { RecordPage } from './record/RecordPage'
 import {
-  clampPanel,
-  openingWidth,
   COLUMN_WIDTH,
   ROW_HEIGHT,
-  PANEL,
   panelLimits,
   useLayoutMode,
 } from './layout/layout'
@@ -73,6 +65,9 @@ import { RecordRows } from './list/RecordRows'
 import { readBookmark, useScrollBookmark } from './list/scrollBookmark'
 import { Toolbar } from './list/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
+import { useSelection } from './selection/useSelection'
+import { useHeldOrder } from './list/useHeldOrder'
+import { usePanelWidth } from './layout/usePanelWidth'
 import { isShared, SharedNote } from './selection/sharedEdit'
 import { Awake, useHandFocus } from './values/awake'
 import { Folds, type Fold } from './drill/Folded'
@@ -163,43 +158,6 @@ export function Collection<T, C = void>({
   // Saves a change made in place, then shows the saved record everywhere (spec 8.3).
   const queryClient = useQueryClient()
   const { source, getId, key } = definition
-
-  /**
-   * A changed record keeps its place (spec 8.6): after a change the table holds the
-   * order it showed, and the records changed here stay even if they no longer match;
-   * the list reloads behind it. `release` sorts it again.
-   */
-  const [hold, setHold] = useState<{ order: Id[]; kept: Map<Id, T> } | null>(
-    null,
-  )
-  const forget = useCallback(
-    (id: Id) =>
-      setHold((held) => {
-        if (!held) return held
-        const kept = new Map(held.kept)
-        kept.delete(id)
-        return { order: held.order.filter((other) => other !== id), kept }
-      }),
-    [],
-  )
-  const release = useCallback(() => setHold(null), [])
-  const shownItems = useMemo(() => {
-    if (!hold) return list.items
-    const latest = new Map(list.items.map((record) => [getId(record), record]))
-    const held = hold.order.flatMap((id) => {
-      const record = latest.get(id) ?? hold.kept.get(id)
-      return record ? [record] : []
-    })
-    const placed = new Set(hold.order)
-    return [
-      ...held,
-      ...list.items.filter((record) => !placed.has(getId(record))),
-    ]
-  }, [hold, list.items, getId])
-  // Out of order: the list, reloaded, would show them in another order.
-  const outOfOrder =
-    hold !== null &&
-    shownItems.map(getId).join() !== list.items.map(getId).join()
 
   // Every change to a record goes through the shared record actions (spec 8.3).
   const actions = useRecordActions(definition, context as C, basePath)
@@ -409,43 +367,25 @@ export function Collection<T, C = void>({
       ),
     [definition],
   )
-  const [selected, setSelected] = useState<ReadonlySet<Id>>(() => new Set())
-  // A new search, filter or sort clears the selection.
+  // A new search, filter or sort clears the selection and sorts the list again.
   const view = JSON.stringify([listing.search, listing.filters, listing.sort])
-  const [selectedView, setSelectedView] = useState(view)
-  if (view !== selectedView) {
-    setSelectedView(view)
-    setSelected(new Set())
-    setHold(null)
-  }
-  /** Clearing the selection sorts the list again (spec 8.6). */
-  const select = useCallback(
-    (keys: ReadonlySet<Id>) => {
-      if (keys.size === 0 && selected.size > 0) release()
-      setSelected(keys)
-    },
-    [selected, release],
-  )
-  // Opening another record sorts the list again.
-  const [heldFor, setHeldFor] = useState(openId)
-  if (openId !== heldFor) {
-    setHeldFor(openId)
-    if (openId) setHold(null)
-  }
-  const selectedRecords = shownItems.filter((record) =>
-    selected.has(getId(record)),
-  )
+  const { shownItems, outOfOrder, keptCount, keep, forget, release } =
+    useHeldOrder(list.items, getId, view, openId)
+  const { selected, select, drop, selectedRecords, bulkActions, saveShared } =
+    useSelection({
+      definition,
+      actions,
+      records: shownItems,
+      view,
+      nameOf,
+      onCleared: release,
+    })
   // A record changed anywhere (spec 8.3): one of this list's records changed
   // keeps its place; a removed one leaves the selection, and the panel, the page or
   // the linked record showing it closes.
   useRecordChanges((change) => {
     if (change.kind === 'updated' && change.key === key) {
-      const shown = shownItems.map(getId)
-      if (shown.includes(change.id))
-        setHold((held) => ({
-          order: held?.order ?? shown,
-          kept: new Map(held?.kept).set(change.id, change.record as T),
-        }))
+      keep(change.id, change.record as T)
       return
     }
     if (change.kind !== 'removed') return
@@ -455,184 +395,12 @@ export function Collection<T, C = void>({
     if (linkedShown) stepBack()
     if (change.key !== key) return
     forget(change.id)
-    setSelected((keys) => {
-      if (!keys.has(change.id)) return keys
-      const next = new Set(keys)
-      next.delete(change.id)
-      return next
-    })
+    drop(change.id)
     if (pageId === change.id) navigate(listPath, { replace: true })
     else if (!linkedShown && shown.open === change.id)
       if (shown.linked.length) leave()
       else doClose()
   })
-  const bulkActions = (definition.actions ?? []).flatMap((action) => {
-    const records = selectedRecords.filter((record) =>
-      actions.allowed(record).some((allowed) => allowed.id === action.id),
-    )
-    return records.length > 0
-      ? [
-          {
-            id: action.id,
-            label: t(action.label),
-            run: () => void runBulk(action, records),
-          },
-        ]
-      : []
-  })
-  /**
-   * Asks, then runs an action on the selected records it applies to: those that
-   * succeed leave the list; those that fail stay selected, with one message and Retry.
-   */
-  async function runBulk(action: ActionDefinition, records: T[]) {
-    const total = selectedRecords.length
-    const leftOut = selectedRecords.filter(
-      (record) => !records.includes(record),
-    )
-    const confirmed = await confirm({
-      title:
-        records.length === total
-          ? t(`collection:selection.${action.id}Title`, {
-              what: countOf(total),
-            })
-          : t(`collection:selection.${action.id}SomeTitle`, {
-              count: records.length,
-              what: countOf(total),
-            }),
-      text:
-        leftOut.length === 0
-          ? t(`collection:selection.${action.id}Text`, {
-              count: records.length,
-            })
-          : leftOut.length === 1
-            ? t(`collection:selection.${action.id}LeftOut`, {
-                name: nameOf(leftOut[0]),
-              })
-            : t(`collection:selection.${action.id}LeftOutMore`, {
-                name: nameOf(leftOut[0]),
-                count: leftOut.length - 1,
-              }),
-      button: t(`collection:selection.${action.id}Button`, {
-        what: countOf(records.length),
-      }),
-      danger: true,
-    })
-    if (!confirmed) return
-    const keepSelected = (failed: T[]) =>
-      setSelected(new Set(failed.map(getId)))
-    keepSelected(await actions.runMany(action, records, keepSelected))
-  }
-  /**
-   * A shared value changed on a selected row (decision 135, 147): saved on every
-   * selected record the person may change, in one request when the source has
-   * `updateMany`, otherwise one at a time. Afterwards one message says on how
-   * many, with Undo (each record gets its own previous value back); records that
-   * failed keep their value and stay selected, with Retry. A failure on the row
-   * edited is rethrown, so its field puts its value back.
-   */
-  async function saveOnSelection(
-    column: ColumnDefinition<T>,
-    edited: T,
-    patch: Partial<T>,
-    label: string,
-    records: T[] = selectedRecords,
-  ) {
-    const field = column.field as {
-      value: (record: T) => unknown
-      patch: (value: never) => Partial<T>
-    }
-    const targets = records.filter((record) => canEdit(record, column.id))
-    const beforeOf = (record: T) => field.patch(field.value(record) as never)
-    const failed: T[] = []
-    const changed: { record: T; before: Partial<T> }[] = []
-    if (actions.saveMany) {
-      const refused = await actions.saveMany(targets, patch)
-      for (const record of targets)
-        if (refused.includes(record)) failed.push(record)
-        else changed.push({ record, before: beforeOf(record) })
-    } else
-      for (const record of targets) {
-        const before = beforeOf(record)
-        try {
-          await save(record, patch)
-          changed.push({ record, before })
-        } catch {
-          failed.push(record)
-        }
-      }
-    const what = countOf(records.length)
-    const messageKey = `${key}:shared:${column.id}`
-    // The records changed: one message with Undo, even when others failed.
-    if (changed.length > 0)
-      notify({
-        tone: 'confirm',
-        text:
-          changed.length === records.length
-            ? t('collection:selection.changed', { field: label, what })
-            : t('collection:selection.changedSome', {
-                field: label,
-                count: changed.length,
-                what,
-              }),
-        action: {
-          label: t('collection:message.undo'),
-          run: () => {
-            const { saveMany } = actions
-            if (!saveMany) {
-              for (const { record, before } of changed)
-                void save(record, before, { label }).catch(() => {})
-              return
-            }
-            // One request per previous value (a checkbox: at most two).
-            const groups = new Map<
-              string,
-              { before: Partial<T>; records: T[] }
-            >()
-            for (const { record, before } of changed) {
-              const same = JSON.stringify(before)
-              const group = groups.get(same) ?? { before, records: [] }
-              group.records.push(record)
-              groups.set(same, group)
-            }
-            for (const { before, records } of groups.values())
-              void saveMany(records, before).then((refused) => {
-                if (refused.length > 0)
-                  notify({
-                    tone: 'error',
-                    text: t('collection:selection.notChanged', {
-                      field: label,
-                      what: countOf(refused.length),
-                    }),
-                    scope: key,
-                  })
-              })
-          },
-        },
-        scope: key,
-        key: messageKey,
-      })
-    // Those that failed stay selected, with Retry, in a message of their own.
-    if (failed.length > 0) {
-      setSelected(new Set(failed.map(getId)))
-      notify({
-        tone: 'error',
-        text: t('collection:selection.notChanged', {
-          field: label,
-          what: countOf(failed.length),
-        }),
-        action: {
-          label: t('collection:message.retry'),
-          run: () =>
-            void saveOnSelection(column, edited, patch, label, failed).catch(
-              () => {},
-            ),
-        },
-        scope: key,
-        key: `${messageKey}:failed`,
-      })
-    }
-    if (failed.includes(edited)) throw new Error('not saved')
-  }
   const newDefaults = useCallback((): Partial<T> => {
     const values = {
       ...definition.create?.defaults(context as C),
@@ -721,50 +489,14 @@ export function Collection<T, C = void>({
   // Layout (spec 9): the room for the list and the panel, the panel's width, the mode.
   const mode = useLayoutMode()
   const reduceMotion = useReducedMotion()
-  const sectionRef = useRef<HTMLElement>(null)
-  const [space, setSpace] = useState(0)
-  useLayoutEffect(() => {
-    const section = sectionRef.current
-    if (!section) return
-    const measure = () => setSpace(section.getBoundingClientRect().width)
-    measure()
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', measure)
-      return () => window.removeEventListener('resize', measure)
-    }
-    const observer = new ResizeObserver(measure)
-    observer.observe(section)
-    return () => observer.disconnect()
-  }, [pageId])
-  const widthKey = `intervio.collection.${key}.panelWidth`
-  const [dragged, setDragged] = useState<number | null>(null)
   const panelShown = Boolean(definition.panel && (openId || isNew))
-  // Each opening starts from the saved width, in its reasonable range (9.1).
-  const [wasShown, setWasShown] = useState(panelShown)
-  if (wasShown !== panelShown) {
-    setWasShown(panelShown)
-    if (!panelShown) setDragged(null)
-  }
-  const saved = (() => {
-    try {
-      return Number(localStorage.getItem(widthKey)) || PANEL.default
-    } catch {
-      return PANEL.default
-    }
-  })()
-  const panelWidth = space
-    ? clampPanel(dragged ?? openingWidth(saved, space), space)
-    : PANEL.default
-  const commitWidth = useCallback(
-    (width: number) => {
-      try {
-        localStorage.setItem(widthKey, String(Math.round(width)))
-      } catch {
-        // not remembered: the next panel opens at 560 px
-      }
-    },
-    [widthKey],
-  )
+  const {
+    sectionRef,
+    space,
+    width: panelWidth,
+    setDragged,
+    commit: commitWidth,
+  } = usePanelWidth(key, panelShown, pageId)
   // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
   // Returning to one takes it and the views after it off the stack.
   const views: Fold[] = currentViews().map((view, index) => ({
@@ -808,7 +540,7 @@ export function Collection<T, C = void>({
     note: t('collection:selection.appliesTo', {
       what: countOf(selectedRecords.length),
     }),
-    saveShared: saveOnSelection,
+    saveShared,
     positions,
   })
   const selection = useMemo(
@@ -901,8 +633,8 @@ export function Collection<T, C = void>({
             {/* In the collection's words: "After a change, 2 items keep their place." */}
             <span aria-live="polite">
               {t('collection:held.text', {
-                count: hold?.kept.size ?? 0,
-                what: countOf(hold?.kept.size ?? 0),
+                count: keptCount,
+                what: countOf(keptCount),
               })}
             </span>
             <Button size="sm" onPress={release}>

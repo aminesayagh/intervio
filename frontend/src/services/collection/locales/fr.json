@@ -55,7 +55,9 @@
     "unsavedTitle": "Quitter sans enregistrer ?",
     "unsavedText": "Vos dernières modifications de la description ne sont pas enregistrées. Elles restent dans cet onglet jusqu’à votre retour.",
     "leave": "Quitter quand même",
-    "keepEditing": "Continuer"
+    "keepEditing": "Continuer",
+    "aiLimit": "Vous avez sollicité l’IA trop souvent. Réessayez plus tard.",
+    "aiUnavailable": "L’IA n’est pas encore disponible."
   },
   "actions": {
     "more": "Plus d’actions",

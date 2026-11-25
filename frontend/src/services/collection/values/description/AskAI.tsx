@@ -1,5 +1,5 @@
 import { useChat } from '@ai-sdk/react'
-import type { ChatTransport, UIMessage } from 'ai'
+import { DefaultChatTransport, type ChatTransport, type UIMessage } from 'ai'
 import { Sparkles } from 'lucide-react'
 import { RangeApi } from 'platejs'
 import {
@@ -11,6 +11,7 @@ import {
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -18,22 +19,35 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import { csrfHeaders } from '../../../http'
 import { notify } from '../../../notifications'
 import { Button, PopoverDialog, Show, TextInput } from '../../../ui-kit'
-import { ErrorText } from '../../parts'
 import { EditorText } from './PlateEditor'
-import { descriptionPlugins, parseMarkdown } from './plugins'
+import { descriptionPlugins, parseMarkdown, serializeMarkdown } from './plugins'
 import { simulatedTransport, type DescriptionContext } from './simulatedAI'
 
-// ponytail: simulated until the backend answers (issue #35); the real one is
-// `new DefaultChatTransport({ api: '/api/ai/description' })`, from 'ai'.
-const defaultTransport = simulatedTransport()
+// The backend's AI (decision 153); the tests answer in the browser instead.
+const defaultTransport: ChatTransport<UIMessage> =
+  import.meta.env.MODE === 'test'
+    ? simulatedTransport()
+    : new DefaultChatTransport({
+        api: '/api/ai/description',
+        headers: csrfHeaders,
+        credentials: 'same-origin',
+      })
+
+/** The message for what the backend answered ({"code": …} or an error chunk's code). */
+function failure(error: Error) {
+  const code = /ERROR_[A-Z_]+/.exec(error.message)?.[0]
+  if (code === 'ERROR_AI_LIMIT') return 'description.aiLimit'
+  if (code === 'ERROR_AI_UNAVAILABLE') return 'description.aiUnavailable'
+  return 'description.aiFailed'
+}
 
 type AI = {
   ask: (prompt: string) => void
   proposal: string
   busy: boolean
-  failed: boolean
   accept: () => void
   reject: () => void
 }
@@ -58,7 +72,19 @@ export function DescriptionAI({
 }) {
   const { t } = useTranslation('collection')
   const editor = useEditorRef()
-  const chat = useChat({ transport })
+  // A refused or failed answer is a notification, and the proposal goes (decision 153).
+  const chat = useChat({
+    transport,
+    onError(error) {
+      notify({
+        tone: 'error',
+        text: t(failure(error)),
+        scope,
+        key: `${scope}:ai`,
+      })
+      clear()
+    },
+  })
   // Where the answer goes: the selection when the question was asked, followed
   // through the edits made while the AI answers.
   const target = useRef<RangeRef | null>(null)
@@ -85,9 +111,22 @@ export function DescriptionAI({
       const editing = !!selection && !RangeApi.isCollapsed(selection)
       target.current?.unref()
       target.current = editing ? editor.api.rangeRef(selection) : null
+      const document = serializeMarkdown(editor)
+      const selected = editing
+        ? serializeMarkdown(editor, editor.api.fragment(selection))
+        : null
+      if (!document.ok || (selected && !selected.ok)) {
+        notify({
+          tone: 'error',
+          text: t('description.aiFailed'),
+          scope,
+          key: `${scope}:ai`,
+        })
+        return
+      }
       const ctx: DescriptionContext = {
-        children: editor.children,
-        selection,
+        document: document.data,
+        selection: selected?.ok ? selected.data : null,
         toolName: editing ? 'edit' : 'generate',
       }
       chat.setMessages([])
@@ -95,7 +134,6 @@ export function DescriptionAI({
     },
     proposal,
     busy: chat.status === 'submitted' || chat.status === 'streaming',
-    failed: chat.status === 'error',
     accept() {
       const parsed = parseMarkdown(editor, proposal)
       if (!parsed.ok) {
@@ -201,10 +239,17 @@ export function AIProposal() {
     editor.children = parsed.ok ? parsed.data : []
     return editor
   }, [ai.proposal])
+  // The proposal sits under the text, often below the panel's fold: bring it into
+  // view when the AI starts writing and when it is done.
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    box.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+  }, [ai.busy])
 
   return (
-    <Show when={ai.proposal || ai.busy || ai.failed}>
+    <Show when={ai.proposal || ai.busy}>
       <div
+        ref={box}
         role="group"
         aria-label={t('description.aiProposal')}
         className="mt-2 rounded-[var(--field-radius)] border border-border px-2 py-1"
@@ -217,9 +262,6 @@ export function AIProposal() {
         <div className="flex min-h-8 items-center justify-end gap-2 text-xs text-muted">
           <Show when={ai.busy}>
             <span>{t('description.aiWriting')}</span>
-          </Show>
-          <Show when={ai.failed}>
-            <ErrorText>{t('description.aiFailed')}</ErrorText>
           </Show>
           <Button look="ghost" size="sm" onPress={ai.reject}>
             {t('description.aiReject')}

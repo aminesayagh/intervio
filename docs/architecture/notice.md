@@ -9,3 +9,15 @@ Points left open on purpose, each with what a person notices today and what it w
 - **Today:** after the table's controls started waiting for their row (2026-11-23), archiving takes about 200–240 ms from the confirmation to the panel closed (it was about 260–290), with the main thread blocked about 130–170 ms (was about 200–230); sorting about 100–120 ms (was about 150).
 - **Why the rest (traced):** taking the row out moves every row after it, and React Aria's table draws each moved row again (its own row and cell wrappers, about 60 ms; that part only changes inside React Aria); then the panel closes, the table widens, and the columns that come back into view are drawn (about 95 ms). Closing the panel first and taking the row out after was tried and measured: it doesn't help (the same work, in another order, and the panel closes later).
 - **Decided (2026-11-23): accepted as it is.** Archiving may take this long; no further work unless a clear, cheap solution appears. The idea left: keep the columns hidden behind the panel drawn while it is open (so closing it draws nothing new), against drawing more cells all the time.
+
+## From the description's AI (2026-11-25)
+
+### 10. The AI is on for everyone, and client data goes to OpenAI
+
+- **Today:** every signed-in person sees Ask AI in the description; their description and selection are sent to OpenAI with the question (decision 153). Without `OPENAI_API_KEY` on the server, Ask AI answers "The AI isn't available yet."
+- **Waits for:** a decision on turning it on per organization (a setting on the company), and the terms that cover sending client information to OpenAI (OpenAI's API does not train on it by default; the contract with clients should say it is sent).
+
+### 11. The AI's limits are counted in memory
+
+- **Today:** the 20 questions per 10 minutes and 100 per day are counted by the backend in memory: a restart resets them, and two backend instances would each count their own.
+- **Waits for:** the backend running on more than one instance; then count them in the database (or Redis).

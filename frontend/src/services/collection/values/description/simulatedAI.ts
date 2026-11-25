@@ -1,36 +1,21 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai'
-import type { TRange, Value } from 'platejs'
 
-/** What the description sends with each request (issue #35), as Plate's AI does. */
+/**
+ * What the description sends with each question (decision 153): the text and the
+ * selection as Markdown; no selection means new text is wanted.
+ */
 export type DescriptionContext = {
-  children: Value
-  selection: TRange | null
+  document: string
+  selection: string | null
   toolName: 'edit' | 'generate'
 }
 
 const SAMPLE =
   'Check the seals and the bearings before each use. Report any leak at once, and note the date of the check.'
 
-/** The text of the top-level blocks the selection covers. */
-function selectedText({ children, selection }: DescriptionContext) {
-  if (!selection) return ''
-  const [from, to] = [selection.anchor.path[0], selection.focus.path[0]].sort(
-    (a, b) => a - b,
-  )
-  // ponytail: whole blocks, not the exact range; enough for a stand-in answer.
-  const text = (node: unknown): string =>
-    typeof node === 'object' && node !== null && 'text' in node
-      ? String(node.text)
-      : ((node as { children?: unknown[] }).children ?? []).map(text).join('')
-  return children
-    .slice(from, to + 1)
-    .map(text)
-    .join(' ')
-}
-
 /** The stand-in answer: "shorter" keeps the selection's first sentence. */
 function answer(prompt: string, ctx: DescriptionContext) {
-  const selected = selectedText(ctx)
+  const selected = ctx.selection ?? ''
   if (/shorter/i.test(prompt) && selected)
     return selected.match(/^.*?[.!?](\s|$)/)?.[0].trim() ?? selected
   return SAMPLE
@@ -39,7 +24,7 @@ function answer(prompt: string, ctx: DescriptionContext) {
 const pause = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
 /**
- * An AI that answers in the browser, streamed word by word like the real one, so the
+ * An AI that answers in the browser (in the tests), streamed word by word like the real one, so the
  * description's AI can be tried before the backend has it.
  */
 export function simulatedTransport(delay = 40): ChatTransport<UIMessage> {

@@ -161,3 +161,31 @@ test('closing with a description not saved yet asks first', async () => {
     ).not.toBeInTheDocument(),
   )
 })
+
+test('Expand puts the panel over the list, folded into a strip; × brings it back, then closes', async () => {
+  show()
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Open Item 002' }),
+  )
+  const aside = await screen.findByRole('complementary', { name: 'Item 002' })
+  await userEvent.click(within(aside).getByRole('button', { name: 'Expand' }))
+  const strip = await screen.findByRole('button', { name: 'Back to Items' })
+  // × first brings the panel back beside the list.
+  await userEvent.click(
+    within(aside)
+      .getAllByRole('button', { name: 'Back beside the list' })
+      .at(-1)!,
+  )
+  await waitFor(() => expect(strip).not.toBeInTheDocument())
+  expect(
+    screen.getByRole('complementary', { name: 'Item 002' }),
+  ).toBeInTheDocument()
+
+  // Then × closes it.
+  await userEvent.click(within(aside).getByRole('button', { name: 'Close' }))
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('complementary', { name: 'Item 002' }),
+    ).toBeNull(),
+  )
+})

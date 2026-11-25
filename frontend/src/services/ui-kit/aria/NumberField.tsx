@@ -6,6 +6,7 @@ import {
   type NumberFieldProps,
 } from 'react-aria-components'
 import { cn } from '../cn'
+import { chip } from './styles'
 
 const step =
   'flex h-[11px] w-4 cursor-pointer items-center justify-center rounded-[2px] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-1 data-[focus-visible]:outline-foreground data-[disabled]:cursor-default data-[disabled]:opacity-40'
@@ -29,7 +30,7 @@ export function NumberInput({
       {...props}
       className={cn(
         'group/number relative flex min-w-0 items-center',
-        look === 'panel' && '-ms-2 w-fit max-w-full',
+        look === 'panel' && 'w-fit max-w-full',
       )}
     >
       <Input
@@ -37,7 +38,7 @@ export function NumberInput({
         className={cn(
           'w-full min-w-0 cursor-text bg-transparent p-0 pe-6 tabular-nums outline-none placeholder:text-muted',
           look === 'panel' &&
-            'w-auto min-w-14 rounded-[var(--field-radius)] px-2 py-1 pe-6 [field-sizing:content] focus:bg-default',
+            cn(chip, 'w-auto min-w-14 pe-6 [field-sizing:content]'),
         )}
       />
       <span

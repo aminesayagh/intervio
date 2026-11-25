@@ -43,3 +43,30 @@ test('an empty value in the panel is "Add …": pressed, its field takes the foc
     within(aside).queryByRole('button', { name: 'Add Quantity' }),
   ).not.toBeInTheDocument()
 })
+
+test('the line under the properties folds them into a row of values, without the empty ones', async () => {
+  const source = itemSource(makeItems(5))
+  renderAt(
+    `/items?open=${makeItems(1)[0].id}`,
+    <Collection definition={itemDefinition(source)} />,
+  )
+  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  await userEvent.click(
+    await within(aside).findByRole('button', { name: 'Fold the properties' }),
+  )
+  await waitFor(() =>
+    expect(within(aside).queryByText('Status', { selector: 'dt' })).toBeNull(),
+  )
+  expect(within(aside).getByTitle('Status')).toBeInTheDocument()
+  expect(within(aside).queryByTitle('Quantity')).toBeNull() // empty
+  expect(
+    within(aside).queryByRole('button', { name: 'Add Quantity' }),
+  ).toBeNull()
+
+  await userEvent.click(
+    within(aside).getByRole('button', { name: 'Show the properties' }),
+  )
+  expect(
+    await within(aside).findByText('Status', { selector: 'dt' }),
+  ).toBeInTheDocument()
+})

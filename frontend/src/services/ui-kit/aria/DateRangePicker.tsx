@@ -15,12 +15,13 @@ import {
   type DateValue,
 } from 'react-aria-components'
 import { cn } from '../cn'
+import { chip } from './styles'
 
 const iconButton =
   'flex cursor-pointer items-center justify-center rounded-[var(--field-radius)] text-muted outline-none data-[hovered]:bg-default data-[hovered]:text-foreground data-[focus-visible]:outline-2 data-[focus-visible]:outline-foreground'
 
 const segment =
-  'rounded-[2px] px-px outline-none data-[focused]:bg-foreground data-[focused]:text-background data-[placeholder]:text-muted data-[type=literal]:px-0'
+  '-mx-px rounded-[2px] px-px outline-none data-[focused]:bg-foreground data-[focused]:text-background data-[placeholder]:text-muted data-[type=literal]:mx-0 data-[type=literal]:px-0'
 
 /**
  * A period: React Aria's DateRangePicker. Two date fields (start and end) in one
@@ -37,19 +38,19 @@ export function DateRangePicker<T extends DateValue>({
       {...props}
       className={cn(
         'group/range flex min-w-0',
-        look === 'panel' && '-ms-2 w-fit max-w-full',
+        look === 'panel' && 'w-fit max-w-full',
       )}
     >
       <Group
         className={cn(
           'flex min-w-0 items-center gap-1 rounded-[var(--field-radius)]',
-          look === 'panel' && 'px-2 py-1 data-[focus-within]:bg-default',
+          look === 'panel' && chip,
         )}
       >
         <DateInput slot="start" className="flex tabular-nums">
           {(part) => <DateSegment segment={part} className={segment} />}
         </DateInput>
-        <span aria-hidden className="text-muted">
+        <span aria-hidden className="-mx-px text-muted">
           –
         </span>
         <DateInput slot="end" className="flex tabular-nums">

@@ -137,7 +137,7 @@ export function NewRecord<T, C>({
           </h2>
         </div>
 
-        <dl className="grid grid-cols-[176px_minmax(0,1fr)] gap-x-4 gap-y-3">
+        <dl className="grid grid-cols-[176px_minmax(0,1fr)] items-start gap-x-4 gap-y-3">
           {panel.properties
             .filter(
               (property) =>
@@ -145,8 +145,10 @@ export function NewRecord<T, C>({
             )
             .map((property) => (
               <div key={property.id} className="contents">
-                <dt className="text-muted">{t(property.label)}</dt>
-                <dd className="min-w-0">
+                <dt className="grid min-h-8 content-center text-muted">
+                  {t(property.label)}
+                </dt>
+                <dd className="grid min-h-8 min-w-0 content-center">
                   <ValueField
                     record={record}
                     field={property.field}

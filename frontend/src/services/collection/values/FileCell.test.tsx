@@ -105,7 +105,5 @@ test('without the right, the files are links only', async () => {
   expect(
     within(aside).queryByRole('button', { name: /Remove plan/ }),
   ).toBeNull()
-  expect(
-    within(aside).queryByRole('button', { name: '+ Add files' }),
-  ).toBeNull()
+  expect(within(aside).queryByRole('button', { name: 'Add Files' })).toBeNull()
 })

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test } from 'vitest'
 import '../../../i18n'
@@ -55,6 +55,8 @@ test('Escape puts the typed text back; Backspace on nothing removes the "/"', as
   )
   expect(screen.queryByRole('menu')).toBeNull()
   expect(markdownOf(field)).toBe('Pump /li')
+  // The editor places the caret and takes the focus back a frame later.
+  await act(() => new Promise(requestAnimationFrame))
 
   await typeIn(field, ' ')
   await typeIn(field, '/')

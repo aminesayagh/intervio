@@ -14,16 +14,29 @@ export const focusRing =
  */
 export type FieldLook = 'cell' | 'panel' | 'title'
 
+/**
+ * A value in the panel: a chip, thinly bordered, whose border takes the primary
+ * color while it is being edited (its field focused, its menu open).
+ */
+export const chip =
+  'rounded-[var(--field-radius)] border border-border px-1.5 py-0.5 focus-within:border-[var(--color-primary)] aria-expanded:border-[var(--color-primary)]'
+
+/**
+ * The panel's "Add …" button: an empty value's (Add Status) and the files' (Add
+ * Files) share it. No background under the pointer, as values.
+ */
+export const addLook =
+  'inline-flex h-6 w-fit cursor-pointer items-center gap-1 rounded-[var(--field-radius)] border border-border px-2 text-xs font-normal text-muted outline-none hover:text-foreground focus-visible:border-foreground data-[hovered]:bg-transparent'
+
 export const fieldLook: Record<FieldLook, string> = {
   cell: 'p-0',
-  panel: 'rounded-[var(--field-radius)] px-2 py-1 data-[focused]:bg-default',
-  title:
-    'rounded-[var(--field-radius)] px-2 py-1 text-xl font-medium data-[focused]:bg-default',
+  panel: chip,
+  title: 'rounded-[var(--field-radius)] px-2 py-1 text-xl font-medium',
 }
 
-/** The panel's fields reach 8 px out on each side, so their text lines up with the rest. */
+/** The title reaches 8 px out on each side, so its text lines up with the rest. */
 export const fieldMargin: Record<FieldLook, string> = {
   cell: '',
-  panel: '-mx-2',
+  panel: '',
   title: '-mx-2',
 }

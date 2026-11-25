@@ -1,9 +1,13 @@
+import { ImageUp, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, cn, Show, Variant } from '../../ui-kit'
 import type { AvatarField, StoredFile } from '../definition'
 
-/** The picture, or an empty frame: 24 px in the table, 64 px in the panel. */
+/**
+ * The picture, or an empty frame: 24 px in the table, 40 px in the panel. Small
+ * corners, as the rest of the app, unless the definition asks for a round one.
+ */
 export function AvatarImage<T>({
   edit,
   file,
@@ -13,9 +17,9 @@ export function AvatarImage<T>({
   file: StoredFile | null
   look: 'cell' | 'panel'
 }) {
-  const size = look === 'cell' ? 'size-6' : 'size-16'
+  const size = look === 'cell' ? 'size-6' : 'size-10'
   const shape =
-    edit.shape === 'square' ? 'rounded-[var(--field-radius)]' : 'rounded-full'
+    edit.shape === 'round' ? 'rounded-full' : 'rounded-[var(--field-radius)]'
   return (
     <Show
       as="span"
@@ -110,7 +114,7 @@ export function AvatarCell<T>({
               aria-busy={busy || undefined}
               onClick={() => input.current?.click()}
               className={cn(
-                'flex cursor-pointer rounded-full outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground',
+                'flex cursor-pointer rounded-[var(--field-radius)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground',
                 busy && 'opacity-50',
               )}
             >
@@ -119,28 +123,35 @@ export function AvatarCell<T>({
             {chooser}
           </>
         ),
-        // In the panel: the picture, Upload or Replace, and Remove.
+        // In the panel: the picture, then Upload or Replace and Remove, as icons.
         panel: () => (
-          <span className={cn('flex items-center gap-3', busy && 'opacity-50')}>
+          <span className={cn('flex items-center gap-2', busy && 'opacity-50')}>
             <AvatarImage edit={edit} file={file} look="panel" />
-            <Button
-              look="ghost"
-              size="sm"
-              isDisabled={busy}
-              onPress={() => input.current?.click()}
-            >
-              {t(file ? 'fields.replace' : 'fields.uploadShort')}
-            </Button>
-            <Show as="span" when={file}>
+            {/* The two side by side, as drawn still. */}
+            <span className="flex">
               <Button
                 look="ghost"
                 size="sm"
                 isDisabled={busy}
-                onPress={() => void save(edit.patch(null)).catch(() => {})}
+                aria-label={t(file ? 'fields.replace' : 'fields.uploadShort')}
+                onPress={() => input.current?.click()}
+                className="px-2"
               >
-                {t('fields.remove')}
+                <ImageUp size={14} />
               </Button>
-            </Show>
+              <Show as="span" when={file} className="flex">
+                <Button
+                  look="ghost"
+                  size="sm"
+                  isDisabled={busy}
+                  aria-label={t('fields.remove')}
+                  onPress={() => void save(edit.patch(null)).catch(() => {})}
+                  className="px-2"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </Show>
+            </span>
             {chooser}
           </span>
         ),

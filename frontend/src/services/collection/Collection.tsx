@@ -524,6 +524,11 @@ export function Collection<T, C = void>({
     return () => foldSidebar(false)
   }, [mode, panelShown, hasStrips])
   const narrowPanel = mode === 'narrow' && panelShown
+  // The panel over the list, which folds into a strip (decision 157); each opening
+  // starts beside it.
+  const [wideState, setWide] = useState(false)
+  if (wideState && !panelShown) setWide(false)
+  const wide = wideState && !narrowPanel
   const back = narrowPanel ? t(definition.i18n.title) : undefined
 
   // What the rows show besides their record (the open one, the selection), read from
@@ -583,13 +588,30 @@ export function Collection<T, C = void>({
       className="relative -mt-4 -me-4 -mb-4 flex h-[calc(100dvh-3.5rem)] min-h-[360px] overflow-hidden lg:-mt-6 lg:-me-6 lg:-mb-6 lg:h-dvh"
     >
       {/* Right after the sidebar, before the list. */}
-      <Show when={hasStrips} className="me-4 h-full lg:me-6">
-        <Folds folds={strips} kind="views" />
+      <Show
+        when={hasStrips || wide}
+        // Space before the list; wide, the panel comes right after the strip.
+        className={cn('h-full', !wide && 'me-4 lg:me-6')}
+      >
+        <Folds
+          folds={
+            wide
+              ? [
+                  ...strips,
+                  {
+                    name: t(definition.i18n.title),
+                    open: () => setWide(false),
+                  },
+                ]
+              : strips
+          }
+          kind="views"
+        />
       </Show>
       <div
         className={cn(
           'flex min-w-0 flex-1 flex-col gap-4 pe-6 pt-4 lg:pt-6',
-          narrowPanel && 'hidden',
+          (narrowPanel || wide) && 'hidden',
         )}
       >
         {/* One row: the title, the search and filters (or the selection), then Add. */}
@@ -731,7 +753,7 @@ export function Collection<T, C = void>({
         </div>
       </div>
 
-      {panelShown && !narrowPanel && (
+      {panelShown && !narrowPanel && !wide && (
         <PanelDivider
           width={panelWidth}
           {...panelLimits(space)}
@@ -759,9 +781,10 @@ export function Collection<T, C = void>({
           initial={{ x: 24, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
-          style={narrowPanel ? undefined : { width: panelWidth }}
+          style={narrowPanel || wide ? undefined : { width: panelWidth }}
           className={cn(
             'h-full shrink-0',
+            wide && 'min-w-0 flex-1',
             narrowPanel &&
               'flex-1 [&>aside]:border-0 [&>aside]:ps-0 [&>aside]:pe-0',
           )}
@@ -814,6 +837,11 @@ export function Collection<T, C = void>({
                     report={report}
                     actions={(record) => actions.menu(record)}
                     onAction={actions.runMenu}
+                    expand={
+                      narrowPanel
+                        ? undefined
+                        : { wide, toggle: () => setWide(!wide) }
+                    }
                   />
                 )}
               </Match>

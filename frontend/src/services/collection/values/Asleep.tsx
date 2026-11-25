@@ -1,5 +1,5 @@
 import { Calendar, ChevronDown, ChevronUp } from 'lucide-react'
-import { cn } from '../../ui-kit'
+import { chip, cn } from '../../ui-kit'
 
 /**
  * The value as text, looking like its editor at rest. It takes the focus, so the
@@ -41,7 +41,8 @@ export function Asleep({
       data-asleep
       tabIndex={0}
       className={cn(
-        'relative -ms-2 flex w-fit max-w-full cursor-text items-center gap-1 rounded-[var(--field-radius)] px-2 py-1 tabular-nums outline-none focus-visible:bg-default',
+        chip,
+        'relative flex w-fit max-w-full cursor-text items-center gap-1 tabular-nums outline-none',
         icon === 'steps' && 'min-w-14 pe-6',
       )}
     >

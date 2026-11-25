@@ -24,6 +24,16 @@ SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
 
 In Google Cloud, the OAuth client allows the origin `http://localhost:5173` and the redirect URI `http://localhost:5173/login/oauth2/code/google`. Without `.env`, everything else works and the Google button is inactive.
 
+The description's AI (Ask AI in the editor) calls OpenAI. Add your OpenAI API key to the same `.env`, then restart the backend:
+
+```
+OPENAI_API_KEY=sk-...
+# Optional: another model than gpt-4.1-mini
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Without the key, Ask AI answers "The AI isn't available yet."
+
 Uploaded files are kept in `storage/` at the root (git-ignored) and scanned by ClamAV, which `make db` starts with the database. ClamAV needs about 1–1.5 GB of memory and downloads its virus signatures on first start (a few minutes); until it is ready, uploads are refused.
 
 Emails (confirmation, sign-in and reset links) are caught locally by Mailpit: open http://localhost:8025.

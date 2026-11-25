@@ -22,6 +22,13 @@ function csrfToken() {
   return document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)?.[1]
 }
 
+/** Spring Security's CSRF header, for a request not made through `api` (the AI's stream). */
+export async function csrfHeaders(): Promise<Record<string, string>> {
+  // The CSRF cookie is set on the first backend response.
+  if (!csrfToken()) await fetch('/api/auth/me', { credentials: 'same-origin' })
+  return { 'X-XSRF-TOKEN': decodeURIComponent(csrfToken() ?? '') }
+}
+
 /**
  * Calls the backend with the session cookie and Spring Security's CSRF header.
  * Returns the parsed JSON body, or undefined for an empty response.
@@ -31,14 +38,9 @@ export async function api<T = void>(
   options: { method?: string; body?: Body } = {},
 ): Promise<T> {
   const method = options.method ?? (options.body ? 'POST' : 'GET')
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> =
+    method === 'GET' ? {} : await csrfHeaders()
   let body: BodyInit | undefined
-  if (method !== 'GET') {
-    // The CSRF cookie is set on the first backend response.
-    if (!csrfToken())
-      await fetch('/api/auth/me', { credentials: 'same-origin' })
-    headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken() ?? '')
-  }
   if (options.body && 'json' in options.body) {
     headers['Content-Type'] = 'application/json'
     body = JSON.stringify(options.body.json)

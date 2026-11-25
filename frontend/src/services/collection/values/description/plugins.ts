@@ -51,9 +51,15 @@ export function parseMarkdown(
  * The editor's content as Markdown, without the trailing new line remark adds. Empty,
  * it is '' (Plate writes an empty paragraph as a zero-width space).
  */
-export function serializeMarkdown(editor: SlateEditor): Converted<string> {
+export function serializeMarkdown(
+  editor: SlateEditor,
+  /** Part of the content (a selection's fragment); the whole content by default. */
+  value?: Value,
+): Converted<string> {
   try {
-    const markdown = editor.getApi(MarkdownPlugin).markdown.serialize()
+    const markdown = editor
+      .getApi(MarkdownPlugin)
+      .markdown.serialize(value ? { value } : undefined)
     // Judged on the text written, not the editor: an image alone holds no text.
     const empty = markdown.replace(/\u200b/g, '').trim() === ''
     return { ok: true, data: empty ? '' : markdown.replace(/\n+$/, '') }

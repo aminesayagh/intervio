@@ -55,7 +55,9 @@
     "unsavedTitle": "Leave without saving?",
     "unsavedText": "Your last changes to the description are not saved. They stay in this tab until you come back.",
     "leave": "Leave anyway",
-    "keepEditing": "Keep editing"
+    "keepEditing": "Keep editing",
+    "aiLimit": "You've asked the AI too often. Try again later.",
+    "aiUnavailable": "The AI isn't available yet."
   },
   "actions": {
     "more": "More actions",

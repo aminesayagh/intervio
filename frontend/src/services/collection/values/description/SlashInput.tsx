@@ -98,7 +98,7 @@ export function SlashInput(props: PlateElementProps) {
         <CommandMenu
           anchor={anchor}
           label={t('description.blocks')}
-          empty={t('description.noBlock')}
+          empty={t('description.noMatch')}
           value={value}
           onChange={setValue}
           inputRef={inputRef}

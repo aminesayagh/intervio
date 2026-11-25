@@ -7,7 +7,7 @@ import * as notifications from '../../../notifications'
 import { editorOf, enter, markdownOf, selectAll } from '../../testing/plate'
 import { Description } from '../Description'
 
-// The stand-in sample answer is made unreadable, to see Accept fail.
+// The stand-in sample answer is made unreadable, to see accepting it fail.
 vi.mock('./plugins', async (original) => {
   const plugins = await original<typeof import('./plugins')>()
   return {
@@ -45,14 +45,11 @@ async function askShorter() {
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     'Make it shorter',
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+  await userEvent.keyboard('{Enter}')
   const proposal = screen.getByRole('group', { name: 'AI proposal' })
-  // The answer streams in; Accept waits for its end.
+  // The answer streams in; Enter accepts it once it has ended.
   await vi.waitFor(
-    () =>
-      expect(
-        within(proposal).getByRole('button', { name: 'Accept' }),
-      ).toBeEnabled(),
+    () => expect(proposal).toHaveTextContent('Enter to accept'),
     { timeout: 3000 },
   )
   expect(proposal).toHaveTextContent('Seals are checked once a year.')
@@ -62,11 +59,9 @@ async function askShorter() {
   return { field, proposal, save }
 }
 
-test('Accept puts the AI proposal in place of the selection, then saves it', async () => {
-  const { field, proposal, save } = await askShorter()
-  await userEvent.click(
-    within(proposal).getByRole('button', { name: 'Accept' }),
-  )
+test('Enter puts the AI proposal in place of the selection, then saves it', async () => {
+  const { field, save } = await askShorter()
+  await userEvent.keyboard('{Enter}')
   expect(markdownOf(field)).toBe('Seals are checked once a year.')
   expect(screen.queryByRole('group', { name: 'AI proposal' })).toBeNull()
   await vi.waitFor(
@@ -75,11 +70,9 @@ test('Accept puts the AI proposal in place of the selection, then saves it', asy
   )
 })
 
-test('Reject drops the AI proposal and leaves the text as it was', async () => {
-  const { field, proposal, save } = await askShorter()
-  await userEvent.click(
-    within(proposal).getByRole('button', { name: 'Reject' }),
-  )
+test('Escape drops the AI proposal and leaves the text as it was', async () => {
+  const { field, save } = await askShorter()
+  await userEvent.keyboard('{Escape}')
   expect(screen.queryByRole('group', { name: 'AI proposal' })).toBeNull()
   expect(markdownOf(field)).toBe(TEXT)
   await new Promise((done) => setTimeout(done, 1200))
@@ -93,19 +86,16 @@ async function ask(prompt: string) {
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     prompt,
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+  await userEvent.keyboard('{Enter}')
   const proposal = screen.getByRole('group', { name: 'AI proposal' })
   await vi.waitFor(
-    () =>
-      expect(
-        within(proposal).getByRole('button', { name: 'Accept' }),
-      ).toBeEnabled(),
+    () => expect(proposal).toHaveTextContent('Enter to accept'),
     { timeout: 3000 },
   )
   return proposal
 }
 
-test('Accept replaces the text asked about, even after edits above it', async () => {
+test('Enter replaces the text asked about, even after edits above it', async () => {
   render(
     <Description
       value={`Intro.\n\n${TEXT}`}
@@ -124,7 +114,7 @@ test('Accept replaces the text asked about, even after edits above it', async ()
       focus: editor.api.end([1])!,
     }),
   )
-  const proposal = await ask('Make it shorter')
+  await ask('Make it shorter')
   // Written while the AI answered: the paragraph asked about moves down.
   await act(async () =>
     editor.tf.insertNodes(
@@ -132,9 +122,7 @@ test('Accept replaces the text asked about, even after edits above it', async ()
       { at: [0] },
     ),
   )
-  await userEvent.click(
-    within(proposal).getByRole('button', { name: 'Accept' }),
-  )
+  await userEvent.keyboard('{Enter}')
   expect(markdownOf(field)).toBe(
     'Added\n\nIntro.\n\nSeals are checked once a year.',
   )
@@ -153,10 +141,8 @@ test('a proposal the editor cannot read is reported, not applied', async () => {
   )
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
-  const proposal = await ask('Rewrite it')
-  await userEvent.click(
-    within(proposal).getByRole('button', { name: 'Accept' }),
-  )
+  await ask('Rewrite it')
+  await userEvent.keyboard('{Enter}')
   expect(markdownOf(field)).toBe(TEXT)
   expect(notify).toHaveBeenCalledWith(
     expect.objectContaining({

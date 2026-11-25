@@ -241,9 +241,6 @@ function Editor({
             <Match when={autosave.status === 'saving'}>
               <span>{t('description.saving')}</span>
             </Match>
-            <Match when={autosave.status === 'saved'}>
-              <span>{t('description.saved')}</span>
-            </Match>
           </Switch>
         </div>
       </Show>

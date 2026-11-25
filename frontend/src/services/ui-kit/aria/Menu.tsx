@@ -132,8 +132,103 @@ export function ActionMenu({
   )
 }
 
-/** One entry of a command menu, with its icon. */
-export type Command = { id: string; label: string; icon: ReactNode }
+/**
+ * One entry of a command menu, with its icon. An `always` one stays whatever is
+ * typed (the "Ask: …" of a free request).
+ */
+export type Command = {
+  id: string
+  label: string
+  icon: ReactNode
+  always?: boolean
+}
+
+/** The filter of command menus: by label, accents and case aside. */
+function useCommandFilter() {
+  const { contains } = useFilter({ sensitivity: 'base' })
+  return (text: string, input: string, node: { value: unknown }) =>
+    !!(node.value as Command | null)?.always || contains(text, input)
+}
+
+function CommandItems({
+  label,
+  commands,
+  onAction,
+  empty,
+}: {
+  label: string
+  commands: Command[]
+  onAction: (id: string) => void
+  empty: string
+}) {
+  return (
+    <Menu
+      aria-label={label}
+      items={commands}
+      onAction={(key) => onAction(String(key))}
+      renderEmptyState={() => (
+        <div className="px-2 py-1 text-muted">{empty}</div>
+      )}
+      className="max-h-[320px] overflow-auto outline-none"
+    >
+      {(command) => (
+        <AriaMenuItem
+          id={command.id}
+          textValue={command.label}
+          className={itemLook}
+        >
+          <span className="flex size-4 shrink-0 items-center justify-center">
+            {command.icon}
+          </span>
+          {command.label}
+        </AriaMenuItem>
+      )}
+    </Menu>
+  )
+}
+
+/**
+ * A search field over a menu of commands, the typing filtering them (React Aria's
+ * Autocomplete): the focus stays in the field, the arrows move in the menu and Enter
+ * runs the highlighted command. For inside a popover (the description's Ask AI).
+ */
+export function CommandSearch({
+  label,
+  placeholder,
+  commands,
+  value,
+  onChange,
+  onAction,
+  empty,
+}: {
+  label: string
+  placeholder: string
+  commands: Command[]
+  value: string
+  onChange: (value: string) => void
+  onAction: (id: string) => void
+  empty: string
+}) {
+  const filter = useCommandFilter()
+  return (
+    <Autocomplete filter={filter} inputValue={value} onInputChange={onChange}>
+      <TextField aria-label={label} autoFocus className="flex">
+        <Input
+          placeholder={placeholder}
+          className="w-full min-w-0 border-b border-border bg-transparent px-2 pt-1 pb-2 outline-none placeholder:text-muted"
+        />
+      </TextField>
+      <div className="pt-1">
+        <CommandItems
+          label={label}
+          commands={commands}
+          onAction={onAction}
+          empty={empty}
+        />
+      </div>
+    </Autocomplete>
+  )
+}
 
 /**
  * A menu of commands filtered by typing (React Aria's Autocomplete), opened at
@@ -166,9 +261,9 @@ export function CommandMenu({
   /** The caller's own handlers on the input (keys, blur). */
   inputProps?: HTMLAttributes<HTMLInputElement>
 }) {
-  const { contains } = useFilter({ sensitivity: 'base' })
+  const filter = useCommandFilter()
   return (
-    <Autocomplete filter={contains} inputValue={value} onInputChange={onChange}>
+    <Autocomplete filter={filter} inputValue={value} onInputChange={onChange}>
       <Popover
         triggerRef={anchor}
         isOpen
@@ -182,28 +277,12 @@ export function CommandMenu({
         <TextField aria-label={label} autoFocus className="sr-only">
           <Input {...inputProps} ref={inputRef} />
         </TextField>
-        <Menu
-          aria-label={label}
-          items={commands}
-          onAction={(key) => onAction(String(key))}
-          renderEmptyState={() => (
-            <div className="px-2 py-1 text-muted">{empty}</div>
-          )}
-          className="max-h-[320px] overflow-auto outline-none"
-        >
-          {(command) => (
-            <AriaMenuItem
-              id={command.id}
-              textValue={command.label}
-              className={itemLook}
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center">
-                {command.icon}
-              </span>
-              {command.label}
-            </AriaMenuItem>
-          )}
-        </Menu>
+        <CommandItems
+          label={label}
+          commands={commands}
+          onAction={onAction}
+          empty={empty}
+        />
       </Popover>
     </Autocomplete>
   )

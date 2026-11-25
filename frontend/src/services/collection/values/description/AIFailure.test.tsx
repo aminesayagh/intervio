@@ -46,7 +46,7 @@ test('the AI gets the text and the selection as Markdown; a refusal is a notific
     await screen.findByRole('textbox', { name: 'What should the AI do?' }),
     'Make it shorter',
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+  await userEvent.keyboard('{Enter}')
 
   await vi.waitFor(() =>
     expect(notify).toHaveBeenCalledWith(

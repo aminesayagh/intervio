@@ -14,6 +14,7 @@ export {
   ActionMenu,
   ChoiceMenu,
   CommandMenu,
+  CommandSearch,
   MenuPopover,
   MenuTrigger,
   type Command,

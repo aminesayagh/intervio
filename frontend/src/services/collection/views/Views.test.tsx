@@ -8,7 +8,7 @@ import { stubElementSizes } from '../testing/layout'
 import { partDefinition } from '../testing/parts'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
-import { DEFAULT_VIEW, viewProblems, viewsOf } from './views'
+import { DEFAULT_VIEW, valuesOf, viewProblems, viewsOf } from './views'
 
 beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
@@ -82,4 +82,17 @@ test("the table shows the view's columns, in its order", async () => {
     .map((header) => header.textContent)
     .filter(Boolean)
   expect(headers).toEqual(['Status', 'Name'])
+})
+
+test('a new record takes the values the list is filtered on', () => {
+  expect(
+    valuesOf(items(), {
+      status: ['valid'],
+      active: ['true'],
+      tags: ['pump', 'valve'],
+      // Not one value, or not "is": nothing to take.
+      owner: ['Julie Moreau', 'Marc Petit'],
+      'quantity.gt': ['5'],
+    }),
+  ).toEqual({ status: 'valid', active: true, tags: ['pump', 'valve'] })
 })

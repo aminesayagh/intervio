@@ -44,7 +44,7 @@ import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
 import { ViewMenu } from './views/ViewMenu'
-import { columnsOf, viewsOf } from './views/views'
+import { columnsOf, valuesOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
 import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
@@ -392,27 +392,19 @@ export function Collection<T, C = void>({
       if (shown.linked.length) leave()
       else doClose()
   })
-  const newDefaults = useCallback((): Omit<T, 'id'> => {
-    const values = {
-      ...definition.create?.defaults(context as C),
-    } as Omit<T, 'id'>
-    // A list filtered or scoped to one value creates records with it (spec 7.5, 12.1).
-    for (const filter of [
-      ...(definition.filters ?? []),
-      ...(definition.scopes ?? []),
-    ]) {
-      const chosen = listing.filters[filter.id] ?? []
-      if (chosen.length === 1 && filter.patch)
-        Object.assign(values, filter.patch(chosen[0]))
-    }
-    return values
-  }, [
-    definition.create,
-    definition.filters,
-    definition.scopes,
-    listing.filters,
-    context,
-  ])
+  // A new record takes the values the list is filtered on (the view's locked ones
+  // too), so it stays in the list it was created in (spec 7.5, 12.1, MOH-34). Only
+  // worked out while a new record is open.
+  const newDefaults = useMemo(
+    () =>
+      isNew
+        ? ({
+            ...definition.create?.defaults(context as C),
+            ...valuesOf(definition, state.query.filters),
+          } as Omit<T, 'id'>)
+        : undefined,
+    [isNew, definition, state.query.filters, context],
+  )
   const createRecord = useCallback(
     async (draft: Partial<T>, latest: () => Partial<T>) => {
       const created = await actions.create(
@@ -794,7 +786,7 @@ export function Collection<T, C = void>({
                   key="new"
                   definition={definition}
                   panel={definition.panel!}
-                  defaults={newDefaults()}
+                  defaults={newDefaults!}
                   draftKey={newRecordKey(stateKey)}
                   onCreated={createRecord}
                   onClose={close}

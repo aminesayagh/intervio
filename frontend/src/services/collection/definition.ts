@@ -117,7 +117,7 @@ export type AvatarField<T> = {
   upload: (file: File) => Promise<StoredFile>
   /** The address that shows the picture. */
   src: (file: StoredFile) => string
-  /** Accepted types (default png, jpg, jpeg) and size (default 2 MB). */
+  /** Accepted types and size: by default the files service's photo rules (#73). */
   extensions?: string[]
   maxMb?: number
   shape?: 'round' | 'square'
@@ -134,7 +134,7 @@ export type FileField<T> = {
   upload: (file: File) => Promise<StoredFile>
   /** The address that opens a file. */
   src: (file: StoredFile) => string
-  /** Accepted types (default: documents, as the files service) and size (default 10 MB). */
+  /** Accepted types and size: by default the files service's document rules (#73). */
   extensions?: string[]
   maxMb?: number
 }

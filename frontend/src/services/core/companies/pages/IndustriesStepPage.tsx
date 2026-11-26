@@ -11,7 +11,7 @@ import {
   INDUSTRY_CODES,
   useCompany,
 } from '../api'
-import { StepLinks, StepTitle } from '../components'
+import { StepLinks, StepTitle } from './StepParts'
 
 /** Step 2 (optional): the industries the company works in, in two columns. */
 export function IndustriesStepPage() {

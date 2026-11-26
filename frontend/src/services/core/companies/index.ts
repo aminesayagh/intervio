@@ -12,5 +12,8 @@ export {
   useCompany,
   type Company,
 } from './api'
-export { CountryField } from './components'
+export {
+  CompanyDetailsFields,
+  type CompanyDetails,
+} from './details/CompanyDetailsFields'
 export { ONBOARDING_START, onboardingRoutes } from './routes'

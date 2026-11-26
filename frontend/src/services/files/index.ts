@@ -15,4 +15,9 @@ export { DocumentsField } from './components/DocumentsField'
 export { FileDropzone } from './components/FileDropzone'
 export { FilePreview, type PreviewFile } from './components/FilePreview'
 export { ImagePicker } from './components/ImagePicker'
-export { checkFile, FILE_PURPOSES, type FilePurpose } from './purposes'
+export {
+  checkFile,
+  FILE_PURPOSES,
+  type FilePurpose,
+  type FileRules,
+} from './purposes'

@@ -4,12 +4,13 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ImagePicker } from '../../files'
 import { navigate, usePath } from '../../navigation'
-import { check, Field, FormError } from '../../ui-kit'
+import { FormError } from '../../ui-kit'
 import {
   companyApi,
   companyErrorKey,
   companyKey,
-  CountryField,
+  CompanyDetailsFields,
+  type CompanyDetails,
   INDUSTRY_CODES,
   useCompany,
   type Company,
@@ -49,9 +50,12 @@ function Details({ company }: { company: Company }) {
   const { t } = useTranslation('settings')
   const { t: tc } = useTranslation('companies')
   const queryClient = useQueryClient()
-  const [name, setName] = useState(company.name)
-  const [country, setCountry] = useState<string | null>(company.country)
-  const [number, setNumber] = useState(company.registrationNumber)
+  const [details, setDetails] = useState<CompanyDetails>({
+    name: company.name,
+    country: company.country,
+    registrationNumber: company.registrationNumber,
+  })
+  const [countryMissing, setCountryMissing] = useState(false)
   const [industries, setIndustries] = useState(company.industries.map(String))
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -59,12 +63,16 @@ function Details({ company }: { company: Company }) {
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!country) return
+    const { name, country, registrationNumber } = details
+    if (!country) {
+      setCountryMissing(true)
+      return
+    }
     setError(null)
     setSaved(false)
     setPending(true)
     try {
-      await companyApi.saveDetails(name, country, number)
+      await companyApi.saveDetails(name, country, registrationNumber)
       queryClient.setQueryData(
         companyKey,
         await companyApi.saveIndustries(industries.map(Number)),
@@ -84,27 +92,10 @@ function Details({ company }: { company: Company }) {
           error && tc(error, { defaultValue: tc('errors.ERROR_UNKNOWN') })
         }
       />
-      <Field
-        name="name"
-        autoComplete="organization"
-        label={tc('company.name')}
-        placeholder={tc('company.namePlaceholder')}
-        value={name}
-        onChange={setName}
-        check={check.required}
-      />
-      <CountryField
-        value={country}
-        onChange={setCountry}
-        isInvalid={!country}
-      />
-      <Field
-        name="registrationNumber"
-        label={tc('company.number')}
-        placeholder={tc('company.numberPlaceholder')}
-        value={number}
-        onChange={setNumber}
-        check={check.required}
+      <CompanyDetailsFields
+        value={details}
+        onChange={setDetails}
+        countryMissing={countryMissing}
       />
       <Select
         fullWidth

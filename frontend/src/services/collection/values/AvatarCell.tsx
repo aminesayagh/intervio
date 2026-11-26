@@ -2,6 +2,7 @@ import { ImageUp, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, cn, Show, Variant } from '../../ui-kit'
+import { checkFile, FILE_PURPOSES } from '../../files'
 import type { AvatarField, StoredFile } from '../definition'
 
 /**
@@ -65,19 +66,19 @@ export function AvatarCell<T>({
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const file = edit.value(record)
-  const extensions = edit.extensions ?? ['png', 'jpg', 'jpeg']
-  const maxMb = edit.maxMb ?? 2
+  // The files service's rules for a photo, unless the field gives its own (#73).
+  const extensions = edit.extensions ?? FILE_PURPOSES.userPhoto.extensions
+  const maxMb = edit.maxMb ?? FILE_PURPOSES.userPhoto.maxMb
 
   async function pick(chosen: File | undefined) {
     if (input.current) input.current.value = '' // the same file can be chosen again
     if (!chosen) return
-    const extension = chosen.name.split('.').pop()?.toLowerCase() ?? ''
-    if (!extensions.includes(extension))
+    const problem = checkFile({ extensions, maxMb }, chosen)
+    if (problem === 'errors.ERROR_FILE_TYPE')
       return onInvalid?.(
         t('fields.pictureType', { types: extensions.join(', ').toUpperCase() }),
       )
-    if (chosen.size > maxMb * 1024 * 1024)
-      return onInvalid?.(t('fields.pictureSize', { size: maxMb }))
+    if (problem) return onInvalid?.(t('fields.pictureSize', { size: maxMb }))
     setBusy(true)
     try {
       const uploaded = await edit.upload(chosen)

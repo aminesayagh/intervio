@@ -22,7 +22,7 @@ export function columnsOf<T, C>(
   definition: CollectionDefinition<T, C>,
   view: ViewDefinition,
 ) {
-  if (!view.columns) return definition.columns
+  if (view.type !== 'table' || !view.columns) return definition.columns
   const byId = new Map(definition.columns.map((column) => [column.id, column]))
   return view.columns.flatMap((id) => byId.get(id) ?? [])
 }
@@ -49,8 +49,17 @@ export function viewProblems<T, C>(definition: CollectionDefinition<T, C>) {
     const at = `view "${view.id}"`
     if (seen.has(view.id)) problems.push(`${at}: id used twice`)
     seen.add(view.id)
-    for (const id of view.columns ?? [])
+    const shown = view.type === 'table' ? view.columns : view.card
+    for (const id of shown ?? [])
       if (!columns.has(id)) problems.push(`${at}: no column "${id}"`)
+    if (view.type === 'kanban') {
+      const group = definition.columns.find((c) => c.id === view.groupBy)
+      const filterable =
+        group?.filter ||
+        definition.filters?.some((filter) => filter.id === view.groupBy)
+      if (group?.field?.type !== 'select' || !filterable)
+        problems.push(`${at}: "${view.groupBy}" is not a filterable select`)
+    }
     for (const key of Object.keys(view.filters ?? {}))
       if (!filters.has(key)) problems.push(`${at}: no filter "${key}"`)
     for (const level of view.sort ?? [])

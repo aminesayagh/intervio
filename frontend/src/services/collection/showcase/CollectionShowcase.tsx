@@ -81,6 +81,13 @@ const definitions = {
         type: 'table' as const,
         columns: ['name', 'status', 'owner', 'updated'],
       },
+      {
+        id: 'board',
+        name: 'Board',
+        type: 'kanban' as const,
+        groupBy: 'status',
+        card: ['owner', 'quantity'],
+      },
     ],
   },
   empty: itemDefinition(empty, 'showcase-empty', rights),

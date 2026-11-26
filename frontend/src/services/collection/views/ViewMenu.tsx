@@ -1,4 +1,4 @@
-import { ChevronDown, Table2 } from 'lucide-react'
+import { ChevronDown, Kanban, Table2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -28,7 +28,7 @@ export function ViewMenu({
   const [search, setSearch] = useState('')
   const name = (
     <>
-      <Table2 size={14} aria-hidden />
+      <TypeIcon view={active} />
       {t(active.name)}
     </>
   )
@@ -58,7 +58,7 @@ export function ViewMenu({
             commands={views.map((view) => ({
               id: view.id,
               label: t(view.name),
-              icon: <Table2 size={14} />,
+              icon: <TypeIcon view={view} />,
             }))}
             value={search}
             onChange={setSearch}
@@ -68,4 +68,10 @@ export function ViewMenu({
       </MenuTrigger>
     </Show>
   )
+}
+
+/** The icon of a view's type: a table, or a board. */
+function TypeIcon({ view }: { view: ViewDefinition }) {
+  const Icon = view.type === 'kanban' ? Kanban : Table2
+  return <Icon size={14} aria-hidden />
 }

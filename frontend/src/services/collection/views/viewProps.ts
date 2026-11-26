@@ -1,6 +1,13 @@
 import type { RefObject } from 'react'
 import type { CollectionDefinition } from '../definition'
-import type { Id, More, ReportInvalid, SaveChange, Sort } from '../types'
+import type {
+  Id,
+  ListQuery,
+  More,
+  ReportInvalid,
+  SaveChange,
+  Sort,
+} from '../types'
 import type { MarksStore } from './rowMarks'
 
 /**
@@ -34,4 +41,7 @@ export type ViewProps<T, C> = {
   }
   /** The open record and the selection, as rows and cells read them. */
   store: MarksStore
+  /** What the list asks the data source (a kanban's columns each add their value). */
+  query: Omit<ListQuery, 'cursor'>
+  context: C
 }

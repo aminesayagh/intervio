@@ -206,5 +206,8 @@
     "choose": "View: {{name}}",
     "search": "Search views…",
     "none": "No view matches"
+  },
+  "board": {
+    "empty": "No records"
   }
 }

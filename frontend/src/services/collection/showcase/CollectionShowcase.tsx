@@ -53,14 +53,33 @@ const rights = () => ({
 })
 const parts = partSource()
 const definitions = {
-  full: itemDefinition(
-    full,
-    'showcase-items',
-    rights,
-    () => partsDefinition,
-    '/dev/collection',
-    () => checksDefinition,
-  ),
+  full: {
+    ...itemDefinition(
+      full,
+      'showcase-items',
+      rights,
+      () => partsDefinition,
+      '/dev/collection',
+      () => checksDefinition,
+    ),
+    // Configured views (decision 168): the tabs above the list.
+    views: [
+      { id: 'all', name: 'collection:views.all', type: 'table' as const },
+      {
+        id: 'active',
+        name: 'Active',
+        type: 'table' as const,
+        filters: { active: ['true'] },
+        sort: [{ by: 'quantity', direction: 'desc' as const }],
+      },
+      {
+        id: 'short',
+        name: 'Short',
+        type: 'table' as const,
+        columns: ['name', 'status', 'owner', 'updated'],
+      },
+    ],
+  },
   empty: itemDefinition(empty, 'showcase-empty', rights),
 }
 /** The second collection, linked to the items (step 12): its list is /dev/parts. */

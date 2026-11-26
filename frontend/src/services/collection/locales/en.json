@@ -201,6 +201,8 @@
     "add": "Add {{name}}"
   },
   "views": {
-    "all": "All"
+    "all": "All",
+    "label": "Views",
+    "more": "{{count}} more"
   }
 }

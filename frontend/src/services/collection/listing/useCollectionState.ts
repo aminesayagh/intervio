@@ -13,7 +13,9 @@ import {
   ruleCount,
   type FilterGroup,
 } from '../listing/rules'
+import type { ViewDefinition } from '../definition'
 import type { Sort } from '../types'
+import { DEFAULT_VIEW } from '../views/views'
 
 /**
  * The list as the person set it: search, filter rules (see `listing/rules`), and the
@@ -62,15 +64,19 @@ export function useCollectionState(
   {
     filters = [],
     kept = [],
+    views = [DEFAULT_VIEW],
   }: {
     /** The collection's rule keys and scope ids: their f.{key} parameters. */
     filters?: string[]
     /** Filters "Clear filters" keeps: the scopes, which only their chip removes. */
     kept?: string[]
+    /** The collection's views in order (`viewsOf`); the first is the default. */
+    views?: ViewDefinition[]
   } = {},
 ) {
   const tabKey = `intervio.collection.${key}.list`
   const sortKey = `intervio.collection.${key}.sort`
+  const viewKey = `intervio.collection.${key}.view`
   const ids = filters.join(',')
   const keptIds = kept.join(',')
   const parsers = useMemo(
@@ -78,6 +84,7 @@ export function useCollectionState(
       ...listParsers(ids ? ids.split(',') : []),
       open: parseAsString,
       new: parseAsString,
+      view: parseAsString,
     }),
     [ids],
   )
@@ -86,7 +93,29 @@ export function useCollectionState(
   const chosen = (id: string) =>
     (values as Record<string, unknown>)[`f.${id}`] as string[]
 
-  // A bare address takes back the tab's last list state, or at least the last sort.
+  // The view shown (decision 168): the address's, else the first; an unknown one
+  // (an old link) is the first too.
+  const view = views.find((one) => one.id === values.view) ?? views[0]
+  /** The address's list parameters as a view starts them: its filters and sort, or none. */
+  const startOf = useCallback(
+    (next: ViewDefinition, sort: Sort[] | null = null) => ({
+      q: '',
+      filter: next.where ?? null,
+      ...Object.fromEntries(
+        (ids ? ids.split(',') : [])
+          .filter((id) => !keptIds.split(',').includes(id))
+          .map((id) => [`f.${id}`, next.filters?.[id] ?? []]),
+      ),
+      sort: next.sort?.length ? next.sort : sort,
+      // The default view keeps the address bare.
+      view: next.id === views[0].id ? null : next.id,
+    }),
+    [ids, keptIds, views],
+  )
+
+  // A bare address takes back the tab's last list state; else the view used last in
+  // this browser (or the one the address names) opens with its filters and sort, or
+  // at least the last sort chosen.
   useLayoutEffect(() => {
     const listed =
       values.q !== '' ||
@@ -96,15 +125,39 @@ export function useCollectionState(
     if (listed) return
     const saved = read(() => sessionStorage, tabKey)
     const lastSort = sortParser.parse(read(() => localStorage, sortKey) ?? '')
-    if (saved !== null) {
+    if (saved !== null && values.view === null) {
       const restored = createLoader(parsers)(`?${saved}`)
       // The record open last comes back too, unless the address names one (or a new one).
       const open = values.open ?? (values.new ? null : restored.open)
       void setValues({ ...restored, open, new: values.new })
-    } else if (lastSort) void setValues({ sort: lastSort })
+      return
+    }
+    const last = read(() => localStorage, viewKey)
+    const opened =
+      views.find((one) => one.id === values.view) ??
+      views.find((one) => one.id === last) ??
+      views[0]
+    const start = startOf(opened, lastSort)
+    // The default view with nothing to set leaves the address alone.
+    if (start.view !== null || start.sort || start.filter || opened.filters)
+      void setValues(start)
     // Only when the collection opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The browser remembers the view used last, for the next bare address.
+  useEffect(
+    () => write(() => localStorage, viewKey, view.id),
+    [view.id, viewKey],
+  )
+  /** Shows another view: the list starts again from its filters and sort; the panel stays. */
+  const setView = useCallback(
+    (id: string) => {
+      const next = views.find((one) => one.id === id)
+      if (next) void setValues(startOf(next))
+    },
+    [views, setValues, startOf],
+  )
 
   // The tab remembers the list it shows, however it got there (toolbar or address).
   const remembered = useMemo(
@@ -196,6 +249,9 @@ export function useCollectionState(
   )
   // The same functions from one render to the next: the table doesn't render again.
   return {
+    /** The view shown, and how to show another. */
+    view,
+    setView,
     listing,
     query,
     setSearch,

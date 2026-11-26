@@ -43,6 +43,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
+import { ViewTabs } from './views/ViewTabs'
 import { columnsOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
@@ -98,20 +99,22 @@ export function Collection<T, C = void>({
   const scrollRef = useRef<HTMLDivElement>(null)
   // What the Filter menu offers, and each rule's f.{key} in the address (decision 149).
   const fields = useMemo(() => filterFields(definition), [definition])
-  // The view shown (decision 168): the first one until tabs choose another (MOH-32).
-  const [activeView] = viewsOf(definition)
-  // The definition as the view draws it: its columns, in its order.
-  const viewed = useMemo(
-    () => ({ ...definition, columns: columnsOf(definition, activeView) }),
-    [definition, activeView],
-  )
+  // The collection's views (decision 168), in order; the address says which shows.
+  const configured = useMemo(() => viewsOf(definition), [definition])
   const state = useCollectionState(definition.key, definition.defaultSort, {
     filters: [
       ...ruleKeys(fields),
       ...(definition.scopes ?? []).map((scope) => scope.id),
     ],
     kept: definition.scopes?.map((scope) => scope.id),
+    views: configured,
   })
+  const activeView = state.view
+  // The definition as the view draws it: its columns, in its order.
+  const viewed = useMemo(
+    () => ({ ...definition, columns: columnsOf(definition, activeView) }),
+    [definition, activeView],
+  )
   const { listing } = state
   const narrowed = isNarrowed(listing)
   // Where the tab left this list (spec 8.4): it starts at that page, for the list it
@@ -612,6 +615,14 @@ export function Collection<T, C = void>({
           (narrowPanel || wide) && 'hidden',
         )}
       >
+        {/* The views as tabs (decision 167), when there are several. */}
+        <Show when={configured.length > 1}>
+          <ViewTabs
+            views={configured}
+            active={activeView.id}
+            onChange={state.setView}
+          />
+        </Show>
         {/* One row: the title, the search and filters (or the selection), then Add. */}
         <div className="flex flex-wrap items-center gap-2">
           <h1

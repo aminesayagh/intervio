@@ -183,12 +183,13 @@ Hooks, each in its own file and tested on its own:
 | State | Kept in | Why |
 |---|---|---|
 | Search, filters, sort | Address | A shared link shows the same list |
+| View shown (decision 168) | Address: `?view={id}`, none for the first view | A shared link opens the same view; switching view starts the list again from its filters and sort |
 | Open record | Address: `?open={id}` | A shared link opens the record; Back closes it |
 | Creation in progress | Address: `?new` | Back cancels it; a refresh keeps it |
 | Panel history (the Back links) | Session storage, per collection | Survives a refresh, not shared |
 | Place in the list: the page of the first record in view (its cursor) and its row | Session storage, per collection and list | A refresh comes back to the same place, loading one page |
 | Values typed in a creation | Session storage, per collection | A refresh does not lose them |
-| Last sort, panel width | Local storage, per collection | A preference of this browser |
+| Last sort, last view, panel width | Local storage, per collection | A preference of this browser; a bare address opens the last view with its filters and sort |
 | Sidebar folded by a panel (medium width) | Not stored | It follows the panel |
 
 Address format, on the collection's base path:
@@ -197,6 +198,7 @@ Address format, on the collection's base path:
 /resources?q=pump&f.type=document,equipment&f.quantity.gt=5&sort=status:asc,updated:desc&open=0192…
 /interventions/0192…/resources?open=0193…
 /resources?new
+/resources?view=open
 ```
 
 Filters use one parameter per rule: `f.{field}` for "is one of", with the chosen values separated by commas, and `f.{field}.{condition}` for the others (`not`, `contains`, `gt`, `lt`), with their value. Rules joined by "or", grouped, or with two rules on one condition go instead in one `filter` parameter, as JSON (decision 161); the data source receives it as `filter` too. The sort is its levels in order, separated by commas. Default values are left out of the address.

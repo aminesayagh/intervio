@@ -12,7 +12,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 **In scope**
 
 - One generic wrapper, `Collection`, that knows nothing about the records it shows. A collection plugs in through a definition (section 4).
-- The list: header, toolbar (search, filters, view switch), cards or table, infinite scroll.
+- The list: header, toolbar (search, filters), table (rows on narrow screens), infinite scroll.
 - The record panel: view, edit in place, linked records, more actions, loading and unavailable states.
 - Creating a record in the panel.
 - The full page of a record, and collections nested in a record page.
@@ -33,7 +33,7 @@ Anything not written here is **not decided**. Open points are listed in section 
 |---|---|
 | **Collection** | A set of records of one kind shown on one screen: the company's resources, an intervention's resources, requests… |
 | **Record** | One item of a collection. Its public identifier is its UUID v7. |
-| **List** | The left side: the records as cards or as a table. |
+| **List** | The left side: the records as a table (rows on narrow screens). |
 | **Panel** | The right side, 560 px wide by default and resizable: one record, or a new one. |
 | **Full page** | One record shown as the main view ("Open full page"). |
 | **Context** | The record a collection lives in, when there is one. For example, the intervention whose Resources tab is open. |
@@ -92,7 +92,6 @@ type CollectionDefinition<T, C = undefined> = {
   // List
   filters: FilterDefinition[]          // fixed filters (their options); columns add theirs with `filter: true`
   defaultSort: Sort                     // the order when no sort level is chosen; a column with `sort` is sortable
-  card: (record: T) => CardContent      // type chip, title, detail line, status, avatar
   row?: { detail?: (record: T) => ReactNode; status?: (record: T) => ReactNode } // narrow screens: the line under the name, the status
   columns: ColumnDefinition<T>[]        // the full table; a column that shows a property names it, and is edited like it (7.3)
 
@@ -157,7 +156,7 @@ One public component, `Collection`. Its parts are internal and are not used on t
 | `CollectionToolbar` | Search, the Filter and Sort menus with counts, "Clear filters" |
 | Row numbers (decision 150) | Each row's place in the list shown (`positions` in the row marks store, so only the rows whose number changes render again), drawn by the ui-kit `Row` in the checkbox column; the checkbox replaces it on hover, focus or selection |
 | Empty values in the panel (decision 151) | `ValueField` shows "Add {label}" for an empty value the person may set (`look="panel"`); pressed, its control is built awake and its first control is clicked (a menu, a picker) or focused (a field); leaving it empty shows the button again, unless the focus went to the control's own popover |
-| Views (`views/`) | One way of showing the records each: the table (`views/table/`) on wide screens, rows (`views/rows/`) on narrow ones, cards next (decision 93). Each gets the records, loading more, the open record and the selection; what is its own stays in it (column widths and editing in cells for the table). The marks store and the scroll bookmark beside them are shared by every view. Search, filter, sort and the held order (`listing/`), the selection (`selection/`) and the panel (`record/`) are the collection's, not a view's. `Collection` keeps the empty, no-result and error states |
+| Views (`views/`) | One way of showing the records each: the table (`views/table/`) on wide screens, rows (`views/rows/`) on narrow ones; other views (kanban, calendar) later. Each gets the records, loading more, the open record and the selection; what is its own stays in it (column widths and editing in cells for the table). The marks store and the scroll bookmark beside them are shared by every view. Search, filter, sort and the held order (`listing/`), the selection (`selection/`) and the panel (`record/`) are the collection's, not a view's. `Collection` keeps the empty, no-result and error states |
 | `RecordPanel` | Top bar, panel history (Back), view or creation; loading and unavailable states |
 | `RecordView` | Title, subtitle, properties, description, sections, activity; used by the panel and the full page |
 | `MarkdownView` · `MarkdownEditor` | The description shown formatted, and its editor (section 7.6) |
@@ -189,7 +188,7 @@ Hooks, each in its own file and tested on its own:
 | Panel history (the Back links) | Session storage, per collection | Survives a refresh, not shared |
 | Place in the list: the page of the first record in view (its cursor) and its row | Session storage, per collection and list | A refresh comes back to the same place, loading one page |
 | Values typed in a creation | Session storage, per collection | A refresh does not lose them |
-| View (cards or table), last sort, panel width | Local storage, per collection | A preference of this browser |
+| Last sort, panel width | Local storage, per collection | A preference of this browser |
 | Sidebar folded by a panel (medium width) | Not stored | It follows the panel |
 
 Address format, on the collection's base path:
@@ -303,7 +302,6 @@ Every type follows the same rules: read view only without the right; saved when 
   - only one cell edits at a time, and saving updates the record everywhere (8.3).
 - **The grey line under a name** holds only read-only facts, such as a file's type and size. A value that can change never hides there, because it couldn't be edited from the table.
 - **A property that doesn't apply to a record** (the quantity of a document, in a list of several types) shows "—" and isn't editable.
-- **Cards are for browsing:** they aren't edited in place, and clicking a card opens the panel.
 - **Keyboard in the table:**
   - Tab moves through the editable cells of the focused row;
   - Enter starts editing the focused cell, or opens the record when the focus is on its name;
@@ -446,7 +444,6 @@ There is no creation form: a new record is the normal record view, created as so
 - **Page size:** 30 records.
 - **Drawing:** the list is virtualized by React Aria's `Virtualizer` with `TableLayout`: only the rows (and the columns) in view are in the page.
   - Rows are measured with `measureElement`, because a row's height depends on its content.
-  - Cards use the virtualizer's `lanes` (one lane per column: 3, or 2 while the panel is open).
   - The table keeps its header in place, and rows scroll under it.
 - **Keeping the table fast** (2026-11-22; budget: an action shows its result within 100 ms):
   - React Aria builds every row again when a value its rows depend on changes. So the open row and the selection don't reach the rows as props: rows and cells read them from a small store (`list/rowMarks.ts`), and a change renders only the rows concerned. A test (`list/Rerender.test.tsx`) fails if selecting a row renders the others.
@@ -465,7 +462,7 @@ There is no creation form: a new record is the normal record view, created as so
 
 | State | Shows |
 |---|---|
-| First load | Six placeholder cards or rows |
+| First load | Six placeholder rows |
 | Empty collection (no search, no filter) | Empty title and text, and "New"; no toolbar |
 | No results | "No records match your search" with Clear filters |
 | Error | "Records could not be loaded." with Retry |
@@ -521,7 +518,7 @@ Decision 136; screens 65, 66.
 | `medium` | Sidebar · list | Rail (57 px) · list beside the panel · panel. The sidebar folds for as long as the panel is open; the user's saved sidebar choice does not change |
 | `narrow` | Top bar · list as rows (name, detail line, status) · the Filter and Sort menus | The panel is the whole screen, with "‹ {collection}" to go back one level |
 
-- **List beside the panel:** the table keeps every column at its width (`column.width`, 200 px when not given) and scrolls sideways when they don't fit; the selection checkbox and the name stay pinned on the left (decision 138). Cards go to two per row, or one under 520 px; under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
+- **List beside the panel:** the table keeps every column at its width (`column.width`, 200 px when not given) and scrolls sideways when they don't fit; the selection checkbox and the name stay pinned on the left (decision 138). Under 480 px the toolbar wraps (search on its own line, then filters and the view switch).
 - **Panel animation:** it slides in from the right in 200 ms, `easeOut`, with Motion. With reduced motion, there is no animation (like the sidebar).
 
 **Built so far (step 11):** layout modes, the divider and the saved width are built. Columns by priority were replaced (2026-11-23) by fixed widths with a horizontal scroll and pinned name (decision 138): `ui-kit/aria/tableLayout.ts` subclasses React Aria's `TableLayout` so the table lays its rows out again only when its height changes (not when the panel changes its width), and pins every column up to the row header. The medium fold goes through `foldSidebar` in the ui-kit, which the board layout reads. **Narrow screens (built 2026-11-23, decision 121):** the list is rows (`views/rows/RecordRows.tsx`, React Aria's GridList, virtualized: `RowList` in `ui-kit/aria/List.tsx`): the name, the line under it (`definition.row.detail`, else the panel's subtitle) and the status (`definition.row.status`); a row opens its record; no selection. The toolbar shows the same Filter and Sort menus as on wide screens (decision 149); the Sort menu is the way to sort, as the rows have no headers. The toolbar stays while a new sort or filter loads; it is hidden only for a collection with no records at all.
@@ -552,7 +549,7 @@ Decision 136; screens 65, 66.
 
 ## 10. Keyboard and accessibility
 
-- The list is a list of links. Each card or row is focusable and has the record's name as its accessible name, and the open one has `aria-current="true"`.
+- The list is a list of links. Each row is focusable and has the record's name as its accessible name, and the open one has `aria-current="true"`.
 - **↑ / ↓:** move the focus between records. While the panel is open, they also open the focused record. At the end of the loaded records, ↓ loads the next page.
 - **Enter:** opens the focused record.
 - **Escape, in this order:**
@@ -561,7 +558,7 @@ Decision 136; screens 65, 66.
   3. closes the panel, which asks first if a creation has input.
 - **Focus:**
   - when the panel opens from the keyboard, the focus moves to its title;
-  - when the panel closes, the focus returns to the record's card or row.
+  - when the panel closes, the focus returns to the record's row.
 - **The panel is not a dialog.** It's a landmark (`<aside>` labeled with the record's name) that doesn't trap the focus, because the list stays usable.
 - **Announcements:** the total and the "no results" state are announced with `aria-live="polite"` when they change.
 - **Touch targets** are at least 32 px, as elsewhere in the app.
@@ -782,8 +779,8 @@ The wrapper is built in small steps. Each step ends with something that can be *
 |---|---|---|---|
 | **0** | Groundwork | Add TanStack Table, TanStack Virtual, react-markdown, remark-gfm. The router learns query strings with push or replace, and marks its own history entries. Test helpers: `testDefinition`, `makeItems`, `memorySource`, layout and `matchMedia` stubs, `renderCollection`. The empty showcase page | Router tests; the existing app unchanged; the showcase page opens |
 | **1** | Data layer | `DataSource`, `restSource` with overridable routes, parameters and response mapping, `ApiError`. `useCollectionQuery` (infinite query) and the cache updates (8.3) | Unit tests (15.3): routes, overrides, errors, cache updates |
-| **2** | List, first page | `Collection` shell, header with total, Cards / Table switch, cards, the table on TanStack Table, the first-load, empty, no-results and error states | Showcase: 30 items as cards and as a table, each state from the switch. Component tests for the list states |
-| **3** | Infinite scroll | TanStack Virtual for cards (lanes) and rows, loading more near the end, loading row, failed page with Retry | Showcase: scroll through 300 items smoothly; a failing page and Retry. Tests: next page once, Retry |
+| **2** | List, first page | `Collection` shell, header with total, the table on TanStack Table, the first-load, empty, no-results and error states | Showcase: 30 items in the table, each state from the switch. Component tests for the list states |
+| **3** | Infinite scroll | TanStack Virtual for the rows, loading more near the end, loading row, failed page with Retry | Showcase: scroll through 300 items smoothly; a failing page and Retry. Tests: next page once, Retry |
 | **4** | Toolbar and address | Search (250 ms), filter menus with counts, Clear filters, sort by column, `useCollectionState` (address, replace or push), view and sort remembered | Showcase: reload keeps search, filters and sort; a copied link opens the same list. Unit tests of the address; component tests of search, filters, sort |
 | **5** | Record panel, reading | Open, switch, close; `?open`; Back and × agree; marked record; top bar; `RecordView` read-only (properties, sections with their first 5, activity slot); loading, unavailable and error states; keyboard ↑ ↓ Enter Escape and focus | Showcase: browse records with the mouse and the keyboard; a removed item shows "no longer available". Panel, keyboard and accessibility tests |
 | **6** | Editing and rights | `rights` per value; cues on hover and focus; edit in place in the panel (text, choices, switch, title); edit in table cells; view-only mode; `403` handling | Showcase: a switch to change the fake user's rights; edit a value in the panel and in the table; view only. Editing and rights tests |
@@ -804,7 +801,7 @@ The wrapper is built in small steps. Each step ends with something that can be *
 
 ## 16. Open points
 
-0. **Views other than the table.** The cards view is set aside from the first build (decided 2026-11-21, during step 3): the wrapper shows a table only. How to offer several views (cards and others) is designed later; until then, the rules about cards in this document are on hold.
+0. **Views other than the table.** The cards view is dropped from the whole application (decided 2026-11-26): the wrapper shows a table, and rows on narrow screens. Other views (kanban, calendar) are designed later.
 1. ~~Restoring after a refresh is limited to 5 pages.~~ Replaced by decision 144: one page is loaded, whatever the depth.
 2. ~~Session storage is per browser tab.~~ Accepted (2026-11-23): a record opened in a new tab starts from its address only, with no panel history and no remembered scroll.
 3. **Later goal: the collection as a public React library** (set 2026-11-23, not scheduled). Intervio becomes one user of it. Decided so far:

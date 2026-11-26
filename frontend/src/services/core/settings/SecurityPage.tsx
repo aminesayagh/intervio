@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { currentUserKey, useCurrentUser } from '../../auth'
 import { navigate } from '../../navigation'
-import { check, Field, FormError, Notice } from '../../ui-kit'
+import { check, Field, Notice } from '../../ui-kit'
+import { notify } from '../../notifications'
 import { errorKey, profileApi } from './api'
 import { SettingsLayout } from './SettingsLayout'
 
@@ -58,14 +59,12 @@ function Password() {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [again, setAgain] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, setPending] = useState(false)
   const hasPassword = user?.hasPassword ?? false
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
     setDone(false)
     setPending(true)
     try {
@@ -76,7 +75,11 @@ function Password() {
       setDone(true)
       await queryClient.invalidateQueries({ queryKey: currentUserKey })
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'SecurityPage:Password',
+      })
     } finally {
       setPending(false)
     }
@@ -87,11 +90,6 @@ function Password() {
       title={t(hasPassword ? 'security.password' : 'security.setPassword')}
     >
       <Form onSubmit={save} className="flex flex-col gap-3">
-        <FormError
-          message={
-            error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })
-          }
-        />
         {done && <Notice>{t('security.passwordChanged')}</Notice>}
         {hasPassword && (
           <Field
@@ -157,24 +155,24 @@ function SignInMethods() {
 
 function OtherDevices() {
   const { t } = useTranslation('settings')
-  const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>(
-    'idle',
-  )
+  const [state, setState] = useState<'idle' | 'pending' | 'done'>('idle')
   async function end() {
     setState('pending')
     try {
       await profileApi.endOtherSessions()
       setState('done')
     } catch {
-      setState('error')
+      setState('idle')
+      notify({
+        tone: 'error',
+        text: t('errors.ERROR_UNKNOWN'),
+        key: 'SecurityPage:devices',
+      })
     }
   }
   return (
     <Section title={t('security.devices')} text={t('security.devicesText')}>
       {state === 'done' && <Notice>{t('security.devicesDone')}</Notice>}
-      <FormError
-        message={state === 'error' ? t('errors.ERROR_UNKNOWN') : null}
-      />
       <Button
         variant="danger"
         className="w-fit"
@@ -193,19 +191,21 @@ function DeleteAccount() {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function remove(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
     setPending(true)
     try {
       await profileApi.deleteAccount(email)
       queryClient.clear() // no user data survives the account
       navigate('/login', { replace: true })
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'SecurityPage:DeleteAccount',
+      })
       setPending(false)
     }
   }
@@ -220,7 +220,6 @@ function DeleteAccount() {
         onOpenChange={(next) => {
           setOpen(next)
           setEmail('')
-          setError(null)
         }}
       >
         <Modal.Container>
@@ -231,12 +230,7 @@ function DeleteAccount() {
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-3">
                 <p>{t('security.deleteConfirm')}</p>
-                <FormError
-                  message={
-                    error &&
-                    t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })
-                  }
-                />
+
                 <Field
                   name="confirmEmail"
                   type="email"

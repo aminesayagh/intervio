@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FilePreview, formatSize } from '../../files'
 import { Link, usePath } from '../../navigation'
-import { FormError, Icon } from '../../ui-kit'
+import { Icon } from '../../ui-kit'
+import { notify } from '../../notifications'
 import {
   errorKey,
   formatDay,
@@ -77,11 +78,9 @@ export function InterventionPage() {
 function Overview({ intervention }: { intervention: Intervention }) {
   const { t, i18n } = useTranslation('interventions')
   const queryClient = useQueryClient()
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function publish() {
-    setError(null)
     setPending(true)
     try {
       const published = await interventionApi.publish(intervention.id)
@@ -91,7 +90,11 @@ function Overview({ intervention }: { intervention: Intervention }) {
       )
       await queryClient.invalidateQueries({ queryKey: interventionsKey })
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'InterventionPage:Overview',
+      })
     } finally {
       setPending(false)
     }
@@ -126,11 +129,6 @@ function Overview({ intervention }: { intervention: Intervention }) {
       )}
       {intervention.status === 'draft' && (
         <div className="flex flex-col gap-2">
-          <FormError
-            message={
-              error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })
-            }
-          />
           <Button isPending={pending} onPress={publish} className="w-fit">
             {t('publish')}
           </Button>

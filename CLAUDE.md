@@ -4,15 +4,15 @@ Code: `backend/` (Spring Boot, Maven, Java 17) and `frontend/` (React, Vite, pnp
 
 The current documents are in `docs/architecture/`; the schema and wireframes are on `docs/Intervio.excalidraw`, previewed with `npx -y mcp-excalidraw-server` at http://127.0.0.1:3000.
 
-| File | Holds |
-|---|---|
-| `use-cases.md` | Decisions, use cases, lifecycles, attributes |
-| `glossary.md` | Business terms used everywhere, including on screens |
-| `delivery-order.md` | Table dependency levels and the order of feature slices |
-| `deferred-features.md` | Features kept out of the core for later |
-| `authentication-spec.md` | Build specification for authentication: only what was decided, plus open points |
+| File                           | Holds                                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `use-cases.md`                 | Decisions, use cases, lifecycles, attributes                                           |
+| `glossary.md`                  | Business terms used everywhere, including on screens                                   |
+| `delivery-order.md`            | Table dependency levels and the order of feature slices                                |
+| `deferred-features.md`         | Features kept out of the core for later                                                |
+| `authentication-spec.md`       | Build specification for authentication: only what was decided, plus open points        |
 | `collection-archetype-spec.md` | Build specification for the list-and-record-panel wrapper every collection screen uses |
-| `notice.md` | Points left open on purpose, to come back to (what shows today, what each waits for) |
+| `notice.md`                    | Points left open on purpose, to come back to (what shows today, what each waits for)   |
 
 Keep only the latest version of each document: update it in place, do not create `-v2` copies.
 
@@ -23,7 +23,7 @@ Keep only the latest version of each document: update it in place, do not create
 - **Inside a service, files sit in subfolders by use case** (for example `collection/record/`, `collection/values/`, `ui-kit/forms/`, `files/components/`), each test next to the code it checks. The service root keeps only its entry point (`index.ts`, which other services import), its main component and the types and pieces shared by its subfolders.
 - **React Aria components come only from `services/ui-kit/aria`,** where each one gets Intervio's defaults once (looks, sizes, focus ring, menu text size) and is exported from `ui-kit`. Other services never import `react-aria-components` directly; a component not yet there is added there first.
 - **Changing views go through the ui-kit's animated components, never `cond && <X/>` or a ternary in JSX:** `Show` for one condition (with `fallback` for an else), `Switch` + `Match` for if / else if / else, `Variant` for one view per option of a value. They share one short fade, and none with reduced motion. The exception is where a wrapper element would be invalid HTML (rows directly in `<tbody>`, items directly in `<ol>`/`<ul>`): put the `Show` inside the row or item.
-- **A refused or failed action is a notification** (`notify()` from `services/notifications`), never text under a field, so every screen reports errors the same way. That service is the only toast provider: no screen calls a toast library directly or renders another toaster, and a component from another library that wants to notify is wired to `notify` through its callback, with its own toaster turned off. Give it the scope of the interaction (a record, a collection) so it leaves when that interaction ends. Only a status line about what is on screen (the description's "Not saved") uses `ErrorText`.
+- **A refused or failed action is a notification** (`notify()` from `services/notifications`), never text under a field, so every screen reports errors the same way. That service is the only toast provider: no screen calls a toast library directly or renders another toaster, and a component from another library that wants to notify is wired to `notify` through its callback, with its own toaster turned off. Give it the scope of the interaction (a record, a collection) so it leaves when that interaction ends. Only a status line about what is on screen (the description's "Not saved") uses `ErrorText`. **The one exception is the public authentication screens** (log in, sign up, password, email links): there the form's error stays above the form (`FormError`), where the person is looking before trying again, as `authentication-spec.md` describes.
 
 ## Visual identity (the built app)
 
@@ -51,6 +51,7 @@ Keep only the latest version of each document: update it in place, do not create
 ## Wireframing rules (always apply)
 
 ### Drawing style
+
 - **Grayscale only.** Black, white and grays. No color, even for states.
 - **Square corners.** No rounded corners on any shape (Excalidraw `roundness: null`).
 - **Clean lines.** Architect style, not hand-drawn (`roughness: 0`), stroke width 1.
@@ -59,6 +60,7 @@ Keep only the latest version of each document: update it in place, do not create
 - **Aligned corners.** Every element snaps to the page grid. Edges that should line up share the same x or y exactly.
 
 ### Page frame and grid
+
 - **Browser size:** each screen is a 1440 × 900 frame showing only the page content, with no browser bar.
 - **Grid:** 12 columns, 72 px side margins, 24 px gutters: columns are 86 px, content area 1296 px.
 - **Spacing unit:** 8 px. All gaps and sizes are multiples of 8.
@@ -70,11 +72,13 @@ Keep only the latest version of each document: update it in place, do not create
 - **No Excalidraw groups.** Never group elements (no screen or area groups): the user edits and reviews element by element, and groups get in the way.
 
 ### Text on screens
+
 - **Minimal.** Only what the user needs to complete the next step: titles, labels, buttons, short helper or error text.
 - **Formally correct.** Correct sentences and punctuation, a professional tone suited to maintenance clients and contractors.
 - **Business words only.** Use the user-facing terms from the glossary.
 - **No specification on the drawing.** No status codes, table names, rules or notes about how the system works. Explanations stay in the md files.
 
 ### Way of working
+
 - **Ask before deciding.** Anything the use cases do not define is raised as an open question with a proposal; the user decides, and the decision is added to the decisions section of `use-cases.md`.
 - **One area at a time,** following `delivery-order.md`. First area: account management (log in, sign up, forgot password).

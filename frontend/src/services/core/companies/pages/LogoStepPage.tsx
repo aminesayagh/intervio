@@ -9,9 +9,9 @@ import {
   uploadFile,
 } from '../../../files'
 import { navigate } from '../../../navigation'
-import { FormError } from '../../../ui-kit'
 import { companyApi, companyKey, useCompany } from '../api'
 import { StepLinks, StepTitle } from './StepParts'
+import { notify } from '../../../notifications'
 
 /** Step 3 (optional): the company logo, PNG or JPG up to 2 MB. The client board opens after it. */
 export function LogoStepPage() {
@@ -20,12 +20,10 @@ export function LogoStepPage() {
   const queryClient = useQueryClient()
   const { data: company } = useCompany()
   const [file, setFile] = useState<File | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function finish() {
     if (!file) return done()
-    setError(null)
     setPending(true)
     try {
       const uploaded = await uploadFile('companyLogo', file)
@@ -35,7 +33,13 @@ export function LogoStepPage() {
       )
       done()
     } catch (e) {
-      setError(uploadErrorKey(e))
+      notify({
+        tone: 'error',
+        text: tf(uploadErrorKey(e), {
+          defaultValue: tf('errors.ERROR_UNKNOWN'),
+        }),
+        key: 'LogoStepPage:LogoStepPage',
+      })
     } finally {
       setPending(false)
     }
@@ -48,17 +52,20 @@ export function LogoStepPage() {
   return (
     <>
       <StepTitle step={3}>{t('logo.title')}</StepTitle>
-      <FormError
-        message={
-          error && tf(error, { defaultValue: tf('errors.ERROR_UNKNOWN') })
-        }
-      />
+
       <FileDropzone
         purpose="companyLogo"
         label={t('logo.upload')}
         currentUrl={company?.logoFileId ? fileUrl(company.logoFileId) : null}
         onChange={setFile}
-        onError={setError}
+        onError={(key) =>
+          key &&
+          notify({
+            tone: 'error',
+            text: tf(key, { defaultValue: tf('errors.ERROR_UNKNOWN') }),
+            key: 'LogoStepPage:LogoStepPage',
+          })
+        }
       />
       <p className="mt-2 mb-5 text-xs text-muted">{t('logo.help')}</p>
       <Button fullWidth isPending={pending} onPress={finish}>

@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DocumentsField, type UploadedFile } from '../../files'
 import { navigate } from '../../navigation'
-import { check, Field, FormError } from '../../ui-kit'
+import { check, Field } from '../../ui-kit'
+import { notify } from '../../notifications'
 import { companyKey, useCompany } from '../companies'
 import { errorKey, interventionApi, interventionsKey } from './api'
 
@@ -32,13 +33,11 @@ export function CreateInterventionPage() {
   const [street, setStreet] = useState('')
   const [city, setCity] = useState('')
   const [postalCode, setPostalCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const askAddress = company ? !company.hasAddress : false
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
     setPending(true)
     try {
       const intervention = await interventionApi.create({
@@ -57,7 +56,11 @@ export function CreateInterventionPage() {
         await queryClient.invalidateQueries({ queryKey: companyKey })
       navigate(`/interventions/${intervention.id}`)
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'CreateInterventionPage:CreateInterventionPage',
+      })
       setPending(false)
     }
   }
@@ -69,11 +72,6 @@ export function CreateInterventionPage() {
         onSubmit={create}
         className="mt-6 flex max-w-[552px] flex-col gap-4"
       >
-        <FormError
-          message={
-            error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })
-          }
-        />
         <Field
           name="title"
           label={t('form.title')}

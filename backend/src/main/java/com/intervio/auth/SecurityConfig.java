@@ -2,6 +2,8 @@ package com.intervio.auth;
 
 import java.time.Duration;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +26,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 class SecurityConfig {
+
+	private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
 	static final int REMEMBER_ME_SECONDS = (int) Duration.ofDays(30).toSeconds();
 
@@ -78,6 +82,11 @@ class SecurityConfig {
 				.userInfoEndpoint(info -> info.oidcUserService(googleUsers))
 				.defaultSuccessUrl(props.frontendUrl() + "/", true)
 				.failureUrl(props.frontendUrl() + "/login?error=google"));
+		}
+		else {
+			// Seen at startup, not when someone presses the button (MAS-39). Never the values.
+			log.warn("Google sign-in is off: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID "
+					+ "and _CLIENT_SECRET are not set (environment or the repository's .env).");
 		}
 		return http.build();
 	}

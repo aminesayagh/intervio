@@ -1,20 +1,26 @@
 import { Button } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../navigation'
-import { Icon } from '../../ui-kit'
+import { Icon, Show } from '../../ui-kit'
+import { useGoogleSignIn } from '../api'
 
-/** Full-page navigation: Google sign-in leaves the app and comes back. */
+/**
+ * Full-page navigation: Google sign-in leaves the app and comes back. Shown only
+ * when Google sign-in is configured (MAS-38).
+ */
 export function GoogleButton() {
   const { t } = useTranslation('auth')
   return (
-    <Button
-      variant="secondary"
-      fullWidth
-      onPress={() => window.location.assign('/oauth2/authorization/google')}
-    >
-      <img src="/icons/google.svg" alt="" width={16} height={16} />
-      {t('common.google')}
-    </Button>
+    <Show when={useGoogleSignIn()}>
+      <Button
+        variant="secondary"
+        fullWidth
+        onPress={() => window.location.assign('/oauth2/authorization/google')}
+      >
+        <img src="/icons/google.svg" alt="" width={16} height={16} />
+        {t('common.google')}
+      </Button>
+    </Show>
   )
 }
 

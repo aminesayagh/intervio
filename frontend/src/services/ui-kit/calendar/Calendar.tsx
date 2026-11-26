@@ -1,5 +1,6 @@
 import FullCalendar, { useCalendarController } from '@fullcalendar/react'
 import dayGrid from '@fullcalendar/react/daygrid'
+import interaction from '@fullcalendar/react/interaction'
 import french from '@fullcalendar/react/locales/fr'
 import '@fullcalendar/react/skeleton.css'
 import classic from '@fullcalendar/react/themes/classic'
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../aria/Button'
 import { cn } from '../cn'
 import './calendar.css'
+import { dayAfter, moved, type CalendarMove } from './dates'
 
 /** Something placed on the calendar: dates as '2026-12-01', or with a time. */
 export type CalendarEntry = {
@@ -18,13 +20,10 @@ export type CalendarEntry = {
   start: string
   /** Inclusive, as the person reads it ('until 5 December'). */
   end?: string | null
-}
-
-/** The day after an inclusive end day: FullCalendar's all-day ends are exclusive. */
-const dayAfter = (day: string) => {
-  const date = new Date(`${day.slice(0, 10)}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() + 1)
-  return date.toISOString().slice(0, 10)
+  /** Dragged to another day (MAS-53). */
+  movable?: boolean
+  /** Stretched to change its end: when the calendar has an end date. */
+  resizable?: boolean
 }
 
 /** Saturday and Sunday (0 and 6), on the grey background. */
@@ -41,15 +40,22 @@ export function Calendar({
   label,
   entries,
   onRange,
-  onOpen,
+  onMove,
   renderEntry,
 }: {
   label: string
   entries: CalendarEntry[]
   onRange: (range: { start: string; end: string }) => void
-  onOpen?: (id: string) => void
-  /** What an entry shows; its title by default. */
-  renderEntry?: (id: string) => ReactNode
+  /**
+   * Saves an entry dragged or stretched to other days: it moves at once, and goes
+   * back if this fails.
+   */
+  onMove?: (id: string, move: CalendarMove) => Promise<void>
+  /**
+   * What an entry shows, its buttons included (opening it, changing its date):
+   * FullCalendar's own element stays a plain box, so they are never nested.
+   */
+  renderEntry: (id: string) => ReactNode
 }) {
   const { t, i18n } = useTranslation('ui-kit')
   const controller = useCalendarController()
@@ -90,7 +96,7 @@ export function Calendar({
       <div className="min-h-0 flex-1 text-xs">
         <FullCalendar
           controller={controller}
-          plugins={[classic, dayGrid]}
+          plugins={[classic, dayGrid, interaction]}
           initialView="dayGridMonth"
           headerToolbar={false}
           // Day names on the left, in capitals; day numbers on two digits (01 … 31);
@@ -113,17 +119,25 @@ export function Calendar({
                 ? dayAfter(entry.end)
                 : (entry.end ?? undefined),
             allDay: !entry.start.includes('T'),
+            startEditable: !!onMove && !!entry.movable,
+            durationEditable: !!onMove && !!entry.movable && !!entry.resizable,
           }))}
+          // Saved through onMove; back where it was if the save fails.
+          eventDrop={(drop) =>
+            void onMove?.(drop.event.id, moved(drop.event)).catch(drop.revert)
+          }
+          eventResize={(resize) =>
+            void onMove?.(resize.event.id, moved(resize.event)).catch(
+              resize.revert,
+            )
+          }
           datesSet={(range) =>
             onRange({
               start: range.startStr.slice(0, 10),
               end: range.endStr.slice(0, 10),
             })
           }
-          eventClick={(click) => onOpen?.(click.event.id)}
-          eventContent={
-            renderEntry && ((content) => renderEntry(content.event.id))
-          }
+          eventContent={(content) => renderEntry(content.event.id)}
         />
       </div>
     </section>

@@ -211,5 +211,8 @@
     "empty": "Aucun enregistrement",
     "move": "Déplacer {{name}}",
     "add": "Nouvel enregistrement dans {{column}}"
+  },
+  "calendar": {
+    "changeDate": "Changer la date de {{name}}"
   }
 }

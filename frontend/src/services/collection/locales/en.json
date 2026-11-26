@@ -211,5 +211,8 @@
     "empty": "No records",
     "move": "Move {{name}}",
     "add": "New record in {{column}}"
+  },
+  "calendar": {
+    "changeDate": "Change the date of {{name}}"
   }
 }

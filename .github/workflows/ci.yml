@@ -13,8 +13,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # On a pull request, which side changed: a job whose side did not change is skipped,
+  # and a job skipped by its `if` still counts as passed for main's required checks.
+  # On a push to main both jobs always run.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: dorny/paths-filter@v4.0.3
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            workflow: &workflow
+              - '.github/workflows/**'
+            backend:
+              - *workflow
+              - 'backend/**'
+            frontend:
+              - *workflow
+              - 'frontend/**'
+
   backend:
     name: Backend (build and tests)
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,6 +58,8 @@ jobs:
 
   frontend:
     name: Frontend (lint, types, unused code, format, tests, build)
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

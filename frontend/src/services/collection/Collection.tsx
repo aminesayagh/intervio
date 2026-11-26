@@ -43,6 +43,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
+import { columnsOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
 import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
@@ -97,6 +98,13 @@ export function Collection<T, C = void>({
   const scrollRef = useRef<HTMLDivElement>(null)
   // What the Filter menu offers, and each rule's f.{key} in the address (decision 149).
   const fields = useMemo(() => filterFields(definition), [definition])
+  // The view shown (decision 168): the first one until tabs choose another (MOH-32).
+  const [activeView] = viewsOf(definition)
+  // The definition as the view draws it: its columns, in its order.
+  const viewed = useMemo(
+    () => ({ ...definition, columns: columnsOf(definition, activeView) }),
+    [definition, activeView],
+  )
   const state = useCollectionState(definition.key, definition.defaultSort, {
     filters: [
       ...ruleKeys(fields),
@@ -527,8 +535,8 @@ export function Collection<T, C = void>({
     [selectable, selected, select],
   )
   // What every type of view gets (MOH-21): the table on wide screens, the rows on narrow ones.
-  const layoutProps: ViewProps<T, C> = {
-    definition,
+  const viewProps: ViewProps<T, C> = {
+    definition: viewed,
     items: shownItems,
     label: t(definition.i18n.title),
     scrollRef,
@@ -704,10 +712,10 @@ export function Collection<T, C = void>({
               </div>
             </Match>
             <Match when={list.items.length > 0 && narrowScreen}>
-              <RecordRows {...layoutProps} />
+              <RecordRows {...viewProps} />
             </Match>
             <Match when={list.items.length > 0}>
-              <RecordTable {...layoutProps} />
+              <RecordTable {...viewProps} />
             </Match>
           </Switch>
           <Show when={list.isFetchNextPageError && !list.isFetchingNextPage}>

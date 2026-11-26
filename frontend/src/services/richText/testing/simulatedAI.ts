@@ -1,14 +1,5 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai'
-
-/**
- * What the description sends with each question (decision 153): the text and the
- * selection as Markdown; no selection means new text is wanted.
- */
-export type DescriptionContext = {
-  document: string
-  selection: string | null
-  toolName: 'edit' | 'generate'
-}
+import type { DescriptionContext } from '../ai/aiContext'
 
 const SAMPLE =
   'Check the seals and the bearings before each use. Report any leak at once, and note the date of the check.'
@@ -24,8 +15,8 @@ function answer(prompt: string, ctx: DescriptionContext) {
 const pause = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
 /**
- * An AI that answers in the browser (in the tests), streamed word by word like the real one, so the
- * description's AI can be tried before the backend has it.
+ * An AI that answers in the browser, streamed word by word like the real one, for the
+ * tests: given to `RichTextAI` as its `transport`.
  */
 export function simulatedTransport(delay = 40): ChatTransport<UIMessage> {
   return {

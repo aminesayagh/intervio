@@ -24,6 +24,7 @@
   "aiPlaceholder": "Ask anything or pick a request",
   "aiProposal": "AI proposal",
   "aiWriting": "Writing…",
+  "aiRetry": "Retry",
   "aiFailed": "The AI couldn't answer.",
   "aiLimit": "You've asked the AI too often. Try again later.",
   "aiUnavailable": "The AI isn't available yet.",

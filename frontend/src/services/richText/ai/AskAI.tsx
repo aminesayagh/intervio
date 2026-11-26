@@ -71,18 +71,29 @@ export function RichTextAI({
   const { t } = useTranslation('rich-text')
   const editor = useEditorRef()
   // A refused or failed answer is a notification, and the proposal goes (decision 153).
+  // When asking again may work (not the limit, not a missing AI), it offers Retry: the
+  // same request, at the same place, followed through the edits made since (MAS-12).
   const chat = useChat({
     transport,
     onError(error) {
+      const reason = failure(error)
+      const asked = last.current
+      const again = reason === 'aiFailed' && asked
+      if (again) target.current = null // kept for the retry
+      clear()
       notify({
         tone: 'error',
-        text: t(failure(error)),
+        text: t(reason),
         scope,
         key: `${scope}:ai`,
+        action: again
+          ? { label: t('aiRetry'), run: () => send(asked.prompt, asked.at) }
+          : undefined,
       })
-      clear()
     },
   })
+  // The last request, for Retry: its prompt and where its answer goes.
+  const last = useRef<{ prompt: string; at: RangeRef | null } | null>(null)
   // Where the answer goes: the selection when the question was asked, followed
   // through the edits made while the AI answers.
   const target = useRef<RangeRef | null>(null)
@@ -90,10 +101,10 @@ export function RichTextAI({
   const requestAt = useRef<Element | null>(null)
   const [requesting, setRequesting] = useState(false)
 
-  const last = chat.messages.at(-1)
+  const answer = chat.messages.at(-1)
   const proposal =
-    last?.role === 'assistant'
-      ? last.parts
+    answer?.role === 'assistant'
+      ? answer.parts
           .map((part) => (part.type === 'text' ? part.text : ''))
           .join('')
       : ''
@@ -106,32 +117,41 @@ export function RichTextAI({
     chat.clearError()
   }
 
+  /** Asks about the range `at` follows (the whole text when null). */
+  function send(prompt: string, at: RangeRef | null) {
+    if (last.current?.at && last.current.at !== at) last.current.at.unref()
+    if (target.current && target.current !== at) target.current.unref()
+    target.current = at
+    last.current = { prompt, at }
+    const selection = at?.current ?? null
+    const editing = !!selection && !RangeApi.isCollapsed(selection)
+    const document = serializeMarkdown(editor)
+    const selected = editing
+      ? serializeMarkdown(editor, editor.api.fragment(selection))
+      : null
+    if (!document.ok || (selected && !selected.ok)) {
+      notify({
+        tone: 'error',
+        text: t('aiFailed'),
+        scope,
+        key: `${scope}:ai`,
+      })
+      return
+    }
+    const ctx: DescriptionContext = {
+      document: document.data,
+      selection: selected?.ok ? selected.data : null,
+      toolName: editing ? 'edit' : 'generate',
+    }
+    chat.setMessages([])
+    void chat.sendMessage({ text: prompt }, { body: { ctx } })
+  }
+
   const ai: AI = {
     ask(prompt) {
       const selection = editor.selection
       const editing = !!selection && !RangeApi.isCollapsed(selection)
-      target.current?.unref()
-      target.current = editing ? editor.api.rangeRef(selection) : null
-      const document = serializeMarkdown(editor)
-      const selected = editing
-        ? serializeMarkdown(editor, editor.api.fragment(selection))
-        : null
-      if (!document.ok || (selected && !selected.ok)) {
-        notify({
-          tone: 'error',
-          text: t('aiFailed'),
-          scope,
-          key: `${scope}:ai`,
-        })
-        return
-      }
-      const ctx: DescriptionContext = {
-        document: document.data,
-        selection: selected?.ok ? selected.data : null,
-        toolName: editing ? 'edit' : 'generate',
-      }
-      chat.setMessages([])
-      void chat.sendMessage({ text: prompt }, { body: { ctx } })
+      send(prompt, editing ? editor.api.rangeRef(selection!) : null)
     },
     request(at) {
       requestAt.current = at

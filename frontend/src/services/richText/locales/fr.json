@@ -24,6 +24,7 @@
   "aiPlaceholder": "Demandez ce que vous voulez ou choisissez une demande",
   "aiProposal": "Proposition de l’IA",
   "aiWriting": "Rédaction…",
+  "aiRetry": "Réessayer",
   "aiFailed": "L’IA n’a pas pu répondre.",
   "aiLimit": "Vous avez sollicité l’IA trop souvent. Réessayez plus tard.",
   "aiUnavailable": "L’IA n’est pas encore disponible.",

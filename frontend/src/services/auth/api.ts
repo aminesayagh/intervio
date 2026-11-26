@@ -50,6 +50,19 @@ export const authApi = {
   logOut: () => api('/api/auth/logout', { method: 'POST' }),
 }
 
+/**
+ * Whether "Continue with Google" can work (MAS-38): the backend says whether Google
+ * sign-in is configured. Off until it answers, and when it can't.
+ */
+export function useGoogleSignIn() {
+  const { data } = useQuery({
+    queryKey: ['auth', 'providers'],
+    queryFn: () => api<{ google: boolean }>('/api/auth/providers'),
+    staleTime: Infinity,
+  })
+  return data?.google ?? false
+}
+
 export const currentUserKey = ['auth', 'me']
 
 /** The logged-in user, or null when nobody is logged in. */

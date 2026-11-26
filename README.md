@@ -15,14 +15,14 @@ make install    # once: frontend libraries
 make dev        # PostgreSQL, backend (http://localhost:8080) and frontend (http://localhost:5173)
 ```
 
-Google sign-in needs a `.env` file at the root (never committed), loaded by `make`:
+Google sign-in needs a `.env` file at the root (never committed). The backend reads it however it is started (`make`, `./mvnw`, the IDE); real environment variables win over it:
 
 ```
 SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
 SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
 ```
 
-In Google Cloud, the OAuth client allows the origin `http://localhost:5173` and the redirect URI `http://localhost:5173/login/oauth2/code/google`. Without `.env`, everything else works and the Google button is inactive.
+In Google Cloud, the OAuth client allows the origin `http://localhost:5173` and the redirect URI `http://localhost:5173/login/oauth2/code/google`. Without the keys, everything else works, the sign-in screens hide the Google button, and the backend logs a warning at startup.
 
 The description's AI (Ask AI in the editor) calls OpenAI. Add your OpenAI API key to the same `.env`, then restart the backend:
 

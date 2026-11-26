@@ -359,7 +359,8 @@ export type CollectionDefinition<T, C = void> = {
   create?: {
     /** "+ Add …" (a linked section) and "New …": translation keys in the collection's namespace. */
     add: string
-    defaults: (context: C) => Partial<T>
+    /** Every value but the id, which the server gives: so a field never misses a value (#68). */
+    defaults: (context: C) => Omit<T, 'id'>
     /** True when the new record has what it needs to be created (its name, often). */
     ready: (draft: Partial<T>) => boolean
   }

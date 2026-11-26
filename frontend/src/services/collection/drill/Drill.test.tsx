@@ -389,6 +389,75 @@ test('a section passes its context to its collection', async () => {
   expect(asked).toContainEqual({ site: 'Building B' })
 })
 
+test('a record opened through the second of two sections of one collection comes back through it (#70)', async () => {
+  const parts = partSource()
+  const asked: unknown[] = []
+  const one = parts.one
+  parts.one = (id, context) => {
+    asked.push(context)
+    return one(id, context)
+  }
+  const definitions: {
+    items?: CollectionDefinition<Item>
+    parts?: CollectionDefinition<Part>
+  } = {}
+  definitions.items = itemDefinition(
+    itemSource(makeItems(8)),
+    'test-items',
+    undefined,
+    () => definitions.parts!,
+    '/items',
+  )
+  definitions.parts = partDefinition(parts, () => definitions.items!)
+  const panelDefinition = definitions.items.panel!
+  const partsSection = panelDefinition.sections!.find((s) => s.id === 'parts')!
+  panelDefinition.sections = [
+    { ...partsSection, context: () => ({ site: 'Building B' }) },
+    {
+      ...partsSection,
+      id: 'spare',
+      label: 'spareParts',
+      context: () => ({ site: 'Building C' }),
+    },
+  ]
+  const show = (url: string) =>
+    renderAt(url, <Collection definition={definitions.items!} />)
+
+  show(`/items?open=${ITEM_001}`)
+  await openLinked('Item 001', 'Spare parts', 'Filter 1, Item 001')
+  await panel('Filter 1, Item 001')
+  const address = window.location.pathname + window.location.search
+  cleanup()
+
+  // The refresh: the same address, a new page.
+  asked.length = 0
+  show(address)
+  expect(await panel('Filter 1, Item 001')).toBeInTheDocument()
+  expect(asked).toContainEqual({ site: 'Building C' })
+  expect(asked).not.toContainEqual({ site: 'Building B' })
+})
+
+test('the scope chip reads its parent with the context the scope gives (#70)', async () => {
+  const items = itemSource(makeItems(8))
+  const asked: unknown[] = []
+  const one = items.one
+  items.one = (id, context) => {
+    asked.push(context)
+    return one(id, context)
+  }
+  const definition = itemDefinition(items, 'test-items')
+  definition.scopes = definition.scopes!.map((scope) => ({
+    ...scope,
+    parentContext: () => ({ site: 'Building B' }),
+  }))
+  renderAt(
+    `/test-items?f.linkedTo=${ITEM_001}`,
+    <Collection definition={definition} />,
+  )
+  expect(await screen.findByText('Linked to: Item 001')).toBeInTheDocument()
+  expect(asked).toEqual([{ site: 'Building B' }])
+})
+
 /** Opens "+ Link or add" under Item 001's Parts section; returns the section. */
 async function linkOrAdd() {
   const aside = await panel('Item 001')

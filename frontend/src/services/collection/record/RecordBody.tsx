@@ -220,6 +220,7 @@ function Sections<T, C>({
       {panel.sections?.map((section) => (
         <Section
           key={section.id}
+          id={section.id}
           label={t(section.label)}
           linked={section.collection()}
           scope={section.scope(record)}
@@ -249,6 +250,7 @@ const PREVIEW = 5
  * them, so "Show all" opens a list already in the cache.
  */
 function Section({
+  id,
   label,
   linked,
   scope,
@@ -256,6 +258,8 @@ function Section({
   viewName,
   link,
 }: {
+  /** The section's id, kept in the address when its record opens (#70). */
+  id: string
   label: string
   linked: AnyCollection
   scope: Record<string, string[]>
@@ -357,7 +361,7 @@ function Section({
                         onClick={() => {
                           const page = linked.opensAsPage?.(item, context)
                           if (page) navigate(page)
-                          else open(linked.key, linked.getId(item))
+                          else open(linked.key, linked.getId(item), id)
                         }}
                         className="max-w-full cursor-pointer truncate text-start outline-none hover:underline focus-visible:underline"
                       >

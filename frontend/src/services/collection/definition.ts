@@ -241,6 +241,8 @@ export type ScopeDefinition = {
   label: string
   /** The collection the parent record belongs to, to show its name. */
   parent: () => AnyCollection
+  /** The parent collection's context, from this list's, when reading the parent needs one (#70). */
+  parentContext?: (context: unknown) => unknown
   /** How a record created in the scoped list links to the parent (spec 7.5). */
   patch?: (parentId: string) => Partial<unknown>
 }

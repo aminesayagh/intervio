@@ -23,6 +23,7 @@ export function Toolbar({
   fields,
   sortables,
   scopes = [],
+  context,
   listing,
   onSearch,
   onFilters,
@@ -34,6 +35,8 @@ export function Toolbar({
   fields: FilterField[]
   sortables: Sortable[]
   scopes?: ScopeDefinition[]
+  /** The list's context (a scope gives its parent's from it). */
+  context?: unknown
   listing: Listing
   onSearch: (search: string) => void
   onFilters: (patch: Record<string, string[]>) => void
@@ -74,6 +77,7 @@ export function Toolbar({
             namespace={namespace}
             scope={scope}
             parentId={parentId}
+            context={context}
             onRemove={() =>
               onFilters({
                 [scope.id]: (listing.filters[scope.id] ?? []).filter(
@@ -163,18 +167,22 @@ function ScopeChip({
   namespace,
   scope,
   parentId,
+  context,
   onRemove,
 }: {
   namespace: string
   scope: ScopeDefinition
   parentId: string
+  /** The list's context, from which the scope gives its parent's. */
+  context: unknown
   onRemove: () => void
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const parent = scope.parent()
+  const parentContext = scope.parentContext?.(context)
   const record = useQuery({
-    queryKey: keys.record(parent.key, parentId),
-    queryFn: () => parent.source.one(parentId, undefined),
+    queryKey: keys.record(parent.key, parentId, parentContext),
+    queryFn: () => parent.source.one(parentId, parentContext),
   })
   const name = record.data
     ? (parent.panel?.title(record.data) ?? parentId)

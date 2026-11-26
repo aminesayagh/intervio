@@ -55,6 +55,7 @@
   "scopes": {
     "linkedTo": "Lié à : {{name}}"
   },
+  "spareParts": "Pièces de rechange",
   "parts": "Pièces",
   "checks": "Contrôles"
 }

@@ -55,6 +55,7 @@
   "scopes": {
     "linkedTo": "Linked to: {{name}}"
   },
+  "spareParts": "Spare parts",
   "parts": "Parts",
   "checks": "Checks"
 }

@@ -275,3 +275,13 @@ export function sameRules(a: FilterGroup, b: FilterGroup) {
   }
   return text(a) === text(b)
 }
+
+/** The group with a new rule at its end: the first field, its first condition, no value. */
+export function withRule(
+  group: FilterGroup,
+  fields: FilterField[],
+): FilterGroup {
+  const [field] = fields
+  const rule: Rule = { id: field.id, op: OPERATORS[field.kind][0], values: [] }
+  return { ...group, rules: [...group.rules, rule] }
+}

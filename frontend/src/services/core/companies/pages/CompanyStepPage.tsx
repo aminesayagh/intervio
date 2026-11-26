@@ -3,13 +3,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../../navigation'
-import { FormError } from '../../../ui-kit'
 import { companyApi, companyKey, errorKey, useCompany } from '../api'
 import {
   CompanyDetailsFields,
   type CompanyDetails,
 } from '../details/CompanyDetailsFields'
 import { StepTitle } from './StepParts'
+import { notify } from '../../../notifications'
 
 /** Step 1 (required): company name, country of registration, registration number. */
 export function CompanyStepPage() {
@@ -28,7 +28,6 @@ function CompanyForm() {
     registrationNumber: saved?.registrationNumber ?? '',
   })
   const [countryMissing, setCountryMissing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -38,7 +37,6 @@ function CompanyForm() {
       setCountryMissing(true)
       return
     }
-    setError(null)
     setPending(true)
     try {
       const company = await companyApi.saveDetails(
@@ -49,7 +47,11 @@ function CompanyForm() {
       queryClient.setQueryData(companyKey, company)
       navigate('/onboarding/industries')
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'CompanyStepPage:CompanyForm',
+      })
     } finally {
       setPending(false)
     }
@@ -58,9 +60,7 @@ function CompanyForm() {
   return (
     <>
       <StepTitle step={1}>{t('company.title')}</StepTitle>
-      <FormError
-        message={error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })}
-      />
+
       <Form onSubmit={save} className="flex flex-col gap-3">
         <CompanyDetailsFields
           value={details}

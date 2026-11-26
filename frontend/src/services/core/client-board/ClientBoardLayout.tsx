@@ -140,11 +140,9 @@ function Sidebar({
       <div
         className={`flex h-8 items-center ${collapsed ? 'justify-center' : 'justify-between'}`}
       >
-        {!collapsed && (
-          <FadeIn>
-            <Logo onNavigate={onNavigate} />
-          </FadeIn>
-        )}
+        <Show as="span" when={!collapsed} className="truncate">
+          <Logo onNavigate={onNavigate} />
+        </Show>
         <button
           type="button"
           aria-label={toggleLabel}
@@ -197,7 +195,9 @@ function Sidebar({
               }`}
             >
               <Icon name={tab.icon} size={18} />
-              {!collapsed && <FadeIn>{t(tab.label)}</FadeIn>}
+              <Show as="span" when={!collapsed} className="truncate">
+                {t(tab.label)}
+              </Show>
             </Link>
           )
         })}
@@ -246,19 +246,19 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
             user?.fullName.charAt(0).toUpperCase()
           )}
         </span>
-        {!collapsed && (
-          <FadeIn className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-medium">
-                {user?.fullName}
-              </span>
-              <span className="block truncate text-xs text-muted">
-                {user?.email}
-              </span>
+        <Show
+          as="span"
+          when={!collapsed}
+          className="flex min-w-0 flex-1 items-center gap-2"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">{user?.fullName}</span>
+            <span className="block truncate text-xs text-muted">
+              {user?.email}
             </span>
-            <Icon name="More-1" size={18} className="text-muted" />
-          </FadeIn>
-        )}
+          </span>
+          <Icon name="More-1" size={18} className="text-muted" />
+        </Show>
       </Button>
       <Dropdown.Popover placement="top start" className="min-w-[232px]">
         <Dropdown.Menu onAction={onAction}>
@@ -306,29 +306,6 @@ function ProfileMenu({ collapsed }: { collapsed: boolean }) {
 }
 
 /** Labels fade in once the sidebar has widened, so they never wrap mid-animation. */
-function FadeIn({
-  children,
-  className = 'truncate',
-}: {
-  children: ReactNode
-  className?: string
-}) {
-  const reduceMotion = useReducedMotion()
-  return (
-    <motion.span
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        duration: reduceMotion ? 0 : 0.15,
-        delay: reduceMotion ? 0 : 0.1,
-      }}
-      className={className}
-    >
-      {children}
-    </motion.span>
-  )
-}
-
 /** "EN / FR" with the current choice in the text color. */
 function Choice({ options, active }: { options: string[]; active: number }) {
   return (

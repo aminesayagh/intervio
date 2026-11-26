@@ -4,7 +4,6 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ImagePicker } from '../../files'
 import { navigate, usePath } from '../../navigation'
-import { FormError } from '../../ui-kit'
 import {
   companyApi,
   companyErrorKey,
@@ -16,6 +15,7 @@ import {
   type Company,
 } from '../companies'
 import { SettingsLayout } from './SettingsLayout'
+import { notify } from '../../notifications'
 
 /** Settings, a company's tab (decision 91): the onboarding fields, with the same rules. */
 export function CompanyPage() {
@@ -57,7 +57,6 @@ function Details({ company }: { company: Company }) {
   })
   const [countryMissing, setCountryMissing] = useState(false)
   const [industries, setIndustries] = useState(company.industries.map(String))
-  const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, setPending] = useState(false)
 
@@ -68,7 +67,6 @@ function Details({ company }: { company: Company }) {
       setCountryMissing(true)
       return
     }
-    setError(null)
     setSaved(false)
     setPending(true)
     try {
@@ -79,7 +77,13 @@ function Details({ company }: { company: Company }) {
       )
       setSaved(true)
     } catch (e) {
-      setError(companyErrorKey(e))
+      notify({
+        tone: 'error',
+        text: tc(companyErrorKey(e), {
+          defaultValue: tc('errors.ERROR_UNKNOWN'),
+        }),
+        key: 'CompanyPage:Details',
+      })
     } finally {
       setPending(false)
     }
@@ -87,11 +91,6 @@ function Details({ company }: { company: Company }) {
 
   return (
     <Form onSubmit={save} className="flex flex-col gap-3">
-      <FormError
-        message={
-          error && tc(error, { defaultValue: tc('errors.ERROR_UNKNOWN') })
-        }
-      />
       <CompanyDetailsFields
         value={details}
         onChange={setDetails}

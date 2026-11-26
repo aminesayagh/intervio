@@ -1,6 +1,7 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FormError, Icon } from '../../ui-kit'
+import { Icon } from '../../ui-kit'
+import { notify } from '../../notifications'
 import {
   formatSize,
   uploadErrorKey,
@@ -27,16 +28,19 @@ export function DocumentsField({
 }) {
   const { t } = useTranslation('files')
   const input = useRef<HTMLInputElement>(null)
-  const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(0)
   const [dragging, setDragging] = useState(false)
 
   async function add(chosen: File[]) {
     if (input.current) input.current.value = ''
-    setError(null)
     const valid = chosen.filter((file) => {
       const invalid = checkFile('document', file)
-      if (invalid) setError(invalid)
+      if (invalid)
+        notify({
+          tone: 'error',
+          text: t(invalid),
+          key: 'DocumentsField:DocumentsField',
+        })
       return !invalid
     })
     if (!valid.length) return
@@ -47,7 +51,11 @@ export function DocumentsField({
       try {
         uploaded.push(await uploadFile('document', file))
       } catch (e) {
-        setError(uploadErrorKey(e))
+        notify({
+          tone: 'error',
+          text: t(uploadErrorKey(e)),
+          key: 'DocumentsField:DocumentsField',
+        })
       }
     }
     setUploading((n) => n - valid.length)
@@ -91,7 +99,7 @@ export function DocumentsField({
       <p className="text-xs text-muted">
         {t('documentRules', { size: rules.maxMb })}
       </p>
-      <FormError message={error && t(error)} />
+
       {value.length > 0 && (
         <ul className="mt-1 flex flex-col">
           {value.map((file) => (

@@ -1,9 +1,9 @@
 import { Button } from '@heroui/react'
 import { useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FormError } from '../../ui-kit'
 import { uploadErrorKey, uploadFile } from '../api'
 import { accept, checkFile, FILE_PURPOSES, type FilePurpose } from '../purposes'
+import { notify } from '../../notifications'
 
 type Props = {
   purpose: FilePurpose
@@ -33,16 +33,18 @@ export function ImagePicker({
 }: Props) {
   const { t } = useTranslation('files')
   const input = useRef<HTMLInputElement>(null)
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function run(action: () => Promise<unknown>) {
-    setError(null)
     setPending(true)
     try {
       await action()
     } catch (e) {
-      setError(uploadErrorKey(e))
+      notify({
+        tone: 'error',
+        text: t(uploadErrorKey(e)),
+        key: 'ImagePicker:ImagePicker',
+      })
     } finally {
       setPending(false)
     }
@@ -52,7 +54,12 @@ export function ImagePicker({
     if (input.current) input.current.value = '' // the same file can be chosen again
     if (!file) return
     const invalid = checkFile(purpose, file)
-    if (invalid) return setError(invalid)
+    if (invalid)
+      return notify({
+        tone: 'error',
+        text: t(invalid),
+        key: 'ImagePicker:ImagePicker',
+      })
     void run(async () => onUploaded((await uploadFile(purpose, file)).id))
   }
 
@@ -101,7 +108,6 @@ export function ImagePicker({
           size: rules.maxMb,
         })}
       </p>
-      <FormError message={error && t(error)} />
     </div>
   )
 }

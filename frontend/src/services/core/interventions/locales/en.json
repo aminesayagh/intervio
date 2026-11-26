@@ -5,7 +5,6 @@
   "none": "No interventions yet.",
   "subtabs": "Intervention sections",
   "overview": "Overview",
-  "offersDue": "Offers due {{date}}",
   "publish": "Publish",
   "publishedOn": "Published on {{date}}",
   "status": {
@@ -38,11 +37,6 @@
     "ERROR_INTERVENTION_NOT_FOUND": "This intervention was not found.",
     "ERROR_FILE_NOT_FOUND": "A file was not found. Upload it again.",
     "ERROR_UNKNOWN": "Something went wrong. Try again."
-  },
-  "view": {
-    "label": "View",
-    "cards": "Cards",
-    "table": "Table"
   },
   "table": {
     "updated": "Last updated"

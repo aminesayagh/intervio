@@ -5,7 +5,6 @@
   "none": "Aucune intervention pour le moment.",
   "subtabs": "Sections de l'intervention",
   "overview": "Vue d'ensemble",
-  "offersDue": "Offres attendues le {{date}}",
   "publish": "Publier",
   "publishedOn": "Publiée le {{date}}",
   "status": {
@@ -38,11 +37,6 @@
     "ERROR_INTERVENTION_NOT_FOUND": "Cette intervention est introuvable.",
     "ERROR_FILE_NOT_FOUND": "Un fichier est introuvable. Importez-le à nouveau.",
     "ERROR_UNKNOWN": "Une erreur est survenue. Réessayez."
-  },
-  "view": {
-    "label": "Affichage",
-    "cards": "Cartes",
-    "table": "Tableau"
   },
   "table": {
     "updated": "Dernière modification"

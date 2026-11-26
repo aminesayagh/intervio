@@ -8,13 +8,13 @@ import {
   applyTheme,
   check,
   Field,
-  FormError,
   Notice,
   Segmented,
   useTheme,
 } from '../../ui-kit'
 import { errorKey, profileApi, useSaveUser } from './api'
 import { SettingsLayout } from './SettingsLayout'
+import { notify } from '../../notifications'
 
 /** Settings, Profile (decisions 87, 88): photo, name, email, then language and theme. */
 export function ProfilePage() {
@@ -64,19 +64,21 @@ function Details({ user }: { user: CurrentUser }) {
   const saveUser = useSaveUser()
   const [name, setName] = useState(user.fullName)
   const [email, setEmail] = useState(user.pendingEmail ?? user.email)
-  const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, setPending] = useState(false)
 
   async function run(action: () => Promise<CurrentUser>) {
-    setError(null)
     setSaved(false)
     setPending(true)
     try {
       saveUser(await action())
       return true
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'ProfilePage:Details',
+      })
       return false
     } finally {
       setPending(false)
@@ -98,9 +100,6 @@ function Details({ user }: { user: CurrentUser }) {
 
   return (
     <Form onSubmit={save} className="flex flex-col gap-3">
-      <FormError
-        message={error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })}
-      />
       <Field
         name="fullName"
         autoComplete="name"

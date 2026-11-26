@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../../navigation'
-import { FormError } from '../../../ui-kit'
 import {
   companyApi,
   companyKey,
@@ -12,6 +11,7 @@ import {
   useCompany,
 } from '../api'
 import { StepLinks, StepTitle } from './StepParts'
+import { notify } from '../../../notifications'
 
 /** Step 2 (optional): the industries the company works in, in two columns. */
 export function IndustriesStepPage() {
@@ -28,11 +28,9 @@ function IndustriesForm({ initial }: { initial: number[] }) {
   const { t } = useTranslation('companies')
   const queryClient = useQueryClient()
   const [selected, setSelected] = useState<string[]>(initial.map(String))
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function save() {
-    setError(null)
     setPending(true)
     try {
       queryClient.setQueryData(
@@ -41,7 +39,11 @@ function IndustriesForm({ initial }: { initial: number[] }) {
       )
       navigate('/onboarding/logo')
     } catch (e) {
-      setError(errorKey(e))
+      notify({
+        tone: 'error',
+        text: t(errorKey(e), { defaultValue: t('errors.ERROR_UNKNOWN') }),
+        key: 'IndustriesStepPage:IndustriesForm',
+      })
     } finally {
       setPending(false)
     }
@@ -50,9 +52,7 @@ function IndustriesForm({ initial }: { initial: number[] }) {
   return (
     <>
       <StepTitle step={2}>{t('industries.title')}</StepTitle>
-      <FormError
-        message={error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })}
-      />
+
       <CheckboxGroup
         aria-label={t('industries.title')}
         value={selected}

@@ -52,6 +52,10 @@ export function viewProblems<T, C>(definition: CollectionDefinition<T, C>) {
     const shown = view.type === 'table' ? view.columns : view.card
     for (const id of shown ?? [])
       if (!columns.has(id)) problems.push(`${at}: no column "${id}"`)
+    if (view.type === 'calendar')
+      for (const id of [view.date, view.end ?? view.date])
+        if (!filterableDate(definition, id))
+          problems.push(`${at}: "${id}" is not a filterable date`)
     if (view.type === 'kanban') {
       const group = definition.columns.find((c) => c.id === view.groupBy)
       const filterable =
@@ -67,6 +71,18 @@ export function viewProblems<T, C>(definition: CollectionDefinition<T, C>) {
         problems.push(`${at}: can't sort by "${level.by}"`)
   }
   return problems
+}
+
+/**
+ * A date column the list can filter "after" and "before": a calendar loads the range
+ * on screen through it (MAS-50).
+ */
+function filterableDate<T, C>(
+  definition: CollectionDefinition<T, C>,
+  id: string,
+) {
+  const column = definition.columns.find((c) => c.id === id)
+  return column?.field?.type === 'date' && !!column.filter
 }
 
 /**

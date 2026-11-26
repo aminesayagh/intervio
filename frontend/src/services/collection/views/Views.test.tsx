@@ -57,6 +57,30 @@ test("a view's unknown ids are reported", () => {
   ])
 })
 
+test('a calendar view needs filterable date columns (MAS-51)', () => {
+  const base = items()
+  const calendar = (date: string, end?: string) => ({
+    ...base,
+    views: [
+      {
+        id: 'cal',
+        name: 'Calendar',
+        type: 'calendar' as const,
+        date,
+        end,
+        card: ['owner'],
+      },
+    ],
+  })
+  expect(viewProblems(calendar('due'))).toEqual([])
+  expect(viewProblems(calendar('due', 'due'))).toEqual([])
+  // Not a date, and a date the list can't filter (no range to load).
+  expect(viewProblems(calendar('quantity', 'updated'))).toEqual([
+    'view "cal": "quantity" is not a filterable date',
+    'view "cal": "updated" is not a filterable date',
+  ])
+})
+
 test("the test collections' views are valid", () => {
   expect(viewProblems(items())).toEqual([])
   expect(viewProblems(checkDefinition())).toEqual([])

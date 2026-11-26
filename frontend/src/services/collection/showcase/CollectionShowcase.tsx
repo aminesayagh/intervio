@@ -62,7 +62,7 @@ const definitions = {
       '/dev/collection',
       () => checksDefinition,
     ),
-    // Configured views (decision 168): the tabs above the list.
+    // Configured views (decisions 168, 169): the menu beside the title.
     views: [
       { id: 'all', name: 'collection:views.all', type: 'table' as const },
       {
@@ -87,6 +87,14 @@ const definitions = {
         type: 'kanban' as const,
         groupBy: 'status',
         card: ['owner', 'quantity'],
+      },
+      {
+        // A calendar by due date (MAS-50); drawn as a table until MAS-52.
+        id: 'calendar',
+        name: 'Calendar',
+        type: 'calendar' as const,
+        date: 'due',
+        card: ['owner'],
       },
     ],
   },

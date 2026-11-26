@@ -41,6 +41,7 @@ export function Calendar({
   entries,
   onRange,
   onMove,
+  onDayPress,
   renderEntry,
 }: {
   label: string
@@ -51,6 +52,8 @@ export function Calendar({
    * back if this fails.
    */
   onMove?: (id: string, move: CalendarMove) => Promise<void>
+  /** A click on a day, outside its entries ('2026-12-01'): a new one there (MAS-54). */
+  onDayPress?: (day: string) => void
   /**
    * What an entry shows, its buttons included (opening it, changing its date):
    * FullCalendar's own element stays a plain box, so they are never nested.
@@ -103,7 +106,10 @@ export function Calendar({
           // Saturday and Sunday on grey.
           dayHeaderAlign="start"
           dayHeaderClass={(day) => cn('uppercase', weekend(day.dow))}
-          dayCellClass={(day) => weekend(day.dow)}
+          dayCellClass={(day) =>
+            cn(weekend(day.dow), onDayPress && 'cursor-pointer')
+          }
+          dateClick={(click) => onDayPress?.(click.dateStr.slice(0, 10))}
           dayCellTopContent={(day) =>
             String(day.date.getDate()).padStart(2, '0')
           }

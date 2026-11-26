@@ -32,11 +32,8 @@ import { csrfHeaders } from '../../http'
 import { notify } from '../../notifications'
 import { Button, CommandSearch, PopoverDialog, Show } from '../../ui-kit'
 import { EditorText } from '../editor/PlateEditor'
-import {
-  richTextPlugins,
-  parseMarkdown,
-  serializeMarkdown,
-} from '../editor/plugins'
+import { parseMarkdown, serializeMarkdown } from '../editor/markdown'
+import { richTextPlugins } from '../editor/plugins'
 import { AIContext, type AI, type DescriptionContext } from './aiContext'
 
 // The backend's AI (decision 153); the tests give a simulated one (testing/simulatedAI).

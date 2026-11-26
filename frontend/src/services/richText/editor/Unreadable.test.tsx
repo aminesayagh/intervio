@@ -4,8 +4,8 @@ import '../../i18n'
 import { TestEditor } from '../testing/TestEditor'
 
 // Plate's Markdown reader accepts any text met so far, so its failure is simulated.
-vi.mock('./plugins', async (original) => ({
-  ...(await original<typeof import('./plugins')>()),
+vi.mock('./markdown', async (original) => ({
+  ...(await original<typeof import('./markdown')>()),
   parseMarkdown: () => ({ ok: false, error: new Error('unreadable') }),
 }))
 

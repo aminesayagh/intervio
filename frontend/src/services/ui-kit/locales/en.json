@@ -18,5 +18,10 @@
     "none": "None",
     "empty": "No icons match.",
     "remove": "Remove the icon"
+  },
+  "calendar": {
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

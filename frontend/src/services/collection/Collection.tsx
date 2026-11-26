@@ -43,6 +43,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
+import { CalendarView } from './views/calendar/CalendarView'
 import { Kanban } from './views/kanban/Kanban'
 import { ViewMenu } from './views/ViewMenu'
 import { columnsOf, valuesOf, viewsOf } from './views/views'
@@ -751,6 +752,23 @@ export function Collection<T, C = void>({
                   groupBy={board.groupBy}
                   card={board.card}
                   narrow={narrowScreen}
+                />
+              )}
+            </Match>
+            {/* A calendar (MAS-52), by the view's date column. */}
+            <Match
+              when={
+                list.items.length > 0 &&
+                activeView.type === 'calendar' &&
+                activeView
+              }
+            >
+              {(calendar) => (
+                <CalendarView
+                  {...viewProps}
+                  date={calendar.date}
+                  end={calendar.end}
+                  card={calendar.card}
                 />
               )}
             </Match>

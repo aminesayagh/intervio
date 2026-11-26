@@ -89,7 +89,7 @@ const definitions = {
         card: ['owner', 'quantity'],
       },
       {
-        // A calendar by due date (MAS-50); drawn as a table until MAS-52.
+        // A calendar by due date (MAS-50, MAS-52).
         id: 'calendar',
         name: 'Calendar',
         type: 'calendar' as const,

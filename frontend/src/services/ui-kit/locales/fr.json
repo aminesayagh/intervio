@@ -18,5 +18,10 @@
     "none": "Aucune",
     "empty": "Aucune icône ne correspond.",
     "remove": "Retirer l’icône"
+  },
+  "calendar": {
+    "today": "Aujourd’hui",
+    "previous": "Précédent",
+    "next": "Suivant"
   }
 }

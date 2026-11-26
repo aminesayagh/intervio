@@ -6,6 +6,7 @@ import { applyTheme, initialTheme } from './theme'
 addTranslations('ui-kit', { en, fr })
 applyTheme(initialTheme())
 
+export { Calendar, type CalendarEntry } from './calendar/Calendar'
 export { cn } from './cn'
 export { Field } from './forms/Field'
 export { FormError, Notice, Title } from './forms/FormParts'

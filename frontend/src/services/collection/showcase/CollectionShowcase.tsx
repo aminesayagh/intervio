@@ -71,6 +71,9 @@ const definitions = {
         type: 'table' as const,
         filters: { active: ['true'] },
         sort: [{ by: 'quantity', direction: 'desc' as const }],
+        // Locked (MOH-33): no Filter or Sort menu; the search stays.
+        filtersEditable: false,
+        sortEditable: false,
       },
       {
         id: 'short',

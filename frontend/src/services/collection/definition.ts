@@ -338,6 +338,19 @@ export type ViewDefinition = {
       /** The columns each card shows under the record's name (by id); none by default. */
       card?: string[]
     }
+  | {
+      /**
+       * Records on a calendar (MAS-50): month, week and list, by a date column. A
+       * record without that date doesn't show (the calendar counts them).
+       */
+      type: 'calendar'
+      /** The date column that places a record (its start); without a time, all day. */
+      date: string
+      /** A date column where the record ends, for records over several days. */
+      end?: string
+      /** The columns each record shows after its name (by id); none by default. */
+      card?: string[]
+    }
 )
 
 /**

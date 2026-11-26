@@ -1,4 +1,4 @@
-import { ChevronDown, Kanban, Table2 } from 'lucide-react'
+import { CalendarDays, ChevronDown, Kanban, Table2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -72,6 +72,11 @@ export function ViewMenu({
 
 /** The icon of a view's type: a table, or a board. */
 function TypeIcon({ view }: { view: ViewDefinition }) {
-  const Icon = view.type === 'kanban' ? Kanban : Table2
+  const Icon =
+    view.type === 'kanban'
+      ? Kanban
+      : view.type === 'calendar'
+        ? CalendarDays
+        : Table2
   return <Icon size={14} aria-hidden />
 }

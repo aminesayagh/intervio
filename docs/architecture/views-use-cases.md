@@ -29,9 +29,10 @@ On narrow screens a table view is drawn as rows (the rows, collection spec 5.2):
 - **C1. Its id**, set by the app: used in the address (`?view={id}`) and to remember the last view used. Never shown.
 - **C2. Its name**, a translation key or plain text (the app may give the same value as the id).
 - **C3. Its order** among the collection's views (optional; otherwise the order of the configuration). The first view is the default one.
-- **C4. Its type**: `table` or `kanban`, each with its own settings and defaults:
+- **C4. Its type**: `table`, `kanban` or `calendar`, each with its own settings and defaults:
   - table: the columns shown, in their order (default: all of them);
-  - kanban: the select field that makes the columns (`groupBy`, required) and the fields each card shows (default: the name only).
+  - kanban: the select field that makes the columns (`groupBy`, required) and the fields each card shows (default: the name only);
+  - calendar: the date field that places a record (`date`, required), the date field where it ends (`end`, optional), and the fields each record shows (`card`, default: the name only). Both date fields must be filterable, as the calendar loads the range on screen through them.
 - **C5. Its filters and sort**, both optional.
 - **C6. Whether the person may change its filters** (default: yes). When not, the view's filters always apply and the filter menu is off; the search stays.
 - **C7. Whether the person may change its sort** (default: yes). When not, the sort menu is off.
@@ -47,6 +48,21 @@ On narrow screens a table view is drawn as rows (the rows, collection spec 5.2):
 - **K4. Move a card.** Dragging a card to another column changes its value through the normal save (undo, notifications, the server's check); the keyboard does it too (React Aria's drag and drop, through `ui-kit/aria`). A card the person can't edit can't be moved. The card moves at once, before the server answers (it goes back if the save fails), and stays where it was dropped while the board is open; the server keeps no order, so on the next visit it takes its place in the list's sort.
 - **K5. Narrow screens (decision 167).** Columns sit side by side, one screen wide, swiped sideways; a card moves through its menu instead of dragging.
 - **Not in the first kanban:** selecting cards and bulk actions, ordering cards by hand inside a column, grouping by something other than a select field.
+
+### The calendar type (decision 170)
+
+Records placed on a calendar by a date field (MAS-50). FullCalendar draws the grid; Intervio's React Aria components (`ui-kit`) draw everything around it: the toolbar, menus and the date picker.
+
+- **CA1. See the calendar.** Three layouts, switched in the view's toolbar: a month, a week with its hours, and a list of the records in order. The toolbar also moves to the previous or next month or week, back to today, and shows the range's title. A record shows its name and the fields the view lists.
+- **CA2. Dates.** The view's `date` field places a record (its start); a date without a time is all day. With an `end` field, a record spans every day up to its end.
+- **CA3. Only the range on screen loads.** The calendar asks for the view's query plus "after" and "before" the range shown, and loads again as the person moves.
+- **CA4. Open a record.** Clicking a record opens it in the panel, as a table row does.
+- **CA5. Move a record.** Dragging a record to another day or time, or stretching it when the view has an end date, changes its dates through the normal save (notifications, the server's check). It moves at once and goes back if the save fails. A record the person can't edit can't be moved. The keyboard does it through the record's "Change date" menu, with the date picker.
+- **CA6. A new record on a day.** Clicking an empty day (or a time, in the week) starts a new record with that date (C9).
+- **CA7. Records without a date** don't show on the calendar. The toolbar says how many of the view's records have none, and opens them as a list.
+- **CA8. Narrow screens.** The list layout only, with the toolbar's previous, today and next; a record moves through its "Change date" menu, not by dragging.
+- **CA9. Time and week.** Dates are shown in the browser's time zone; the week starts as the person's language says (Monday in French, Sunday in English).
+- **Not in the first calendar:** a day layout, recurring records, records from several collections on one calendar, a period field (start and end in one value) as the calendar's dates.
 
 ## 3. Actors
 

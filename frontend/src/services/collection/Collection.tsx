@@ -33,7 +33,7 @@ import { useRecordActions } from './data/recordActions'
 import { useRecordChanges } from './data/recordChanges'
 import { confirm } from './confirm/confirm'
 import type { CollectionDefinition } from './definition'
-import { listPathOf } from './definition'
+import { listPathOf, stateKeyOf } from './definition'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import { RecordPage } from './record/RecordPage'
@@ -108,9 +108,10 @@ export function Collection<T, C = void>({
   // Where the tab left this list (spec 8.4): it starts at that page, for the list it
   // reopens on only (another search, filter or sort starts at the top).
   const listKey = JSON.stringify(state.query)
+  const stateKey = stateKeyOf(definition.key, context)
   const [opened] = useState(() => ({
     list: listKey,
-    page: readBookmark(definition.key, listKey)?.page ?? null,
+    page: readBookmark(stateKey, listKey)?.page ?? null,
   }))
   const list = useCollectionQuery({
     key: definition.key,
@@ -246,11 +247,11 @@ export function Collection<T, C = void>({
   // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
   const hasDraft = useCallback(() => {
     try {
-      return sessionStorage.getItem(newRecordKey(key)) !== null
+      return sessionStorage.getItem(newRecordKey(stateKey)) !== null
     } catch {
       return false
     }
-  }, [key])
+  }, [stateKey])
   const startNew = useCallback(() => {
     const wasOpen = Boolean(current().open || current().new)
     mark(
@@ -292,13 +293,13 @@ export function Collection<T, C = void>({
       })
       if (!discard) return
       try {
-        sessionStorage.removeItem(newRecordKey(key))
+        sessionStorage.removeItem(newRecordKey(stateKey))
       } catch {
         // storage blocked: nothing kept
       }
       doClose()
     } else doClose()
-  }, [key, openId, doClose, isNew, hasDraft, t])
+  }, [key, stateKey, openId, doClose, isNew, hasDraft, t])
 
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
@@ -307,7 +308,7 @@ export function Collection<T, C = void>({
   const narrowScreen = useLayoutMode() === 'narrow'
   // The tab remembers where the person was, and the pages above load on the way up.
   useScrollBookmark({
-    key: definition.key,
+    key: stateKey,
     list: listKey,
     scrollRef,
     rowHeight: narrowScreen ? ROW_HEIGHT.rows : ROW_HEIGHT.table,
@@ -768,6 +769,7 @@ export function Collection<T, C = void>({
                   definition={definition}
                   panel={definition.panel!}
                   defaults={newDefaults()}
+                  draftKey={newRecordKey(stateKey)}
                   onCreated={createRecord}
                   onClose={close}
                 />

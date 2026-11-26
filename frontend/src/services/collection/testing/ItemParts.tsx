@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { Part } from './parts'
-import { ChipList } from '../values/ChipList'
+import { ChipList } from '..'
 import type { Item } from './items'
 
 /** Small pieces the test collection's cards and cells are made of. */

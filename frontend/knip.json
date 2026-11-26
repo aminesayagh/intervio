@@ -1,6 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/services/*/index.ts", "src/services/core/*/index.ts"],
+  "entry": [
+    "src/services/*/index.ts",
+    "src/services/core/*/index.ts",
+    "src/services/collection/confirm/index.ts",
+    "src/services/collection/showcase/index.ts",
+    "src/services/collection/testing/index.ts"
+  ],
   "project": ["src/**/*.{ts,tsx,css}"],
   "ignoreExportsUsedInFile": true
 }

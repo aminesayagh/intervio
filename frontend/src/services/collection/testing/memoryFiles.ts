@@ -1,4 +1,4 @@
-import type { StoredFile } from '../definition'
+import type { StoredFile } from '..'
 
 /**
  * Uploads kept in memory, for the showcase and the tests (spec 15.2): the file

@@ -1,6 +1,6 @@
 import { memorySource } from '../data/memorySource'
-import type { StoredFile } from '../definition'
-import { ICON_CHOICES } from '../values/iconChoices'
+import type { StoredFile } from '..'
+import { ICON_CHOICES } from '..'
 
 /** The test collection's record (spec 15.2): one of each property kind the wrapper must handle. */
 export type Item = {

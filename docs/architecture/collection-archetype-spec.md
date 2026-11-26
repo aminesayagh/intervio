@@ -772,7 +772,7 @@ The wrapper is built in small steps. Each step ends with something that can be *
   - It can be made slow or failing from a small switch on the page, to see the loading and error states.
   - Each step is shown there before any real collection uses it.
 - **Tests** from section 15, written in the same step as the code they cover.
-  - The component tests use `memorySource`.
+  - The component tests use `memorySource`. It and the demo collections come from `collection/testing` (its own entry, never imported by the app); the app shell imports only `collection/confirm` (the confirmation host) and, lazily, `collection/showcase`, so the collection loads with the first screen that uses it (#72).
   - The `restSource` tests use MSW.
 - **CI green and the user's review** of the showcase page before merging.
 

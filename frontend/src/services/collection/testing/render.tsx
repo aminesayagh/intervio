@@ -14,6 +14,8 @@ export function renderAt(
   ui: ReactElement,
   /** What the tab held before, as after a refresh. */
   session: Record<string, string> = {},
+  /** What the browser held before (the last view, the last sort). */
+  local: Record<string, string> = {},
 ) {
   window.history.replaceState(null, '', url)
   clearNotifications()
@@ -22,6 +24,8 @@ export function renderAt(
     localStorage.clear()
     for (const [key, value] of Object.entries(session))
       sessionStorage.setItem(key, value)
+    for (const [key, value] of Object.entries(local))
+      localStorage.setItem(key, value)
   } catch {
     // storage blocked: nothing to clear
   }

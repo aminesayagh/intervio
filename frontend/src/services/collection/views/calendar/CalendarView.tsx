@@ -31,6 +31,9 @@ const dayBefore = (day: string) => {
  * when the view has an end date (MAS-53); its calendar button changes the dates
  * with the date picker, from the keyboard too. Both go through the normal save.
  * A click on an empty day starts a new record on that day (MAS-54).
+ *
+ * Records without a date don't show on the month: the toolbar counts them, and
+ * opens them as a list where each can be opened or given a date (MAS-55).
  */
 export function CalendarView<T, C>({
   definition,
@@ -85,6 +88,17 @@ export function CalendarView<T, C>({
       },
     },
   })
+  // The view's records without a date, for the toolbar's count and list.
+  const undated = useCollectionQuery({
+    key: definition.key,
+    source: definition.source,
+    context,
+    listing: {
+      ...query,
+      filters: { ...query.filters, [`${date}.empty`]: ['true'] },
+    },
+  })
+  const undatedCount = undated.total ?? undated.items.length
   // Every page of the days on screen: a calendar has no scrolling to load more.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list
   useEffect(() => {
@@ -114,6 +128,64 @@ export function CalendarView<T, C>({
       label={label}
       entries={range ? entries : []}
       onRange={setRange}
+      toolbar={
+        <Show when={undatedCount > 0}>
+          <PopoverDialog
+            label={t('collection:calendar.undatedList')}
+            width={320}
+            trigger={
+              <Button size="sm" look="ghost" className="text-muted">
+                {t('collection:calendar.undated', { count: undatedCount })}
+              </Button>
+            }
+          >
+            <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto p-2 text-sm">
+              {undated.items.map((record) => (
+                <li
+                  key={definition.getId(record)}
+                  className="flex items-center gap-2"
+                >
+                  <Button
+                    size="sm"
+                    look="ghost"
+                    className="min-w-0 flex-1 justify-start overflow-hidden px-1 font-normal"
+                    onPress={() => onOpen?.(definition.getId(record))}
+                  >
+                    <span className="truncate">{name(record)}</span>
+                  </Button>
+                  <Show when={starts && canEdit(record, date) && starts}>
+                    {(dates) => (
+                      <DateCell
+                        record={record}
+                        edit={dates}
+                        label={labelOf(date)}
+                        look="panel"
+                        save={(patch) =>
+                          save(record, patch, { label: labelOf(date) })
+                        }
+                      />
+                    )}
+                  </Show>
+                </li>
+              ))}
+              {/* The Show inside the item: a wrapper directly in <ul> is invalid. */}
+              <li>
+                <Show when={undated.hasNextPage}>
+                  <Button
+                    size="sm"
+                    look="ghost"
+                    className="w-full"
+                    isDisabled={undated.isFetchingNextPage}
+                    onPress={() => void undated.fetchNextPage()}
+                  >
+                    {t('collection:calendar.more')}
+                  </Button>
+                </Show>
+              </li>
+            </ul>
+          </PopoverDialog>
+        </Show>
+      }
       onDayPress={
         onCreate &&
         starts &&

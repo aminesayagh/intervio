@@ -11,7 +11,7 @@ import type { Sort, SortDirection } from '../types'
 export type FilterKind =
   'text' | 'number' | 'date' | 'choice' | 'tags' | 'check'
 
-export type Operator = 'is' | 'not' | 'contains' | 'gt' | 'lt'
+export type Operator = 'is' | 'not' | 'contains' | 'gt' | 'lt' | 'empty'
 
 /** The operators each kind offers, the first one the default. */
 export const OPERATORS: Record<FilterKind, Operator[]> = {
@@ -110,6 +110,10 @@ export function matches(value: FilterValue, op: Operator, chosen: string[]) {
       return !values.some((v) => chosen.includes(v))
     case 'contains':
       return values.some((v) => v.toLowerCase().includes(first.toLowerCase()))
+    // No value at all (`due.empty`: ['true']): the calendar's records without a
+    // date (MAS-55). Not offered in the Filter menu.
+    case 'empty':
+      return values.length === 0
     case 'gt':
     case 'lt': {
       if (values.length === 0) return false

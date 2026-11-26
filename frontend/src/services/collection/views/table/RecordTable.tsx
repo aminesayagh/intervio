@@ -21,7 +21,7 @@ import { isShared, SharedNote } from '../../selection/sharedEdit'
 import type { Id, ReportInvalid, SaveChange } from '../../types'
 import { Awake, useHandFocus } from '../../values/awake'
 import { ValueField } from '../../values/ValueField'
-import type { LayoutProps } from '../contract'
+import type { ViewProps } from '../viewProps'
 import { MarksProvider, useMark, useMarks } from '../rowMarks'
 
 /**
@@ -51,7 +51,7 @@ function RecordTableOf<T, C>({
   onOpen,
   selection,
   store,
-}: LayoutProps<T, C>) {
+}: ViewProps<T, C>) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   // Every column, at its own width: the table scrolls sideways when they don't fit,
   // and the panel opening or closing changes nothing in it (spec 9).

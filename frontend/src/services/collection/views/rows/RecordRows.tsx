@@ -6,7 +6,7 @@ import {
   RowListLoadMore,
 } from '../../../ui-kit'
 import { ROW_HEIGHT } from '../../layout/layout'
-import type { LayoutProps } from '../contract'
+import type { ViewProps } from '../viewProps'
 
 /**
  * The list on narrow screens (spec 9, decision 121): a row per record, with its name,
@@ -21,7 +21,7 @@ export function RecordRows<T, C>({
   more,
   onOpen,
 }: Pick<
-  LayoutProps<T, C>,
+  ViewProps<T, C>,
   'definition' | 'items' | 'label' | 'scrollRef' | 'more' | 'onOpen'
 >) {
   const { t } = useTranslation('collection')

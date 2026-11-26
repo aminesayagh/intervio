@@ -4,24 +4,24 @@ Status: scope decided (2026-11-26, decision 166). The first version has only **c
 
 ## 1. What a view is
 
-A **view** is a saved way of looking at one collection's records: a **layout** (a table today; a kanban, a calendar or others later) with its own settings (filters, sort, columns, grouping). A collection can have many views; several views can use the same layout ("Open documents" and "My equipment" are two tables of the resources). A view only changes what is shown and in which order: it never gives access to a record the person can't see, and never changes a record.
+A **view** is a saved way of looking at one collection's records: a **type** (a table today; a kanban, a calendar or others later) with its own settings (filters, sort, columns, grouping). A collection can have many views; several views can have the same type ("Open documents" and "My equipment" are two tables of the resources). A view only changes what is shown and in which order: it never gives access to a record the person can't see, and never changes a record.
 
 | Term         | Meaning                                                                                                                    |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **View**     | A named, saved presentation of one collection: layout + settings + who it belongs to                                       |
-| **Layout**   | How the records are drawn: table, kanban, calendar… A layout is code; a view is data                                       |
+| **View**     | A named presentation of one collection: type + settings (+ who it belongs to, for views people create later)               |
+| **Type**     | How the records are drawn: table, kanban, calendar… A type is a component; a view is its configuration                     |
 | **Settings** | What the view keeps: filters, sort, columns (shown, order, width), the kanban's grouping field, the calendar's date field… |
 | **Owner**    | The person who created the view                                                                                            |
 | **Audience** | Who sees a view: only its owner, or the people it is shared with                                                           |
 
-On narrow screens a table view is drawn as rows (the rows layout, collection spec 5.2): the same view, not another one.
+On narrow screens a table view is drawn as rows (the rows, collection spec 5.2): the same view, not another one.
 
 ## 2. First version: configured views
 
-- **Views come from the collection's definition** in the frontend (name, layout, filters, sort, columns), next to its fields. No backend, no table, no API.
+- **Views come from the collection's definition** in the frontend (name, type, filters, sort, columns), next to its fields. No backend, no table, no API.
 - **Covered:** V1 (see the views), V2 (switch), V3 (open on the last-used view, remembered by the browser, else the first configured one), V4 (`?view={key}` in the address, a stable key from the config instead of an id), V9 (filter, sort and search inside a view, as today, kept in the address and not saved).
 - **Not in this version:** creating, saving, organizing and sharing views (V6-V8, V10-V23), views on every device (V5), and keeping views valid (V24-V27): a view is code, so TypeScript checks its fields.
-- **Where they appear (Q1, decision 167):** tabs above the toolbar, one per view with its layout's icon; extra views fold into a "More" menu. The active view is in the address (`?view={key}`).
+- **Where they appear (Q1, decision 167):** tabs above the toolbar, one per view with its type's icon; extra views fold into a "More" menu. The active view is in the address (`?view={key}`).
 - **Every collection has at least one view.** Without configured views, it gets the default view: a table with every column, no filters and no default sort beyond the collection's own.
 
 ### What the app configures for a view (decision 168)
@@ -29,7 +29,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 - **C1. Its id**, set by the app: used in the address (`?view={id}`) and to remember the last view used. Never shown.
 - **C2. Its name**, a translation key or plain text (the app may give the same value as the id).
 - **C3. Its order** among the collection's views (optional; otherwise the order of the configuration). The first view is the default one.
-- **C4. Its layout**: `table` or `kanban`, each with its own settings and defaults:
+- **C4. Its type**: `table` or `kanban`, each with its own settings and defaults:
   - table: the columns shown, in their order (default: all of them);
   - kanban: the select field that makes the columns (`groupBy`, required) and the fields each card shows (default: the name only).
 - **C5. Its filters and sort**, both optional.
@@ -39,7 +39,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 - **C9. New records follow the view**: a record created in a filtered view, or in a kanban column, takes the view's (or the column's) value, so it stays in sight.
 - **Not configured:** views per person (every person sees every view; who may open the collection is decided outside it), and filters that depend on the person ("My items"): no saved per-person filter exists yet.
 
-### The kanban layout
+### The kanban type
 
 - **K1. See the board.** One column per option of a select field (`groupBy`, such as Status), in the options' order, each with its count. A card shows the record's name and the fields the view lists.
 - **K2. Each column loads on its own (decision 167).** A column asks for the view's query plus its own value, and loads more as it scrolls, so counts and paging are right per column.
@@ -60,7 +60,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 **V1. See the views of a collection.** Above the list, the person sees the views they can use: their own, those shared with them, and the default one. One is active; its name shows.
 
-**V2. Switch to another view.** Choosing a view shows the records with its layout and settings at once. The open record (the panel) stays open if it is still in the list.
+**V2. Switch to another view.** Choosing a view shows the records with its type and settings at once. The open record (the panel) stays open if it is still in the list.
 
 **V3. Open a collection on the right view.** Opening a collection shows the view the person used last on it; the first time, the collection's default view.
 
@@ -70,11 +70,11 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 ### B. Creating views
 
-**V6. Create a view.** "+ New view" asks for a name and a layout (table only, until another exists). It starts from the default view's settings, or from what is on screen ("Save as new view").
+**V6. Create a view.** "+ New view" asks for a name and a type (table only, until another exists). It starts from the default view's settings, or from what is on screen ("Save as new view").
 
 **V7. Duplicate a view.** Makes a copy with "(copy)" after its name, owned by the person duplicating, private until shared.
 
-**V8. Several views with the same layout.** Nothing limits how many tables (or later kanbans) a collection has; each keeps its own settings.
+**V8. Several views of the same type.** Nothing limits how many tables (or later kanbans) a collection has; each keeps its own settings.
 
 ### C. Changing a view's settings
 
@@ -82,7 +82,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 **V10. Choose and arrange columns (table).** Show or hide a column, reorder columns, change their width; the name column stays first.
 
-**V11. Layout-specific settings (later layouts).** A kanban chooses its grouping field (a select, such as Status) and the order of its columns; a calendar chooses its date field. The settings of one layout don't affect another.
+**V11. Settings of each type (later types).** A kanban chooses its grouping field (a select, such as Status) and the order of its columns; a calendar chooses its date field. The settings of one type don't affect another.
 
 **V12. See that a view has unsaved changes.** Changing a filter, the sort or the columns marks the view as changed ("Edited"), with **Save** and **Reset**. Reset brings back the saved settings.
 
@@ -126,7 +126,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 - Today the filters and sort live in the address, and the last sort is remembered by the browser (collection spec 6). With views, the saved filters, sort and columns live in the view, on the server; the address still carries unsaved changes (decision 112), so a shared link shows what its sender sees.
 - Choosing, reordering and resizing columns, and saved views, were left out of the collection's first build (collection spec 1, "Out of scope"); views bring them in.
-- The collection's `layouts/` folder (table, rows; formerly `views/`) holds the **layouts**; the word "view" means a configured presentation.
+- The collection's `views/` folder holds the types of view (table, rows, later kanban) and, from MOH-31, the configured views. "Layout" stays the word for how the screen is split (`layout/`: modes, the panel's width).
 
 ## 6. Open questions (each with a proposal)
 
@@ -150,6 +150,6 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 ## 7. Out of scope here
 
-- The backend model and API (a `views` table: collection key, owner, audience, layout, settings as JSON, position): designed once these use cases are agreed.
-- The kanban and calendar layouts themselves (Linear issues of their own).
-- The collection's code contract for layouts (old GitHub #69, now in Linear: a layout gets the records, paging, selection and one `openRecord`).
+- The backend model and API (a `views` table: collection key, owner, audience, type, settings as JSON, position): designed once these use cases are agreed.
+- The kanban and calendar types themselves (Linear issues of their own).
+- The collection's code contract for types of view (MOH-21, built: `ViewProps` in `views/viewProps.ts`).

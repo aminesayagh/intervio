@@ -42,10 +42,10 @@ import { NewRecord } from './create/NewRecord'
 import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
-import type { LayoutProps } from './layouts/contract'
-import { RecordRows } from './layouts/rows/RecordRows'
-import { RecordTable } from './layouts/table/RecordTable'
-import { readBookmark, useScrollBookmark } from './layouts/scrollBookmark'
+import type { ViewProps } from './views/viewProps'
+import { RecordRows } from './views/rows/RecordRows'
+import { RecordTable } from './views/table/RecordTable'
+import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
 import { Toolbar } from './listing/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { useSelection } from './selection/useSelection'
@@ -58,7 +58,7 @@ import { panelAddress, panelParsers, readPanel } from './address'
 import { LinkedPanel } from './record/LinkedPanel'
 import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
-import { useMarksStore } from './layouts/rowMarks'
+import { useMarksStore } from './views/rowMarks'
 import type { Id, More } from './types'
 import { filterFields, ruleKeys } from './listing/rules'
 import { isNarrowed, useCollectionState } from './listing/useCollectionState'
@@ -526,8 +526,8 @@ export function Collection<T, C = void>({
     () => (selectable ? { keys: selected, onChange: select } : undefined),
     [selectable, selected, select],
   )
-  // What every layout gets (MOH-21): the table on wide screens, the rows on narrow ones.
-  const layoutProps: LayoutProps<T, C> = {
+  // What every type of view gets (MOH-21): the table on wide screens, the rows on narrow ones.
+  const layoutProps: ViewProps<T, C> = {
     definition,
     items: shownItems,
     label: t(definition.i18n.title),

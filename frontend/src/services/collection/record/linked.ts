@@ -5,25 +5,28 @@ import type { AnyCollection } from '../definition'
 import type { Id } from '../types'
 
 /**
- * A linked record opened in the panel (decision 137): its collection's key and its id.
+ * A linked record opened in the panel (decision 137): its collection's key, its id, and
+ * the section it was opened from (#70: a parent may have two sections of one collection).
  * The address keeps the chain after the record opened from the list:
- * ?open={id}&linked={key}:{id},{key}:{id}. The last one shows; the others are tabs.
+ * ?open={id}&linked={key}:{id}:{section},… The last one shows; the others are tabs.
  */
-export type Step = { key: string; id: Id }
+export type Step = { key: string; id: Id; section?: string }
 
 export function parseChain(value: string | null): Step[] {
   return (value ?? '')
     .split(',')
     .filter(Boolean)
     .map((step) => {
-      const [key, id] = step.split(':')
-      return { key, id }
+      const [key, id, section] = step.split(':')
+      return { key, id, ...(section && { section }) }
     })
     .filter((step) => step.key && step.id)
 }
 
 export const formatChain = (chain: Step[]) =>
-  chain.map((step) => `${step.key}:${step.id}`).join(',')
+  chain
+    .map((step) => [step.key, step.id, step.section].filter(Boolean).join(':'))
+    .join(',')
 
 /** A collection reached from this one through its sections (or this one), by key. */
 export function findCollection(
@@ -66,13 +69,15 @@ export function useChain(
   const collections = steps.map((step, depth) =>
     depth === 0 ? root : (findCollection(root, step.key) ?? root),
   )
-  // ponytail: a parent with two sections of the same collection takes the first's
-  // context; name the section in the address if that case appears.
-  const sections = steps.map((step, depth) =>
+  // The section named in the address; an older address without one takes the first
+  // section of that collection.
+  const sections = steps.map((step: Step, depth) =>
     depth === 0
       ? undefined
-      : collections[depth - 1].panel?.sections?.find(
-          (section) => section.collection().key === step.key,
+      : collections[depth - 1].panel?.sections?.find((section) =>
+          step.section
+            ? section.id === step.section
+            : section.collection().key === step.key,
         ),
   )
   // Contexts come down the chain: each from its parent record, read from the cache
@@ -112,7 +117,7 @@ export function useChain(
 }
 
 /** Set by the collection around its panel: a section's record opens in the panel. */
-export const OpenLinked = createContext<((key: string, id: Id) => void) | null>(
-  null,
-)
+export const OpenLinked = createContext<
+  ((key: string, id: Id, section: string) => void) | null
+>(null)
 export const useOpenLinked = () => useContext(OpenLinked)

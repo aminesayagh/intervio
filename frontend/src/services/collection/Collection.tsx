@@ -179,9 +179,9 @@ export function Collection<T, C = void>({
   )
   /** A section's record opens in the panel; Back returns to the one before. */
   const openLinked = useCallback(
-    (collectionKey: string, id: Id) =>
+    (collectionKey: string, id: Id, section: string) =>
       mark(
-        { linked: [...current().linked, { key: collectionKey, id }] },
+        { linked: [...current().linked, { key: collectionKey, id, section }] },
         { ...entryState(), linkedStep: true },
       ),
     [mark],
@@ -612,6 +612,7 @@ export function Collection<T, C = void>({
                 fields={fields}
                 sortables={sortables}
                 scopes={definition.scopes}
+                context={context}
                 listing={listing}
                 onSearch={state.setSearch}
                 onFilters={state.setFilters}

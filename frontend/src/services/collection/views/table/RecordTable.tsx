@@ -116,7 +116,10 @@ function RecordTableOf<T, C>({
                   id={column.id}
                   isRowHeader={column.id === columns[0]?.id}
                   allowsSorting={Boolean(column.sort)}
-                  width={column.width ?? COLUMN_WIDTH}
+                  // The last one takes what is left, so a few columns still fill the width.
+                  {...(column.id === columns.at(-1)?.id
+                    ? { width: '1fr', minWidth: column.width ?? COLUMN_WIDTH }
+                    : { width: column.width ?? COLUMN_WIDTH })}
                 >
                   {t(column.label)}
                 </Column>

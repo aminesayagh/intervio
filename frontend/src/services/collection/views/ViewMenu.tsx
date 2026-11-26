@@ -35,6 +35,8 @@ export function ViewMenu({
   return (
     <Show
       as="span"
+      // A box of its own: inline, the button would sit on the text's baseline.
+      className="flex items-center"
       when={views.length > 1}
       fallback={
         <span className="flex items-center gap-1.5 text-muted">{name}</span>

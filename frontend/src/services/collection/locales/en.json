@@ -227,16 +227,15 @@
     "none": "No filter: every record shows.",
     "add": "Add a filter",
     "where": "Where",
-    "and": "and",
-    "or": "or",
+    "and": "And",
+    "or": "Or",
     "join": "Join rules with",
     "addGroup": "Add a filter group",
     "removeGroup": "Remove group",
     "field": "Field",
     "operator": "Condition",
     "choose": "Choose…",
-    "value": "Value",
-    "remove": "Remove the filter on {{name}}",
+    "value": "Enter a value…",
     "yes": "Yes",
     "no": "No",
     "op": {
@@ -250,7 +249,13 @@
         "gt": "after",
         "lt": "before"
       }
-    }
+    },
+    "addMenu": "Add",
+    "actions": "Filter actions",
+    "duplicate": "Duplicate",
+    "ungroup": "Ungroup",
+    "wrap": "Wrap in a filter group",
+    "removeRule": "Remove filter"
   },
   "sort": {
     "title": "Sort",

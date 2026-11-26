@@ -97,7 +97,13 @@ export function ChoiceMenu({
 }
 
 /** One entry of an action menu; `danger` ones are red and come after a separator. */
-export type MenuAction = { id: string; label: string; danger?: boolean }
+export type MenuAction = {
+  id: string
+  label: string
+  danger?: boolean
+  /** A small icon before the label (a lucide icon at 14 px). */
+  icon?: ReactNode
+}
 
 /** A menu of actions (More actions): a click runs the action. */
 export function ActionMenu({
@@ -116,8 +122,13 @@ export function ActionMenu({
       key={action.id}
       id={action.id}
       textValue={action.label}
-      className={cn(itemLook, action.danger && 'text-danger')}
+      className={cn(
+        itemLook,
+        action.icon && 'flex items-center gap-2',
+        action.danger && 'text-danger',
+      )}
     >
+      {action.icon}
       {action.label}
     </AriaMenuItem>
   )

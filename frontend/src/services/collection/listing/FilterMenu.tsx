@@ -1,9 +1,26 @@
-import { ChevronDown, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import {
+  Calendar,
+  ChevronDown,
+  CircleChevronDown,
+  Copy,
+  Ellipsis,
+  Group,
+  Hash,
+  Plus,
+  SquareCheck,
+  SquarePlus,
+  Tags,
+  Trash2,
+  Type,
+  Ungroup,
+} from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  ActionMenu,
   Button,
   ChoiceMenu,
+  cn,
   MenuPopover,
   MenuTrigger,
   PopoverDialog,
@@ -61,7 +78,7 @@ export function FilterMenu({
   return (
     <PopoverDialog
       label={label}
-      width={560}
+      width={600}
       placement="bottom end"
       trigger={
         <Button size="sm" aria-label={label}>
@@ -70,43 +87,72 @@ export function FilterMenu({
         </Button>
       }
     >
-      <Show when={local.rules.length === 0}>
-        <p className="text-muted">{t('filter.none')}</p>
+      <h2 className="text-base font-medium">{label}</h2>
+      <Show when={local.rules.length > 0}>
+        <Lines
+          namespace={namespace}
+          fields={fields}
+          group={local}
+          onChange={change}
+        />
       </Show>
-      <Lines
-        namespace={namespace}
-        fields={fields}
-        group={local}
-        onChange={change}
-      />
-      <span className="flex gap-1">
-        <Button
-          size="sm"
-          look="ghost"
-          onPress={() => change(withRule(local, fields))}
-        >
-          <Plus size={14} />
-          {t('filter.add')}
-        </Button>
-        <Button
-          size="sm"
-          look="ghost"
-          onPress={() =>
-            change({
-              ...local,
-              rules: [
-                ...local.rules,
-                withRule({ join: 'and', rules: [] }, fields),
-              ],
-            })
-          }
-        >
-          <Plus size={14} />
-          {t('filter.addGroup')}
-        </Button>
+      <span className="flex flex-col items-start gap-2">
+        <MenuTrigger>
+          <Button size="sm" look="ghost" className={fieldButton}>
+            <Plus size={14} />
+            {t('filter.addMenu')}
+          </Button>
+          <MenuPopover minWidth={200}>
+            <ActionMenu
+              label={t('filter.addMenu')}
+              actions={[
+                {
+                  id: 'rule',
+                  label: t('filter.add'),
+                  icon: <Plus size={14} />,
+                },
+                {
+                  id: 'group',
+                  label: t('filter.addGroup'),
+                  icon: <SquarePlus size={14} />,
+                },
+              ]}
+              onAction={(id) =>
+                change(
+                  id === 'rule'
+                    ? withRule(local, fields)
+                    : {
+                        ...local,
+                        rules: [
+                          ...local.rules,
+                          withRule({ join: 'and', rules: [] }, fields),
+                        ],
+                      },
+                )
+              }
+            />
+          </MenuPopover>
+        </MenuTrigger>
+        <Show when={local.rules.length === 0}>
+          <p className="text-muted">{t('filter.none')}</p>
+        </Show>
       </span>
     </PopoverDialog>
   )
+}
+
+/** A choice in a rule: a white field with a thin border, as a typed value. */
+const fieldButton =
+  'border border-border bg-surface px-2.5 font-normal data-[hovered]:bg-default'
+
+/** The type of value a field holds, shown before its name. */
+const KIND_ICON: Record<FilterKind, typeof Type> = {
+  text: Type,
+  number: Hash,
+  date: Calendar,
+  choice: CircleChevronDown,
+  tags: Tags,
+  check: SquareCheck,
 }
 
 /** The group with a new rule at its end: the first field, its first condition, no value. */
@@ -118,39 +164,73 @@ function withRule(group: FilterGroup, fields: FilterField[]): FilterGroup {
 
 /**
  * A group's lines: "Where" before the first, the group's word before the others (a
- * choice on the second line, the same word after it), and a box for an inner group.
+ * choice on the second line, the same word after it), a grey box for an inner group,
+ * and ⋯ at the end of each line for its actions.
  */
 function Lines({
   namespace,
   fields,
   group,
   onChange,
+  inner = false,
 }: {
   namespace: string
   fields: FilterField[]
   group: FilterGroup
   onChange: (group: FilterGroup) => void
+  /** Inside a group: its lines can't be grouped again (one level). */
+  inner?: boolean
 }) {
   const { t } = useTranslation('collection')
   const fieldOf = (id: string) => fields.find((field) => field.id === id)
-  const put = (index: number, item: Rule | FilterGroup | null) =>
+  /** Puts these items in place of the one at `index` (none removes it). */
+  const put = (index: number, ...items: (Rule | FilterGroup)[]) =>
     onChange({
       ...group,
-      rules: group.rules.flatMap((old, i) =>
-        i !== index ? [old] : item ? [item] : [],
-      ),
+      rules: group.rules.flatMap((old, i) => (i !== index ? [old] : items)),
     })
+  function act(index: number, id: string) {
+    const item = group.rules[index]
+    if (id === 'duplicate') put(index, item, structuredClone(item))
+    if (id === 'wrap') put(index, { join: 'and', rules: [item] })
+    if (id === 'ungroup' && isGroup(item)) put(index, ...item.rules)
+    if (id === 'remove') put(index)
+  }
+  const actionsOf = (item: Rule | FilterGroup) => [
+    { id: 'duplicate', label: t('filter.duplicate'), icon: <Copy size={14} /> },
+    ...(isGroup(item)
+      ? [
+          {
+            id: 'ungroup',
+            label: t('filter.ungroup'),
+            icon: <Ungroup size={14} />,
+          },
+        ]
+      : inner
+        ? []
+        : [{ id: 'wrap', label: t('filter.wrap'), icon: <Group size={14} /> }]),
+    {
+      id: 'remove',
+      label: t(isGroup(item) ? 'filter.removeGroup' : 'filter.removeRule'),
+      icon: <Trash2 size={14} />,
+      danger: true,
+    },
+  ]
   const joins: Join[] = ['and', 'or']
   return (
     <ul className="flex flex-col gap-2">
       {/* By place: a new rule keeps its line (and the focus) once it applies. */}
       {group.rules.map((item, index) => (
-        <li key={index} className="flex items-start gap-1">
-          <span className="flex h-8 w-16 shrink-0 items-center">
+        <li key={index} className="flex items-start gap-2">
+          {/* One width for "Where", the choice and the word, so the rules line up. */}
+          <span className="flex h-8 w-[4.5rem] shrink-0 items-center">
             <Variant<'where' | 'choice' | 'word'>
               value={index === 0 ? 'where' : index === 1 ? 'choice' : 'word'}
+              className="flex w-full"
               views={{
-                where: () => <span className="ps-2">{t('filter.where')}</span>,
+                where: () => (
+                  <span className="px-2.5">{t('filter.where')}</span>
+                ),
                 choice: () => (
                   <Pick
                     label={t('filter.join')}
@@ -163,19 +243,18 @@ function Lines({
                     onChange={(join) =>
                       onChange({ ...group, join: join as Join })
                     }
+                    className="w-full justify-between"
                   />
                 ),
                 word: () => (
-                  <span className="ps-2 text-muted">
-                    {t(`filter.${group.join}`)}
-                  </span>
+                  <span className="px-2.5">{t(`filter.${group.join}`)}</span>
                 ),
               }}
             />
           </span>
           <Show
             when={isGroup(item) && item}
-            className="flex min-w-0 flex-1 items-center gap-1"
+            className="flex min-w-0 flex-1 items-center gap-2"
             fallback={
               <RuleLine
                 namespace={namespace}
@@ -183,68 +262,75 @@ function Lines({
                 rule={item as Rule}
                 field={fieldOf((item as Rule).id) ?? fields[0]}
                 onChange={(next) => put(index, next)}
-                onRemove={() => put(index, null)}
               />
             }
           >
-            {(inner) => (
-              <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-[var(--field-radius)] border border-border p-2">
+            {(box) => (
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-2 rounded-[var(--field-radius)] bg-default/60 p-2">
                 <Lines
                   namespace={namespace}
                   fields={fields}
-                  group={inner}
+                  group={box}
                   onChange={(next) => put(index, next)}
+                  inner
                 />
-                <span className="flex justify-between">
-                  <Button
-                    size="sm"
-                    look="ghost"
-                    onPress={() => put(index, withRule(inner, fields))}
-                  >
-                    <Plus size={14} />
-                    {t('filter.add')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    look="ghost"
-                    onPress={() => put(index, null)}
-                  >
-                    <X size={14} />
-                    {t('filter.removeGroup')}
-                  </Button>
-                </span>
+                <Button
+                  size="sm"
+                  look="ghost"
+                  onPress={() => put(index, withRule(box, fields))}
+                >
+                  <Plus size={14} />
+                  {t('filter.addMenu')}
+                </Button>
               </div>
             )}
           </Show>
+          <MenuTrigger>
+            <Button
+              look="ghost"
+              size="sm"
+              aria-label={t('filter.actions')}
+              className="h-8 min-w-8 px-2"
+            >
+              <Ellipsis size={14} />
+            </Button>
+            <MenuPopover minWidth={200}>
+              <ActionMenu
+                label={t('filter.actions')}
+                actions={actionsOf(item)}
+                onAction={(id) => act(index, id)}
+              />
+            </MenuPopover>
+          </MenuTrigger>
         </li>
       ))}
     </ul>
   )
 }
 
-/** One rule: its field, its operator, its value, and × to remove it. */
+/** One rule: its field (with its type's icon), its condition and its value. */
 function RuleLine({
   namespace,
   fields,
   rule,
   field,
   onChange,
-  onRemove,
 }: {
   namespace: string
   fields: FilterField[]
   rule: Rule
   field: FilterField
   onChange: (rule: Rule) => void
-  onRemove: () => void
 }) {
   const { t } = useTranslation([namespace, 'collection'])
   const fieldLabel = t(field.label)
+  const Icon = KIND_ICON[field.kind]
   return (
     <>
       <Pick
         label={t('collection:filter.field')}
         text={fieldLabel}
+        icon={<Icon size={14} className="shrink-0 text-muted" />}
         options={fields.map((f) => ({ id: f.id, label: t(f.label) }))}
         selected={rule.id}
         onChange={(id) => {
@@ -272,15 +358,6 @@ function RuleLine({
           onChange={(values) => onChange({ ...rule, values })}
         />
       </span>
-      <Button
-        size="sm"
-        look="ghost"
-        aria-label={t('collection:filter.remove', { name: fieldLabel })}
-        onPress={onRemove}
-        className="px-2"
-      >
-        <X size={14} />
-      </Button>
     </>
   )
 }
@@ -316,7 +393,7 @@ function RuleValue({
       selected={rule.values}
       multiple={many && field.kind !== 'check'}
       onChange={(id, all) => onChange(all ?? [id])}
-      grow
+      className="min-w-0 flex-1 justify-between"
     />
   )
   const typed = (type: 'text' | 'number' | 'date') => () => (
@@ -371,7 +448,7 @@ function TypedValue({
       onChange={(event) => setText(event.target.value)}
       onBlur={apply}
       onKeyDown={(event) => event.key === 'Enter' && apply()}
-      className="h-8 w-full min-w-0 rounded-[var(--field-radius)] border border-border bg-surface px-2 outline-none focus-visible:border-foreground"
+      className="h-8 w-full min-w-0 rounded-[var(--field-radius)] border border-border bg-surface px-2.5 outline-none focus-visible:border-foreground"
     />
   )
 }
@@ -380,30 +457,34 @@ function TypedValue({
 function Pick({
   label,
   text,
+  icon,
   options,
   selected,
   onChange,
   multiple = false,
-  grow = false,
+  className = 'shrink-0',
 }: {
   label: string
   text: string
+  icon?: ReactNode
   options: { id: string; label: string }[]
   selected: string | string[]
   onChange: (id: string, all?: string[]) => void
   multiple?: boolean
-  grow?: boolean
+  className?: string
 }) {
   const ids = Array.isArray(selected) ? selected : [selected]
   return (
     <MenuTrigger>
       <Button
         size="sm"
+        look="ghost"
         aria-label={label}
-        className={grow ? 'min-w-0 flex-1 justify-between' : 'shrink-0'}
+        className={cn(fieldButton, className)}
       >
+        {icon}
         <span className="truncate">{text}</span>
-        <ChevronDown size={14} />
+        <ChevronDown size={14} className="shrink-0 text-muted" />
       </Button>
       <MenuPopover>
         <ChoiceMenu

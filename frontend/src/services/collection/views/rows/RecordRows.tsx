@@ -1,9 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import type { RefObject } from 'react'
-import { RowCollection, RowItem, RowList, RowListLoadMore } from '../../ui-kit'
-import type { CollectionDefinition } from '../definition'
-import { ROW_HEIGHT } from '../layout/layout'
-import type { Id } from '../types'
+import {
+  RowCollection,
+  RowItem,
+  RowList,
+  RowListLoadMore,
+} from '../../../ui-kit'
+import type { CollectionDefinition } from '../../definition'
+import { ROW_HEIGHT } from '../../layout/layout'
+import type { Id, More } from '../../types'
 
 /**
  * The list on narrow screens (spec 9, decision 121): a row per record, with its name,
@@ -22,7 +27,7 @@ export function RecordRows<T, C>({
   items: T[]
   label: string
   scrollRef: RefObject<HTMLDivElement | null>
-  more: { canLoadMore: boolean; loadMore: () => void; loading: boolean }
+  more: More
   onOpen?: (id: Id) => void
 }) {
   const { t } = useTranslation('collection')

@@ -73,3 +73,12 @@ export type ReportInvalid<T> = (
   field: string,
   reason: string,
 ) => void
+
+/** What the list parts need from the query to load more (spec 8.1). */
+export type More = {
+  canLoadMore: boolean
+  loadMore: () => void
+  /** The next page is loading. */
+  loading: boolean
+  hasMore: boolean
+}

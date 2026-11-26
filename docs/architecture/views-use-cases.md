@@ -22,8 +22,22 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 - **Covered:** V1 (see the views), V2 (switch), V3 (open on the last-used view, remembered by the browser, else the first configured one), V4 (`?view={key}` in the address, a stable key from the config instead of an id), V9 (filter, sort and search inside a view, as today, kept in the address and not saved).
 - **Not in this version:** creating, saving, organizing and sharing views (V6-V8, V10-V23), views on every device (V5), and keeping views valid (V24-V27): a view is code, so TypeScript checks its fields.
 - **Where they appear (Q1, decision 167):** tabs above the toolbar, one per view with its layout's icon; extra views fold into a "More" menu. The active view is in the address (`?view={key}`).
-- **A view's query is `starting` or `fixed` (decision 167).** Each view's filters and sort are marked in the config: `starting` opens the view with them and lets the person change them (in the address, not saved; switching back to the view resets them); `fixed` always applies them, and the person can't remove or change them, only add filters or search on top.
-- **Enabling a layout is configuration.** A collection has a kanban when its config lists a kanban view; without views it gets one table view.
+- **Every collection has at least one view.** Without configured views, it gets the default view: a table with every column, no filters and no default sort beyond the collection's own.
+
+### What the app configures for a view (decision 168)
+
+- **C1. Its id**, set by the app: used in the address (`?view={id}`) and to remember the last view used. Never shown.
+- **C2. Its name**, a translation key or plain text (the app may give the same value as the id).
+- **C3. Its order** among the collection's views (optional; otherwise the order of the configuration). The first view is the default one.
+- **C4. Its layout**: `table` or `kanban`, each with its own settings and defaults:
+  - table: the columns shown, in their order (default: all of them);
+  - kanban: the select field that makes the columns (`groupBy`, required) and the fields each card shows (default: the name only).
+- **C5. Its filters and sort**, both optional.
+- **C6. Whether the person may change its filters** (default: yes). When not, the view's filters always apply and the filter menu is off; the search stays.
+- **C7. Whether the person may change its sort** (default: yes). When not, the sort menu is off.
+- **C8. An unknown view** (an old link, a view removed from the configuration) opens the default view.
+- **C9. New records follow the view**: a record created in a filtered view, or in a kanban column, takes the view's (or the column's) value, so it stays in sight.
+- **Not configured:** views per person (every person sees every view; who may open the collection is decided outside it), and filters that depend on the person ("My items"): no saved per-person filter exists yet.
 
 ### The kanban layout
 

@@ -53,16 +53,16 @@ On narrow screens a table view is drawn as rows (the rows, collection spec 5.2):
 
 Records placed on a calendar by a date field (MAS-50). FullCalendar draws the grid; Intervio's React Aria components (`ui-kit`) draw everything around it: the toolbar, menus and the date picker.
 
-- **CA1. See the calendar.** Three layouts, switched in the view's toolbar: a month, a week with its hours, and a list of the records in order. The toolbar also moves to the previous or next month or week, back to today, and shows the range's title. A record shows its name and the fields the view lists.
+- **CA1. See the calendar.** One month at a time (the person's choice on 2026-11-26: no week or list layout), opening on the current month. The toolbar moves to the previous or next month, back to today, and shows the month's name. A record shows its name and the fields the view lists.
 - **CA2. Dates.** The view's `date` field places a record (its start); a date without a time is all day. With an `end` field, a record spans every day up to its end.
 - **CA3. Only the range on screen loads.** The calendar asks for the view's query plus "after" and "before" the range shown, and loads again as the person moves.
 - **CA4. Open a record.** Clicking a record opens it in the panel, as a table row does.
-- **CA5. Move a record.** Dragging a record to another day or time, or stretching it when the view has an end date, changes its dates through the normal save (notifications, the server's check). It moves at once and goes back if the save fails. A record the person can't edit can't be moved. The keyboard does it through the record's "Change date" menu, with the date picker.
-- **CA6. A new record on a day.** Clicking an empty day (or a time, in the week) starts a new record with that date (C9).
+- **CA5. Move a record.** Dragging a record to another day, or stretching it when the view has an end date, changes its dates through the normal save (notifications, the server's check). It moves at once and goes back if the save fails. A record the person can't edit can't be moved. The keyboard does it through the record's "Change date" menu, with the date picker.
+- **CA6. A new record on a day.** Clicking an empty day starts a new record with that date (C9).
 - **CA7. Records without a date** don't show on the calendar. The toolbar says how many of the view's records have none, and opens them as a list.
-- **CA8. Narrow screens.** The list layout only, with the toolbar's previous, today and next; a record moves through its "Change date" menu, not by dragging.
+- **CA8. Narrow screens.** The same month, with the toolbar's previous, today and next; a record moves through its "Change date" menu, not by dragging. How a month reads on a phone is open until MAS-56 (the list layout first planned for it was dropped with CA1).
 - **CA9. Time and week.** Dates are shown in the browser's time zone; the week starts as the person's language says (Monday in French, Sunday in English).
-- **Not in the first calendar:** a day layout, recurring records, records from several collections on one calendar, a period field (start and end in one value) as the calendar's dates.
+- **Not in the first calendar:** a week, day or list layout, recurring records, records from several collections on one calendar, a period field (start and end in one value) as the calendar's dates.
 
 ## 3. Actors
 

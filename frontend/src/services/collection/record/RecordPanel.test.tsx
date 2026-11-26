@@ -1,6 +1,7 @@
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, expect, test } from 'vitest'
+import { ApiError } from '../../http'
 import '../../i18n'
 import { Collection } from '../Collection'
 import { itemSource, makeItems } from '../testing/items'
@@ -8,6 +9,8 @@ import { stubElementSizes } from '../testing/layout'
 import { reachValue, seeSections } from '../testing/panel'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
+import type { CollectionDefinition } from '../definition'
+import type { Item } from '../testing/items'
 
 beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
@@ -109,6 +112,46 @@ test('a link to a record that does not exist says so', async () => {
   show('/items?open=00000000-0000-7000-8000-000000000999')
   expect(
     await screen.findByText('This record is no longer available.'),
+  ).toBeInTheDocument()
+})
+
+test('a record refused under one parent stays in the list of another (#67)', async () => {
+  const source = itemSource(makeItems(5))
+  // Item 003 can't be opened under A (403), but can under B.
+  const definition = {
+    ...itemDefinition(source),
+    source: {
+      ...source,
+      one: (rid: string, context?: unknown) =>
+        context === 'A'
+          ? Promise.reject(new ApiError(403, 'ERROR_FORBIDDEN'))
+          : source.one(rid),
+    },
+  } as unknown as CollectionDefinition<Item, string> // the test items take no context
+  renderAt(
+    `/items?open=${id(3)}`,
+    <>
+      <section aria-label="Under A">
+        <Collection definition={definition} context="A" />
+      </section>
+      <section aria-label="Under B">
+        <Collection definition={definition} context="B" />
+      </section>
+    </>,
+  )
+  const [a, b] = ['Under A', 'Under B'].map((name) =>
+    screen.getByRole('region', { name }),
+  )
+  expect(
+    await within(a).findByText('This record is no longer available.'),
+  ).toBeInTheDocument()
+  await waitFor(() =>
+    expect(
+      within(a).queryByRole('button', { name: 'Open Item 003' }),
+    ).not.toBeInTheDocument(),
+  )
+  expect(
+    within(b).getByRole('button', { name: 'Open Item 003' }),
   ).toBeInTheDocument()
 })
 

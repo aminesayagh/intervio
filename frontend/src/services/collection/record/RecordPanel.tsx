@@ -84,7 +84,7 @@ export function RecordPanel<T, C>({
    * screen "‹ {collection}" leaves for the list.
    */
   onLeave?: () => void
-  onUnavailable: (id: Id) => void
+  onUnavailable: (id: Id, deleted: boolean) => void
   /** Whether the person may change a value (spec 7.7). */
   canEdit: (record: T, id: string) => boolean
   save: SaveChange<T>

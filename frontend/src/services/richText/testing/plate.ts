@@ -1,7 +1,7 @@
 import { act, fireEvent } from '@testing-library/react'
 import type { SlateEditor } from 'platejs'
 import { ELEMENT_TO_NODE } from 'slate-dom'
-import { toMarkdown } from '../values/description/plugins'
+import { toMarkdown } from '../editor/plugins'
 
 /**
  * Drives the description editor in tests (each step awaited: Slate reports a change a

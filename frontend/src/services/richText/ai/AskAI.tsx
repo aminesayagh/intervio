@@ -28,11 +28,15 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { csrfHeaders } from '../../../http'
-import { notify } from '../../../notifications'
-import { Button, CommandSearch, PopoverDialog, Show } from '../../../ui-kit'
-import { EditorText } from './PlateEditor'
-import { descriptionPlugins, parseMarkdown, serializeMarkdown } from './plugins'
+import { csrfHeaders } from '../../http'
+import { notify } from '../../notifications'
+import { Button, CommandSearch, PopoverDialog, Show } from '../../ui-kit'
+import { EditorText } from '../editor/PlateEditor'
+import {
+  richTextPlugins,
+  parseMarkdown,
+  serializeMarkdown,
+} from '../editor/plugins'
 import { simulatedTransport, type DescriptionContext } from './simulatedAI'
 import { AIContext, type AI } from './aiContext'
 
@@ -49,9 +53,9 @@ const defaultTransport: ChatTransport<UIMessage> =
 /** The message for what the backend answered ({"code": …} or an error chunk's code). */
 function failure(error: Error) {
   const code = /ERROR_[A-Z_]+/.exec(error.message)?.[0]
-  if (code === 'ERROR_AI_LIMIT') return 'description.aiLimit'
-  if (code === 'ERROR_AI_UNAVAILABLE') return 'description.aiUnavailable'
-  return 'description.aiFailed'
+  if (code === 'ERROR_AI_LIMIT') return 'aiLimit'
+  if (code === 'ERROR_AI_UNAVAILABLE') return 'aiUnavailable'
+  return 'aiFailed'
 }
 
 type RangeRef = ReturnType<PlateEditor['api']['rangeRef']>
@@ -61,7 +65,7 @@ type RangeRef = ReturnType<PlateEditor['api']['rangeRef']>
  * answer proposed under the text. Only Accept changes the text, which then saves
  * the usual way; the AI never saves by itself.
  */
-export function DescriptionAI({
+export function RichTextAI({
   scope,
   transport = defaultTransport,
   children,
@@ -71,7 +75,7 @@ export function DescriptionAI({
   transport?: ChatTransport<UIMessage>
   children: ReactNode
 }) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const editor = useEditorRef()
   // A refused or failed answer is a notification, and the proposal goes (decision 153).
   const chat = useChat({
@@ -122,7 +126,7 @@ export function DescriptionAI({
       if (!document.ok || (selected && !selected.ok)) {
         notify({
           tone: 'error',
-          text: t('description.aiFailed'),
+          text: t('aiFailed'),
           scope,
           key: `${scope}:ai`,
         })
@@ -147,7 +151,7 @@ export function DescriptionAI({
       if (!parsed.ok) {
         notify({
           tone: 'error',
-          text: t('description.aiFailed'),
+          text: t('aiFailed'),
           scope,
           key: `${scope}:ai`,
         })
@@ -194,7 +198,7 @@ export function DescriptionAI({
       {children}
       <Show when={requesting}>
         <PopoverDialog
-          label={t('description.askAI')}
+          label={t('askAI')}
           width={340}
           at={{ anchor: requestAt, onClose: () => setRequesting(false) }}
         >
@@ -212,23 +216,23 @@ export function DescriptionAI({
 
 function useAI() {
   const ai = useContext(AIContext)
-  if (!ai) throw new Error('Inside DescriptionAI only')
+  if (!ai) throw new Error('Inside RichTextAI only')
   return ai
 }
 
 /** The toolbar's "Ask AI": a request about the selection, or the whole text. */
 export function AskAIButton() {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const ai = useAI()
   return (
     <PopoverDialog
-      label={t('description.askAI')}
+      label={t('askAI')}
       width={340}
       trigger={
         <Button
           look="ghost"
           size="sm"
-          aria-label={t('description.askAI')}
+          aria-label={t('askAI')}
           isDisabled={ai.busy}
           className="px-2"
         >
@@ -266,43 +270,41 @@ const FREE = 'free'
  * Enter asks the highlighted one; with nothing offered matching, the typed request.
  */
 function AIRequests({ onDone }: { onDone: (prompt: string) => void }) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const [value, setValue] = useState('')
   const typed = value.trim()
   const offered = requests.map(([id, Icon]) => ({
     id,
-    label: t(`description.prompts.${id}.label`),
+    label: t(`prompts.${id}.label`),
     icon: <Icon size={14} />,
   }))
   const free = {
     id: FREE,
-    label: t('description.aiAsk', { prompt: typed }),
+    label: t('aiAsk', { prompt: typed }),
     icon: <Sparkles size={14} />,
     always: true,
   }
 
   return (
     <CommandSearch
-      label={t('description.aiPrompt')}
-      placeholder={t('description.aiPlaceholder')}
-      empty={t('description.noMatch')}
+      label={t('aiPrompt')}
+      placeholder={t('aiPlaceholder')}
+      empty={t('noMatch')}
       commands={typed ? [...offered, free] : offered}
       value={value}
       onChange={setValue}
-      onAction={(id) =>
-        onDone(id === FREE ? typed : t(`description.prompts.${id}.prompt`))
-      }
+      onAction={(id) => onDone(id === FREE ? typed : t(`prompts.${id}.prompt`))}
     />
   )
 }
 
 /** The AI's answer, formatted, under the text: Enter accepts it, Escape drops it. */
 export function AIProposal() {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const ai = useAI()
   // A read-only editor of its own: the proposal is never in the text until accepted.
   const preview = useMemo(() => {
-    const editor = createPlateEditor({ plugins: descriptionPlugins })
+    const editor = createPlateEditor({ plugins: richTextPlugins })
     const parsed = parseMarkdown(editor, ai.proposal)
     editor.children = parsed.ok ? parsed.data : []
     return editor
@@ -319,20 +321,17 @@ export function AIProposal() {
       <div
         ref={box}
         role="group"
-        aria-label={t('description.aiProposal')}
+        aria-label={t('aiProposal')}
         className="mt-2 rounded-[var(--field-radius)] border border-border"
       >
         <Show when={ai.proposal}>
           <Plate key={ai.proposal} editor={preview}>
-            <EditorText readOnly aria-label={t('description.aiProposal')} />
+            <EditorText readOnly aria-label={t('aiProposal')} />
           </Plate>
         </Show>
         <div className="flex min-h-8 items-center justify-end px-3 text-xs text-muted">
-          <Show
-            when={ai.busy}
-            fallback={<span>{t('description.aiKeys')}</span>}
-          >
-            <span>{t('description.aiWriting')}</span>
+          <Show when={ai.busy} fallback={<span>{t('aiKeys')}</span>}>
+            <span>{t('aiWriting')}</span>
           </Show>
         </div>
       </div>

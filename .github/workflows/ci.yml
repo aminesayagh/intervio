@@ -30,7 +30,7 @@ jobs:
       - run: ./mvnw -B verify
 
   frontend:
-    name: Frontend (lint, types, format, tests, build)
+    name: Frontend (lint, types, unused code, format, tests, build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -48,6 +48,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm unused
       - run: pnpm format:check
       - run: pnpm test
       - run: pnpm build

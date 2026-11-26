@@ -1,15 +1,21 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
-import '../../../i18n'
-import '../../index'
-import * as notifications from '../../../notifications'
-import { editorOf, enter, markdownOf, selectAll } from '../../testing/plate'
-import { Description } from '../Description'
+import '../../i18n'
+import '../index'
+import * as notifications from '../../notifications'
+import {
+  editorOf,
+  enter,
+  markdownOf,
+  selectAll,
+} from '../../richText/testing/plate'
+import { RichText } from './RichText'
 
 // The stand-in sample answer is made unreadable, to see accepting it fail.
-vi.mock('./plugins', async (original) => {
-  const plugins = await original<typeof import('./plugins')>()
+vi.mock('../../richText/editor/plugins', async (original) => {
+  const plugins =
+    await original<typeof import('../../richText/editor/plugins')>()
   return {
     ...plugins,
     parseMarkdown: (...args: Parameters<typeof plugins.parseMarkdown>) =>
@@ -26,7 +32,7 @@ const TEXT = 'Seals are checked once a year. Bearings are greased every month.'
 async function askShorter() {
   const save = vi.fn(async () => {})
   render(
-    <Description
+    <RichText
       value={TEXT}
       editable
       storageKey="ai"
@@ -97,7 +103,7 @@ async function ask(prompt: string) {
 
 test('Enter replaces the text asked about, even after edits above it', async () => {
   render(
-    <Description
+    <RichText
       value={`Intro.\n\n${TEXT}`}
       editable
       storageKey="ai-moved"
@@ -131,7 +137,7 @@ test('Enter replaces the text asked about, even after edits above it', async () 
 test('a proposal the editor cannot read is reported, not applied', async () => {
   const notify = vi.spyOn(notifications, 'notify')
   render(
-    <Description
+    <RichText
       value={TEXT}
       editable
       storageKey="ai-unreadable"

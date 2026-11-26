@@ -34,7 +34,6 @@
     "nameRequired": "The name can't be empty."
   },
   "type": "Item",
-  "updatedOn": "Updated {{date}}",
   "linked": "Linked items",
   "actions": {
     "archive": "Archive",

@@ -20,9 +20,9 @@ import { useEditorId, useEditorRef, useEventEditorValue } from 'platejs/react'
 import { useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { notify } from '../../../notifications'
-import { Button, PopoverDialog, Show, TextInput } from '../../../ui-kit'
-import { AskAIButton } from './AskAI'
+import { notify } from '../../notifications'
+import { Button, PopoverDialog, Show, TextInput } from '../../ui-kit'
+import { AskAIButton } from '../ai/AskAI'
 
 /** The six formats of spec 7.6, each applied to the editor's selection. */
 const tools: [
@@ -78,7 +78,7 @@ export function FloatingToolbar({ scope }: { scope: string }) {
  * the selection they format stays where it was.
  */
 function Tools({ scope }: { scope: string }) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const editor = useEditorRef()
 
   return (
@@ -90,7 +90,7 @@ function Tools({ scope }: { scope: string }) {
           look="ghost"
           size="sm"
           preventFocusOnPress
-          aria-label={t(`description.${kind}`)}
+          aria-label={t(`${kind}`)}
           onPress={() => apply(editor)}
           className="px-2"
         >
@@ -98,12 +98,12 @@ function Tools({ scope }: { scope: string }) {
         </Button>
       ))}
       <PopoverDialog
-        label={t('description.link')}
+        label={t('link')}
         trigger={
           <Button
             look="ghost"
             size="sm"
-            aria-label={t('description.link')}
+            aria-label={t('link')}
             className="px-2"
           >
             <Link size={14} />
@@ -117,7 +117,7 @@ function Tools({ scope }: { scope: string }) {
               editor.tf.focus()
               if (!upsertLink(editor, { url }))
                 notify({
-                  text: t('description.linkInvalid'),
+                  text: t('linkInvalid'),
                   tone: 'error',
                   key: `${scope}:link`,
                   scope,
@@ -132,7 +132,7 @@ function Tools({ scope }: { scope: string }) {
 
 /** The link's address, added over the selection (or as its own text). */
 function LinkForm({ onDone }: { onDone: (url: string) => void }) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const [url, setUrl] = useState('')
 
   function submit(event: FormEvent) {
@@ -145,14 +145,14 @@ function LinkForm({ onDone }: { onDone: (url: string) => void }) {
       <TextInput
         look="panel"
         autoFocus
-        aria-label={t('description.linkUrl')}
+        aria-label={t('linkUrl')}
         placeholder="https://example.com"
         value={url}
         onChange={setUrl}
         className="mx-0 flex-1"
       />
       <Button type="submit" look="primary" size="sm">
-        {t('description.linkAdd')}
+        {t('linkAdd')}
       </Button>
     </form>
   )

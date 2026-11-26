@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useTranslation } from 'react-i18next'
-import { cn, Show } from '../../../ui-kit'
+import { cn, Show } from '../../ui-kit'
 
 /**
  * Drag to move (decided 2026-11-25): each top-level block of an editable text has a
@@ -25,7 +25,7 @@ export function DragArea({ children }: { children: ReactNode }) {
   return <DndProvider backend={HTML5Backend}>{children}</DndProvider>
 }
 function Block({ children, element }: PlateElementProps) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const { isDragging, nodeRef, previewRef, handleRef } = useDraggable({
     element,
   })
@@ -36,8 +36,8 @@ function Block({ children, element }: PlateElementProps) {
         ref={handleRef}
         contentEditable={false}
         role="button"
-        aria-label={t('description.drag')}
-        title={t('description.drag')}
+        aria-label={t('drag')}
+        title={t('drag')}
         className="absolute -start-6 top-0 flex h-[1lh] w-5 cursor-grab items-center justify-center rounded-[var(--field-radius)] text-muted opacity-0 select-none group-hover/block:opacity-100 hover:bg-default"
       >
         <GripVertical size={14} />

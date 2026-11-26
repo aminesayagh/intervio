@@ -195,7 +195,7 @@ const rules: MdRules = {
  * level 2). "/" at the start of a word opens the menu of blocks (never saved: it leaves
  * the text when closed).
  */
-export const descriptionPlugins = [
+export const richTextPlugins = [
   BoldPlugin,
   ItalicPlugin,
   H1Plugin,
@@ -381,7 +381,7 @@ export function serializeMarkdown(
 /** A detached editor holding a Markdown text (for the round-trip test). */
 export function markdownEditor(markdown: string) {
   return createPlateEditor({
-    plugins: descriptionPlugins,
+    plugins: richTextPlugins,
     value: (editor) => {
       const parsed = parseMarkdown(editor, markdown)
       if (!parsed.ok) throw parsed.error

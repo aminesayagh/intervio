@@ -11,8 +11,8 @@ import {
   type ComponentProps,
   type ReactNode,
 } from 'react'
-import { cn } from '../../../ui-kit'
-import { descriptionPlugins, parseMarkdown, serializeMarkdown } from './plugins'
+import { cn } from '../../ui-kit'
+import { richTextPlugins, parseMarkdown, serializeMarkdown } from './plugins'
 
 /** Why the editor can't go on: the text couldn't be read, or written back. */
 export type MarkdownFailure = 'parse' | 'serialize'
@@ -40,11 +40,11 @@ export function PlateEditor({
 }) {
   // Read once, before the editor exists: a text it can't read never opens.
   const [parsed] = useState(() =>
-    parseMarkdown(createPlateEditor({ plugins: descriptionPlugins }), initial),
+    parseMarkdown(createPlateEditor({ plugins: richTextPlugins }), initial),
   )
   const unreadable = !parsed.ok
   const editor = usePlateEditor({
-    plugins: descriptionPlugins,
+    plugins: richTextPlugins,
     value: parsed.ok ? parsed.data : [],
   })
   // The text as Plate writes it on opening: the same string is no edit yet.

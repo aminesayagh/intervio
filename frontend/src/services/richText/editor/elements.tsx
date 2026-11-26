@@ -21,7 +21,7 @@ import {
   MenuPopover,
   MenuTrigger,
   Show,
-} from '../../../ui-kit'
+} from '../../ui-kit'
 
 /**
  * A list's item. In a to-do list, its checkbox first: ticked by whoever may edit the
@@ -78,7 +78,7 @@ export function ImageElement(
  * content yet (a new one).
  */
 export function ToggleElement(props: PlateElementProps) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const [open, setOpen] = useState(() => props.element.children.length < 2)
   const title = props.editor.api.string(props.element.children[0] as TElement)
   return (
@@ -87,7 +87,7 @@ export function ToggleElement(props: PlateElementProps) {
         type="button"
         contentEditable={false}
         aria-expanded={open}
-        aria-label={t(open ? 'description.hide' : 'description.show', {
+        aria-label={t(open ? 'hide' : 'show', {
           name: title,
         })}
         onClick={() => setOpen(!open)}
@@ -179,17 +179,13 @@ const PLAIN = 'plaintext'
 export function CodeBlockElement(
   props: PlateElementProps<TElement & { lang?: string }>,
 ) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const readOnly = useReadOnly()
   const lang = props.element.lang ?? AUTO
-  const label = t('description.language')
+  const label = t('language')
   const name = (id: string) =>
     LANGUAGES[id] ??
-    (id === AUTO
-      ? t('description.languageAuto')
-      : id === PLAIN
-        ? t('description.languagePlain')
-        : id)
+    (id === AUTO ? t('languageAuto') : id === PLAIN ? t('languagePlain') : id)
   return (
     <PlateElement {...props} className="relative">
       <pre className="pe-28">{props.children}</pre>

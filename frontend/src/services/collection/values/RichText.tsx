@@ -12,12 +12,13 @@ import { LetterText } from 'lucide-react'
 import { Button, Match, Show, Switch } from '../../ui-kit'
 import { ErrorText, FoldTitle } from '../parts'
 import {
+  AIProposal,
   EditorText,
+  FloatingToolbar,
   PlateEditor,
+  RichTextAI,
   type MarkdownFailure,
-} from './description/PlateEditor'
-import { AIProposal, DescriptionAI } from './description/AskAI'
-import { FloatingToolbar } from './description/Toolbar'
+} from '../../richText'
 import { useAutosave } from './useAutosave'
 
 /** The longest description accepted (spec 7.6), in Markdown characters. */
@@ -29,7 +30,7 @@ const MAX_LENGTH = 20_000
  * directly; it saves by itself a moment after typing stops, and keeps unsaved text in
  * the browser tab. Without the right, the same editor is read-only.
  */
-export function Description({
+export function RichText({
   value,
   editable,
   storageKey,
@@ -232,7 +233,7 @@ function Editor({
             </p>
           }
         >
-          <DescriptionAI scope={scope}>
+          <RichTextAI scope={scope}>
             {/* The tools float over a selection only (decision 159). */}
             <EditorText
               aria-label={label}
@@ -242,7 +243,7 @@ function Editor({
             />
             <FloatingToolbar scope={scope} />
             <AIProposal />
-          </DescriptionAI>
+          </RichTextAI>
         </PlateEditor>
       </Show>
     </section>

@@ -1,11 +1,11 @@
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test } from 'vitest'
-import '../../../i18n'
-import '../../index'
-import { editorOf, enter, markdownOf, typeIn } from '../../testing/plate'
+import '../../i18n'
+import '../index'
+import { editorOf, enter, markdownOf, typeIn } from '../testing/plate'
 import { EditorText, PlateEditor } from './PlateEditor'
-import { DescriptionAI } from './AskAI'
+import { RichTextAI } from '../ai/AskAI'
 
 afterEach(cleanup)
 
@@ -21,9 +21,9 @@ async function slash(initial = 'Pump') {
       onFailure={() => {}}
       fallback={null}
     >
-      <DescriptionAI scope="test">
+      <RichTextAI scope="test">
         <EditorText aria-label="Description" />
-      </DescriptionAI>
+      </RichTextAI>
     </PlateEditor>,
   )
   const field = screen.getByRole('textbox', { name: 'Description' })
@@ -45,6 +45,23 @@ test('"/" opens the blocks, the typing filters them, Enter turns the line', asyn
   await userEvent.keyboard('{Enter}')
   expect(screen.queryByRole('menu')).toBeNull()
   expect(markdownOf(field)).toBe('1. Pump&#x20;')
+})
+
+test.each([
+  ['h1', ['Heading 1']],
+  ['h3', ['Heading 3']],
+  ['ul', ['Bulleted list']],
+  ['check', ['To-do list']],
+  ['quote', ['Blockquote']],
+])('"%s" finds its block by keyword', async (typed, found) => {
+  await slash()
+  await userEvent.type(
+    await screen.findByRole('textbox', { name: 'Turn into' }),
+    typed,
+  )
+  expect(
+    screen.getAllByRole('menuitem').map((item) => item.textContent),
+  ).toEqual(found)
 })
 
 test('the blocks come in titled groups, AI first; Heading 3 turns the line', async () => {

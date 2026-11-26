@@ -1,11 +1,11 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test } from 'vitest'
-import '../../../i18n'
-import '../../index'
-import { enter, markdownOf, selectAll, typeIn } from '../../testing/plate'
+import '../../i18n'
+import '../index'
+import { enter, markdownOf, selectAll, typeIn } from '../testing/plate'
 import { EditorText, PlateEditor } from './PlateEditor'
-import { DescriptionAI } from './AskAI'
+import { RichTextAI } from '../ai/AskAI'
 import { FloatingToolbar } from './Toolbar'
 
 afterEach(cleanup)
@@ -18,10 +18,10 @@ async function renderEditor(initial = '') {
       onFailure={() => {}}
       fallback={null}
     >
-      <DescriptionAI scope="test">
+      <RichTextAI scope="test">
         <EditorText aria-label="Description" />
         <FloatingToolbar scope="test" />
-      </DescriptionAI>
+      </RichTextAI>
     </PlateEditor>,
   )
   const field = screen.getByRole('textbox', { name: 'Description' })

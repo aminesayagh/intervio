@@ -32,7 +32,12 @@ export {
 export { Tab, TabList, TabPanel, Tabs } from './Tabs'
 export { TextInput } from './TextField'
 /** The language React Aria formats in (dates, numbers): for text that must match it. */
-export { useLocale } from 'react-aria-components'
+export {
+  isTextDropItem,
+  useDragAndDrop,
+  useLocale,
+  type DropItem,
+} from 'react-aria-components'
 export {
   Cell,
   Column,
@@ -50,5 +55,12 @@ export {
   type SortDescriptor,
 } from './Table'
 export { TableLayout } from './tableLayout'
-export { CardItem, CardList, RowItem, RowList, RowListLoadMore } from './List'
+export {
+  CardDropIndicator,
+  CardItem,
+  CardList,
+  RowItem,
+  RowList,
+  RowListLoadMore,
+} from './List'
 export { PopoverDialog } from './PopoverDialog'

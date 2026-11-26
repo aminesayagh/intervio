@@ -208,6 +208,8 @@
     "none": "No view matches"
   },
   "board": {
-    "empty": "No records"
+    "empty": "No records",
+    "move": "Move {{name}}",
+    "add": "New record in {{column}}"
   }
 }

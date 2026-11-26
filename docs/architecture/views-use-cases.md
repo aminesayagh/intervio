@@ -44,7 +44,7 @@ On narrow screens a table view is drawn as rows (the rows, collection spec 5.2):
 - **K1. See the board.** One column per option of a select field (`groupBy`, such as Status), in the options' order, each with its count. A card shows the record's name and the fields the view lists.
 - **K2. Each column loads on its own (decision 167).** A column asks for the view's query plus its own value, and loads more as it scrolls, so counts and paging are right per column.
 - **K3. Open a card.** Clicking a card opens the record in the panel, as a table row does.
-- **K4. Move a card.** Dragging a card to another column changes its value through the normal save (undo, notifications, the server's check); the keyboard does it too (React Aria's drag and drop, through `ui-kit/aria`). A card the person can't edit can't be moved.
+- **K4. Move a card.** Dragging a card to another column changes its value through the normal save (undo, notifications, the server's check); the keyboard does it too (React Aria's drag and drop, through `ui-kit/aria`). A card the person can't edit can't be moved. The card moves at once, before the server answers (it goes back if the save fails), and stays where it was dropped while the board is open; the server keeps no order, so on the next visit it takes its place in the list's sort.
 - **K5. Narrow screens (decision 167).** Columns sit side by side, one screen wide, swiped sideways; a card moves through its menu instead of dragging.
 - **Not in the first kanban:** selecting cards and bulk actions, ordering cards by hand inside a column, grouping by something other than a select field.
 

@@ -208,6 +208,8 @@
     "none": "Aucune vue ne correspond"
   },
   "board": {
-    "empty": "Aucun enregistrement"
+    "empty": "Aucun enregistrement",
+    "move": "Déplacer {{name}}",
+    "add": "Nouvel enregistrement dans {{column}}"
   }
 }

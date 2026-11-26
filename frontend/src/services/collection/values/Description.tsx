@@ -226,7 +226,11 @@ function Editor({
           initial={text}
           onChange={change}
           onFailure={fail}
-          fallback={<p className="break-words whitespace-pre-wrap">{text}</p>}
+          fallback={
+            <p className="p-[12px] text-[16px]/[1.7] break-words whitespace-pre-wrap">
+              {text}
+            </p>
+          }
         >
           <DescriptionAI scope={scope}>
             {/* The tools float over a selection only (decision 159). */}

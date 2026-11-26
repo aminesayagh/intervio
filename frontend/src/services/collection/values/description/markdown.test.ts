@@ -51,6 +51,7 @@ test.each([
   ],
   ['an empty toggle', '<details>\n<summary>Steps</summary>\n\n</details>'],
   ['a code block', '```\nconst a = 1\n```'],
+  ['a code block keeps its language', '```html\n<html></html>\n```'],
 ])('%s: kept unchanged after an edit', (_, markdown) => {
   expect(afterAnEdit(markdown)).toBe(markdown)
 })

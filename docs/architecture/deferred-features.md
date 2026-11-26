@@ -34,3 +34,9 @@ Let a client invite colleagues as additional clients of the same company. For no
 ## Several companies per user
 
 Let a user own and manage several companies. The data already allows it (decision 67) and Settings has one tab per company with an "Add a company" button (decision 86), which only says it is not available yet. Still to design: what the button opens, and how the client board shows which company the user is working in.
+
+## Views people create and share
+
+Let people create their own views of a collection, save filters, sort and columns in them, and share them with the company or an intervention's team; views would then be stored by the backend and follow the person across devices. The use cases are in `views-use-cases.md` (V5-V8, V10-V27).
+
+**Why deferred:** configured views, set in the frontend, cover what Intervio needs now (decision 166).

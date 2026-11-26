@@ -72,8 +72,9 @@ export function PlateEditor({
 }
 
 /**
- * The text, formatted, with the panel's looks: headings one step below the panel's
- * title, the editing cue under the pointer when it may be edited.
+ * The text, formatted, with a document's room (decided 2026-11-25): 16 px text on
+ * 1.7 lines, headings of 24, 20 and 17 px, 16 px between blocks, 12 px inside its
+ * area; the editing cue under the pointer when it may be edited.
  */
 export function EditorText({
   className,
@@ -85,14 +86,15 @@ export function EditorText({
       {...props}
       readOnly={readOnly}
       className={cn(
-        'min-w-0 break-words outline-none',
+        'min-w-0 p-[12px] text-[16px]/[1.7] break-words outline-none',
         !readOnly && 'cursor-text',
-        '[&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-3 [&_blockquote]:text-muted',
-        '[&_code]:rounded-[var(--field-radius)] [&_code]:bg-default [&_code]:px-1 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:font-semibold',
-        '[&_pre]:overflow-x-auto [&_pre]:rounded-[var(--field-radius)] [&_pre]:bg-default [&_pre]:px-3 [&_pre]:py-2 [&_pre]:font-mono [&_pre]:text-xs',
-        '[&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:ps-5 [&_ul]:list-disc [&_ul]:ps-5',
-        '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-start',
-        '[&>*+*]:mt-2',
+        '[&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-s-2 [&_blockquote]:border-border [&_blockquote]:ps-4 [&_blockquote]:text-muted',
+        '[&_code]:rounded-[var(--field-radius)] [&_code]:bg-default [&_code]:px-1',
+        '[&_h1]:text-[24px]/[1.3] [&_h1]:font-semibold [&_h2]:text-[20px]/[1.35] [&_h2]:font-semibold [&_h3]:text-[17px]/[1.4] [&_h3]:font-semibold',
+        '[&_pre]:overflow-x-auto [&_pre]:rounded-[var(--field-radius)] [&_pre]:bg-default [&_pre]:px-4 [&_pre]:py-3 [&_pre]:font-mono [&_pre]:text-[13px]/[1.6]',
+        '[&_li]:my-1 [&_ol]:list-decimal [&_ol]:ps-6 [&_ul]:list-disc [&_ul]:ps-6',
+        '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-1.5 [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-1.5 [&_th]:text-start',
+        '[&>*+*]:mt-[16px]',
         className,
       )}
     />

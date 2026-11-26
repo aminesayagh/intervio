@@ -129,6 +129,17 @@ test('Enter on an empty last line leaves a code block', async () => {
   expect(markdownOf(field)).toBe('```\nPump \n```\n\nAfter')
 })
 
+test('"/" in a code block is code: no menu', async () => {
+  const field = await slash()
+  await userEvent.click(
+    await screen.findByRole('menuitem', { name: 'Code block' }),
+  )
+  await act(() => new Promise(requestAnimationFrame))
+  await typeIn(field, '/')
+  expect(screen.queryByRole('menu')).toBeNull()
+  expect(markdownOf(field)).toBe('```\nPump /\n```')
+})
+
 test('Table on an empty line takes its place', async () => {
   const field = await slash('')
   await userEvent.click(await screen.findByRole('menuitem', { name: 'Table' }))

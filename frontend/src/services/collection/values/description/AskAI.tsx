@@ -320,14 +320,14 @@ export function AIProposal() {
         ref={box}
         role="group"
         aria-label={t('description.aiProposal')}
-        className="mt-2 rounded-[var(--field-radius)] border border-border px-2 py-1"
+        className="mt-2 rounded-[var(--field-radius)] border border-border"
       >
         <Show when={ai.proposal}>
           <Plate key={ai.proposal} editor={preview}>
             <EditorText readOnly aria-label={t('description.aiProposal')} />
           </Plate>
         </Show>
-        <div className="flex min-h-8 items-center justify-end text-xs text-muted">
+        <div className="flex min-h-8 items-center justify-end px-3 text-xs text-muted">
           <Show
             when={ai.busy}
             fallback={<span>{t('description.aiKeys')}</span>}

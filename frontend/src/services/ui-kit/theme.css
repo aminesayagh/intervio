@@ -15,6 +15,13 @@
   --color-text-secondary: #686862;
   --color-border: #deddd5;
 
+  /* Code blocks' highlighting, readable on the fields' grey. */
+  --color-code-keyword: #9b3d7a;
+  --color-code-string: #3f7a3a;
+  --color-code-number: #a35a00;
+  --color-code-title: #2f5f9e;
+  --color-code-attribute: #2a7373;
+
   --font-family: 'Manrope', sans-serif;
 }
 
@@ -30,6 +37,12 @@
   --color-text: #f2f1ec;
   --color-text-secondary: #a3a39b;
   --color-border: #3a3a36;
+
+  --color-code-keyword: #d993c2;
+  --color-code-string: #9ccf8f;
+  --color-code-number: #e6b46a;
+  --color-code-title: #8db4e6;
+  --color-code-attribute: #7cc4c4;
 }
 
 /* HeroUI variables, pointed at the tokens (unlayered, so they win over HeroUI's themes). */
@@ -137,4 +150,46 @@ html {
 svg.lucide {
   display: inline-block;
   flex-shrink: 0;
+}
+
+/* Code blocks: the highlighter's (highlight.js) classes on the tokens above. */
+.hljs-keyword,
+.hljs-name,
+.hljs-tag,
+.hljs-selector-tag,
+.hljs-doctag {
+  color: var(--color-code-keyword);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--color-code-string);
+}
+.hljs-number,
+.hljs-literal,
+.hljs-built_in,
+.hljs-symbol,
+.hljs-type {
+  color: var(--color-code-number);
+}
+.hljs-title,
+.hljs-section,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--color-code-title);
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-params,
+.hljs-template-variable {
+  color: var(--color-code-attribute);
+}
+.hljs-comment,
+.hljs-quote,
+.hljs-meta,
+.hljs-deletion {
+  color: var(--color-text-secondary);
+  font-style: italic;
 }

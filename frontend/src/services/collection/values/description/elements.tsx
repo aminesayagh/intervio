@@ -2,12 +2,26 @@ import {
   useTodoListElement,
   useTodoListElementState,
 } from '@platejs/list-classic/react'
-import { Play } from 'lucide-react'
+import { ChevronDown, Play } from 'lucide-react'
 import type { TElement } from 'platejs'
-import { PlateElement, type PlateElementProps } from 'platejs/react'
+import {
+  PlateElement,
+  PlateLeaf,
+  useReadOnly,
+  type PlateElementProps,
+  type PlateLeafProps,
+} from 'platejs/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Checkbox, cn, Show } from '../../../ui-kit'
+import {
+  Button,
+  Checkbox,
+  ChoiceMenu,
+  cn,
+  MenuPopover,
+  MenuTrigger,
+  Show,
+} from '../../../ui-kit'
 
 /**
  * A list's item. In a to-do list, its checkbox first: ticked by whoever may edit the
@@ -88,7 +102,7 @@ export function ToggleElement(props: PlateElementProps) {
           )}
         />
       </button>
-      <div className={cn('[&>*+*]:mt-2', !open && '[&>*+*]:hidden')}>
+      <div className={cn('[&>*+*]:mt-[16px]', !open && '[&>*+*]:hidden')}>
         {props.children}
       </div>
     </PlateElement>
@@ -130,3 +144,95 @@ export const TableCellElement = (props: PlateElementProps) => (
 export const TableHeaderCellElement = (props: PlateElementProps) => (
   <PlateElement {...props} as="th" />
 )
+
+/** The languages a code block offers (their names, never translated), by id. */
+const LANGUAGES: Record<string, string> = {
+  bash: 'Bash',
+  c: 'C',
+  cpp: 'C++',
+  csharp: 'C#',
+  css: 'CSS',
+  go: 'Go',
+  html: 'HTML',
+  java: 'Java',
+  javascript: 'JavaScript',
+  json: 'JSON',
+  kotlin: 'Kotlin',
+  markdown: 'Markdown',
+  php: 'PHP',
+  python: 'Python',
+  ruby: 'Ruby',
+  rust: 'Rust',
+  sql: 'SQL',
+  swift: 'Swift',
+  typescript: 'TypeScript',
+  xml: 'XML',
+  yaml: 'YAML',
+}
+const AUTO = 'auto'
+const PLAIN = 'plaintext'
+
+/**
+ * A code block: its lines highlighted in its language, and the language's menu at
+ * the top right (the sort menu's look). Without a chosen language it is guessed.
+ */
+export function CodeBlockElement(
+  props: PlateElementProps<TElement & { lang?: string }>,
+) {
+  const { t } = useTranslation('collection')
+  const readOnly = useReadOnly()
+  const lang = props.element.lang ?? AUTO
+  const label = t('description.language')
+  const name = (id: string) =>
+    LANGUAGES[id] ??
+    (id === AUTO
+      ? t('description.languageAuto')
+      : id === PLAIN
+        ? t('description.languagePlain')
+        : id)
+  return (
+    <PlateElement {...props} className="relative">
+      <pre className="pe-28">{props.children}</pre>
+      <div contentEditable={false} className="absolute end-1 top-1 select-none">
+        <MenuTrigger>
+          <Button
+            size="sm"
+            look="ghost"
+            aria-label={label}
+            isDisabled={readOnly}
+            className="h-6 px-1.5 font-sans text-xs text-muted"
+          >
+            {name(lang)}
+            <ChevronDown size={12} />
+          </Button>
+          <MenuPopover minWidth={160}>
+            <ChoiceMenu
+              label={label}
+              mode="single"
+              options={[AUTO, PLAIN, ...Object.keys(LANGUAGES)].map((id) => ({
+                id,
+                label: name(id),
+              }))}
+              selected={[lang]}
+              onChange={([id]) =>
+                id === AUTO
+                  ? props.editor.tf.unsetNodes('lang', { at: props.element })
+                  : props.editor.tf.setNodes(
+                      { lang: id },
+                      { at: props.element },
+                    )
+              }
+            />
+          </MenuPopover>
+        </MenuTrigger>
+      </div>
+    </PlateElement>
+  )
+}
+
+/** A highlighted piece of code: its highlighter classes (colored by the theme). */
+export function CodeSyntaxLeaf(
+  props: PlateLeafProps & { leaf: { className?: string } },
+) {
+  return <PlateLeaf {...props} className={props.leaf.className} />
+}

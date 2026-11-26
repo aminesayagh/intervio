@@ -173,10 +173,20 @@ export const cache = {
     key: string,
     id: Id,
     getId: (record: T) => Id,
-    /** Keep the record's own query (the panel showing it says it is unavailable). */
-    { keepRecord = false } = {},
+    {
+      keepRecord = false,
+      only,
+    }: {
+      /** Keep the record's own query (the panel showing it says it is unavailable). */
+      keepRecord?: boolean
+      /** Only from this context's lists: refused there, not deleted (#67). */
+      only?: { context: unknown }
+    } = {},
   ) {
-    client.setQueriesData<Pages<T>>({ queryKey: keys.lists(key) }, (data) => {
+    const queryKey = only
+      ? [...keys.lists(key), only.context ?? null]
+      : keys.lists(key)
+    client.setQueriesData<Pages<T>>({ queryKey }, (data) => {
       if (!data) return data
       const found = data.pages.some((page) =>
         page.items.some((item) => getId(item) === id),

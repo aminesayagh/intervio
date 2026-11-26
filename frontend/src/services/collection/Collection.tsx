@@ -412,9 +412,12 @@ export function Collection<T, C = void>({
     [actions, key, context, getId, state.query, mark],
   )
   const unavailable = useCallback(
-    (id: Id) =>
-      cache.removed(queryClient, key, id, getId, { keepRecord: true }),
-    [queryClient, key, getId],
+    (id: Id, deleted: boolean) =>
+      cache.removed(queryClient, key, id, getId, {
+        keepRecord: true,
+        only: deleted ? undefined : { context },
+      }),
+    [queryClient, key, getId, context],
   )
   const panelOpen = Boolean(definition.panel && (openId || isNew))
   const canCreate = Boolean(

@@ -24,7 +24,8 @@ export function useRecord<T, C>({
   context: C
   id: Id
   fromList?: T
-  onUnavailable?: (id: Id) => void
+  /** `deleted`: gone everywhere (404); otherwise only refused in this context (403). */
+  onUnavailable?: (id: Id, deleted: boolean) => void
 }) {
   const query = useQuery<T, Error, T, readonly unknown[]>({
     queryKey: keys.record(definition.key, id, context),
@@ -37,9 +38,10 @@ export function useRecord<T, C>({
     retry: (failures, error) => !isUnavailable(error) && failures < 1,
   })
   const unavailable = query.isError && isUnavailable(query.error)
+  const deleted = (query.error as ApiError | null)?.status === 404
   useEffect(() => {
-    if (unavailable) onUnavailable?.(id)
-  }, [unavailable, id, onUnavailable])
+    if (unavailable) onUnavailable?.(id, deleted)
+  }, [unavailable, deleted, id, onUnavailable])
   return { query, record: query.data, unavailable }
 }
 

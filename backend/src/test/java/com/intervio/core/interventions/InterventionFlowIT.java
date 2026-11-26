@@ -3,6 +3,7 @@ package com.intervio.core.interventions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -109,6 +110,26 @@ class InterventionFlowIT {
 		RequestPostProcessor other = client("other@interventions.test", "FR-4");
 		mvc.perform(get("/api/interventions/" + id).with(other)).andExpect(status().isNotFound());
 		mvc.perform(get("/api/interventions/" + Uuids.v7()).with(owner)).andExpect(status().isNotFound());
+	}
+
+	/** A published intervention keeps the account; with drafts only, it is deleted (decision 90, #76). */
+	@Test
+	void aPublishedInterventionKeepsTheAccount() throws Exception {
+		RequestPostProcessor keeps = client("keeps@interventions.test", "FR-90");
+		String id = JsonPath.read(send(keeps, post("/api/interventions"), create("Valve check", ADDRESS))
+			.andExpect(status().isCreated())
+			.andReturn()
+			.getResponse()
+			.getContentAsString(), "$.id");
+		send(keeps, post("/api/interventions/" + id + "/publish"), "").andExpect(jsonPath("$.status").value("published"));
+		send(keeps, delete("/api/account"), "{\"email\":\"keeps@interventions.test\"}")
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.code").value("ERROR_ACCOUNT_HAS_INTERVENTIONS"));
+
+		RequestPostProcessor leaves = client("leaves@interventions.test", "FR-91");
+		send(leaves, post("/api/interventions"), create("Draft only", ADDRESS)).andExpect(status().isCreated());
+		send(leaves, delete("/api/account"), "{\"email\":\"leaves@interventions.test\"}")
+			.andExpect(status().isNoContent());
 	}
 
 	private static String create(String title, String address) {

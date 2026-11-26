@@ -16,6 +16,8 @@ interface InterventionRepository extends JpaRepository<Intervention, Long> {
 
 	long countByCompanyId(Long companyId);
 
+	boolean existsByCompanyIdAndPublishedAtIsNotNull(Long companyId);
+
 	/** The interventions of this company the user opened last, most recent first (decision 92). */
 	@Query(value = """
 			select i.* from intervention_visits v join interventions i on i.id = v.intervention_id

@@ -44,4 +44,6 @@ export type ViewProps<T, C> = {
   /** What the list asks the data source (a kanban's columns each add their value). */
   query: Omit<ListQuery, 'cursor'>
   context: C
+  /** Set when records can be created: a new one, starting with these values. */
+  onCreate?: (values: Partial<T>) => void
 }

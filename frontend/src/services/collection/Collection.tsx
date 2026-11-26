@@ -273,7 +273,10 @@ export function Collection<T, C = void>({
       return false
     }
   }, [stateKey])
+  // Values a new record starts with besides the list's (a kanban column's, MAS-36).
+  const [newIn, setNewIn] = useState<Partial<T>>({})
   const startNew = useCallback(() => {
+    setNewIn({})
     const wasOpen = Boolean(current().open || current().new)
     mark(
       { open: null, new: '1' },
@@ -402,9 +405,10 @@ export function Collection<T, C = void>({
         ? ({
             ...definition.create?.defaults(context as C),
             ...valuesOf(definition, state.query.filters),
+            ...newIn,
           } as Omit<T, 'id'>)
         : undefined,
-    [isNew, definition, state.query.filters, context],
+    [isNew, definition, state.query.filters, context, newIn],
   )
   const createRecord = useCallback(
     async (draft: Partial<T>, latest: () => Partial<T>) => {
@@ -436,6 +440,14 @@ export function Collection<T, C = void>({
   const panelOpen = Boolean(definition.panel && (openId || isNew))
   const canCreate = Boolean(
     definition.create && definition.panel && source.create,
+  )
+  /** "+" on a kanban column: a new record with its value (MAS-36). */
+  const createIn = useCallback(
+    (values: Partial<T>) => {
+      startNew()
+      setNewIn(values)
+    },
+    [startNew],
   )
 
   /** With the panel open, ↑ and ↓ open the previous or next record; Escape closes it. */
@@ -556,6 +568,7 @@ export function Collection<T, C = void>({
     store: marksStore,
     query: state.query,
     context: context as C,
+    onCreate: canCreate ? createIn : undefined,
   }
   // The open record's row stays in view (after ↑ / ↓, or a link).
   useEffect(() => {
@@ -724,11 +737,10 @@ export function Collection<T, C = void>({
                 </Show>
               </div>
             </Match>
-            {/* A board (MOH-35); on narrow screens rows until MOH-37. */}
+            {/* A board (MAS-35), swiped column by column on narrow screens (MAS-37). */}
             <Match
               when={
                 list.items.length > 0 &&
-                !narrowScreen &&
                 activeView.type === 'kanban' &&
                 activeView
               }
@@ -738,6 +750,7 @@ export function Collection<T, C = void>({
                   {...viewProps}
                   groupBy={board.groupBy}
                   card={board.card}
+                  narrow={narrowScreen}
                 />
               )}
             </Match>

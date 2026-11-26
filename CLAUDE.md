@@ -44,9 +44,15 @@ Keep only the latest version of each document: update it in place, do not create
 ## Versioning
 
 - The code is on GitHub at https://github.com/aminesayagh/intervio (public). Claude owns versioning.
-- **One branch per feature or change**, never directly on `main`. Branch names: `feature/<short-name>` for features, `fix/<short-name>` for fixes, `chore/<short-name>` for tooling and docs (for example `feature/onboarding`).
-- Commit with clear messages on the branch, push it, and open a pull request into `main`. CI (GitHub Actions, `.github/workflows/ci.yml`) runs on the pull request; merge only when its jobs are green, then delete the branch. Review apps installed on the repository (Sourcery, Socket) do not block a merge.
+- **One branch per feature or change**, never directly on `main`. Branch names: `feature/<short-name>` for features, `fix/<short-name>` for fixes, `chore/<short-name>` for tooling and docs (for example `feature/onboarding`). Work on a Linear issue puts its key after the prefix: `feature/mas-12-onboarding`.
+- Commit with clear messages on the branch, push it, and open a pull request into `main` (with `Fixes MAS-12` when it closes an issue). CI (GitHub Actions, `.github/workflows/ci.yml`) runs on the pull request; merge only when its jobs are green, then delete the branch. Review apps installed on the repository (Sourcery, Socket) do not block a merge.
 - Before each commit, check that no secrets, `.env` files or personal data are included.
+
+## Task tracking
+
+- Work is tracked in Linear, project **Intervio** in team **MAS**, as described in the global rule `~/.claude/rules/linear.md`. GitHub Issues are no longer used; the old ones were moved to Linear on 2026-11-26 (GitHub #35 → MAS-5 … #76 → MAS-28, each with a link back).
+- Labels: Feature, Bug, Improvement, Documentation, Question.
+- A point left open on purpose still goes in `notice.md` or `deferred-features.md`; when it becomes work to do, it also gets a Linear issue that links to the document.
 
 ## Wireframing rules (always apply)
 

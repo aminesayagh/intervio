@@ -50,5 +50,5 @@ export {
   type SortDescriptor,
 } from './Table'
 export { TableLayout } from './tableLayout'
-export { RowItem, RowList, RowListLoadMore } from './List'
+export { CardItem, CardList, RowItem, RowList, RowListLoadMore } from './List'
 export { PopoverDialog } from './PopoverDialog'

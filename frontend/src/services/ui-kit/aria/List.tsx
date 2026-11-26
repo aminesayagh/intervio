@@ -85,3 +85,48 @@ export function RowListLoadMore({
     </GridListLoadMoreItem>
   )
 }
+
+/**
+ * A column of cards (a kanban's, MOH-35): React Aria's GridList, virtualized, cards
+ * of their own heights with a gap between them. It scrolls itself.
+ */
+export function CardList<T extends object>({
+  className,
+  ...props
+}: Omit<GridListProps<T>, 'className'> & { className?: string }) {
+  return (
+    <Virtualizer
+      layout={ListLayout}
+      layoutOptions={{ estimatedRowHeight: 64, gap: 8, padding: 4 }}
+    >
+      <GridList
+        {...props}
+        className={cn(
+          'min-h-0 w-full flex-1 overflow-auto outline-none',
+          className,
+        )}
+      />
+    </Virtualizer>
+  )
+}
+
+/** One card: a bordered box that opens its record. */
+export function CardItem({
+  id,
+  textValue,
+  children,
+}: {
+  id: string
+  textValue: string
+  children: ReactNode
+}) {
+  return (
+    <GridListItem
+      id={id}
+      textValue={textValue}
+      className="flex cursor-pointer flex-col gap-1 rounded-[var(--field-radius)] border border-border bg-surface px-3 py-2 outline-none data-[focus-visible]:outline-2 data-[focus-visible]:outline-foreground data-[hovered]:bg-[color-mix(in_srgb,var(--default)_50%,var(--surface))]"
+    >
+      {children}
+    </GridListItem>
+  )
+}

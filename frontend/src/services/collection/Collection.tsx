@@ -43,6 +43,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
+import { Kanban } from './views/kanban/Kanban'
 import { ViewMenu } from './views/ViewMenu'
 import { columnsOf, valuesOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
@@ -553,6 +554,8 @@ export function Collection<T, C = void>({
     onOpen: definition.panel ? open : undefined,
     selection,
     store: marksStore,
+    query: state.query,
+    context: context as C,
   }
   // The open record's row stays in view (after ↑ / ↓, or a link).
   useEffect(() => {
@@ -720,6 +723,23 @@ export function Collection<T, C = void>({
                   </Button>
                 </Show>
               </div>
+            </Match>
+            {/* A board (MOH-35); on narrow screens rows until MOH-37. */}
+            <Match
+              when={
+                list.items.length > 0 &&
+                !narrowScreen &&
+                activeView.type === 'kanban' &&
+                activeView
+              }
+            >
+              {(board) => (
+                <Kanban
+                  {...viewProps}
+                  groupBy={board.groupBy}
+                  card={board.card}
+                />
+              )}
             </Match>
             <Match when={list.items.length > 0 && narrowScreen}>
               <RecordRows {...viewProps} />

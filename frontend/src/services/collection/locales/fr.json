@@ -206,5 +206,8 @@
     "choose": "Vue : {{name}}",
     "search": "Rechercher une vue…",
     "none": "Aucune vue ne correspond"
+  },
+  "board": {
+    "empty": "Aucun enregistrement"
   }
 }

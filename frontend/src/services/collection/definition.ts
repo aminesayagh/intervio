@@ -324,11 +324,21 @@ export type ViewDefinition = {
   filtersEditable?: boolean
   /** Whether the person may change its sort (default true). */
   sortEditable?: boolean
-} & {
-  type: 'table'
-  /** The columns shown, in this order (by id); all of them by default. */
-  columns?: string[]
-}
+} & (
+  | {
+      type: 'table'
+      /** The columns shown, in this order (by id); all of them by default. */
+      columns?: string[]
+    }
+  | {
+      /** A board (MOH-35): a column of cards per option of a select field. */
+      type: 'kanban'
+      /** The select column whose options make the board's columns. */
+      groupBy: string
+      /** The columns each card shows under the record's name (by id); none by default. */
+      card?: string[]
+    }
+)
 
 /**
  * Everything specific to one kind of record (spec 4). The wrapper knows nothing else

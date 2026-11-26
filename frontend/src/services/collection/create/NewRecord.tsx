@@ -41,7 +41,7 @@ export function NewRecord<T, C>({
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
   /** The collection's defaults, with the active filters' values. */
-  defaults: Partial<T>
+  defaults: Omit<T, 'id'>
   /**
    * Creates the record from the draft; `latest` gives the draft as it is when the
    * record comes back, so values typed meanwhile are saved on it.
@@ -54,18 +54,27 @@ export function NewRecord<T, C>({
   draftKey: string
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  const [draft, setDraft] = useState<Partial<T>>(() => ({
-    ...defaults,
-    ...read<T>(storageKey),
-  }))
+  const [draft, setDraft] = useState<Partial<T>>(
+    () => ({ ...defaults, ...read<T>(storageKey) }) as Partial<T>,
+  )
   const creating = useRef(false)
   // The draft as typed so far, for values typed while the record is being created.
   const latest = useRef(draft)
+  // Every value is there (the defaults are complete); only the id, which nothing shows.
   const record = draft as T
 
   const scope = `${definition.key}:new`
   // Leaving the new record (created, discarded, closed) takes its notifications away.
   useEffect(() => () => dismissScope(scope), [scope])
+
+  /** A value the field refused: it went back; the message says why (#68). */
+  const invalid = (field: string) => (reason: string) =>
+    notify({
+      tone: 'error',
+      text: t('collection:message.putBack', { reason }),
+      scope,
+      key: `${scope}:${field}`,
+    })
 
   /** Creates the record; a failure keeps what was typed and offers Retry (7.8). */
   async function create(next: Partial<T>) {
@@ -129,6 +138,7 @@ export function NewRecord<T, C>({
                   label={t('collection:panel.title')}
                   namespace={definition.i18n.namespace}
                   save={change}
+                  onInvalid={invalid('title')}
                   look="title"
                   placeholder={t('collection:create.name')}
                   autoFocus
@@ -158,6 +168,7 @@ export function NewRecord<T, C>({
                     label={t(property.label)}
                     namespace={definition.i18n.namespace}
                     save={change}
+                    onInvalid={invalid(property.id)}
                     look="panel"
                   />
                 </dd>

@@ -371,10 +371,10 @@ export function Collection<T, C = void>({
       if (shown.linked.length) leave()
       else doClose()
   })
-  const newDefaults = useCallback((): Partial<T> => {
+  const newDefaults = useCallback((): Omit<T, 'id'> => {
     const values = {
       ...definition.create?.defaults(context as C),
-    } as Partial<T>
+    } as Omit<T, 'id'>
     // A list filtered or scoped to one value creates records with it (spec 7.5, 12.1).
     for (const filter of [
       ...(definition.filters ?? []),

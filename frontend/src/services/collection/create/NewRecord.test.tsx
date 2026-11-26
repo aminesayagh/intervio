@@ -197,3 +197,19 @@ test('a draft left under one parent is not shown under another (#66)', async () 
     ).getByRole('textbox', { name: 'Title' }),
   ).toHaveValue('Seals of A')
 })
+
+test('a file refused on a new record says so (#68)', async () => {
+  show()
+  const aside = await startNew()
+  const input = within(aside)
+    .getByText('Files', { selector: 'dt' })
+    .nextElementSibling!.querySelector<HTMLInputElement>('input[type=file]')!
+  await userEvent.upload(
+    input,
+    new File(['x'], 'virus.exe', { type: 'application/octet-stream' }),
+    { applyAccept: false },
+  )
+  expect(
+    await screen.findByText(/virus.exe isn't a document this field takes/),
+  ).toBeInTheDocument()
+})

@@ -12,6 +12,7 @@ The current documents are in `docs/architecture/`; the schema and wireframes are
 | `deferred-features.md`         | Features kept out of the core for later                                                |
 | `authentication-spec.md`       | Build specification for authentication: only what was decided, plus open points        |
 | `collection-archetype-spec.md` | Build specification for the list-and-record-panel wrapper every collection screen uses |
+| `views-use-cases.md`           | Use cases of views (saved presentations of a collection), before their design          |
 | `notice.md`                    | Points left open on purpose, to come back to (what shows today, what each waits for)   |
 
 Keep only the latest version of each document: update it in place, do not create `-v2` copies.

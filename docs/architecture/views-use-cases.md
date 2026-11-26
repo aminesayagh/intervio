@@ -21,7 +21,7 @@ On narrow screens a table view is drawn as rows (the rows, collection spec 5.2):
 - **Views come from the collection's definition** in the frontend (name, type, filters, sort, columns), next to its fields. No backend, no table, no API.
 - **Covered:** V1 (see the views), V2 (switch), V3 (open on the last-used view, remembered by the browser, else the first configured one), V4 (`?view={key}` in the address, a stable key from the config instead of an id), V9 (filter, sort and search inside a view, as today, kept in the address and not saved).
 - **Not in this version:** creating, saving, organizing and sharing views (V6-V8, V10-V23), views on every device (V5), and keeping views valid (V24-V27): a view is code, so TypeScript checks its fields.
-- **Where they appear (Q1, decision 167):** tabs above the toolbar, one per view with its type's icon; extra views fold into a "More" menu. The active view is in the address (`?view={key}`).
+- **Where they appear (Q1, decision 169):** a button beside the collection's title shows the view on screen (its type's icon and name); with several views it opens a menu that lists them under a search field. With one view, only its name shows. There is no "Add view": the app configures the views. The active view is in the address (`?view={id}`).
 - **Every collection has at least one view.** Without configured views, it gets the default view: a table with every column, no filters and no default sort beyond the collection's own.
 
 ### What the app configures for a view (decision 168)

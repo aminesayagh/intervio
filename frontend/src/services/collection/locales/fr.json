@@ -203,6 +203,8 @@
   "views": {
     "all": "Tous",
     "label": "Vues",
-    "more": "{{count}} de plus"
+    "choose": "Vue : {{name}}",
+    "search": "Rechercher une vue…",
+    "none": "Aucune vue ne correspond"
   }
 }

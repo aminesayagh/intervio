@@ -43,7 +43,7 @@ import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
 import type { ViewProps } from './views/viewProps'
-import { ViewTabs } from './views/ViewTabs'
+import { ViewMenu } from './views/ViewMenu'
 import { columnsOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
@@ -615,14 +615,6 @@ export function Collection<T, C = void>({
           (narrowPanel || wide) && 'hidden',
         )}
       >
-        {/* The views as tabs (decision 167), when there are several. */}
-        <Show when={configured.length > 1}>
-          <ViewTabs
-            views={configured}
-            active={activeView.id}
-            onChange={state.setView}
-          />
-        </Show>
         {/* One row: the title, the search and filters (or the selection), then Add. */}
         <div className="flex flex-wrap items-center gap-2">
           <h1
@@ -631,6 +623,11 @@ export function Collection<T, C = void>({
           >
             {t(definition.i18n.title)}
           </h1>
+          <ViewMenu
+            views={configured}
+            active={activeView}
+            onChange={state.setView}
+          />
           <Switch className="ms-auto min-w-0">
             <Match when={selectedRecords.length > 0}>
               <SelectionBar

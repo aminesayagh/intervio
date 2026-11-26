@@ -32,15 +32,20 @@ const show = (
     {},
     local,
   )
-const selectedTab = () =>
-  screen.getAllByRole('tab').find((tab) => tab.ariaSelected === 'true')
-    ?.textContent
+/** The view shown, as its button says. */
+const shown = () => screen.getByRole('button', { name: /^View: / }).textContent
+/** Opens the views menu and picks one, after typing in its search. */
+async function pick(name: string, typed = '') {
+  await userEvent.click(screen.getByRole('button', { name: /^View: / }))
+  if (typed) await userEvent.type(screen.getByRole('textbox'), typed)
+  await userEvent.click(screen.getByRole('menuitem', { name }))
+}
 
-test('a tab shows its view: the address names it and the list takes its filters', async () => {
+test('choosing a view: the address names it and the list takes its filters', async () => {
   show()
   await screen.findByDisplayValue('Item 001')
-  expect(selectedTab()).toBe('All')
-  await userEvent.click(screen.getByRole('tab', { name: 'Valid' }))
+  expect(shown()).toBe('All')
+  await pick('Valid', 'val')
   await waitFor(() => expect(location.search).toContain('view=valid'))
   expect(location.search).toContain('f.status=valid')
   // Items 2 and 5 are the valid ones.
@@ -49,32 +54,45 @@ test('a tab shows its view: the address names it and the list takes its filters'
   )
   expect(screen.getByDisplayValue('Item 002')).toBeInTheDocument()
   // Back to the default view: its own settings, and a bare address.
-  await userEvent.click(screen.getByRole('tab', { name: 'All' }))
+  await pick('All')
   await waitFor(() => expect(location.search).toBe(''))
 })
 
 test('a link to a view opens it with its filters', async () => {
   show('/items?view=valid')
   await screen.findByDisplayValue('Item 002')
-  expect(selectedTab()).toBe('Valid')
+  expect(shown()).toBe('Valid')
   expect(screen.queryByDisplayValue('Item 001')).not.toBeInTheDocument()
 })
 
 test('an unknown view opens the default one', async () => {
   show('/items?view=gone')
   await screen.findByDisplayValue('Item 001')
-  expect(selectedTab()).toBe('All')
+  expect(shown()).toBe('All')
 })
 
 test('a bare address opens the view this browser used last', async () => {
   show('/items', { 'intervio.collection.test-items.view': 'valid' })
   await screen.findByDisplayValue('Item 002')
-  expect(selectedTab()).toBe('Valid')
+  expect(shown()).toBe('Valid')
   expect(location.search).toContain('view=valid')
 })
 
-test('a collection with one view shows no tabs', async () => {
+test('the search narrows the menu', async () => {
+  show()
+  await screen.findByDisplayValue('Item 001')
+  await userEvent.click(screen.getByRole('button', { name: /^View: / }))
+  await userEvent.type(screen.getByRole('textbox'), 'val')
+  expect(
+    screen.getAllByRole('menuitem').map((item) => item.textContent),
+  ).toEqual(['Valid'])
+})
+
+test('a collection with one view shows its name, with no menu', async () => {
   show('/items', {}, [views[0]])
   await screen.findByDisplayValue('Item 001')
-  expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: /^View: / }),
+  ).not.toBeInTheDocument()
+  expect(screen.getByText('All')).toBeInTheDocument()
 })

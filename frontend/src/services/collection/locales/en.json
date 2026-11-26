@@ -203,6 +203,8 @@
   "views": {
     "all": "All",
     "label": "Views",
-    "more": "{{count}} more"
+    "choose": "View: {{name}}",
+    "search": "Search views…",
+    "none": "No view matches"
   }
 }

@@ -14,9 +14,11 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 } as unknown as typeof ResizeObserver
 
-// waitFor and findBy wait up to 3 s (not 1 s): with the whole suite running at once,
-// a save in an interface test can take longer than 1 s without anything being wrong.
-configure({ asyncUtilTimeout: 3000 })
+// waitFor and findBy wait up to 10 s (not 1 s): with the whole suite running at once,
+// opening a record panel (it mounts the rich-text editor) takes ~0.25 s alone but
+// 1.5-2 s in a full run, and a busy moment pushed it past the former 3 s. A passing
+// wait returns as soon as it passes, so only a failing test waits longer.
+configure({ asyncUtilTimeout: 10_000 })
 
 // jsdom has no IntersectionObserver (React Aria's TableLoadMoreItem watches the end
 // of the list with one). This one never fires by itself: a test that scrolls to the

@@ -37,8 +37,7 @@ import {
   usePath,
 } from '../services/navigation'
 import { Notifications } from '../services/notifications'
-// The host alone: importing the collection's index would load it with the app shell.
-import { Confirmations } from '../services/collection/confirm/Confirmations'
+import { Confirmations } from '../services/collection/confirm'
 import { PublicLayout } from '../services/ui-kit'
 
 /** A page, who may open it, and whether it sits in the client board. */
@@ -70,17 +69,15 @@ const devRoutes: Record<string, Route> =
   import.meta.env.DEV || import.meta.env.VITE_SHOWCASE === '1'
     ? {
         '/dev/collection': {
-          page: lazy(
-            () => import('../services/collection/showcase/CollectionShowcase'),
-          ),
+          page: lazy(() => import('../services/collection/showcase')),
           access: 'user',
           board: true,
         },
         '/dev/parts': {
           page: lazy(() =>
-            import('../services/collection/showcase/CollectionShowcase').then(
-              (module) => ({ default: module.PartsShowcase }),
-            ),
+            import('../services/collection/showcase').then((module) => ({
+              default: module.PartsShowcase,
+            })),
           ),
           access: 'user',
           board: true,

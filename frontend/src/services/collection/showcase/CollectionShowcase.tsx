@@ -2,11 +2,15 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { usePath } from '../../navigation'
 import { Button, Segmented, Show } from '../../ui-kit'
-import { Collection } from '../Collection'
-import { checkDefinition, checkSource } from '../testing/checks'
-import { itemSource } from '../testing/items'
-import { partDefinition, partSource } from '../testing/parts'
-import { itemDefinition } from '../testing/testDefinition'
+import { Collection } from '..'
+import {
+  checkDefinition,
+  checkSource,
+  itemDefinition,
+  itemSource,
+  partDefinition,
+  partSource,
+} from '../testing'
 
 // ponytail: a developer's page, never built into production (spec 17.1), so its few
 // labels are plain English rather than translations.

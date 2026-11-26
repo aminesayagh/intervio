@@ -1,9 +1,9 @@
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { addTranslations } from '../../i18n'
-import { AvatarImage } from '../values/AvatarCell'
-import { FileCount, FileList } from '../values/FileCell'
+import { AvatarImage } from '..'
+import { FileCount, FileList } from '..'
 import { memorySrc, memoryUpload } from './memoryFiles'
-import { firstLine } from '../values/markdown'
+import { firstLine } from '..'
 import type {
   AnyCollection,
   AvatarField,
@@ -19,8 +19,8 @@ import type {
   NumberField,
   SelectField,
   TextField,
-} from '../definition'
-import type { DataSource } from '../types'
+} from '..'
+import type { DataSource } from '..'
 import { Avatar, Day, Period, StatusChip, Tags, TypeChip } from './ItemParts'
 import { itemSource, OWNERS, STATUSES, TAGS, type Item } from './items'
 import en from './locales/en.json'

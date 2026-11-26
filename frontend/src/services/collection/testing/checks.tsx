@@ -1,8 +1,8 @@
 import { ApiError } from '../../http'
 import { addTranslations } from '../../i18n'
 import { memorySource } from '../data/memorySource'
-import type { CollectionDefinition, TextField } from '../definition'
-import type { DataSource } from '../types'
+import type { CollectionDefinition, TextField } from '..'
+import type { DataSource } from '..'
 import { CheckChip } from './ItemParts'
 
 // ponytail: a test collection's few words, inline rather than in locale files.

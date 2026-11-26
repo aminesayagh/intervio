@@ -6,7 +6,7 @@ import type {
   NumberField,
   SelectField,
   TextField,
-} from '../definition'
+} from '..'
 import { KindText, PartChip } from './ItemParts'
 import en from './parts-locales/en.json'
 import fr from './parts-locales/fr.json'

@@ -2,7 +2,9 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { createElement } from 'react'
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useRef,
   type ContextType,
@@ -61,14 +63,36 @@ export function Table({
   ref?: Ref<HTMLDivElement>
 }) {
   const state = useRef<TableState>(null)
+  // Scrolled sideways, the pinned columns get a line on their right (decided
+  // 2026-11-26): marked on the element, so no cell renders again while scrolling.
+  const scroller = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const element = scroller.current
+    if (!element) return
+    const mark = () =>
+      element.toggleAttribute('data-scrolled-x', element.scrollLeft > 0)
+    mark()
+    element.addEventListener('scroll', mark, { passive: true })
+    return () => element.removeEventListener('scroll', mark)
+  }, [])
+  const setRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      scroller.current = element
+      if (typeof ref === 'function') ref(element)
+      else if (ref) ref.current = element
+    },
+    [ref],
+  )
   return (
     <LatestState value={state}>
       <AriaTable
         {...props}
-        ref={ref as unknown as Ref<HTMLTableElement>}
+        ref={setRef as unknown as Ref<HTMLTableElement>}
         className={cn(
           // It fills what its column leaves (a flex item), and scrolls inside.
-          'min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
+          'group/table min-h-0 w-full flex-1 overflow-auto text-start outline-none [--scroll-quiet-top:2rem]',
+          // The line right of the pinned name cells, once scrolled (see the Column too).
+          "[&[data-scrolled-x]_[role=rowheader]]:after:absolute [&[data-scrolled-x]_[role=rowheader]]:after:inset-y-0 [&[data-scrolled-x]_[role=rowheader]]:after:end-0 [&[data-scrolled-x]_[role=rowheader]]:after:w-px [&[data-scrolled-x]_[role=rowheader]]:after:bg-border [&[data-scrolled-x]_[role=rowheader]]:after:content-['']",
           className,
         )}
       />
@@ -159,6 +183,9 @@ export function Column({
       className={cn(
         'group/column relative flex h-full items-center bg-background px-3 shadow-[inset_0_-1px_0_var(--foreground)] text-start text-xs font-normal text-muted outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         props.allowsSorting && 'cursor-pointer data-[hovered]:text-foreground',
+        // The last pinned column's title: a line on its right once the table scrolls sideways.
+        props.isRowHeader &&
+          "group-data-[scrolled-x]/table:after:absolute group-data-[scrolled-x]/table:after:inset-y-0 group-data-[scrolled-x]/table:after:end-0 group-data-[scrolled-x]/table:after:w-px group-data-[scrolled-x]/table:after:bg-border group-data-[scrolled-x]/table:after:content-['']",
         className,
       )}
     >
@@ -373,7 +400,7 @@ export function Cell({
     <AriaCell
       {...props}
       className={cn(
-        'flex h-full items-center overflow-hidden px-3 outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
+        'relative flex h-full items-center overflow-hidden px-3 outline-none data-[focus-visible]:outline-2 data-[focus-visible]:-outline-offset-2 data-[focus-visible]:outline-foreground',
         ROW_BACKGROUND,
         className,
       )}

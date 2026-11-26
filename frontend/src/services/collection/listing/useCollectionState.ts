@@ -100,13 +100,22 @@ export function useCollectionState(
   const startOf = useCallback(
     (next: ViewDefinition, sort: Sort[] | null = null) => ({
       q: '',
-      filter: next.where ?? null,
+      // Locked filters and sort stay out of the address: `query` adds them.
+      filter: next.filtersEditable === false ? null : (next.where ?? null),
       ...Object.fromEntries(
         (ids ? ids.split(',') : [])
           .filter((id) => !keptIds.split(',').includes(id))
-          .map((id) => [`f.${id}`, next.filters?.[id] ?? []]),
+          .map((id) => [
+            `f.${id}`,
+            next.filtersEditable === false ? [] : (next.filters?.[id] ?? []),
+          ]),
       ),
-      sort: next.sort?.length ? next.sort : sort,
+      sort:
+        next.sortEditable === false
+          ? null
+          : next.sort?.length
+            ? next.sort
+            : sort,
       // The default view keeps the address bare.
       view: next.id === views[0].id ? null : next.id,
     }),
@@ -186,13 +195,31 @@ export function useCollectionState(
     }),
     [values, ids],
   )
-  const query = useMemo(
-    () => ({
+  // What the data source is asked: the person's listing, with the view's locked
+  // filters (the scopes stay) and sort in place of theirs (MOH-33).
+  const query = useMemo(() => {
+    const kept = keptIds.split(',')
+    const filters =
+      view.filtersEditable === false
+        ? {
+            ...Object.fromEntries(
+              Object.entries(listing.filters).filter(([id]) =>
+                kept.includes(id),
+              ),
+            ),
+            ...view.filters,
+          }
+        : listing.filters
+    const where =
+      view.filtersEditable === false ? (view.where ?? null) : listing.where
+    const sort = view.sortEditable === false ? (view.sort ?? []) : listing.sort
+    return {
       ...listing,
-      sort: listing.sort.length ? listing.sort : [defaultSort],
-    }),
-    [listing, defaultSort],
-  )
+      filters,
+      where,
+      sort: sort.length ? sort : [defaultSort],
+    }
+  }, [listing, defaultSort, view, keptIds])
 
   /** Sets several filter rules at once (an empty list removes one). */
   const setFilters = useCallback(

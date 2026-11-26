@@ -111,8 +111,16 @@ export function Collection<T, C = void>({
   })
   const activeView = state.view
   // The definition as the view draws it: its columns, in its order.
+  // A view with a locked sort has no sortable headers (MOH-33).
   const viewed = useMemo(
-    () => ({ ...definition, columns: columnsOf(definition, activeView) }),
+    () => ({
+      ...definition,
+      columns: columnsOf(definition, activeView).map((column) =>
+        activeView.sortEditable === false
+          ? { ...column, sort: undefined }
+          : column,
+      ),
+    }),
     [definition, activeView],
   )
   const { listing } = state
@@ -346,6 +354,7 @@ export function Collection<T, C = void>({
   )
   // A new search, filter or sort clears the selection and sorts the list again.
   const view = JSON.stringify([
+    activeView.id,
     listing.search,
     listing.filters,
     listing.where,
@@ -642,8 +651,9 @@ export function Collection<T, C = void>({
             <Match when={narrowed || list.items.length > 0 || !list.isSuccess}>
               <Toolbar
                 namespace={definition.i18n.namespace}
-                fields={fields}
-                sortables={sortables}
+                // A view may lock its filters or its sort: that menu is off (MOH-33).
+                fields={activeView.filtersEditable === false ? [] : fields}
+                sortables={activeView.sortEditable === false ? [] : sortables}
                 scopes={definition.scopes}
                 context={context}
                 listing={listing}

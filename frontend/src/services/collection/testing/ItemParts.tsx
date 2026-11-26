@@ -57,20 +57,6 @@ export function TypeChip() {
   )
 }
 
-/** "Updated Nov 21, 2026", under the panel's title. */
-export function UpdatedOn({ iso }: { iso: string }) {
-  const { t, i18n } = useTranslation('test-items')
-  return (
-    <>
-      {t('updatedOn', {
-        date: new Intl.DateTimeFormat(i18n.language, {
-          dateStyle: 'medium',
-        }).format(new Date(iso)),
-      })}
-    </>
-  )
-}
-
 /** The item's tags as chips (the first ones, then "+n"). */
 export function Tags({ tags, max }: { tags: string[]; max?: number }) {
   const { t } = useTranslation('test-items')

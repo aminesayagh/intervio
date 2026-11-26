@@ -59,3 +59,45 @@ export function viewProblems<T, C>(definition: CollectionDefinition<T, C>) {
   }
   return problems
 }
+
+/**
+ * The values a new record takes from the filters on screen (MOH-34), so it stays in
+ * the list it was created in: each "is" rule with one value (or tags) on a column
+ * whose field can hold it. Fixed filters and scopes use their own `patch` (spec 7.5).
+ */
+export function valuesOf<T, C>(
+  definition: CollectionDefinition<T, C>,
+  filters: Record<string, string[]>,
+): Partial<T> {
+  const values: Partial<T> = {}
+  for (const own of [
+    ...(definition.filters ?? []),
+    ...(definition.scopes ?? []),
+  ]) {
+    const chosen = filters[own.id] ?? []
+    if (chosen.length === 1 && own.patch)
+      Object.assign(values, own.patch(chosen[0]))
+  }
+  for (const column of definition.columns) {
+    const chosen = filters[column.id] ?? []
+    const field = column.field
+    if (!column.filter || !field || chosen.length === 0) continue
+    if (field.type === 'multiSelect') Object.assign(values, field.patch(chosen))
+    if (chosen.length !== 1) continue
+    const [value] = chosen
+    switch (field.type) {
+      case 'select':
+      case 'text':
+      case 'date':
+        Object.assign(values, field.patch(value))
+        break
+      case 'checkbox':
+        Object.assign(values, field.patch(value === 'true'))
+        break
+      case 'number':
+        Object.assign(values, field.patch(Number(value)))
+        break
+    }
+  }
+  return values
+}

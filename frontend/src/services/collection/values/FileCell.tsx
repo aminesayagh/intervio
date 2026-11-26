@@ -10,22 +10,8 @@ import {
   Show,
   Variant,
 } from '../../ui-kit'
+import { checkFile, FILE_PURPOSES } from '../../files'
 import type { FileField, StoredFile } from '../definition'
-
-/** The kinds of files a file field takes by default, as the files service does. */
-const DOCUMENTS = [
-  'pdf',
-  'png',
-  'jpg',
-  'jpeg',
-  'xlsx',
-  'xls',
-  'csv',
-  'docx',
-  'doc',
-  'pptx',
-  'ppt',
-]
 
 /** "2 files", or "—": a file value in the table (a click opens the record). */
 export function FileCount({ files }: { files: StoredFile[] }) {
@@ -111,19 +97,19 @@ export function FileCell<T>({
   const { t } = useTranslation('collection')
   const [busy, setBusy] = useState(false)
   const files = edit.value(record)
-  const extensions = edit.extensions ?? DOCUMENTS
-  const maxMb = edit.maxMb ?? 10
+  // The files service's rules for documents, unless the field gives its own (#73).
+  const extensions = edit.extensions ?? FILE_PURPOSES.document.extensions
+  const maxMb = edit.maxMb ?? FILE_PURPOSES.document.maxMb
 
   async function add(chosen: File[]) {
     const refused: string[] = []
     const good = chosen.filter((file) => {
-      const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-      if (!extensions.includes(extension))
+      const problem = checkFile({ extensions, maxMb }, file)
+      if (problem === 'errors.ERROR_FILE_TYPE')
         refused.push(t('fields.fileType', { name: file.name }))
-      else if (file.size > maxMb * 1024 * 1024)
+      else if (problem)
         refused.push(t('fields.fileSize', { name: file.name, size: maxMb }))
-      else return true
-      return false
+      return !problem
     })
     if (good.length > 0) {
       setBusy(true)

@@ -11,7 +11,7 @@ import {
 import { navigate } from '../../../navigation'
 import { FormError } from '../../../ui-kit'
 import { companyApi, companyKey, useCompany } from '../api'
-import { StepLinks, StepTitle } from '../components'
+import { StepLinks, StepTitle } from './StepParts'
 
 /** Step 3 (optional): the company logo, PNG or JPG up to 2 MB. The client board opens after it. */
 export function LogoStepPage() {

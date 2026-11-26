@@ -3,9 +3,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { navigate } from '../../../navigation'
-import { check, Field, FormError } from '../../../ui-kit'
+import { FormError } from '../../../ui-kit'
 import { companyApi, companyKey, errorKey, useCompany } from '../api'
-import { CountryField, StepTitle } from '../components'
+import {
+  CompanyDetailsFields,
+  type CompanyDetails,
+} from '../details/CompanyDetailsFields'
+import { StepTitle } from './StepParts'
 
 /** Step 1 (required): company name, country of registration, registration number. */
 export function CompanyStepPage() {
@@ -18,15 +22,18 @@ function CompanyForm() {
   const { t } = useTranslation('companies')
   const queryClient = useQueryClient()
   const { data: saved } = useCompany()
-  const [name, setName] = useState(saved?.name ?? '')
-  const [country, setCountry] = useState<string | null>(saved?.country ?? null)
-  const [number, setNumber] = useState(saved?.registrationNumber ?? '')
+  const [details, setDetails] = useState<CompanyDetails>({
+    name: saved?.name ?? '',
+    country: saved?.country ?? null,
+    registrationNumber: saved?.registrationNumber ?? '',
+  })
   const [countryMissing, setCountryMissing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const { name, country, registrationNumber } = details
     if (!country) {
       setCountryMissing(true)
       return
@@ -34,7 +41,11 @@ function CompanyForm() {
     setError(null)
     setPending(true)
     try {
-      const company = await companyApi.saveDetails(name, country, number)
+      const company = await companyApi.saveDetails(
+        name,
+        country,
+        registrationNumber,
+      )
       queryClient.setQueryData(companyKey, company)
       navigate('/onboarding/industries')
     } catch (e) {
@@ -51,30 +62,10 @@ function CompanyForm() {
         message={error && t(error, { defaultValue: t('errors.ERROR_UNKNOWN') })}
       />
       <Form onSubmit={save} className="flex flex-col gap-3">
-        <Field
-          name="name"
-          autoComplete="organization"
-          label={t('company.name')}
-          placeholder={t('company.namePlaceholder')}
-          value={name}
-          onChange={setName}
-          check={check.required}
-        />
-        <CountryField
-          value={country}
-          onChange={(code) => {
-            setCountry(code)
-            setCountryMissing(false)
-          }}
-          isInvalid={countryMissing}
-        />
-        <Field
-          name="registrationNumber"
-          label={t('company.number')}
-          placeholder={t('company.numberPlaceholder')}
-          value={number}
-          onChange={setNumber}
-          check={check.required}
+        <CompanyDetailsFields
+          value={details}
+          onChange={setDetails}
+          countryMissing={countryMissing}
         />
         <Button type="submit" fullWidth isPending={pending} className="mt-1">
           {t('continue')}

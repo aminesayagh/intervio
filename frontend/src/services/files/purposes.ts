@@ -28,12 +28,18 @@ export function accept(purpose: FilePurpose) {
   return FILE_PURPOSES[purpose].extensions.map((e) => `.${e}`).join(',')
 }
 
-/** Returns a translation key (files namespace) when the file cannot be uploaded, or null. */
+/** What a file must be: its types and its largest size. */
+export type FileRules = { extensions: readonly string[]; maxMb: number }
+
+/**
+ * Returns a translation key (files namespace) when the file cannot be uploaded, or null:
+ * against a purpose's rules, or a field's own (#73: the one check, used everywhere).
+ */
 export function checkFile(
-  purpose: FilePurpose,
+  purpose: FilePurpose | FileRules,
   file: Pick<File, 'name' | 'size'>,
 ) {
-  const rules = FILE_PURPOSES[purpose]
+  const rules = typeof purpose === 'string' ? FILE_PURPOSES[purpose] : purpose
   const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (!(rules.extensions as readonly string[]).includes(extension))
     return 'errors.ERROR_FILE_TYPE'

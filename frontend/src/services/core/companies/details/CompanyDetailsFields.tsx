@@ -1,48 +1,64 @@
 import { ComboBox, FieldError, Input, Label, ListBox } from '@heroui/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from '../../navigation'
-import { Title } from '../../ui-kit'
-import { countries } from './countries'
+import { check, Field } from '../../../ui-kit'
+import { countries } from '../countries'
 
-/** "Step X of 3" above the step's title. */
-export function StepTitle({
-  step,
-  children,
+/** A company's details as its forms edit them. */
+export type CompanyDetails = {
+  name: string
+  country: string | null
+  registrationNumber: string
+}
+
+/**
+ * The company's name, country of registration and registration number (#73): the same
+ * fields, rules and placeholders in onboarding and in Settings; each screen keeps its
+ * own saving. `countryMissing` is set by the screen when a save finds no country, so
+ * the country is marked only after the person tries to save (decided 2026-11-26).
+ */
+export function CompanyDetailsFields({
+  value,
+  onChange,
+  countryMissing,
 }: {
-  step: number
-  children: string
+  value: CompanyDetails
+  onChange: (next: CompanyDetails) => void
+  countryMissing: boolean
 }) {
   const { t } = useTranslation('companies')
   return (
     <>
-      <p className="mb-1 text-xs text-muted">{t('step', { step })}</p>
-      <Title>{children}</Title>
+      <Field
+        name="name"
+        autoComplete="organization"
+        label={t('company.name')}
+        placeholder={t('company.namePlaceholder')}
+        value={value.name}
+        onChange={(name) => onChange({ ...value, name })}
+        check={check.required}
+      />
+      <CountryField
+        value={value.country}
+        onChange={(country) => onChange({ ...value, country })}
+        isInvalid={countryMissing && !value.country}
+      />
+      <Field
+        name="registrationNumber"
+        label={t('company.number')}
+        placeholder={t('company.numberPlaceholder')}
+        value={value.registrationNumber}
+        onChange={(registrationNumber) =>
+          onChange({ ...value, registrationNumber })
+        }
+        check={check.required}
+      />
     </>
   )
 }
 
-/** "Back" on the left and, for optional steps, "Skip" on the right. */
-export function StepLinks({ back, skip }: { back: string; skip?: () => void }) {
-  const { t } = useTranslation('companies')
-  return (
-    <div className="mt-4 flex items-center justify-between">
-      <Link href={back}>{t('back')}</Link>
-      {skip && (
-        <button
-          type="button"
-          className="underline underline-offset-4"
-          onClick={skip}
-        >
-          {t('skip')}
-        </button>
-      )}
-    </div>
-  )
-}
-
 /** Country of registration: a searchable list with flags (onboarding and Settings). */
-export function CountryField({
+function CountryField({
   value,
   onChange,
   isInvalid,

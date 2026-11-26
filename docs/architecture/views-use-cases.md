@@ -21,7 +21,18 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 - **Views come from the collection's definition** in the frontend (name, layout, filters, sort, columns), next to its fields. No backend, no table, no API.
 - **Covered:** V1 (see the views), V2 (switch), V3 (open on the last-used view, remembered by the browser, else the first configured one), V4 (`?view={key}` in the address, a stable key from the config instead of an id), V9 (filter, sort and search inside a view, as today, kept in the address and not saved).
 - **Not in this version:** creating, saving, organizing and sharing views (V6-V8, V10-V23), views on every device (V5), and keeping views valid (V24-V27): a view is code, so TypeScript checks its fields.
-- **Still open:** where the views appear (Q1, proposal: tabs above the toolbar).
+- **Where they appear (Q1, decision 167):** tabs above the toolbar, one per view with its layout's icon; extra views fold into a "More" menu. The active view is in the address (`?view={key}`).
+- **A view's query is `starting` or `fixed` (decision 167).** Each view's filters and sort are marked in the config: `starting` opens the view with them and lets the person change them (in the address, not saved; switching back to the view resets them); `fixed` always applies them, and the person can't remove or change them, only add filters or search on top.
+- **Enabling a layout is configuration.** A collection has a kanban when its config lists a kanban view; without views it gets one table view.
+
+### The kanban layout
+
+- **K1. See the board.** One column per option of a select field (`groupBy`, such as Status), in the options' order, each with its count. A card shows the record's name and the fields the view lists.
+- **K2. Each column loads on its own (decision 167).** A column asks for the view's query plus its own value, and loads more as it scrolls, so counts and paging are right per column.
+- **K3. Open a card.** Clicking a card opens the record in the panel, as a table row does.
+- **K4. Move a card.** Dragging a card to another column changes its value through the normal save (undo, notifications, the server's check); the keyboard does it too (React Aria's drag and drop, through `ui-kit/aria`). A card the person can't edit can't be moved.
+- **K5. Narrow screens (decision 167).** Columns sit side by side, one screen wide, swiped sideways; a card moves through its menu instead of dragging.
+- **Not in the first kanban:** selecting cards and bulk actions, ordering cards by hand inside a column, grouping by something other than a select field.
 
 ## 3. Actors
 

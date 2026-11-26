@@ -126,7 +126,7 @@ On narrow screens a table view is drawn as rows (the rows layout, collection spe
 
 - Today the filters and sort live in the address, and the last sort is remembered by the browser (collection spec 6). With views, the saved filters, sort and columns live in the view, on the server; the address still carries unsaved changes (decision 112), so a shared link shows what its sender sees.
 - Choosing, reordering and resizing columns, and saved views, were left out of the collection's first build (collection spec 1, "Out of scope"); views bring them in.
-- The spec's `views/` folder (table, rows) holds **layouts**; the word "view" now means the saved presentation.
+- The collection's `layouts/` folder (table, rows; formerly `views/`) holds the **layouts**; the word "view" means a configured presentation.
 
 ## 6. Open questions (each with a proposal)
 

@@ -42,9 +42,10 @@ import { NewRecord } from './create/NewRecord'
 import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
-import { RecordRows } from './views/rows/RecordRows'
-import { RecordTable } from './views/table/RecordTable'
-import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
+import type { LayoutProps } from './layouts/contract'
+import { RecordRows } from './layouts/rows/RecordRows'
+import { RecordTable } from './layouts/table/RecordTable'
+import { readBookmark, useScrollBookmark } from './layouts/scrollBookmark'
 import { Toolbar } from './listing/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { useSelection } from './selection/useSelection'
@@ -57,7 +58,7 @@ import { panelAddress, panelParsers, readPanel } from './address'
 import { LinkedPanel } from './record/LinkedPanel'
 import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
-import { useMarksStore } from './views/rowMarks'
+import { useMarksStore } from './layouts/rowMarks'
 import type { Id, More } from './types'
 import { filterFields, ruleKeys } from './listing/rules'
 import { isNarrowed, useCollectionState } from './listing/useCollectionState'
@@ -525,6 +526,22 @@ export function Collection<T, C = void>({
     () => (selectable ? { keys: selected, onChange: select } : undefined),
     [selectable, selected, select],
   )
+  // What every layout gets (MOH-21): the table on wide screens, the rows on narrow ones.
+  const layoutProps: LayoutProps<T, C> = {
+    definition,
+    items: shownItems,
+    label: t(definition.i18n.title),
+    scrollRef,
+    more,
+    sort: listing.sort,
+    onSort: state.setSort,
+    save,
+    report,
+    canEdit,
+    onOpen: definition.panel ? open : undefined,
+    selection,
+    store: marksStore,
+  }
   // The open record's row stays in view (after ↑ / ↓, or a link).
   useEffect(() => {
     if (!openId) return
@@ -687,31 +704,10 @@ export function Collection<T, C = void>({
               </div>
             </Match>
             <Match when={list.items.length > 0 && narrowScreen}>
-              <RecordRows
-                definition={definition}
-                items={shownItems}
-                label={t(definition.i18n.title)}
-                scrollRef={scrollRef}
-                more={more}
-                onOpen={definition.panel ? open : undefined}
-              />
+              <RecordRows {...layoutProps} />
             </Match>
             <Match when={list.items.length > 0}>
-              <RecordTable
-                definition={definition}
-                items={shownItems}
-                label={t(definition.i18n.title)}
-                scrollRef={scrollRef}
-                more={more}
-                sort={listing.sort}
-                onSort={state.setSort}
-                save={save}
-                report={report}
-                canEdit={canEdit}
-                onOpen={definition.panel ? open : undefined}
-                selection={selection}
-                store={marksStore}
-              />
+              <RecordTable {...layoutProps} />
             </Match>
           </Switch>
           <Show when={list.isFetchNextPageError && !list.isFetchingNextPage}>

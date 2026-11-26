@@ -1,14 +1,12 @@
 import { useTranslation } from 'react-i18next'
-import type { RefObject } from 'react'
 import {
   RowCollection,
   RowItem,
   RowList,
   RowListLoadMore,
 } from '../../../ui-kit'
-import type { CollectionDefinition } from '../../definition'
 import { ROW_HEIGHT } from '../../layout/layout'
-import type { Id, More } from '../../types'
+import type { LayoutProps } from '../contract'
 
 /**
  * The list on narrow screens (spec 9, decision 121): a row per record, with its name,
@@ -22,14 +20,10 @@ export function RecordRows<T, C>({
   scrollRef,
   more,
   onOpen,
-}: {
-  definition: CollectionDefinition<T, C>
-  items: T[]
-  label: string
-  scrollRef: RefObject<HTMLDivElement | null>
-  more: More
-  onOpen?: (id: Id) => void
-}) {
+}: Pick<
+  LayoutProps<T, C>,
+  'definition' | 'items' | 'label' | 'scrollRef' | 'more' | 'onOpen'
+>) {
   const { t } = useTranslation('collection')
   const name = (record: T) =>
     definition.panel?.title(record) ?? definition.getId(record)

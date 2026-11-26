@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react'
-import { memo, type ComponentProps, type RefObject } from 'react'
+import { memo, type ComponentProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Cell,
@@ -18,10 +18,11 @@ import type { CollectionDefinition, ColumnDefinition } from '../../definition'
 import { COLUMN_WIDTH, ROW_HEIGHT } from '../../layout/layout'
 import { nextSort } from '../../listing/rules'
 import { isShared, SharedNote } from '../../selection/sharedEdit'
-import type { Id, More, ReportInvalid, SaveChange, Sort } from '../../types'
+import type { Id, ReportInvalid, SaveChange } from '../../types'
 import { Awake, useHandFocus } from '../../values/awake'
 import { ValueField } from '../../values/ValueField'
-import { MarksProvider, useMark, useMarks, type MarksStore } from '../rowMarks'
+import type { LayoutProps } from '../contract'
+import { MarksProvider, useMark, useMarks } from '../rowMarks'
 
 /**
  * The table (spec 8): React Aria's Table, virtualized (only the rows in view are in
@@ -50,28 +51,7 @@ function RecordTableOf<T, C>({
   onOpen,
   selection,
   store,
-}: {
-  definition: CollectionDefinition<T, C>
-  items: T[]
-  label: string
-  scrollRef: RefObject<HTMLDivElement | null>
-  more: More
-  /** The sort levels chosen, none for the default order; the header marks the first. */
-  sort: Sort[]
-  onSort: (sort: Sort[]) => void
-  save: SaveChange<T>
-  report: ReportInvalid<T>
-  canEdit: (record: T, id: string) => boolean
-  /** Set when a row opens its record in the panel. */
-  onOpen?: (id: Id) => void
-  /** Set when rows can be selected (spec 8.5): the selected ids. */
-  selection?: {
-    keys: ReadonlySet<Id>
-    onChange: (keys: ReadonlySet<Id>) => void
-  }
-  /** The open row and the selection, as the rows and cells read them (rowMarks). */
-  store: MarksStore
-}) {
+}: LayoutProps<T, C>) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   // Every column, at its own width: the table scrolls sideways when they don't fit,
   // and the panel opening or closing changes nothing in it (spec 9).

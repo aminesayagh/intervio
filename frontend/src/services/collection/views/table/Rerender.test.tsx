@@ -1,14 +1,14 @@
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, expect, test } from 'vitest'
-import '../../i18n'
-import { Collection } from '../Collection'
-import type { TextField } from '../definition'
-import { itemSource, makeItems, type Item } from '../testing/items'
-import { stubElementSizes } from '../testing/layout'
-import { reachRow } from '../testing/panel'
-import { renderAt } from '../testing/render'
-import { itemDefinition } from '../testing/testDefinition'
+import '../../../i18n'
+import { Collection } from '../../Collection'
+import type { TextField } from '../../definition'
+import { itemSource, makeItems, type Item } from '../../testing/items'
+import { stubElementSizes } from '../../testing/layout'
+import { reachRow } from '../../testing/panel'
+import { renderAt } from '../../testing/render'
+import { itemDefinition } from '../../testing/testDefinition'
 
 beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)

@@ -156,15 +156,24 @@ export type Command = {
   icon: ReactNode
   always?: boolean
   section?: string
+  /** Other words that find it, besides its label ("h1" for Heading 1). */
+  keywords?: string
 }
 
-/** The filter of command menus: by label, accents, case and punctuation aside ("todo" finds "To-do"). */
+/**
+ * The filter of command menus: by label and keywords, accents, case and punctuation
+ * aside ("todo" finds "To-do").
+ */
 function useCommandFilter() {
   const { contains } = useFilter({ sensitivity: 'base' })
   const bare = (text: string) => text.replace(/[^\p{L}\p{N} ]/gu, '')
-  return (text: string, input: string, node: { value: unknown }) =>
-    !!(node.value as Command | null)?.always ||
-    contains(bare(text), bare(input))
+  return (text: string, input: string, node: { value: unknown }) => {
+    const command = node.value as Command | null
+    return (
+      !!command?.always ||
+      contains(bare(`${text} ${command?.keywords ?? ''}`), bare(input))
+    )
+  }
 }
 
 function CommandItems({

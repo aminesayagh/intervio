@@ -1,17 +1,17 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
-import '../../../i18n'
-import '../../index'
-import * as notifications from '../../../notifications'
-import { enter, markdownOf, selectAll } from '../../testing/plate'
-import { Description } from '../Description'
-import type { DescriptionContext } from './simulatedAI'
+import '../../i18n'
+import '../index'
+import * as notifications from '../../notifications'
+import { enter, markdownOf, selectAll } from '../../richText/testing/plate'
+import { RichText } from './RichText'
+import type { DescriptionContext } from '../../richText/ai/simulatedAI'
 
 // The backend refuses, as it does once the person has asked too often (decision 153);
 // what the editor sent is kept, to check it.
 const sent: DescriptionContext[] = []
-vi.mock('./simulatedAI', () => ({
+vi.mock('../../richText/ai/simulatedAI', () => ({
   simulatedTransport: () => ({
     async sendMessages({ body }: { body: { ctx: DescriptionContext } }) {
       sent.push(body.ctx)
@@ -27,7 +27,7 @@ test('the AI gets the text and the selection as Markdown; a refusal is a notific
   const notify = vi.spyOn(notifications, 'notify')
   const text = 'Seals are checked **once a year**.'
   render(
-    <Description
+    <RichText
       value={text}
       editable
       storageKey="ai-refused"

@@ -1,0 +1,92 @@
+{
+  "bold": "Gras",
+  "italic": "Italique",
+  "heading": "Titre",
+  "list": "Liste",
+  "numbered": "Liste numérotée",
+  "todo": "Liste de tâches",
+  "toggle": "Bloc repliable",
+  "code": "Bloc de code",
+  "table": "Tableau",
+  "quote": "Citation",
+  "callout": "Encadré",
+  "language": "Langage",
+  "languageAuto": "Détecter",
+  "languagePlain": "Texte brut",
+  "drag": "Glisser pour déplacer",
+  "blocks": "Transformer en",
+  "link": "Lien",
+  "linkUrl": "Adresse du lien",
+  "linkAdd": "Ajouter",
+  "linkInvalid": "Cette adresse n’est pas un lien valide.",
+  "askAI": "Demander à l’IA",
+  "aiPrompt": "Que doit faire l’IA ?",
+  "aiPlaceholder": "Demandez ce que vous voulez ou choisissez une demande",
+  "aiProposal": "Proposition de l’IA",
+  "aiWriting": "Rédaction…",
+  "aiFailed": "L’IA n’a pas pu répondre.",
+  "aiLimit": "Vous avez sollicité l’IA trop souvent. Réessayez plus tard.",
+  "aiUnavailable": "L’IA n’est pas encore disponible.",
+  "aiAsk": "Demander : {{prompt}}",
+  "aiKeys": "Entrée pour accepter, Échap pour rejeter",
+  "noMatch": "Aucun résultat",
+  "prompts": {
+    "report": {
+      "label": "Rédiger en rapport d’intervention",
+      "prompt": "Réécris ceci en rapport d’intervention avec ces parties : contexte, travaux réalisés, constats, recommandations. Garde tous les faits, n’en invente aucun."
+    },
+    "summary": {
+      "label": "Synthèse pour un responsable",
+      "prompt": "Résume ceci en quelques puces pour un responsable : état, problèmes, prochaines étapes."
+    },
+    "actions": {
+      "label": "Lister les actions à mener",
+      "prompt": "Transforme ceci en liste d’actions à mener. Indique qui et quand seulement si le texte le dit."
+    },
+    "client": {
+      "label": "Rédiger un point pour le client",
+      "prompt": "Réécris ceci en un point court et courtois pour le client : ce qui a été fait, ce qui reste, et ce qui est attendu de lui."
+    },
+    "risks": {
+      "label": "Lister les risques et points de sécurité",
+      "prompt": "Liste les risques, blocages et points de sécurité que ce texte soulève, du plus grave au moins grave."
+    },
+    "improve": {
+      "label": "Améliorer la rédaction",
+      "prompt": "Réécris ceci de façon claire, précise et professionnelle, en gardant tous les faits."
+    },
+    "shorter": {
+      "label": "Raccourcir",
+      "prompt": "Rends ceci plus court et plus direct, en gardant tous les faits."
+    },
+    "spelling": {
+      "label": "Corriger l’orthographe et la grammaire",
+      "prompt": "Corrige seulement l’orthographe et la grammaire ; ne change rien d’autre."
+    }
+  },
+  "hide": "Masquer {{name}}",
+  "show": "Afficher {{name}}",
+  "ai": "Demander à l'IA",
+  "sectionAI": "IA",
+  "sectionBlocks": "Blocs de base",
+  "text": "Texte",
+  "heading1": "Titre 1",
+  "heading2": "Titre 2",
+  "heading3": "Titre 3",
+  "bulleted": "Liste à puces",
+  "keywords": {
+    "ai": "ia ai assistant écrire générer aide",
+    "text": "p paragraphe texte normal",
+    "heading1": "h1 # titre grand heading",
+    "heading2": "h2 ## sous-titre heading",
+    "heading3": "h3 ### petit titre heading",
+    "bulleted": "ul puces liste bullet -",
+    "numbered": "ol 1. numéros liste ordonnée numbered",
+    "todo": "todo tâches case à cocher checklist [] check",
+    "toggle": "details replier déplier toggle",
+    "code": "``` pre extrait programmation code",
+    "table": "grille lignes colonnes cellules table",
+    "quote": "> citation quote",
+    "callout": "note info astuce avertissement encadré callout"
+  }
+}

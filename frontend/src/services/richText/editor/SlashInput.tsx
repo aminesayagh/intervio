@@ -33,8 +33,8 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CommandMenu } from '../../../ui-kit'
-import { useOptionalAI } from './aiContext'
+import { CommandMenu } from '../../ui-kit'
+import { useOptionalAI } from '../ai/aiContext'
 import { TOGGLE } from './plugins'
 
 /** A block that turns a list's line takes it out of the list first. */
@@ -106,7 +106,7 @@ const AI = 'ai'
  * input removes the "/".
  */
 export function SlashInput(props: PlateElementProps) {
-  const { t } = useTranslation('collection')
+  const { t } = useTranslation('rich-text')
   const { editor, element } = props
   const ai = useOptionalAI()
   // Where the typed text goes back if the menu is left: just before the "/".
@@ -175,8 +175,8 @@ export function SlashInput(props: PlateElementProps) {
         /{value}
         <CommandMenu
           anchor={anchor}
-          label={t('description.blocks')}
-          empty={t('description.noMatch')}
+          label={t('blocks')}
+          empty={t('noMatch')}
           value={value}
           onChange={setValue}
           inputRef={inputRef}
@@ -187,17 +187,19 @@ export function SlashInput(props: PlateElementProps) {
               ? [
                   {
                     id: AI,
-                    label: t('description.ai'),
+                    label: t('ai'),
                     icon: <Sparkles size={14} />,
-                    section: t('description.sectionAI'),
+                    section: t('sectionAI'),
+                    keywords: t('keywords.ai'),
                   },
                 ]
               : []),
             ...blocks.map(([kind, Icon]) => ({
               id: kind,
-              label: t(`description.${kind}`),
+              label: t(`${kind}`),
               icon: <Icon size={14} />,
-              section: t('description.sectionBlocks'),
+              section: t('sectionBlocks'),
+              keywords: t(`keywords.${kind}`),
             })),
           ]}
           onAction={(id) => {

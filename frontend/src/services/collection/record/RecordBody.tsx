@@ -14,7 +14,7 @@ import { drill } from '../drill/viewStack'
 import { useOpenLinked } from './linked'
 import { listAddress } from '../address'
 import { recordScope } from '../data/recordActions'
-import { Description } from '../values/Description'
+import { RichText } from '../values/RichText'
 import { EditableCell } from '../values/EditableCell'
 import type { Id, ReportInvalid, SaveChange } from '../types'
 import { LinkOrAdd } from './LinkOrAdd'
@@ -107,7 +107,7 @@ export function RecordBody<T, C>({
 
         <Show when={panel.description}>
           {(description) => (
-            <Description
+            <RichText
               key={id}
               value={description.value(shown)}
               editable={canEdit(shown, 'description')}
@@ -127,7 +127,7 @@ export function RecordBody<T, C>({
           const field = property.field
           if (field?.type !== 'richText') return null
           return (
-            <Description
+            <RichText
               key={`${id}-${property.id}`}
               label={t(property.label)}
               value={field.value(shown)}

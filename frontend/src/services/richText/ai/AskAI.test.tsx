@@ -4,18 +4,12 @@ import { afterEach, expect, test, vi } from 'vitest'
 import '../../i18n'
 import '../index'
 import * as notifications from '../../notifications'
-import {
-  editorOf,
-  enter,
-  markdownOf,
-  selectAll,
-} from '../../richText/testing/plate'
-import { RichText } from './RichText'
+import { editorOf, enter, markdownOf, selectAll } from '../testing/plate'
+import { TestEditor } from '../testing/TestEditor'
 
 // The stand-in sample answer is made unreadable, to see accepting it fail.
-vi.mock('../../richText/editor/plugins', async (original) => {
-  const plugins =
-    await original<typeof import('../../richText/editor/plugins')>()
+vi.mock('../editor/plugins', async (original) => {
+  const plugins = await original<typeof import('../editor/plugins')>()
   return {
     ...plugins,
     parseMarkdown: (...args: Parameters<typeof plugins.parseMarkdown>) =>
@@ -30,16 +24,8 @@ afterEach(cleanup)
 const TEXT = 'Seals are checked once a year. Bearings are greased every month.'
 
 async function askShorter() {
-  const save = vi.fn(async () => {})
-  render(
-    <RichText
-      value={TEXT}
-      editable
-      storageKey="ai"
-      scope="test:record:1"
-      save={save}
-    />,
-  )
+  const save = vi.fn()
+  render(<TestEditor value={TEXT} onChange={save} />)
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
   await selectAll(field)
@@ -65,14 +51,13 @@ async function askShorter() {
   return { field, proposal, save }
 }
 
-test('Enter puts the AI proposal in place of the selection, then saves it', async () => {
+test('Enter puts the AI proposal in place of the selection, as a change', async () => {
   const { field, save } = await askShorter()
   await userEvent.keyboard('{Enter}')
   expect(markdownOf(field)).toBe('Seals are checked once a year.')
   expect(screen.queryByRole('group', { name: 'AI proposal' })).toBeNull()
-  await vi.waitFor(
-    () => expect(save).toHaveBeenCalledWith('Seals are checked once a year.'),
-    { timeout: 3000 },
+  await vi.waitFor(() =>
+    expect(save).toHaveBeenCalledWith('Seals are checked once a year.'),
   )
 })
 
@@ -81,7 +66,6 @@ test('Escape drops the AI proposal and leaves the text as it was', async () => {
   await userEvent.keyboard('{Escape}')
   expect(screen.queryByRole('group', { name: 'AI proposal' })).toBeNull()
   expect(markdownOf(field)).toBe(TEXT)
-  await new Promise((done) => setTimeout(done, 1200))
   expect(save).not.toHaveBeenCalled()
 })
 
@@ -102,15 +86,7 @@ async function ask(prompt: string) {
 }
 
 test('Enter replaces the text asked about, even after edits above it', async () => {
-  render(
-    <RichText
-      value={`Intro.\n\n${TEXT}`}
-      editable
-      storageKey="ai-moved"
-      scope="test"
-      save={async () => {}}
-    />,
-  )
+  render(<TestEditor value={`Intro.\n\n${TEXT}`} />)
   const field = screen.getByRole('textbox', { name: 'Description' })
   const editor = editorOf(field)
   await enter(field)
@@ -136,15 +112,7 @@ test('Enter replaces the text asked about, even after edits above it', async () 
 
 test('a proposal the editor cannot read is reported, not applied', async () => {
   const notify = vi.spyOn(notifications, 'notify')
-  render(
-    <RichText
-      value={TEXT}
-      editable
-      storageKey="ai-unreadable"
-      scope="test:record:1"
-      save={async () => {}}
-    />,
-  )
+  render(<TestEditor value={TEXT} />)
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
   await selectAll(field)

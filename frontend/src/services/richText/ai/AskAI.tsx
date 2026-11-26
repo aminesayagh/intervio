@@ -37,18 +37,14 @@ import {
   parseMarkdown,
   serializeMarkdown,
 } from '../editor/plugins'
-import { simulatedTransport, type DescriptionContext } from './simulatedAI'
-import { AIContext, type AI } from './aiContext'
+import { AIContext, type AI, type DescriptionContext } from './aiContext'
 
-// The backend's AI (decision 153); the tests answer in the browser instead.
-const defaultTransport: ChatTransport<UIMessage> =
-  import.meta.env.MODE === 'test'
-    ? simulatedTransport()
-    : new DefaultChatTransport({
-        api: '/api/ai/description',
-        headers: csrfHeaders,
-        credentials: 'same-origin',
-      })
+// The backend's AI (decision 153); the tests give a simulated one (testing/simulatedAI).
+const defaultTransport: ChatTransport<UIMessage> = new DefaultChatTransport({
+  api: '/api/ai/description',
+  headers: csrfHeaders,
+  credentials: 'same-origin',
+})
 
 /** The message for what the backend answered ({"code": …} or an error chunk's code). */
 function failure(error: Error) {

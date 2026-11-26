@@ -1,40 +1,31 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
+import type { ChatTransport, UIMessage } from 'ai'
 import '../../i18n'
 import '../index'
 import * as notifications from '../../notifications'
-import { enter, markdownOf, selectAll } from '../../richText/testing/plate'
-import { RichText } from './RichText'
-import type { DescriptionContext } from '../../richText/ai/simulatedAI'
+import { enter, markdownOf, selectAll } from '../testing/plate'
+import { TestEditor } from '../testing/TestEditor'
+import type { DescriptionContext } from './aiContext'
 
 // The backend refuses, as it does once the person has asked too often (decision 153);
 // what the editor sent is kept, to check it.
 const sent: DescriptionContext[] = []
-vi.mock('../../richText/ai/simulatedAI', () => ({
-  simulatedTransport: () => ({
-    async sendMessages({ body }: { body: { ctx: DescriptionContext } }) {
-      sent.push(body.ctx)
-      throw new Error('{"code":"ERROR_AI_LIMIT"}')
-    },
-    reconnectToStream: async () => null,
-  }),
-}))
+const refusing = {
+  async sendMessages({ body }: { body?: object }) {
+    sent.push((body as { ctx: DescriptionContext }).ctx)
+    throw new Error('{"code":"ERROR_AI_LIMIT"}')
+  },
+  reconnectToStream: async () => null,
+} as ChatTransport<UIMessage>
 
 afterEach(cleanup)
 
 test('the AI gets the text and the selection as Markdown; a refusal is a notification', async () => {
   const notify = vi.spyOn(notifications, 'notify')
   const text = 'Seals are checked **once a year**.'
-  render(
-    <RichText
-      value={text}
-      editable
-      storageKey="ai-refused"
-      scope="test:record:1"
-      save={async () => {}}
-    />,
-  )
+  render(<TestEditor value={text} transport={refusing} />)
   const field = screen.getByRole('textbox', { name: 'Description' })
   await enter(field)
   await selectAll(field)

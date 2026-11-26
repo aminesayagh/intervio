@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { FilterGroup } from './listing/rules'
 import type { DataSource, Id, Sort, SortDirection } from './types'
 
 /** One table column (spec 4). Its label is a translation key in the collection's namespace. */
@@ -302,6 +303,34 @@ export type FilterDefinition = {
 }
 
 /**
+ * A configured view (decisions 166, 168): a type of view and the query it opens on,
+ * set by the app, the same for everyone. Without views a collection gets one table
+ * with no filters (`viewsOf`).
+ */
+export type ViewDefinition = {
+  /** In the address (?view={id}) and remembered by the browser; never shown. */
+  id: string
+  /** A translation key (the collection's namespace, then `collection`) or plain text. */
+  name: string
+  /** Its place among the views; without it, its place in the configuration. The first is the default. */
+  order?: number
+  /** Plain rules, as in the address: `{ status: ['open'], 'quantity.gt': ['5'] }`. */
+  filters?: Record<string, string[]>
+  /** Composed rules ("or", groups: decision 161). */
+  where?: FilterGroup
+  /** Its sort levels; none for the collection's default order. */
+  sort?: Sort[]
+  /** Whether the person may change its filters (default true); the search always stays. */
+  filtersEditable?: boolean
+  /** Whether the person may change its sort (default true). */
+  sortEditable?: boolean
+} & {
+  type: 'table'
+  /** The columns shown, in this order (by id); all of them by default. */
+  columns?: string[]
+}
+
+/**
  * Everything specific to one kind of record (spec 4). The wrapper knows nothing else
  * about it. Later steps add the panel, rights, filters and creation.
  */
@@ -345,6 +374,8 @@ export type CollectionDefinition<T, C = void> = {
    * for a record that opens in the panel as usual.
    */
   opensAsPage?: (record: T, context: C) => string | null
+  /** Its views (decision 168), shown as tabs; without them, one table of every record. */
+  views?: ViewDefinition[]
   /** Set when a record opens in the panel beside the list. */
   panel?: PanelDefinition<T>
   /**

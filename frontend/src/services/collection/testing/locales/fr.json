@@ -34,7 +34,6 @@
     "nameRequired": "Le nom ne peut pas être vide."
   },
   "type": "Élément",
-  "updatedOn": "Mis à jour le {{date}}",
   "linked": "Éléments liés",
   "actions": {
     "archive": "Archiver",

@@ -32,32 +32,6 @@
   "description": {
     "label": "Description",
     "add": "Add a description",
-    "bold": "Bold",
-    "italic": "Italic",
-    "heading": "Heading",
-    "list": "List",
-    "numbered": "Numbered list",
-    "todo": "To-do list",
-    "toggle": "Toggle",
-    "code": "Code block",
-    "table": "Table",
-    "quote": "Blockquote",
-    "callout": "Callout",
-    "language": "Language",
-    "languageAuto": "Detect",
-    "languagePlain": "Plain text",
-    "drag": "Drag to move",
-    "blocks": "Turn into",
-    "link": "Link",
-    "linkUrl": "Link address",
-    "linkAdd": "Add",
-    "linkInvalid": "This address is not a valid link.",
-    "askAI": "Ask AI",
-    "aiPrompt": "What should the AI do?",
-    "aiPlaceholder": "Ask anything or pick a request",
-    "aiProposal": "AI proposal",
-    "aiWriting": "Writing…",
-    "aiFailed": "The AI couldn't answer.",
     "unreadable": "This description can't be opened in the editor.",
     "unwritable": "Your last change couldn't be turned into Markdown, so it isn't saved.",
     "saving": "Saving…",
@@ -67,55 +41,8 @@
     "unsavedText": "Your last changes to the description are not saved. They stay in this tab until you come back.",
     "leave": "Leave anyway",
     "keepEditing": "Keep editing",
-    "aiLimit": "You've asked the AI too often. Try again later.",
-    "aiUnavailable": "The AI isn't available yet.",
-    "aiAsk": "Ask: {{prompt}}",
-    "aiKeys": "Enter to accept, Escape to discard",
-    "noMatch": "No match",
-    "prompts": {
-      "report": {
-        "label": "Write as an intervention report",
-        "prompt": "Rewrite this as an intervention report with these parts: context, work done, findings, recommendations. Keep every fact; invent none."
-      },
-      "summary": {
-        "label": "Summary for a manager",
-        "prompt": "Summarize this in a few bullet points for a manager: status, problems, next steps."
-      },
-      "actions": {
-        "label": "List the action items",
-        "prompt": "Turn this into a list of action items. Give who and when only where the text says it."
-      },
-      "client": {
-        "label": "Write a client update",
-        "prompt": "Rewrite this as a short, courteous update for the client: what was done, what remains, and what is expected from them."
-      },
-      "risks": {
-        "label": "List risks and safety points",
-        "prompt": "List the risks, blockers and safety points this text raises, most serious first."
-      },
-      "improve": {
-        "label": "Improve the wording",
-        "prompt": "Rewrite this to be clear, precise and professional, keeping every fact."
-      },
-      "shorter": {
-        "label": "Make it shorter",
-        "prompt": "Make this shorter and more direct, keeping every fact."
-      },
-      "spelling": {
-        "label": "Fix spelling and grammar",
-        "prompt": "Fix the spelling and grammar only; change nothing else."
-      }
-    },
     "hide": "Hide {{name}}",
-    "show": "Show {{name}}",
-    "ai": "Ask AI",
-    "sectionAI": "AI",
-    "sectionBlocks": "Basic blocks",
-    "text": "Text",
-    "heading1": "Heading 1",
-    "heading2": "Heading 2",
-    "heading3": "Heading 3",
-    "bulleted": "Bulleted list"
+    "show": "Show {{name}}"
   },
   "actions": {
     "more": "More actions",

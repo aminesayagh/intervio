@@ -1,12 +1,12 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
-import '../../../i18n'
-import * as notifications from '../../../notifications'
-import { Description } from '../Description'
+import '../../i18n'
+import * as notifications from '../../notifications'
+import { RichText } from './RichText'
 
 // Plate's Markdown reader accepts any text met so far, so its failure is simulated.
-vi.mock('./plugins', async (original) => ({
-  ...(await original<typeof import('./plugins')>()),
+vi.mock('../../richText/editor/plugins', async (original) => ({
+  ...(await original<typeof import('../../richText/editor/plugins')>()),
   parseMarkdown: () => ({ ok: false, error: new Error('unreadable') }),
 }))
 
@@ -16,7 +16,7 @@ test('a text the editor cannot read is shown as it is, read-only, said once, and
   const notify = vi.spyOn(notifications, 'notify')
   const save = vi.fn(async () => {})
   render(
-    <Description
+    <RichText
       value={'## Odd **text**'}
       editable
       storageKey="unreadable"

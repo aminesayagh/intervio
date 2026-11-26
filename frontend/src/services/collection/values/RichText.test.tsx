@@ -1,95 +1,245 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeAll, expect, test } from 'vitest'
+import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../i18n'
 import { Collection } from '../Collection'
+import { RichText } from './RichText'
 import { itemSource, makeItems } from '../testing/items'
-import { clearEditor, enter, selectAll, typeIn } from '../testing/plate'
+import {
+  clearEditor,
+  enter,
+  markdownOf,
+  replaceText,
+  selectAll,
+  typeIn,
+} from '../../richText/testing/plate'
 import { stubElementSizes } from '../testing/layout'
 import { renderAt } from '../testing/render'
 import { itemDefinition } from '../testing/testDefinition'
-import { firstLine } from './markdown'
 
-// A wide list, so the Notes column fits in the table.
-beforeAll(() => stubElementSizes({ width: 4000, height: 400, itemHeight: 152 }))
+beforeAll(() => stubElementSizes({ width: 1128, height: 400, itemHeight: 152 }))
 afterEach(cleanup)
 
-function show(rights?: Parameters<typeof itemDefinition>[2]) {
-  const source = itemSource(makeItems(5))
-  renderAt(
-    '/items',
-    <Collection definition={itemDefinition(source, 'test-items', rights)} />,
+test('read-only, it is shown formatted, raw HTML is not rendered, and links open in a new tab', () => {
+  const { container } = render(
+    <RichText
+      value={
+        '**Bold** <b>raw</b>\n\n- one\n- two\n\n[site](https://example.com)'
+      }
+      editable={false}
+      storageKey="test"
+      scope="test"
+      save={async () => {}}
+    />,
   )
-  return source
-}
-
-test('the table shows the first line, and clicking it opens the record', async () => {
-  show()
-  const table = await screen.findByRole('grid')
-  const first = within(
-    table.querySelectorAll('[role="row"][data-key]')[1] as HTMLElement,
-  )
-  // "## Inspection" without its heading mark.
-  await userEvent.click(first.getByText('Inspection'))
-  expect(
-    await screen.findByRole('complementary', { name: 'Item 002' }),
-  ).toBeInTheDocument()
+  expect(container.querySelector('strong')).toHaveTextContent('Bold')
+  expect(container.querySelector('b')).toBeNull()
+  expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  const link = screen.getByRole('link', { name: 'site' })
+  expect(link).toHaveAttribute('target', '_blank')
+  expect(link).toHaveAttribute('rel', 'noopener noreferrer')
 })
 
-test('the panel edits it like the description, and it saves by itself', async () => {
-  const source = show()
+async function openRecord(source = itemSource(makeItems(3))) {
+  renderAt('/items', <Collection definition={itemDefinition(source)} />)
   await userEvent.click(
-    await screen.findByRole('button', { name: 'Open Item 003' }),
+    await screen.findByRole('button', { name: 'Open Item 001' }),
   )
-  const aside = await screen.findByRole('complementary', { name: 'Item 003' })
-  const field = await within(aside).findByRole('textbox', { name: 'Notes' })
+  const aside = await screen.findByRole('complementary', { name: 'Item 001' })
+  // The description is in its editor from the start: nothing to click into.
+  const field = await within(aside).findByRole('textbox', {
+    name: 'Description',
+  })
+  return { source, aside, field }
+}
+
+test('opening and leaving never saves, even text Plate writes its own way', async () => {
+  // Plate writes "*" bullets as "-" and "*soft*" as "_soft_": not an edit.
+  const items = makeItems(3)
+  items[0].description = '* Seals\n* Bearings\n\nKeep it *soft*'
+  const source = itemSource(items)
+  const update = vi.spyOn(source, 'update')
+  const { field } = await openRecord(source)
+  await enter(field)
+  fireEvent.keyDown(field, { key: 'Escape' })
+  fireEvent.focusOut(field)
+  await new Promise((done) => setTimeout(done, 1200))
+  expect(update).not.toHaveBeenCalled()
+  expect(source.items()[0].description).toBe(
+    '* Seals\n* Bearings\n\nKeep it *soft*',
+  )
+})
+
+test('the description saves by itself, says Saved, and Escape leaves the text', async () => {
+  const { source, aside, field } = await openRecord()
   await enter(field)
   await clearEditor(field)
-  await typeIn(field, 'greased')
+  await typeIn(field, 'checked')
   await selectAll(field)
   await userEvent.click(
     within(screen.getByRole('toolbar')).getByRole('button', { name: 'Bold' }),
   )
-  await waitFor(() => expect(source.items()[2].notes).toBe('**greased**'), {
-    timeout: 3000,
-  })
+  await vi.waitFor(
+    () => expect(source.items()[0].description).toBe('**checked**'),
+    { timeout: 3000 },
+  )
+  expect(within(field).getByText('checked').closest('strong')).not.toBeNull()
+
+  fireEvent.keyDown(field, { key: 'Escape' })
+  expect(document.activeElement).toBe(
+    within(aside).getByRole('region', { name: 'Description' }),
+  )
 })
 
-test('without the right, it shows formatted and cannot be edited', async () => {
-  show(() => ({ edit: [] }))
+test('a failed save says Not saved, keeps the text, and Retry saves it', async () => {
+  const { source, aside, field } = await openRecord()
+  source.settings.failing = true
+  await typeIn(field, ' more')
+  expect(
+    await within(aside).findByText('Not saved', undefined, { timeout: 3000 }),
+  ).toBeInTheDocument()
+  expect(markdownOf(field)).toBe(`${makeItems(1)[0].description} more`)
+
+  source.settings.failing = false
+  await userEvent.click(within(aside).getByRole('button', { name: 'Retry' }))
+  await vi.waitFor(() =>
+    expect(source.items()[0].description).toBe(
+      `${makeItems(1)[0].description} more`,
+    ),
+  )
+  expect(within(aside).queryByText('Not saved')).toBeNull()
+})
+
+test('it is edited in place, the tools float over a selection, and Bold wraps it', async () => {
+  const { aside, field } = await openRecord()
+  expect(field).toHaveAttribute('contenteditable', 'true')
+  expect(within(aside).queryByRole('tab')).toBeNull()
+  expect(within(aside).queryByRole('button', { name: 'Bold' })).toBeNull()
+
+  await enter(field)
+  await clearEditor(field)
+  await typeIn(field, 'pump')
+  // No tools with the cursor alone: they come over the selected text.
+  expect(screen.queryByRole('button', { name: 'Bold' })).toBeNull()
+  await selectAll(field)
+  await userEvent.click(
+    within(screen.getByRole('toolbar')).getByRole('button', { name: 'Bold' }),
+  )
+  expect(markdownOf(field)).toBe('**pump**')
+  expect(within(field).getByText('pump').closest('strong')).not.toBeNull()
+})
+
+test('a description over 20,000 characters is refused, and not saved', async () => {
+  const { source, aside, field } = await openRecord()
+  await replaceText(field, 'x'.repeat(20_001))
+  expect(
+    within(aside).getByText(
+      'This description is too long: 20,000 characters at most.',
+    ),
+  ).toBeInTheDocument()
+  await new Promise((done) => setTimeout(done, 1200))
+  expect(source.items()[0].description).toBe(makeItems(1)[0].description)
+})
+
+test('without the right, the same editor is read-only', async () => {
+  const source = itemSource(makeItems(3))
+  renderAt(
+    '/items',
+    <Collection
+      definition={itemDefinition(source, 'test-items', () => ({ edit: [] }))}
+    />,
+  )
   await userEvent.click(
     await screen.findByRole('button', { name: 'Open Item 001' }),
   )
   const aside = await screen.findByRole('complementary', { name: 'Item 001' })
   // Read-only, Slate gives the text no textbox role: it is found as the editor.
   const field = within(
-    within(aside).getByRole('region', { name: 'Notes' }),
-  ).getByLabelText('Notes')
-  expect(within(field).getByText('replaced').closest('strong')).not.toBeNull()
+    within(aside).getByRole('region', { name: 'Description' }),
+  ).getByLabelText('Description')
   expect(field).toHaveAttribute('contenteditable', 'false')
+  expect(within(field).getByText('Item 001').closest('strong')).not.toBeNull()
+  await enter(field)
+  expect(within(aside).queryByRole('button', { name: 'Bold' })).toBeNull()
 })
 
-test('closing with notes not saved yet asks first', async () => {
-  show()
+test('empty, it invites a description when editable, and shows nothing when not', () => {
+  const props = { value: '', storageKey: 'x', scope: 'x', save: async () => {} }
+  const { unmount } = render(<RichText {...props} editable />)
+  expect(screen.getByRole('textbox', { name: 'Description' })).toHaveAttribute(
+    'aria-placeholder',
+    'Add a description',
+  )
+  unmount()
+  const { container } = render(<RichText {...props} editable={false} />)
+  expect(container).toBeEmptyDOMElement()
+})
+
+test('a draft kept in the tab is saved when the description opens again', async () => {
+  sessionStorage.setItem('draft-key', 'Seals **checked**')
+  const save = vi.fn(async () => {})
+  render(
+    <RichText
+      value="Seals"
+      editable
+      storageKey="draft-key"
+      scope="test"
+      save={save}
+    />,
+  )
+  await vi.waitFor(
+    () => expect(save).toHaveBeenCalledWith('Seals **checked**'),
+    { timeout: 3000 },
+  )
+  expect(sessionStorage.getItem('draft-key')).toBeNull()
+})
+
+test('a newer text from the record replaces the one shown, unless the person is in it', async () => {
+  const props = {
+    editable: true,
+    storageKey: 'newer',
+    scope: 'test',
+    save: async () => {},
+  }
+  const { rerender } = render(<RichText {...props} value="Seals" />)
+  rerender(<RichText {...props} value="Seals and bearings" />)
+  expect(markdownOf(screen.getByRole('textbox', { name: 'Description' }))).toBe(
+    'Seals and bearings',
+  )
+
+  await enter(screen.getByRole('textbox', { name: 'Description' }))
+  rerender(<RichText {...props} value="Something else" />)
+  expect(markdownOf(screen.getByRole('textbox', { name: 'Description' }))).toBe(
+    'Seals and bearings',
+  )
+})
+
+test('the triangle before its title folds the text away and shows it again', async () => {
+  render(
+    <RichText
+      value="Seals **checked**"
+      editable
+      storageKey="fold"
+      scope="test"
+      save={async () => {}}
+    />,
+  )
   await userEvent.click(
-    await screen.findByRole('button', { name: 'Open Item 002' }),
+    screen.getByRole('button', { name: 'Hide Description' }),
   )
-  const aside = await screen.findByRole('complementary', { name: 'Item 002' })
-  sessionStorage.setItem(
-    `intervio.collection.test-items.${makeItems(2)[1].id}.notes`,
-    'draft',
+  await waitFor(() =>
+    expect(screen.queryByRole('textbox', { name: 'Description' })).toBeNull(),
   )
-  await userEvent.click(within(aside).getByRole('button', { name: 'Close' }))
-  expect(
-    await screen.findByRole('alertdialog', { name: 'Leave without saving?' }),
-  ).toBeInTheDocument()
-})
-
-test('the first line drops the Markdown marks', () => {
-  expect(firstLine('## Inspection\n\nmore')).toBe('Inspection')
-  expect(firstLine('\n- [x] **Seals** [checked](https://x.io) `now`')).toBe(
-    'Seals checked now',
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Show Description' }),
   )
-  expect(firstLine('> quoted _text_')).toBe('quoted text')
-  expect(firstLine('')).toBe('')
+  const field = await screen.findByRole('textbox', { name: 'Description' })
+  expect(markdownOf(field)).toBe('Seals **checked**')
 })

@@ -42,6 +42,7 @@ import { NewRecord } from './create/NewRecord'
 import { PanelDivider } from './layout/PanelDivider'
 import { RecordPanel } from './record/RecordPanel'
 import { newRecordKey } from './record/recordQuery'
+import type { ViewProps } from './views/viewProps'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
 import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
@@ -525,6 +526,22 @@ export function Collection<T, C = void>({
     () => (selectable ? { keys: selected, onChange: select } : undefined),
     [selectable, selected, select],
   )
+  // What every type of view gets (MOH-21): the table on wide screens, the rows on narrow ones.
+  const layoutProps: ViewProps<T, C> = {
+    definition,
+    items: shownItems,
+    label: t(definition.i18n.title),
+    scrollRef,
+    more,
+    sort: listing.sort,
+    onSort: state.setSort,
+    save,
+    report,
+    canEdit,
+    onOpen: definition.panel ? open : undefined,
+    selection,
+    store: marksStore,
+  }
   // The open record's row stays in view (after ↑ / ↓, or a link).
   useEffect(() => {
     if (!openId) return
@@ -687,31 +704,10 @@ export function Collection<T, C = void>({
               </div>
             </Match>
             <Match when={list.items.length > 0 && narrowScreen}>
-              <RecordRows
-                definition={definition}
-                items={shownItems}
-                label={t(definition.i18n.title)}
-                scrollRef={scrollRef}
-                more={more}
-                onOpen={definition.panel ? open : undefined}
-              />
+              <RecordRows {...layoutProps} />
             </Match>
             <Match when={list.items.length > 0}>
-              <RecordTable
-                definition={definition}
-                items={shownItems}
-                label={t(definition.i18n.title)}
-                scrollRef={scrollRef}
-                more={more}
-                sort={listing.sort}
-                onSort={state.setSort}
-                save={save}
-                report={report}
-                canEdit={canEdit}
-                onOpen={definition.panel ? open : undefined}
-                selection={selection}
-                store={marksStore}
-              />
+              <RecordTable {...layoutProps} />
             </Match>
           </Switch>
           <Show when={list.isFetchNextPageError && !list.isFetchingNextPage}>

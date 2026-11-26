@@ -3,7 +3,7 @@ import type { Part } from './parts'
 import { ChipList } from '..'
 import type { Item } from './items'
 
-/** Small pieces the test collection's cards and cells are made of. */
+/** Small pieces the test collection's cells are made of. */
 export function StatusChip({ status }: { status: Item['status'] }) {
   const { t } = useTranslation('test-items')
   const look =

@@ -47,6 +47,7 @@ export function CalendarView<T, C>({
   date,
   end,
   card = [],
+  narrow = false,
 }: Pick<
   ViewProps<T, C>,
   | 'definition'
@@ -57,7 +58,13 @@ export function CalendarView<T, C>({
   | 'save'
   | 'canEdit'
   | 'onCreate'
-> & { date: string; end?: string; card?: string[] }) {
+> & {
+  date: string
+  end?: string
+  card?: string[]
+  /** A phone (MAS-56): no dragging; the calendar button changes the dates. */
+  narrow?: boolean
+}) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const [range, setRange] = useState<{ start: string; end: string } | null>(
     null,
@@ -117,7 +124,8 @@ export function CalendarView<T, C>({
             title: name(record),
             start,
             end: ends?.value(record),
-            movable: movable(record),
+            // On a phone a drag fights the page's scrolling: the button moves it.
+            movable: !narrow && movable(record),
             resizable: !!ends,
           },
         ]

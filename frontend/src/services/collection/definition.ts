@@ -366,6 +366,15 @@ export type CollectionDefinition<T, C = void> = {
 }
 
 /** The collection's list address in a context (`basePath`): /{key} by default. */
+/**
+ * One mounted collection's name for what the tab keeps (the new record's draft, the
+ * scroll position): the collection and its parent context, so the same collection
+ * under two parents keeps them apart (#66). Without a context it is the collection's
+ * key, as before. (The selection needs none: a new parent's records replace it.)
+ */
+export const stateKeyOf = (key: string, context: unknown) =>
+  context == null ? key : `${key}:${JSON.stringify(context)}`
+
 export function listPathOf<C>(
   definition: { key: string; basePath?: string | ((context: C) => string) },
   context: C,

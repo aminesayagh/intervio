@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '../../i18n'
 import { Collection } from '../Collection'
+import { checkDefinition, checkSource } from '../testing/checks'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
 import { renderAt } from '../testing/render'
@@ -152,4 +153,47 @@ test('without a way to remove records, "Record created" offers no Undo', async (
     0,
   )
   expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull()
+})
+
+test('a draft left under one parent is not shown under another (#66)', async () => {
+  const A = '00000000-0000-7000-8000-000000000001'
+  const B = '00000000-0000-7000-8000-000000000002'
+  const base = checkDefinition(checkSource())
+  // Never ready, so what is typed stays a draft in the tab.
+  const definition = {
+    ...base,
+    create: { ...base.create!, ready: () => false },
+  }
+  const showUnder = (item: string) =>
+    renderAt(
+      `/items/${item}/checks?new=1`,
+      <Collection definition={definition} context={{ item }} />,
+      saved(),
+    )
+  const saved = () =>
+    Object.fromEntries(
+      Object.keys(sessionStorage).map((n) => [n, sessionStorage.getItem(n)!]),
+    )
+
+  showUnder(A)
+  const name = within(
+    await screen.findByRole('complementary', { name: '+ Add check' }),
+  ).getByRole('textbox', { name: 'Title' })
+  await userEvent.type(name, 'Seals of A{Enter}')
+  cleanup()
+
+  showUnder(B)
+  const other = within(
+    await screen.findByRole('complementary', { name: '+ Add check' }),
+  ).getByRole('textbox', { name: 'Title' })
+  expect(other).toHaveValue('')
+  cleanup()
+
+  // Back under A, its draft is still there.
+  showUnder(A)
+  expect(
+    within(
+      await screen.findByRole('complementary', { name: '+ Add check' }),
+    ).getByRole('textbox', { name: 'Title' }),
+  ).toHaveValue('Seals of A')
 })

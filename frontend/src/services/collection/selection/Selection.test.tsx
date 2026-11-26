@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '../../i18n'
 import { Collection } from '../Collection'
+import { useState } from 'react'
+import { checkDefinition, checkSource } from '../testing/checks'
 import { itemSource, makeItems } from '../testing/items'
 import { stubElementSizes } from '../testing/layout'
 import { reachRow } from '../testing/panel'
@@ -161,6 +163,46 @@ test('a new search clears the selection', async () => {
   await select('Item 002')
   act(() => window.history.pushState(null, '', '/items?q=Item'))
   act(() => window.dispatchEvent(new PopStateEvent('popstate')))
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('toolbar', { name: 'Selected records' }),
+    ).not.toBeInTheDocument(),
+  )
+})
+
+test('the selection under one parent is dropped when the collection moves to another (#66)', async () => {
+  const A = '00000000-0000-7000-8000-000000000001'
+  const B = '00000000-0000-7000-8000-000000000002'
+  const base = checkDefinition(checkSource())
+  const definition: typeof base = {
+    ...base,
+    rights: () => ({ edit: ['name', 'title'], actions: ['archive'] }),
+    actions: [
+      {
+        id: 'archive',
+        label: 'type',
+        confirm: { title: 'type', text: 'type', button: 'type' },
+      },
+    ],
+  }
+  // The same mounted collection, its parent changed (no remount).
+  function Switching() {
+    const [item, setItem] = useState(A)
+    return (
+      <>
+        <button type="button" onClick={() => setItem(B)}>
+          To B
+        </button>
+        <Collection definition={definition} context={{ item }} />
+      </>
+    )
+  }
+  renderAt(`/items/${A}/checks`, <Switching />)
+  await select('Check 1, Item 001')
+  expect(toolbar()).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'To B' }))
+  await screen.findByDisplayValue('Check 1, Item 002')
   await waitFor(() =>
     expect(
       screen.queryByRole('toolbar', { name: 'Selected records' }),

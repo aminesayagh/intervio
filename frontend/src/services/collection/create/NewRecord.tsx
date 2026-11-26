@@ -4,7 +4,6 @@ import { Show } from '../../ui-kit'
 import type { CollectionDefinition, PanelDefinition } from '../definition'
 import { EditableCell } from '../values/EditableCell'
 import { PanelClose } from '../parts'
-import { newRecordKey } from '../record/recordQuery'
 import { dismissScope, notify } from '../../notifications'
 import { ValueField } from '../values/ValueField'
 
@@ -37,6 +36,7 @@ export function NewRecord<T, C>({
   onCreated,
   onClose,
   back,
+  draftKey: storageKey,
 }: {
   definition: CollectionDefinition<T, C>
   panel: PanelDefinition<T>
@@ -50,9 +50,10 @@ export function NewRecord<T, C>({
   onClose: () => void
   /** Narrow screens: the collection's name, for the way back. */
   back?: string
+  /** Where the tab keeps the draft: one per collection and parent (#66). */
+  draftKey: string
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
-  const storageKey = newRecordKey(definition.key)
   const [draft, setDraft] = useState<Partial<T>>(() => ({
     ...defaults,
     ...read<T>(storageKey),

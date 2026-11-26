@@ -35,7 +35,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { CommandMenu } from '../../ui-kit'
 import { useOptionalAI } from '../ai/aiContext'
-import { TOGGLE } from './plugins'
+import { TOGGLE } from './blocks'
 
 /** A block that turns a list's line takes it out of the list first. */
 const outOfList =

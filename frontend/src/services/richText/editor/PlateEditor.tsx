@@ -12,7 +12,8 @@ import {
   type ReactNode,
 } from 'react'
 import { cn } from '../../ui-kit'
-import { richTextPlugins, parseMarkdown, serializeMarkdown } from './plugins'
+import { parseMarkdown, serializeMarkdown } from './markdown'
+import { richTextPlugins } from './plugins'
 
 /** Why the editor can't go on: the text couldn't be read, or written back. */
 export type MarkdownFailure = 'parse' | 'serialize'

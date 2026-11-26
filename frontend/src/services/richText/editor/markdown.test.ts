@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { markdownEditor, toMarkdown } from './plugins'
+import { markdownEditor, toMarkdown } from './markdown'
 
 test.each([
   ['bold', 'Seals **checked**'],

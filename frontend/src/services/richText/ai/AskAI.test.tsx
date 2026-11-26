@@ -8,8 +8,8 @@ import { editorOf, enter, markdownOf, selectAll } from '../testing/plate'
 import { TestEditor } from '../testing/TestEditor'
 
 // The stand-in sample answer is made unreadable, to see accepting it fail.
-vi.mock('../editor/plugins', async (original) => {
-  const plugins = await original<typeof import('../editor/plugins')>()
+vi.mock('../editor/markdown', async (original) => {
+  const plugins = await original<typeof import('../editor/markdown')>()
   return {
     ...plugins,
     parseMarkdown: (...args: Parameters<typeof plugins.parseMarkdown>) =>

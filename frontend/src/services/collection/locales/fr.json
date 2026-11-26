@@ -231,16 +231,15 @@
     "none": "Aucun filtre : tous les éléments s’affichent.",
     "add": "Ajouter un filtre",
     "where": "Où",
-    "and": "et",
-    "or": "ou",
+    "and": "Et",
+    "or": "Ou",
     "join": "Joindre les règles par",
     "addGroup": "Ajouter un groupe de filtres",
     "removeGroup": "Retirer le groupe",
     "field": "Champ",
     "operator": "Condition",
     "choose": "Choisir…",
-    "value": "Valeur",
-    "remove": "Retirer le filtre sur {{name}}",
+    "value": "Saisir une valeur…",
     "yes": "Oui",
     "no": "Non",
     "op": {
@@ -254,7 +253,13 @@
         "gt": "après",
         "lt": "avant"
       }
-    }
+    },
+    "addMenu": "Ajouter",
+    "actions": "Actions du filtre",
+    "duplicate": "Dupliquer",
+    "ungroup": "Dégrouper",
+    "wrap": "Mettre dans un groupe de filtres",
+    "removeRule": "Retirer le filtre"
   },
   "sort": {
     "title": "Trier",

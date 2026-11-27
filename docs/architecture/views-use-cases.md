@@ -58,7 +58,7 @@ Records placed on a calendar by a date field (MAS-50). FullCalendar draws the gr
 - **CA3. Only the range on screen loads.** The calendar asks for the view's query plus "after" and "before" the range shown, and loads again as the person moves.
 - **CA4. Open a record.** Clicking a record opens it in the panel, as a table row does.
 - **CA5. Move a record.** Dragging a record to another day, or stretching it when the view has an end date, changes its dates through the normal save (notifications, the server's check). It moves at once and goes back if the save fails. A record the person can't edit can't be moved. Each record the person can edit also has a small calendar button ("Change the date of …") that opens its date fields with the date picker: the way from the keyboard, and on phones (MAS-53). A single action, so a button rather than a menu of one item.
-- **CA6. A new record on a day.** Clicking an empty day starts a new record with that date (C9).
+- **CA6. A new record on a day.** Clicking an empty day starts a new record with that date, and the end date too when the view has one (C9, MAS-54). Only where the person may create records; the "New" button stays the way from the keyboard.
 - **CA7. Records without a date** don't show on the calendar. The toolbar says how many of the view's records have none, and opens them as a list.
 - **CA8. Narrow screens.** The same month, with the toolbar's previous, today and next; a record moves through its calendar button, not by dragging. How a month reads on a phone is open until MAS-56 (the list layout first planned for it was dropped with CA1).
 - **CA9. Time and week.** Dates are shown in the browser's time zone; the week starts as the person's language says (Monday in French, Sunday in English).

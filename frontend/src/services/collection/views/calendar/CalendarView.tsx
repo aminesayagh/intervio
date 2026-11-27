@@ -30,6 +30,7 @@ const dayBefore = (day: string) => {
  * A record the person may edit moves to another day by dragging, or is stretched
  * when the view has an end date (MAS-53); its calendar button changes the dates
  * with the date picker, from the keyboard too. Both go through the normal save.
+ * A click on an empty day starts a new record on that day (MAS-54).
  */
 export function CalendarView<T, C>({
   definition,
@@ -39,12 +40,20 @@ export function CalendarView<T, C>({
   onOpen,
   save,
   canEdit,
+  onCreate,
   date,
   end,
   card = [],
 }: Pick<
   ViewProps<T, C>,
-  'definition' | 'label' | 'query' | 'context' | 'onOpen' | 'save' | 'canEdit'
+  | 'definition'
+  | 'label'
+  | 'query'
+  | 'context'
+  | 'onOpen'
+  | 'save'
+  | 'canEdit'
+  | 'onCreate'
 > & { date: string; end?: string; card?: string[] }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const [range, setRange] = useState<{ start: string; end: string } | null>(
@@ -105,6 +114,12 @@ export function CalendarView<T, C>({
       label={label}
       entries={range ? entries : []}
       onRange={setRange}
+      onDayPress={
+        onCreate &&
+        starts &&
+        ((day) =>
+          onCreate({ ...starts.patch(day), ...(ends && ends.patch(day)) }))
+      }
       onMove={(id, move) => {
         const record = byId.get(id)
         if (!record || !starts) return Promise.resolve()
@@ -129,7 +144,7 @@ export function CalendarView<T, C>({
               <Button
                 look="ghost"
                 size="sm"
-                className="h-auto min-w-0 flex-1 justify-start gap-2 px-0 font-normal data-[hovered]:bg-transparent"
+                className="h-auto min-w-0 flex-1 justify-start gap-2 overflow-hidden px-0 font-normal data-[hovered]:bg-transparent"
                 onPress={() => onOpen?.(definition.getId(record))}
               >
                 <span className="truncate font-medium">{name(record)}</span>

@@ -3,7 +3,7 @@ import type { FilterGroup } from './listing/rules'
 /** A record's public identifier: its UUID v7. */
 export type Id = string
 
-/** One page of a list (spec section 11). `total` is optional: without it, the header shows "30+". */
+/** One page of a list (spec section 11). `total` is optional; the header doesn't show it (decision 148). */
 export type Page<T> = {
   items: T[]
   nextCursor: string | null

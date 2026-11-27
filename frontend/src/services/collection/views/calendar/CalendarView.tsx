@@ -35,7 +35,7 @@ const dayBefore = (day: string) => {
  * with the date picker, from the keyboard too. Both go through the normal save.
  * A click on an empty day starts a new record on that day (MAS-54).
  *
- * Records without a date don't show on the month: the toolbar counts them, and
+ * Records without a date don't show on the month: the toolbar's Backlog button
  * opens their own panel (MAS-55, MAS-60). Each is dragged onto a day, or given a
  * date with its calendar button.
  */
@@ -102,7 +102,7 @@ export function CalendarView<T, C>({
       },
     },
   })
-  // The view's records without a date, for the toolbar's count and list.
+  // The view's records without a date: whether Backlog shows, and its list.
   const undated = useCollectionQuery({
     key: definition.key,
     source: definition.source,
@@ -221,11 +221,11 @@ export function CalendarView<T, C>({
           <Button
             size="sm"
             look="ghost"
-            className="text-muted"
+            className="ms-2"
             aria-pressed={backlog}
             onPress={() => setBacklog(!backlog)}
           >
-            {t('collection:calendar.undated', { count: undatedCount })}
+            {t('collection:calendar.backlog')}
           </Button>
         </Show>
       }
@@ -303,7 +303,6 @@ export function CalendarView<T, C>({
           <h2 className="text-sm font-medium">
             {t('collection:calendar.undatedList')}
           </h2>
-          <span className="text-xs text-muted">{undatedCount}</span>
           <Button
             size="sm"
             look="ghost"
@@ -324,7 +323,7 @@ export function CalendarView<T, C>({
         <CalendarDragSource className="min-h-0 flex-1 overflow-y-auto">
           <ul
             aria-label={t('collection:calendar.undatedList')}
-            className="flex flex-col gap-1 text-xs"
+            className="flex flex-col gap-2 text-sm"
           >
             {backlogList.items.map((record) => {
               const draggable = !narrow && movable(record)
@@ -336,22 +335,31 @@ export function CalendarView<T, C>({
                   }
                   data-calendar-title={draggable ? name(record) : undefined}
                   className={cn(
-                    'flex items-center gap-2 rounded-[var(--radius)] bg-[var(--color-primary-subtle)] px-2 py-1',
+                    // The kanban's card (ui-kit CardItem): the name, then the fields.
+                    'relative flex flex-col gap-1 rounded-[var(--field-radius)] border border-border bg-surface px-3 py-2 hover:bg-[color-mix(in_srgb,var(--default)_50%,var(--surface))]',
                     draggable && 'cursor-grab',
                   )}
                 >
-                  <span className="truncate font-medium">{name(record)}</span>
-                  {shown.map((column) => (
-                    <span
-                      key={column.id}
-                      className="flex min-w-0 items-center text-muted"
-                    >
-                      {column.cell(record)}
-                    </span>
-                  ))}
+                  <span className="truncate pe-6 font-medium">
+                    {name(record)}
+                  </span>
                   <Show
                     as="span"
-                    className="ms-auto flex"
+                    when={shown.length > 0}
+                    className="flex flex-wrap items-center gap-2 text-xs text-muted"
+                  >
+                    {shown.map((column) => (
+                      <span
+                        key={column.id}
+                        className="flex min-w-0 items-center"
+                      >
+                        {column.cell(record)}
+                      </span>
+                    ))}
+                  </Show>
+                  <Show
+                    as="span"
+                    className="absolute end-1 top-1.5 flex"
                     when={movable(record)}
                   >
                     {changeDate(record)}

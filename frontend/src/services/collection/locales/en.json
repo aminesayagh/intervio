@@ -214,10 +214,9 @@
   },
   "calendar": {
     "changeDate": "Change the date of {{name}}",
-    "undated_one": "{{count}} without a date",
-    "undated_other": "{{count}} without a date",
-    "undatedList": "Records without a date",
+    "undatedList": "Backlog",
     "more": "Show more",
-    "closeUndated": "Close the records without a date"
+    "closeUndated": "Close the backlog",
+    "backlog": "Backlog"
   }
 }

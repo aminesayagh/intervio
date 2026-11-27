@@ -80,7 +80,7 @@ test("a record the person can't edit has no calendar button", async () => {
   expect(screen.queryByLabelText('Change the date of Item 003')).toBeNull()
 })
 
-test('the toolbar counts the records without a date, and opens their panel (MAS-55, MAS-60)', async () => {
+test('Backlog opens the records without a date (MAS-55, MAS-60)', async () => {
   renderAt(
     '/items',
     <Collection
@@ -88,11 +88,9 @@ test('the toolbar counts the records without a date, and opens their panel (MAS-
     />,
   )
   // Every sixth of the 60 items has no due date.
-  await userEvent.click(
-    await screen.findByRole('button', { name: '10 without a date' }),
-  )
+  await userEvent.click(await screen.findByRole('button', { name: 'Backlog' }))
   const list = await screen.findByRole('list', {
-    name: 'Records without a date',
+    name: 'Backlog',
   })
   expect(list).toHaveTextContent('Item 006')
   expect(list).toHaveTextContent('Item 060')
@@ -104,22 +102,18 @@ test('the toolbar counts the records without a date, and opens their panel (MAS-
   expect(
     within(list).getByRole('button', { name: 'Change the date of Item 006' }),
   ).toBeInTheDocument()
-  // Its own search narrows the list; the toolbar's count stays the view's.
+  // Its own search narrows the list; the Backlog button stays.
   await userEvent.type(
     within(list.parentElement!.parentElement!).getByRole('searchbox'),
     'Item 012',
   )
   await waitFor(() => expect(list).not.toHaveTextContent('Item 006'))
   expect(list).toHaveTextContent('Item 012')
-  expect(
-    screen.getByRole('button', { name: '10 without a date' }),
-  ).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Backlog' })).toBeInTheDocument()
   await userEvent.click(
-    screen.getByRole('button', { name: 'Close the records without a date' }),
+    screen.getByRole('button', { name: 'Close the backlog' }),
   )
-  expect(
-    screen.queryByRole('list', { name: 'Records without a date' }),
-  ).toBeNull()
+  expect(screen.queryByRole('list', { name: 'Backlog' })).toBeNull()
 })
 
 test('on a phone the calendar button stays, as the way to move a record (MAS-56)', async () => {

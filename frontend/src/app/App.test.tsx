@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
@@ -62,5 +62,48 @@ test('a logged-in client opening "/" lands on the dashboard tab', async () => {
   expect(screen.getAllByRole('link', { name: 'Dashboard' })[0]).toHaveAttribute(
     'aria-current',
     'page',
+  )
+})
+
+test('after logging in, a visitor lands on the page they asked for (decision 141, MAS-58)', async () => {
+  let loggedIn = false
+  server.use(
+    http.get('/api/auth/me', () =>
+      loggedIn
+        ? HttpResponse.json({
+            fullName: 'Ada Martin',
+            email: 'ada@example.com',
+          })
+        : new HttpResponse(null, { status: 401 }),
+    ),
+    http.post('/api/auth/login', () => {
+      loggedIn = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+    // The company answers after the user: the moment the saved page was lost.
+    http.get('/api/company', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      return HttpResponse.json({
+        name: 'Martin Industries',
+        country: 'FR',
+        registrationNumber: '123',
+        id: '01970000-0000-7000-8000-000000000000',
+        industries: [],
+        logoFileId: null,
+        hasAddress: false,
+      })
+    }),
+  )
+  window.history.pushState(null, '', '/resources?q=pump')
+  render(<App />)
+
+  await userEvent.type(await screen.findByLabelText('Email'), 'ada@example.com')
+  await userEvent.type(screen.getByLabelText('Password'), 'the password')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+  await waitFor(() =>
+    expect(window.location.pathname + window.location.search).toBe(
+      '/resources?q=pump',
+    ),
   )
 })

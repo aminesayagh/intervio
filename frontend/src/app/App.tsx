@@ -142,9 +142,11 @@ function Guard() {
     if (keepAddress)
       saveReturnTo(window.location.pathname + window.location.search)
     if (redirect) navigate(redirect, { replace: true })
-    // A logged-in user has arrived: the saved page works once, so it is dropped.
-    else if (user) dropReturnTo()
-  }, [redirect, keepAddress, user])
+    // A logged-in user has arrived: the saved page works once, so it is dropped. Not
+    // while the company still loads: no redirect is decided yet, and the saved page
+    // is the one it will go to (MAS-58).
+    else if (user && !isPending) dropReturnTo()
+  }, [redirect, keepAddress, user, isPending])
 
   if (isPending || redirect || !route) return null
   const Layout = route.board ? ClientBoardLayout : PublicLayout

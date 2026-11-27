@@ -17,8 +17,8 @@ afterAll(() => vi.useRealTimers())
 afterEach(cleanup)
 
 // Items are due a day apart from 1 December 2026; every sixth has no date.
-const definition = () => ({
-  ...itemDefinition(itemSource(makeItems(60))),
+const definition = (rights?: Parameters<typeof itemDefinition>[2]) => ({
+  ...itemDefinition(itemSource(makeItems(60)), 'test-items', rights),
   views: [
     {
       id: 'calendar',
@@ -41,10 +41,41 @@ test('the month shows the records due in it, and moves on (MAS-52)', async () =>
   expect(await screen.findByText('Item 050')).toBeInTheDocument()
 })
 
-test('a record opens in the panel', async () => {
+test('a record opens in the panel, from the keyboard too', async () => {
   renderAt('/items', <Collection definition={definition()} />)
-  await userEvent.click(await screen.findByText('Item 003'))
+  // A pointer starts FullCalendar's drag handling, which needs a real layout.
+  ;(await screen.findByText('Item 003')).closest('button')!.focus()
+  await userEvent.keyboard('{Enter}')
   expect(
     await screen.findByRole('complementary', { name: 'Item 003' }),
   ).toBeInTheDocument()
+})
+
+test('a record changes its date from its calendar button (MAS-53)', async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+    />,
+  )
+  // From the keyboard: FullCalendar's drag handling needs a real layout, which
+  // jsdom doesn't have (it also keeps the records hidden while it measures them).
+  ;(await screen.findByLabelText('Change the date of Item 003')).focus()
+  await userEvent.keyboard('{Enter}')
+  const dialog = await screen.findByRole('dialog', {
+    name: 'Change the date of Item 003',
+  })
+  expect(dialog).toHaveTextContent('Due')
+  expect(dialog).toHaveTextContent('12/3/2026')
+})
+
+test("a record the person can't edit has no calendar button", async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['name'], actions: [], add: [] }))}
+    />,
+  )
+  expect(await screen.findByText('Item 003')).toBeInTheDocument()
+  expect(screen.queryByLabelText('Change the date of Item 003')).toBeNull()
 })

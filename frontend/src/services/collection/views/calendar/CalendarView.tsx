@@ -1,7 +1,16 @@
+import { CalendarDays } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Calendar, Show, type CalendarEntry } from '../../../ui-kit'
+import { useTranslation } from 'react-i18next'
+import {
+  Button,
+  Calendar,
+  PopoverDialog,
+  Show,
+  type CalendarEntry,
+} from '../../../ui-kit'
 import { useCollectionQuery } from '../../data/collectionQuery'
 import type { DateField } from '../../definition'
+import { DateCell } from '../../values/DateCell'
 import type { ViewProps } from '../viewProps'
 
 /** The day before '2026-12-01': "after" is strict, and the range's first day counts. */
@@ -17,6 +26,10 @@ const dayBefore = (day: string) => {
  * ("after" the day before the first, "before" the day after the last), and loads
  * every page of them. A record shows its name and the view's `card` columns, and
  * opens in the panel.
+ *
+ * A record the person may edit moves to another day by dragging, or is stretched
+ * when the view has an end date (MAS-53); its calendar button changes the dates
+ * with the date picker, from the keyboard too. Both go through the normal save.
  */
 export function CalendarView<T, C>({
   definition,
@@ -24,13 +37,16 @@ export function CalendarView<T, C>({
   query,
   context,
   onOpen,
+  save,
+  canEdit,
   date,
   end,
   card = [],
 }: Pick<
   ViewProps<T, C>,
-  'definition' | 'label' | 'query' | 'context' | 'onOpen'
+  'definition' | 'label' | 'query' | 'context' | 'onOpen' | 'save' | 'canEdit'
 > & { date: string; end?: string; card?: string[] }) {
+  const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const [range, setRange] = useState<{ start: string; end: string } | null>(
     null,
   )
@@ -39,6 +55,10 @@ export function CalendarView<T, C>({
       DateField<T> | undefined
   const starts = field(date)
   const ends = field(end)
+  const labelOf = (id: string) =>
+    t(definition.columns.find((column) => column.id === id)?.label ?? id)
+  const movable = (record: T) =>
+    canEdit(record, date) && (!end || canEdit(record, end))
   // ponytail: filtered on the start date only, so a record that starts before the
   // range and ends inside it is missing; filter on `end` too when ranges are common.
   const list = useCollectionQuery({
@@ -74,6 +94,8 @@ export function CalendarView<T, C>({
             title: name(record),
             start,
             end: ends?.value(record),
+            movable: movable(record),
+            resizable: !!ends,
           },
         ]
       : []
@@ -83,7 +105,19 @@ export function CalendarView<T, C>({
       label={label}
       entries={range ? entries : []}
       onRange={setRange}
-      onOpen={onOpen && ((id) => onOpen(id))}
+      onMove={(id, move) => {
+        const record = byId.get(id)
+        if (!record || !starts) return Promise.resolve()
+        return save(
+          record,
+          {
+            ...starts.patch(move.start),
+            // Back on one day: it ends that day.
+            ...(ends && ends.patch(move.end ?? move.start)),
+          },
+          { label: labelOf(date) },
+        )
+      }}
       renderEntry={(id) => (
         <Show
           as="span"
@@ -92,15 +126,73 @@ export function CalendarView<T, C>({
         >
           {(record) => (
             <>
-              <span className="truncate font-medium">{name(record)}</span>
-              {shown.map((column) => (
-                <span
-                  key={column.id}
-                  className="flex min-w-0 items-center text-xs text-muted"
+              <Button
+                look="ghost"
+                size="sm"
+                className="h-auto min-w-0 flex-1 justify-start gap-2 px-0 font-normal data-[hovered]:bg-transparent"
+                onPress={() => onOpen?.(definition.getId(record))}
+              >
+                <span className="truncate font-medium">{name(record)}</span>
+                {shown.map((column) => (
+                  <span
+                    key={column.id}
+                    className="flex min-w-0 items-center text-xs text-muted"
+                  >
+                    {column.cell(record)}
+                  </span>
+                ))}
+              </Button>
+              <Show as="span" className="ms-auto flex" when={movable(record)}>
+                <PopoverDialog
+                  label={t('collection:calendar.changeDate', {
+                    name: name(record),
+                  })}
+                  width={240}
+                  trigger={
+                    <Button
+                      size="sm"
+                      look="ghost"
+                      className="size-5 min-w-0 px-0"
+                      aria-label={t('collection:calendar.changeDate', {
+                        name: name(record),
+                      })}
+                    >
+                      <CalendarDays size={12} />
+                    </Button>
+                  }
                 >
-                  {column.cell(record)}
-                </span>
-              ))}
+                  <div className="flex flex-col gap-2 p-2 text-sm">
+                    {[
+                      [date, starts],
+                      [end, ends],
+                    ].map(([id, edit]) => (
+                      <Show
+                        key={String(id)}
+                        when={id && edit ? (edit as DateField<T>) : null}
+                      >
+                        {(dates) => (
+                          <label className="flex items-center justify-between gap-2">
+                            <span className="text-muted">
+                              {labelOf(String(id))}
+                            </span>
+                            <DateCell
+                              record={record}
+                              edit={dates}
+                              label={labelOf(String(id))}
+                              look="panel"
+                              save={(patch) =>
+                                save(record, patch, {
+                                  label: labelOf(String(id)),
+                                })
+                              }
+                            />
+                          </label>
+                        )}
+                      </Show>
+                    ))}
+                  </div>
+                </PopoverDialog>
+              </Show>
             </>
           )}
         </Show>

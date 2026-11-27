@@ -1,12 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
@@ -54,6 +47,7 @@ import { Toolbar } from './listing/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { useSelection } from './selection/useSelection'
 import { useHeldOrder } from './listing/useHeldOrder'
+import { useListKeyboard } from './listing/useListKeyboard'
 import { usePanelWidth } from './layout/usePanelWidth'
 import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
@@ -451,27 +445,14 @@ export function Collection<T, C = void>({
     [startNew],
   )
 
-  /** With the panel open, ↑ and ↓ open the previous or next record; Escape closes it. */
-  function onKeyDown(event: KeyboardEvent) {
-    if (!panelOpen || event.defaultPrevented) return
-    const target = event.target as HTMLElement
-    if (target.closest('input, textarea, [role="menu"], [role="dialog"]'))
-      return
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      if (chain.length) stepBack()
-      else close()
-      return
-    }
-    if (!openId || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'))
-      return
-    const index = shownItems.findIndex((item) => getId(item) === openId)
-    const next = shownItems[index + (event.key === 'ArrowDown' ? 1 : -1)]
-    if (next) {
-      event.preventDefault()
-      open(getId(next))
-    }
-  }
+  const onKeyDown = useListKeyboard({
+    panelOpen,
+    openId,
+    items: shownItems,
+    getId,
+    open,
+    back: () => (chain.length ? stepBack() : close()),
+  })
 
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])

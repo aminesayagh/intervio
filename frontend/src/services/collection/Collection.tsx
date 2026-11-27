@@ -1,37 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { dismissScope } from '../notifications'
-import {
-  currentAddress,
-  currentSearch,
-  entryState,
-  navigate,
-  usePath,
-  useQueryStates,
-} from '../navigation'
-import {
-  Button,
-  cn,
-  foldSidebar,
-  offerBack,
-  Match,
-  Show,
-  Switch,
-} from '../ui-kit'
-import { cache, keys, useCollectionQuery } from './data/collectionQuery'
+import { navigate, usePath } from '../navigation'
+import { Button, cn, Match, Show, Switch } from '../ui-kit'
+import { cache, useCollectionQuery } from './data/collectionQuery'
 import { useRecordActions } from './data/recordActions'
 import { useRecordChanges } from './data/recordChanges'
-import { confirm } from './confirm/confirm'
 import type { CollectionDefinition } from './definition'
 import { listPathOf, stateKeyOf } from './definition'
 import en from './locales/en.json'
@@ -46,7 +23,7 @@ import type { ViewProps } from './views/viewProps'
 import { CalendarView } from './views/calendar/CalendarView'
 import { Kanban } from './views/kanban/Kanban'
 import { ViewMenu } from './views/ViewMenu'
-import { columnsOf, valuesOf, viewsOf } from './views/views'
+import { columnsOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
 import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
@@ -54,11 +31,13 @@ import { Toolbar } from './listing/Toolbar'
 import { SelectionBar } from './selection/SelectionBar'
 import { useSelection } from './selection/useSelection'
 import { useHeldOrder } from './listing/useHeldOrder'
+import { useListKeyboard } from './listing/useListKeyboard'
 import { usePanelWidth } from './layout/usePanelWidth'
-import { Folds, type Fold } from './drill/Folded'
-import { currentViews } from './drill/viewStack'
-import { OpenLinked, type Step } from './record/linked'
-import { panelAddress, panelParsers, readPanel } from './address'
+import { Folds } from './drill/Folded'
+import { useDrillStrips } from './drill/useDrillStrips'
+import { OpenLinked } from './record/linked'
+import { current, usePanel } from './record/usePanel'
+import { useNewRecord } from './create/useNewRecord'
 import { LinkedPanel } from './record/LinkedPanel'
 import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
@@ -68,14 +47,6 @@ import { filterFields, ruleKeys } from './listing/rules'
 import { isNarrowed, useCollectionState } from './listing/useCollectionState'
 
 addTranslations('collection', { en, fr })
-
-/**
- * The panel's parameters as the address has them now. The panel's callbacks read them
- * when they run, not from the last render: one click can call them several times
- * before a render (a row's press, then its action), and they stay the same from one
- * record to the next, so rows don't render again.
- */
-const current = () => readPanel(currentSearch())
 
 /**
  * A collection screen (spec 4–5): the list of one kind of record, as a table (other
@@ -149,94 +120,22 @@ export function Collection<T, C = void>({
   // Every change to a record goes through the shared record actions (spec 8.3).
   const actions = useRecordActions(definition, context as C, basePath)
   const { canEdit, save, report } = actions
-  // The panel's address (spec 6.3, 7.1, decision 137): the record open (?open=), a new
-  // one (?new=1), the linked records opened after it (?linked=key:id,…).
-  const [panel] = useQueryStates(panelParsers)
-  const openId = panel.open
-  const chain = panel.linked
-  const isNew = panel.new === '1'
+  // The panel's address and its moves (spec 6.3, 7.1, decision 137).
+  const {
+    openId,
+    chain,
+    isNew,
+    panelMark,
+    mark,
+    open,
+    openLinked,
+    leave,
+    stepTo,
+    stepBack,
+    doClose,
+  } = usePanel(key)
   // Each record on the way, with its collection and context (notice 3).
   const linkedChain = useChain(definition, context, openId ?? null, chain)
-  const panelMark = `panel:${key}`
-  /**
-   * Changes the panel's parameters at once (nuqs's own updates wait a moment), with an
-   * entry that carries this screen's marks, which nuqs can't set: pushed, or replacing
-   * the current one. The entry keeps its place in a drill-down (spec 12.1).
-   */
-  const mark = useCallback(
-    (
-      values: Parameters<typeof panelAddress>[1],
-      state: Record<string, unknown>,
-      replace = false,
-    ) => {
-      const drill = entryState().drill
-      navigate(panelAddress(currentAddress(), values), {
-        replace,
-        state: { ...(drill === undefined ? {} : { drill }), ...state },
-      })
-    },
-    [],
-  )
-  const open = useCallback(
-    (id: Id) => {
-      const wasOpen = current().open
-      if (wasOpen === id) return
-      // Another record from the list: no linked ones after it. Opening pushes an
-      // entry (Back closes); switching records replaces it.
-      if (wasOpen)
-        mark(
-          { open: id, linked: null },
-          { ...entryState(), linkedStep: false },
-          true,
-        )
-      else mark({ open: id, linked: null }, { panel: panelMark })
-    },
-    [mark, panelMark],
-  )
-
-  /** Shows the chain cut to this many steps (0: the record opened from the list). */
-  const showChain = useCallback(
-    (next: Step[]) => mark({ linked: next }, entryState(), true),
-    [mark],
-  )
-  /** A section's record opens in the panel; Back returns to the one before. */
-  const openLinked = useCallback(
-    (collectionKey: string, id: Id, section: string) =>
-      mark(
-        { linked: [...current().linked, { key: collectionKey, id, section }] },
-        { ...entryState(), linkedStep: true },
-      ),
-    [mark],
-  )
-  /** "‹ {collection}" on a narrow screen: the list, whatever the depth. */
-  const leave = useCallback(
-    () => mark({ open: null, linked: null }, entryState(), true),
-    [mark],
-  )
-  /**
-   * Back to the chain cut to this depth (a tab, or × one step): through the browser's
-   * history when the steps were pushed, so Back never meets a stale entry after it.
-   */
-  // ponytail: assumes each step after the first linked one was pushed (openLinked
-  // does); a chain from a link (the address alone) has no entries, so it is replaced.
-  const stepTo = useCallback(
-    (depth: number) => {
-      const steps = current().linked.length - depth
-      if (steps <= 0) return
-      if (entryState().linkedStep === true) window.history.go(-steps)
-      else showChain(current().linked.slice(0, depth))
-    },
-    [showChain],
-  )
-  /** × on a linked record: one step back, as Back does. */
-  const stepBack = useCallback(
-    () => stepTo(current().linked.length - 1),
-    [stepTo],
-  )
-  const doClose = useCallback(() => {
-    if (entryState().panel === panelMark) window.history.back()
-    else mark({ open: null }, entryState(), true)
-  }, [panelMark, mark])
 
   // Messages (decision 132): each belongs to a record or to the collection, and
   // leaves with it; one about a value is replaced by the next one about that value.
@@ -266,65 +165,18 @@ export function Collection<T, C = void>({
     }
   }, [pageId, recordScope])
 
-  // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
-  const hasDraft = useCallback(() => {
-    try {
-      return sessionStorage.getItem(newRecordKey(stateKey)) !== null
-    } catch {
-      return false
-    }
-  }, [stateKey])
-  // Values a new record starts with besides the list's (a kanban column's, MAS-36).
-  const [newIn, setNewIn] = useState<Partial<T>>({})
-  const startNew = useCallback(() => {
-    setNewIn({})
-    const wasOpen = Boolean(current().open || current().new)
-    mark(
-      { open: null, new: '1' },
-      wasOpen ? entryState() : { panel: panelMark },
-      wasOpen,
-    )
-  }, [mark, panelMark])
-
-  // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
-  const close = useCallback(async () => {
-    const unsaved = (() => {
-      try {
-        // The description and every rich text value keep unsaved text here.
-        const prefix = `intervio.collection.${key}.${openId}.`
-        return (
-          Object.keys(sessionStorage).find((name) => name.startsWith(prefix)) ??
-          null
-        )
-      } catch {
-        return null
-      }
-    })()
-    if (unsaved !== null) {
-      const leave = await confirm({
-        title: t('collection:description.unsavedTitle'),
-        text: t('collection:description.unsavedText'),
-        button: t('collection:description.leave'),
-        cancel: t('collection:description.keepEditing'),
-      })
-      if (leave) doClose()
-    } else if (isNew && hasDraft()) {
-      const discard = await confirm({
-        title: t('collection:create.discardTitle'),
-        text: t('collection:create.discardText'),
-        button: t('collection:create.discard'),
-        cancel: t('collection:description.keepEditing'),
-        danger: true,
-      })
-      if (!discard) return
-      try {
-        sessionStorage.removeItem(newRecordKey(stateKey))
-      } catch {
-        // storage blocked: nothing kept
-      }
-      doClose()
-    } else doClose()
-  }, [key, stateKey, openId, doClose, isNew, hasDraft, t])
+  // A new record (spec 7.5): starting it, its defaults, its first save, and the
+  // questions before closing with unsaved input.
+  const { startNew, createIn, newDefaults, createRecord, close } = useNewRecord(
+    {
+      definition,
+      context: context as C,
+      stateKey,
+      query: state.query,
+      actions,
+      panel: { isNew, openId, mark, panelMark, doClose },
+    },
+  )
 
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
@@ -397,39 +249,6 @@ export function Collection<T, C = void>({
       if (shown.linked.length) leave()
       else doClose()
   })
-  // A new record takes the values the list is filtered on (the view's locked ones
-  // too), so it stays in the list it was created in (spec 7.5, 12.1, MOH-34). Only
-  // worked out while a new record is open.
-  const newDefaults = useMemo(
-    () =>
-      isNew
-        ? ({
-            ...definition.create?.defaults(context as C),
-            ...valuesOf(definition, state.query.filters),
-            ...newIn,
-          } as Omit<T, 'id'>)
-        : undefined,
-    [isNew, definition, state.query.filters, context, newIn],
-  )
-  const createRecord = useCallback(
-    async (draft: Partial<T>, latest: () => Partial<T>) => {
-      const created = await actions.create(
-        draft,
-        keys.list(key, context, state.query),
-      )
-      mark({ new: null, open: getId(created) }, entryState(), true)
-      // Values typed while it was being created: saved on it, not lost.
-      const typed = latest()
-      const later = Object.fromEntries(
-        Object.entries(typed).filter(
-          ([name, value]) => draft[name as keyof T] !== value,
-        ),
-      ) as Partial<T>
-      if (Object.keys(later).length > 0)
-        void actions.save(created, later).catch(() => {}) // a failure says so
-    },
-    [actions, key, context, getId, state.query, mark],
-  )
   const unavailable = useCallback(
     (id: Id, deleted: boolean) =>
       cache.removed(queryClient, key, id, getId, {
@@ -442,36 +261,14 @@ export function Collection<T, C = void>({
   const canCreate = Boolean(
     definition.create && definition.panel && source.create,
   )
-  /** "+" on a kanban column: a new record with its value (MAS-36). */
-  const createIn = useCallback(
-    (values: Partial<T>) => {
-      startNew()
-      setNewIn(values)
-    },
-    [startNew],
-  )
-
-  /** With the panel open, ↑ and ↓ open the previous or next record; Escape closes it. */
-  function onKeyDown(event: KeyboardEvent) {
-    if (!panelOpen || event.defaultPrevented) return
-    const target = event.target as HTMLElement
-    if (target.closest('input, textarea, [role="menu"], [role="dialog"]'))
-      return
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      if (chain.length) stepBack()
-      else close()
-      return
-    }
-    if (!openId || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp'))
-      return
-    const index = shownItems.findIndex((item) => getId(item) === openId)
-    const next = shownItems[index + (event.key === 'ArrowDown' ? 1 : -1)]
-    if (next) {
-      event.preventDefault()
-      open(getId(next))
-    }
-  }
+  const onKeyDown = useListKeyboard({
+    panelOpen,
+    openId,
+    items: shownItems,
+    getId,
+    open,
+    back: () => (chain.length ? stepBack() : close()),
+  })
 
   const { fetchNextPage } = list
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
@@ -497,32 +294,8 @@ export function Collection<T, C = void>({
     setDragged,
     commit: commitWidth,
   } = usePanelWidth(key, panelShown, pageId)
-  // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
-  // Returning to one takes it and the views after it off the stack.
-  const views: Fold[] = currentViews().map((view, index) => ({
-    name: view.name,
-    open: () => navigate(view.address, { state: { drill: index } }),
-  }))
-  const strips = mode === 'narrow' ? [] : views
-  const hasStrips = strips.length > 0
-  // Narrow: no strips; the top bar's ‹ goes up one level, as the last strip would.
-  const up = mode === 'narrow' ? views.at(-1) : undefined
-  const upName = up?.name
-  const upOpen = up?.open
-  useEffect(() => {
-    if (!upName || !upOpen) return
-    return offerBack({
-      label: t('collection:folds.back', { name: upName }),
-      run: upOpen,
-    })
-    // A new function each render: the address and the name say which view it opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upName, t])
-  // Medium width: the sidebar folds while a panel or a strip shows (spec 9, 12.1).
-  useEffect(() => {
-    foldSidebar(mode === 'medium' && (panelShown || hasStrips))
-    return () => foldSidebar(false)
-  }, [mode, panelShown, hasStrips])
+  // The strips of the views drilled from, and the sidebar fold (spec 9, 12.1).
+  const { strips, hasStrips } = useDrillStrips(mode, panelShown)
   const narrowPanel = mode === 'narrow' && panelShown
   // The panel over the list, which folds into a strip (decision 157); each opening
   // starts beside it.

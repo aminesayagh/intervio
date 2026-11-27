@@ -71,7 +71,7 @@ export function Calendar({
   return (
     <section
       aria-label={label}
-      className="intervio-calendar flex min-h-0 flex-1 flex-col gap-2"
+      className="intervio-calendar flex min-h-0 min-w-0 flex-1 flex-col gap-2"
     >
       {/* The month on the left; the way to move, then the view's own tools, on the right. */}
       <div className="flex flex-wrap items-center gap-2">
@@ -103,60 +103,65 @@ export function Calendar({
           {toolbar}
         </div>
       </div>
-      <div className="min-h-0 flex-1 text-xs">
-        <FullCalendar
-          controller={controller}
-          plugins={[classic, dayGrid, interaction]}
-          initialView="dayGridMonth"
-          headerToolbar={false}
-          // Day names on the left, in capitals; day numbers on two digits (01 … 31);
-          // Saturday and Sunday on grey.
-          dayHeaderAlign="start"
-          dayHeaderClass={(day) => cn('uppercase', weekend(day.dow))}
-          dayCellClass={(day) =>
-            cn(weekend(day.dow), onDayPress && 'cursor-pointer')
-          }
-          dateClick={(click) => onDayPress?.(click.dateStr.slice(0, 10))}
-          droppable={!!onDrop}
-          drop={(dropped) => {
-            const id = dropped.draggedEl.dataset.calendarId
-            if (id) onDrop?.(id, dropped.dateStr.slice(0, 10))
-          }}
-          dayCellTopContent={(day) =>
-            String(day.date.getDate()).padStart(2, '0')
-          }
-          height="100%"
-          locale={i18n.language === 'fr' ? french : 'en'}
-          events={entries.map((entry) => ({
-            id: entry.id,
-            title: entry.title,
-            start: entry.start,
-            // A day's end is inclusive for the person, exclusive for FullCalendar.
-            end:
-              entry.end && !entry.end.includes('T')
-                ? dayAfter(entry.end)
-                : (entry.end ?? undefined),
-            allDay: !entry.start.includes('T'),
-            startEditable: !!onMove && !!entry.movable,
-            durationEditable: !!onMove && !!entry.movable && !!entry.resizable,
-          }))}
-          // Saved through onMove; back where it was if the save fails.
-          eventDrop={(drop) =>
-            void onMove?.(drop.event.id, moved(drop.event)).catch(drop.revert)
-          }
-          eventResize={(resize) =>
-            void onMove?.(resize.event.id, moved(resize.event)).catch(
-              resize.revert,
-            )
-          }
-          datesSet={(range) =>
-            onRange({
-              start: range.startStr.slice(0, 10),
-              end: range.endStr.slice(0, 10),
-            })
-          }
-          eventContent={(content) => renderEntry(content.event.id)}
-        />
+      {/* On a phone (under 1024 px) a day is 160 px wide, so a record's name stays
+          readable, and the month scrolls sideways under its toolbar (MAS-56, CA8). */}
+      <div className="min-h-0 flex-1 overflow-x-auto text-xs">
+        <div className="h-full max-lg:min-w-[1120px]">
+          <FullCalendar
+            controller={controller}
+            plugins={[classic, dayGrid, interaction]}
+            initialView="dayGridMonth"
+            headerToolbar={false}
+            // Day names on the left, in capitals; day numbers on two digits (01 … 31);
+            // Saturday and Sunday on grey.
+            dayHeaderAlign="start"
+            dayHeaderClass={(day) => cn('uppercase', weekend(day.dow))}
+            dayCellClass={(day) =>
+              cn(weekend(day.dow), onDayPress && 'cursor-pointer')
+            }
+            dateClick={(click) => onDayPress?.(click.dateStr.slice(0, 10))}
+            droppable={!!onDrop}
+            drop={(dropped) => {
+              const id = dropped.draggedEl.dataset.calendarId
+              if (id) onDrop?.(id, dropped.dateStr.slice(0, 10))
+            }}
+            dayCellTopContent={(day) =>
+              String(day.date.getDate()).padStart(2, '0')
+            }
+            height="100%"
+            locale={i18n.language === 'fr' ? french : 'en'}
+            events={entries.map((entry) => ({
+              id: entry.id,
+              title: entry.title,
+              start: entry.start,
+              // A day's end is inclusive for the person, exclusive for FullCalendar.
+              end:
+                entry.end && !entry.end.includes('T')
+                  ? dayAfter(entry.end)
+                  : (entry.end ?? undefined),
+              allDay: !entry.start.includes('T'),
+              startEditable: !!onMove && !!entry.movable,
+              durationEditable:
+                !!onMove && !!entry.movable && !!entry.resizable,
+            }))}
+            // Saved through onMove; back where it was if the save fails.
+            eventDrop={(drop) =>
+              void onMove?.(drop.event.id, moved(drop.event)).catch(drop.revert)
+            }
+            eventResize={(resize) =>
+              void onMove?.(resize.event.id, moved(resize.event)).catch(
+                resize.revert,
+              )
+            }
+            datesSet={(range) =>
+              onRange({
+                start: range.startStr.slice(0, 10),
+                end: range.endStr.slice(0, 10),
+              })
+            }
+            eventContent={(content) => renderEntry(content.event.id)}
+          />
+        </div>
       </div>
     </section>
   )

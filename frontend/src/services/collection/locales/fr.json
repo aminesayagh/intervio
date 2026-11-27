@@ -214,9 +214,9 @@
   },
   "calendar": {
     "changeDate": "Changer la date de {{name}}",
-    "undated_one": "{{count}} sans date",
-    "undated_other": "{{count}} sans date",
-    "undatedList": "Fiches sans date",
-    "more": "Afficher plus"
+    "undatedList": "Backlog",
+    "more": "Afficher plus",
+    "closeUndated": "Fermer le backlog",
+    "backlog": "Backlog"
   }
 }

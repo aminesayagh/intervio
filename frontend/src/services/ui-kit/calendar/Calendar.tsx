@@ -42,6 +42,7 @@ export function Calendar({
   onRange,
   onMove,
   onDayPress,
+  onDrop,
   renderEntry,
   toolbar,
 }: {
@@ -55,12 +56,14 @@ export function Calendar({
   onMove?: (id: string, move: CalendarMove) => Promise<void>
   /** A click on a day, outside its entries ('2026-12-01'): a new one there (MAS-54). */
   onDayPress?: (day: string) => void
+  /** An item of a `CalendarDragSource` dropped on a day: its id and the day (MAS-60). */
+  onDrop?: (id: string, day: string) => void
   /**
    * What an entry shows, its buttons included (opening it, changing its date):
    * FullCalendar's own element stays a plain box, so they are never nested.
    */
   renderEntry: (id: string) => ReactNode
-  /** More in the toolbar, after the month's name (records without a date). */
+  /** More in the toolbar, at the right after the arrows (the backlog). */
   toolbar?: ReactNode
 }) {
   const { t, i18n } = useTranslation('ui-kit')
@@ -70,12 +73,11 @@ export function Calendar({
       aria-label={label}
       className="intervio-calendar flex min-h-0 flex-1 flex-col gap-2"
     >
-      {/* The month on the left, the way to move on the right. */}
+      {/* The month on the left; the way to move, then the view's own tools, on the right. */}
       <div className="flex flex-wrap items-center gap-2">
         <h2 aria-live="polite" className="text-sm font-medium">
           {controller.view?.title}
         </h2>
-        {toolbar}
         <div className="ms-auto flex items-center gap-1">
           <Button
             size="sm"
@@ -98,6 +100,7 @@ export function Calendar({
           >
             <ChevronRight size={16} />
           </Button>
+          {toolbar}
         </div>
       </div>
       <div className="min-h-0 flex-1 text-xs">
@@ -114,6 +117,11 @@ export function Calendar({
             cn(weekend(day.dow), onDayPress && 'cursor-pointer')
           }
           dateClick={(click) => onDayPress?.(click.dateStr.slice(0, 10))}
+          droppable={!!onDrop}
+          drop={(dropped) => {
+            const id = dropped.draggedEl.dataset.calendarId
+            if (id) onDrop?.(id, dropped.dateStr.slice(0, 10))
+          }}
           dayCellTopContent={(day) =>
             String(day.date.getDate()).padStart(2, '0')
           }

@@ -1,7 +1,7 @@
 import { Search, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Show } from '../../ui-kit'
+import { Button, cn, Show } from '../../ui-kit'
 import { useQuery } from '@tanstack/react-query'
 import { keys } from '../data/collectionQuery'
 import type { ScopeDefinition } from '../definition'
@@ -118,12 +118,15 @@ export function Toolbar({
  * trimmed, SEARCH_DELAY after the last key. It takes the address's search only when
  * that changes from elsewhere: Clear filters, a link, the tab's last list.
  */
-function SearchField({
+export function SearchField({
   value,
   onSearch,
+  className = 'w-60',
 }: {
   value: string
   onSearch: (search: string) => void
+  /** Its width: 240 px in the toolbar, the panel's width elsewhere. */
+  className?: string
 }) {
   const { t } = useTranslation('collection')
   const [text, setText] = useState(value)
@@ -143,7 +146,7 @@ function SearchField({
   }
 
   return (
-    <label className="relative flex w-60 max-w-full items-center">
+    <label className={cn('relative flex max-w-full items-center', className)}>
       <span className="pointer-events-none absolute start-2.5 flex text-muted">
         <Search size={14} />
       </span>

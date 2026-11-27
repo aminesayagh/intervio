@@ -48,3 +48,9 @@
 
   font-family: var(--font-family);
 }
+
+/* The theme sets its own pixel sizes (14 px day names and numbers): the calendar
+   takes the size its container gives instead, the app's compact text. */
+.intervio-calendar [class*='fc-'] {
+  font-size: inherit;
+}

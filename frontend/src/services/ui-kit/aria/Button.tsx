@@ -25,7 +25,7 @@ export function Button({
     <AriaButton
       {...props}
       className={cn(
-        'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--field-radius)] font-medium',
+        'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--field-radius)] font-medium',
         size === 'sm' ? 'h-8 px-3' : 'h-9 px-4',
         buttonLook[look],
         focusRing,

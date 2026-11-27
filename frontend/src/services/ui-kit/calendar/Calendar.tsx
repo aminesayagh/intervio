@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../aria/Button'
+import { cn } from '../cn'
 import './calendar.css'
 
 /** Something placed on the calendar: dates as '2026-12-01', or with a time. */
@@ -25,6 +26,10 @@ const dayAfter = (day: string) => {
   date.setUTCDate(date.getUTCDate() + 1)
   return date.toISOString().slice(0, 10)
 }
+
+/** Saturday and Sunday (0 and 6), on the grey background. */
+const weekend = (dow: number) =>
+  (dow === 0 || dow === 6) && 'bg-[var(--color-background-secondary)]'
 
 /**
  * A calendar of one month at a time (MAS-52): FullCalendar draws the month; the
@@ -51,40 +56,51 @@ export function Calendar({
   return (
     <section
       aria-label={label}
-      className="intervio-calendar flex min-h-0 flex-1 flex-col gap-2 text-sm"
+      className="intervio-calendar flex min-h-0 flex-1 flex-col gap-2"
     >
+      {/* The month on the left, the way to move on the right. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" onPress={() => controller.today()}>
-          {t('calendar.today')}
-        </Button>
-        <Button
-          size="sm"
-          look="ghost"
-          className="w-8 px-0"
-          aria-label={t('calendar.previous')}
-          onPress={() => controller.prev()}
-        >
-          <ChevronLeft size={16} />
-        </Button>
-        <Button
-          size="sm"
-          look="ghost"
-          className="w-8 px-0"
-          aria-label={t('calendar.next')}
-          onPress={() => controller.next()}
-        >
-          <ChevronRight size={16} />
-        </Button>
-        <h2 aria-live="polite" className="text-base font-medium">
+        <h2 aria-live="polite" className="text-sm font-medium">
           {controller.view?.title}
         </h2>
+        <div className="ms-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            look="ghost"
+            className="w-8 px-0"
+            aria-label={t('calendar.previous')}
+            onPress={() => controller.prev()}
+          >
+            <ChevronLeft size={16} />
+          </Button>
+          <Button size="sm" look="ghost" onPress={() => controller.today()}>
+            {t('calendar.today')}
+          </Button>
+          <Button
+            size="sm"
+            look="ghost"
+            className="w-8 px-0"
+            aria-label={t('calendar.next')}
+            onPress={() => controller.next()}
+          >
+            <ChevronRight size={16} />
+          </Button>
+        </div>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 text-xs">
         <FullCalendar
           controller={controller}
           plugins={[classic, dayGrid]}
           initialView="dayGridMonth"
           headerToolbar={false}
+          // Day names on the left, in capitals; day numbers on two digits (01 … 31);
+          // Saturday and Sunday on grey.
+          dayHeaderAlign="start"
+          dayHeaderClass={(day) => cn('uppercase', weekend(day.dow))}
+          dayCellClass={(day) => weekend(day.dow)}
+          dayCellTopContent={(day) =>
+            String(day.date.getDate()).padStart(2, '0')
+          }
           height="100%"
           locale={i18n.language === 'fr' ? french : 'en'}
           events={entries.map((entry) => ({

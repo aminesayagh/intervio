@@ -266,7 +266,9 @@ export function CalendarView<T, C>({
                 className="h-auto min-w-0 flex-1 justify-start gap-2 overflow-hidden px-0 font-normal data-[hovered]:bg-transparent"
                 onPress={() => onOpen?.(definition.getId(record))}
               >
-                <span className="truncate font-medium">{name(record)}</span>
+                <span className="max-w-full shrink-0 truncate font-medium">
+                  {name(record)}
+                </span>
                 {shown.map((column) => (
                   <span
                     key={column.id}

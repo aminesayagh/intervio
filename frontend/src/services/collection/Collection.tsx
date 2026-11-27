@@ -4,14 +4,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { dismissScope } from '../notifications'
-import {
-  currentAddress,
-  currentSearch,
-  entryState,
-  navigate,
-  usePath,
-  useQueryStates,
-} from '../navigation'
+import { entryState, navigate, usePath } from '../navigation'
 import {
   Button,
   cn,
@@ -51,8 +44,8 @@ import { useListKeyboard } from './listing/useListKeyboard'
 import { usePanelWidth } from './layout/usePanelWidth'
 import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
-import { OpenLinked, type Step } from './record/linked'
-import { panelAddress, panelParsers, readPanel } from './address'
+import { OpenLinked } from './record/linked'
+import { current, usePanel } from './record/usePanel'
 import { LinkedPanel } from './record/LinkedPanel'
 import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
@@ -62,14 +55,6 @@ import { filterFields, ruleKeys } from './listing/rules'
 import { isNarrowed, useCollectionState } from './listing/useCollectionState'
 
 addTranslations('collection', { en, fr })
-
-/**
- * The panel's parameters as the address has them now. The panel's callbacks read them
- * when they run, not from the last render: one click can call them several times
- * before a render (a row's press, then its action), and they stay the same from one
- * record to the next, so rows don't render again.
- */
-const current = () => readPanel(currentSearch())
 
 /**
  * A collection screen (spec 4–5): the list of one kind of record, as a table (other
@@ -143,94 +128,22 @@ export function Collection<T, C = void>({
   // Every change to a record goes through the shared record actions (spec 8.3).
   const actions = useRecordActions(definition, context as C, basePath)
   const { canEdit, save, report } = actions
-  // The panel's address (spec 6.3, 7.1, decision 137): the record open (?open=), a new
-  // one (?new=1), the linked records opened after it (?linked=key:id,…).
-  const [panel] = useQueryStates(panelParsers)
-  const openId = panel.open
-  const chain = panel.linked
-  const isNew = panel.new === '1'
+  // The panel's address and its moves (spec 6.3, 7.1, decision 137).
+  const {
+    openId,
+    chain,
+    isNew,
+    panelMark,
+    mark,
+    open,
+    openLinked,
+    leave,
+    stepTo,
+    stepBack,
+    doClose,
+  } = usePanel(key)
   // Each record on the way, with its collection and context (notice 3).
   const linkedChain = useChain(definition, context, openId ?? null, chain)
-  const panelMark = `panel:${key}`
-  /**
-   * Changes the panel's parameters at once (nuqs's own updates wait a moment), with an
-   * entry that carries this screen's marks, which nuqs can't set: pushed, or replacing
-   * the current one. The entry keeps its place in a drill-down (spec 12.1).
-   */
-  const mark = useCallback(
-    (
-      values: Parameters<typeof panelAddress>[1],
-      state: Record<string, unknown>,
-      replace = false,
-    ) => {
-      const drill = entryState().drill
-      navigate(panelAddress(currentAddress(), values), {
-        replace,
-        state: { ...(drill === undefined ? {} : { drill }), ...state },
-      })
-    },
-    [],
-  )
-  const open = useCallback(
-    (id: Id) => {
-      const wasOpen = current().open
-      if (wasOpen === id) return
-      // Another record from the list: no linked ones after it. Opening pushes an
-      // entry (Back closes); switching records replaces it.
-      if (wasOpen)
-        mark(
-          { open: id, linked: null },
-          { ...entryState(), linkedStep: false },
-          true,
-        )
-      else mark({ open: id, linked: null }, { panel: panelMark })
-    },
-    [mark, panelMark],
-  )
-
-  /** Shows the chain cut to this many steps (0: the record opened from the list). */
-  const showChain = useCallback(
-    (next: Step[]) => mark({ linked: next }, entryState(), true),
-    [mark],
-  )
-  /** A section's record opens in the panel; Back returns to the one before. */
-  const openLinked = useCallback(
-    (collectionKey: string, id: Id, section: string) =>
-      mark(
-        { linked: [...current().linked, { key: collectionKey, id, section }] },
-        { ...entryState(), linkedStep: true },
-      ),
-    [mark],
-  )
-  /** "‹ {collection}" on a narrow screen: the list, whatever the depth. */
-  const leave = useCallback(
-    () => mark({ open: null, linked: null }, entryState(), true),
-    [mark],
-  )
-  /**
-   * Back to the chain cut to this depth (a tab, or × one step): through the browser's
-   * history when the steps were pushed, so Back never meets a stale entry after it.
-   */
-  // ponytail: assumes each step after the first linked one was pushed (openLinked
-  // does); a chain from a link (the address alone) has no entries, so it is replaced.
-  const stepTo = useCallback(
-    (depth: number) => {
-      const steps = current().linked.length - depth
-      if (steps <= 0) return
-      if (entryState().linkedStep === true) window.history.go(-steps)
-      else showChain(current().linked.slice(0, depth))
-    },
-    [showChain],
-  )
-  /** × on a linked record: one step back, as Back does. */
-  const stepBack = useCallback(
-    () => stepTo(current().linked.length - 1),
-    [stepTo],
-  )
-  const doClose = useCallback(() => {
-    if (entryState().panel === panelMark) window.history.back()
-    else mark({ open: null }, entryState(), true)
-  }, [panelMark, mark])
 
   // Messages (decision 132): each belongs to a record or to the collection, and
   // leaves with it; one about a value is replaced by the next one about that value.

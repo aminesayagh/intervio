@@ -213,6 +213,10 @@
     "add": "Nouvel enregistrement dans {{column}}"
   },
   "calendar": {
-    "changeDate": "Changer la date de {{name}}"
+    "changeDate": "Changer la date de {{name}}",
+    "undated_one": "{{count}} sans date",
+    "undated_other": "{{count}} sans date",
+    "undatedList": "Fiches sans date",
+    "more": "Afficher plus"
   }
 }

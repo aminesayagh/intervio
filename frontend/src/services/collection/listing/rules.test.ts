@@ -181,3 +181,8 @@ test('a composed filter is read back from the address, leaving out what is wrong
     ],
   })
 })
+
+test('"empty" passes a record without a value (MAS-55)', () => {
+  expect(passes({ 'due.empty': ['true'] }, () => null)).toBe(true)
+  expect(passes({ 'due.empty': ['true'] }, () => '2026-12-01')).toBe(false)
+})

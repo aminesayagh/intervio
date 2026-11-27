@@ -43,6 +43,7 @@ export function Calendar({
   onMove,
   onDayPress,
   renderEntry,
+  toolbar,
 }: {
   label: string
   entries: CalendarEntry[]
@@ -59,6 +60,8 @@ export function Calendar({
    * FullCalendar's own element stays a plain box, so they are never nested.
    */
   renderEntry: (id: string) => ReactNode
+  /** More in the toolbar, after the month's name (records without a date). */
+  toolbar?: ReactNode
 }) {
   const { t, i18n } = useTranslation('ui-kit')
   const controller = useCalendarController()
@@ -72,6 +75,7 @@ export function Calendar({
         <h2 aria-live="polite" className="text-sm font-medium">
           {controller.view?.title}
         </h2>
+        {toolbar}
         <div className="ms-auto flex items-center gap-1">
           <Button
             size="sm"

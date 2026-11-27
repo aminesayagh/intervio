@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../../i18n'
 import { Collection } from '../../Collection'
 import { itemSource, makeItems } from '../../testing/items'
-import { stubElementSizes } from '../../testing/layout'
+import { setScreenWidth, stubElementSizes } from '../../testing/layout'
 import { renderAt } from '../../testing/render'
 import { itemDefinition } from '../../testing/testDefinition'
 
@@ -91,4 +91,21 @@ test('the toolbar counts the records without a date, and lists them (MAS-55)', a
   expect(list).toHaveTextContent('Item 006')
   expect(list).toHaveTextContent('Item 060')
   expect(list).not.toHaveTextContent('Item 001')
+})
+
+test('on a phone the calendar button stays, as the way to move a record (MAS-56)', async () => {
+  setScreenWidth(390)
+  try {
+    renderAt(
+      '/items',
+      <Collection
+        definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+      />,
+    )
+    expect(
+      await screen.findByLabelText('Change the date of Item 003'),
+    ).toBeInTheDocument()
+  } finally {
+    setScreenWidth(1128)
+  }
 })

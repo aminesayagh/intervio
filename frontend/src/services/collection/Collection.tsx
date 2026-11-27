@@ -5,15 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { dismissScope } from '../notifications'
 import { navigate, usePath } from '../navigation'
-import {
-  Button,
-  cn,
-  foldSidebar,
-  offerBack,
-  Match,
-  Show,
-  Switch,
-} from '../ui-kit'
+import { Button, cn, Match, Show, Switch } from '../ui-kit'
 import { cache, useCollectionQuery } from './data/collectionQuery'
 import { useRecordActions } from './data/recordActions'
 import { useRecordChanges } from './data/recordChanges'
@@ -41,8 +33,8 @@ import { useSelection } from './selection/useSelection'
 import { useHeldOrder } from './listing/useHeldOrder'
 import { useListKeyboard } from './listing/useListKeyboard'
 import { usePanelWidth } from './layout/usePanelWidth'
-import { Folds, type Fold } from './drill/Folded'
-import { currentViews } from './drill/viewStack'
+import { Folds } from './drill/Folded'
+import { useDrillStrips } from './drill/useDrillStrips'
 import { OpenLinked } from './record/linked'
 import { current, usePanel } from './record/usePanel'
 import { useNewRecord } from './create/useNewRecord'
@@ -302,32 +294,8 @@ export function Collection<T, C = void>({
     setDragged,
     commit: commitWidth,
   } = usePanelWidth(key, panelShown, pageId)
-  // The views this list was drilled from (spec 12.1): a strip each, after the sidebar.
-  // Returning to one takes it and the views after it off the stack.
-  const views: Fold[] = currentViews().map((view, index) => ({
-    name: view.name,
-    open: () => navigate(view.address, { state: { drill: index } }),
-  }))
-  const strips = mode === 'narrow' ? [] : views
-  const hasStrips = strips.length > 0
-  // Narrow: no strips; the top bar's ‹ goes up one level, as the last strip would.
-  const up = mode === 'narrow' ? views.at(-1) : undefined
-  const upName = up?.name
-  const upOpen = up?.open
-  useEffect(() => {
-    if (!upName || !upOpen) return
-    return offerBack({
-      label: t('collection:folds.back', { name: upName }),
-      run: upOpen,
-    })
-    // A new function each render: the address and the name say which view it opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upName, t])
-  // Medium width: the sidebar folds while a panel or a strip shows (spec 9, 12.1).
-  useEffect(() => {
-    foldSidebar(mode === 'medium' && (panelShown || hasStrips))
-    return () => foldSidebar(false)
-  }, [mode, panelShown, hasStrips])
+  // The strips of the views drilled from, and the sidebar fold (spec 9, 12.1).
+  const { strips, hasStrips } = useDrillStrips(mode, panelShown)
   const narrowPanel = mode === 'narrow' && panelShown
   // The panel over the list, which folds into a strip (decision 157); each opening
   // starts beside it.

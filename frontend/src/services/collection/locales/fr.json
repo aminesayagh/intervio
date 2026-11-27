@@ -211,5 +211,12 @@
     "empty": "Aucun enregistrement",
     "move": "Déplacer {{name}}",
     "add": "Nouvel enregistrement dans {{column}}"
+  },
+  "calendar": {
+    "changeDate": "Changer la date de {{name}}",
+    "undatedList": "Backlog",
+    "more": "Afficher plus",
+    "closeUndated": "Fermer le backlog",
+    "backlog": "Backlog"
   }
 }

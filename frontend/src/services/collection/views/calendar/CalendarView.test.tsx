@@ -1,10 +1,10 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../../i18n'
 import { Collection } from '../../Collection'
 import { itemSource, makeItems } from '../../testing/items'
-import { stubElementSizes } from '../../testing/layout'
+import { setScreenWidth, stubElementSizes } from '../../testing/layout'
 import { renderAt } from '../../testing/render'
 import { itemDefinition } from '../../testing/testDefinition'
 
@@ -17,8 +17,8 @@ afterAll(() => vi.useRealTimers())
 afterEach(cleanup)
 
 // Items are due a day apart from 1 December 2026; every sixth has no date.
-const definition = () => ({
-  ...itemDefinition(itemSource(makeItems(60))),
+const definition = (rights?: Parameters<typeof itemDefinition>[2]) => ({
+  ...itemDefinition(itemSource(makeItems(60)), 'test-items', rights),
   views: [
     {
       id: 'calendar',
@@ -41,10 +41,94 @@ test('the month shows the records due in it, and moves on (MAS-52)', async () =>
   expect(await screen.findByText('Item 050')).toBeInTheDocument()
 })
 
-test('a record opens in the panel', async () => {
+test('a record opens in the panel, from the keyboard too', async () => {
   renderAt('/items', <Collection definition={definition()} />)
-  await userEvent.click(await screen.findByText('Item 003'))
+  // A pointer starts FullCalendar's drag handling, which needs a real layout.
+  ;(await screen.findByText('Item 003')).closest('button')!.focus()
+  await userEvent.keyboard('{Enter}')
   expect(
     await screen.findByRole('complementary', { name: 'Item 003' }),
   ).toBeInTheDocument()
+})
+
+test('a record changes its date from its calendar button (MAS-53)', async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+    />,
+  )
+  // From the keyboard: FullCalendar's drag handling needs a real layout, which
+  // jsdom doesn't have (it also keeps the records hidden while it measures them).
+  ;(await screen.findByLabelText('Change the date of Item 003')).focus()
+  await userEvent.keyboard('{Enter}')
+  const dialog = await screen.findByRole('dialog', {
+    name: 'Change the date of Item 003',
+  })
+  expect(dialog).toHaveTextContent('Due')
+  expect(dialog).toHaveTextContent('12/3/2026')
+})
+
+test("a record the person can't edit has no calendar button", async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['name'], actions: [], add: [] }))}
+    />,
+  )
+  expect(await screen.findByText('Item 003')).toBeInTheDocument()
+  expect(screen.queryByLabelText('Change the date of Item 003')).toBeNull()
+})
+
+test('Backlog opens the records without a date (MAS-55, MAS-60)', async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+    />,
+  )
+  // Every sixth of the 60 items has no due date.
+  await userEvent.click(await screen.findByRole('button', { name: 'Backlog' }))
+  const list = await screen.findByRole('list', {
+    name: 'Backlog',
+  })
+  expect(list).toHaveTextContent('Item 006')
+  expect(list).toHaveTextContent('Item 060')
+  expect(list).not.toHaveTextContent('Item 001')
+  // Each one draggable onto a day, or dated with its calendar button.
+  expect(within(list).getAllByRole('listitem')[0]).toHaveAttribute(
+    'data-calendar-id',
+  )
+  expect(
+    within(list).getByRole('button', { name: 'Change the date of Item 006' }),
+  ).toBeInTheDocument()
+  // Its own search narrows the list; the Backlog button stays.
+  await userEvent.type(
+    within(list.parentElement!.parentElement!).getByRole('searchbox'),
+    'Item 012',
+  )
+  await waitFor(() => expect(list).not.toHaveTextContent('Item 006'))
+  expect(list).toHaveTextContent('Item 012')
+  expect(screen.getByRole('button', { name: 'Backlog' })).toBeInTheDocument()
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Close the backlog' }),
+  )
+  expect(screen.queryByRole('list', { name: 'Backlog' })).toBeNull()
+})
+
+test('on a phone the calendar button stays, as the way to move a record (MAS-56)', async () => {
+  setScreenWidth(390)
+  try {
+    renderAt(
+      '/items',
+      <Collection
+        definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+      />,
+    )
+    expect(
+      await screen.findByLabelText('Change the date of Item 003'),
+    ).toBeInTheDocument()
+  } finally {
+    setScreenWidth(1128)
+  }
 })

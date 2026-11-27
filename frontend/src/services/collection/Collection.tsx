@@ -542,6 +542,7 @@ export function Collection<T, C = void>({
                   date={calendar.date}
                   end={calendar.end}
                   card={calendar.card}
+                  narrow={narrowScreen}
                 />
               )}
             </Match>

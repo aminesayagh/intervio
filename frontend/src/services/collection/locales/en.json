@@ -217,6 +217,7 @@
     "undated_one": "{{count}} without a date",
     "undated_other": "{{count}} without a date",
     "undatedList": "Records without a date",
-    "more": "Show more"
+    "more": "Show more",
+    "closeUndated": "Close the records without a date"
   }
 }

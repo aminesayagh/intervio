@@ -42,6 +42,7 @@ export function Calendar({
   onRange,
   onMove,
   onDayPress,
+  onDrop,
   renderEntry,
   toolbar,
 }: {
@@ -55,6 +56,8 @@ export function Calendar({
   onMove?: (id: string, move: CalendarMove) => Promise<void>
   /** A click on a day, outside its entries ('2026-12-01'): a new one there (MAS-54). */
   onDayPress?: (day: string) => void
+  /** An item of a `CalendarDragSource` dropped on a day: its id and the day (MAS-60). */
+  onDrop?: (id: string, day: string) => void
   /**
    * What an entry shows, its buttons included (opening it, changing its date):
    * FullCalendar's own element stays a plain box, so they are never nested.
@@ -114,6 +117,11 @@ export function Calendar({
             cn(weekend(day.dow), onDayPress && 'cursor-pointer')
           }
           dateClick={(click) => onDayPress?.(click.dateStr.slice(0, 10))}
+          droppable={!!onDrop}
+          drop={(dropped) => {
+            const id = dropped.draggedEl.dataset.calendarId
+            if (id) onDrop?.(id, dropped.dateStr.slice(0, 10))
+          }}
           dayCellTopContent={(day) =>
             String(day.date.getDate()).padStart(2, '0')
           }

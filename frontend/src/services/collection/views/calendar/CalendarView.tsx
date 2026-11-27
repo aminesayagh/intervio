@@ -1,9 +1,11 @@
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
   Calendar,
+  CalendarDragSource,
+  cn,
   PopoverDialog,
   Show,
   type CalendarEntry,
@@ -33,7 +35,8 @@ const dayBefore = (day: string) => {
  * A click on an empty day starts a new record on that day (MAS-54).
  *
  * Records without a date don't show on the month: the toolbar counts them, and
- * opens them as a list where each can be opened or given a date (MAS-55).
+ * opens their own panel (MAS-55, MAS-60). Each is dragged onto a day, or given a
+ * date with its calendar button.
  */
 export function CalendarView<T, C>({
   definition,
@@ -66,6 +69,7 @@ export function CalendarView<T, C>({
   narrow?: boolean
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
+  const [backlog, setBacklog] = useState(false)
   const [range, setRange] = useState<{ start: string; end: string } | null>(
     null,
   )
@@ -131,69 +135,87 @@ export function CalendarView<T, C>({
         ]
       : []
   })
-  return (
+  /** A record dropped on a day takes it as its date (and its end date). */
+  const place = (record: T, day: string) =>
+    save(
+      record,
+      { ...starts!.patch(day), ...(ends && ends.patch(day)) },
+      { label: labelOf(date) },
+    ).catch(() => {
+      // the record stays in the list; the notification says why
+    })
+  /** The small calendar button: the record's dates with the date picker (MAS-53). */
+  const changeDate = (record: T) => (
+    <PopoverDialog
+      label={t('collection:calendar.changeDate', {
+        name: name(record),
+      })}
+      width={240}
+      trigger={
+        <Button
+          size="sm"
+          look="ghost"
+          className="size-5 min-w-0 px-0"
+          aria-label={t('collection:calendar.changeDate', {
+            name: name(record),
+          })}
+        >
+          <CalendarDays size={12} />
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-2 p-2 text-sm">
+        {[
+          [date, starts],
+          [end, ends],
+        ].map(([id, edit]) => (
+          <Show
+            key={String(id)}
+            when={id && edit ? (edit as DateField<T>) : null}
+          >
+            {(dates) => (
+              <label className="flex items-center justify-between gap-2">
+                <span className="text-muted">{labelOf(String(id))}</span>
+                <DateCell
+                  record={record}
+                  edit={dates}
+                  label={labelOf(String(id))}
+                  look="panel"
+                  save={(patch) =>
+                    save(record, patch, {
+                      label: labelOf(String(id)),
+                    })
+                  }
+                />
+              </label>
+            )}
+          </Show>
+        ))}
+      </div>
+    </PopoverDialog>
+  )
+  const calendar = (
     <Calendar
       label={label}
       entries={range ? entries : []}
       onRange={setRange}
       toolbar={
         <Show when={undatedCount > 0}>
-          <PopoverDialog
-            label={t('collection:calendar.undatedList')}
-            width={320}
-            trigger={
-              <Button size="sm" look="ghost" className="text-muted">
-                {t('collection:calendar.undated', { count: undatedCount })}
-              </Button>
-            }
+          <Button
+            size="sm"
+            look="ghost"
+            className="text-muted"
+            aria-pressed={backlog}
+            onPress={() => setBacklog(!backlog)}
           >
-            <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto p-2 text-sm">
-              {undated.items.map((record) => (
-                <li
-                  key={definition.getId(record)}
-                  className="flex items-center gap-2"
-                >
-                  <Button
-                    size="sm"
-                    look="ghost"
-                    className="min-w-0 flex-1 justify-start overflow-hidden px-1 font-normal"
-                    onPress={() => onOpen?.(definition.getId(record))}
-                  >
-                    <span className="truncate">{name(record)}</span>
-                  </Button>
-                  <Show when={starts && canEdit(record, date) && starts}>
-                    {(dates) => (
-                      <DateCell
-                        record={record}
-                        edit={dates}
-                        label={labelOf(date)}
-                        look="panel"
-                        save={(patch) =>
-                          save(record, patch, { label: labelOf(date) })
-                        }
-                      />
-                    )}
-                  </Show>
-                </li>
-              ))}
-              {/* The Show inside the item: a wrapper directly in <ul> is invalid. */}
-              <li>
-                <Show when={undated.hasNextPage}>
-                  <Button
-                    size="sm"
-                    look="ghost"
-                    className="w-full"
-                    isDisabled={undated.isFetchingNextPage}
-                    onPress={() => void undated.fetchNextPage()}
-                  >
-                    {t('collection:calendar.more')}
-                  </Button>
-                </Show>
-              </li>
-            </ul>
-          </PopoverDialog>
+            {t('collection:calendar.undated', { count: undatedCount })}
+          </Button>
         </Show>
       }
+      onDrop={(id, day) => {
+        const record = undated.items.find((r) => definition.getId(r) === id)
+        if (record && starts) void place(record, day)
+      }}
       onDayPress={
         onCreate &&
         starts &&
@@ -238,60 +260,98 @@ export function CalendarView<T, C>({
                 ))}
               </Button>
               <Show as="span" className="ms-auto flex" when={movable(record)}>
-                <PopoverDialog
-                  label={t('collection:calendar.changeDate', {
-                    name: name(record),
-                  })}
-                  width={240}
-                  trigger={
-                    <Button
-                      size="sm"
-                      look="ghost"
-                      className="size-5 min-w-0 px-0"
-                      aria-label={t('collection:calendar.changeDate', {
-                        name: name(record),
-                      })}
-                    >
-                      <CalendarDays size={12} />
-                    </Button>
-                  }
-                >
-                  <div className="flex flex-col gap-2 p-2 text-sm">
-                    {[
-                      [date, starts],
-                      [end, ends],
-                    ].map(([id, edit]) => (
-                      <Show
-                        key={String(id)}
-                        when={id && edit ? (edit as DateField<T>) : null}
-                      >
-                        {(dates) => (
-                          <label className="flex items-center justify-between gap-2">
-                            <span className="text-muted">
-                              {labelOf(String(id))}
-                            </span>
-                            <DateCell
-                              record={record}
-                              edit={dates}
-                              label={labelOf(String(id))}
-                              look="panel"
-                              save={(patch) =>
-                                save(record, patch, {
-                                  label: labelOf(String(id)),
-                                })
-                              }
-                            />
-                          </label>
-                        )}
-                      </Show>
-                    ))}
-                  </div>
-                </PopoverDialog>
+                {changeDate(record)}
               </Show>
             </>
           )}
         </Show>
       )}
     />
+  )
+  return (
+    <div className="flex min-h-0 flex-1 gap-3">
+      {calendar}
+      {/* The records without a date (MAS-60): their own panel, a fixed width; the
+          whole screen on a phone. Dragged onto a day, a record takes that date. */}
+      <Show
+        as="div"
+        when={backlog && undatedCount > 0}
+        className={
+          narrow
+            ? 'fixed inset-0 z-30 flex flex-col bg-background p-3'
+            : 'flex w-72 shrink-0 flex-col border-s border-border ps-3'
+        }
+      >
+        <div className="flex items-center gap-2 pb-2">
+          <h2 className="text-sm font-medium">
+            {t('collection:calendar.undatedList')}
+          </h2>
+          <span className="text-xs text-muted">{undatedCount}</span>
+          <Button
+            size="sm"
+            look="ghost"
+            className="ms-auto w-8 px-0"
+            aria-label={t('collection:calendar.closeUndated')}
+            onPress={() => setBacklog(false)}
+          >
+            <X size={16} />
+          </Button>
+        </div>
+        <CalendarDragSource className="min-h-0 flex-1 overflow-y-auto">
+          <ul
+            aria-label={t('collection:calendar.undatedList')}
+            className="flex flex-col gap-1 text-xs"
+          >
+            {undated.items.map((record) => {
+              const draggable = !narrow && movable(record)
+              return (
+                <li
+                  key={definition.getId(record)}
+                  data-calendar-id={
+                    draggable ? definition.getId(record) : undefined
+                  }
+                  data-calendar-title={draggable ? name(record) : undefined}
+                  className={cn(
+                    'flex items-center gap-2 rounded-[var(--radius)] bg-[var(--color-primary-subtle)] px-2 py-1',
+                    draggable && 'cursor-grab',
+                  )}
+                >
+                  <span className="truncate font-medium">{name(record)}</span>
+                  {shown.map((column) => (
+                    <span
+                      key={column.id}
+                      className="flex min-w-0 items-center text-muted"
+                    >
+                      {column.cell(record)}
+                    </span>
+                  ))}
+                  <Show
+                    as="span"
+                    className="ms-auto flex"
+                    when={movable(record)}
+                  >
+                    {changeDate(record)}
+                  </Show>
+                </li>
+              )
+            })}
+            {/* The Show inside the item: a wrapper directly in <ul> is invalid. */}
+            <li>
+              <Show when={undated.hasNextPage}>
+                <Button
+                  size="sm"
+                  look="ghost"
+                  className="w-full"
+                  isDisabled={undated.isFetchingNextPage}
+                  onPress={() => void undated.fetchNextPage()}
+                >
+                  {t('collection:calendar.more')}
+                </Button>
+              </Show>
+            </li>
+          </ul>
+        </CalendarDragSource>
+      </Show>
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../../i18n'
@@ -80,17 +80,36 @@ test("a record the person can't edit has no calendar button", async () => {
   expect(screen.queryByLabelText('Change the date of Item 003')).toBeNull()
 })
 
-test('the toolbar counts the records without a date, and lists them (MAS-55)', async () => {
-  renderAt('/items', <Collection definition={definition()} />)
+test('the toolbar counts the records without a date, and opens their panel (MAS-55, MAS-60)', async () => {
+  renderAt(
+    '/items',
+    <Collection
+      definition={definition(() => ({ edit: ['due'], actions: [], add: [] }))}
+    />,
+  )
   // Every sixth of the 60 items has no due date.
-  const count = await screen.findByRole('button', { name: '10 without a date' })
-  await userEvent.click(count)
-  const list = await screen.findByRole('dialog', {
+  await userEvent.click(
+    await screen.findByRole('button', { name: '10 without a date' }),
+  )
+  const list = await screen.findByRole('list', {
     name: 'Records without a date',
   })
   expect(list).toHaveTextContent('Item 006')
   expect(list).toHaveTextContent('Item 060')
   expect(list).not.toHaveTextContent('Item 001')
+  // Each one draggable onto a day, or dated with its calendar button.
+  expect(within(list).getAllByRole('listitem')[0]).toHaveAttribute(
+    'data-calendar-id',
+  )
+  expect(
+    within(list).getByRole('button', { name: 'Change the date of Item 006' }),
+  ).toBeInTheDocument()
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Close the records without a date' }),
+  )
+  expect(
+    screen.queryByRole('list', { name: 'Records without a date' }),
+  ).toBeNull()
 })
 
 test('on a phone the calendar button stays, as the way to move a record (MAS-56)', async () => {

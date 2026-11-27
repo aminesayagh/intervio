@@ -12,6 +12,7 @@ import {
 } from '../../../ui-kit'
 import { useCollectionQuery } from '../../data/collectionQuery'
 import type { DateField } from '../../definition'
+import { SearchField } from '../../listing/Toolbar'
 import { DateCell } from '../../values/DateCell'
 import type { ViewProps } from '../viewProps'
 
@@ -70,6 +71,8 @@ export function CalendarView<T, C>({
 }) {
   const { t } = useTranslation([definition.i18n.namespace, 'collection'])
   const [backlog, setBacklog] = useState(false)
+  // The panel's own search, over the records without a date only (MAS-60).
+  const [backlogSearch, setBacklogSearch] = useState('')
   const [range, setRange] = useState<{ start: string; end: string } | null>(
     null,
   )
@@ -110,6 +113,20 @@ export function CalendarView<T, C>({
     },
   })
   const undatedCount = undated.total ?? undated.items.length
+  // What the panel lists: the same records, narrowed by its search. With no search
+  // it is the query above (one cache entry).
+  const backlogList = useCollectionQuery({
+    key: definition.key,
+    source: definition.source,
+    context,
+    listing: {
+      ...query,
+      // ponytail: the panel's search replaces the list's while typed; the data
+      // source takes one search text.
+      search: backlogSearch || query.search,
+      filters: { ...query.filters, [`${date}.empty`]: ['true'] },
+    },
+  })
   // Every page of the days on screen: a calendar has no scrolling to load more.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = list
   useEffect(() => {
@@ -213,7 +230,7 @@ export function CalendarView<T, C>({
         </Show>
       }
       onDrop={(id, day) => {
-        const record = undated.items.find((r) => definition.getId(r) === id)
+        const record = backlogList.items.find((r) => definition.getId(r) === id)
         if (record && starts) void place(record, day)
       }}
       onDayPress={
@@ -297,12 +314,19 @@ export function CalendarView<T, C>({
             <X size={16} />
           </Button>
         </div>
+        <div className="pb-2">
+          <SearchField
+            value={backlogSearch}
+            onSearch={setBacklogSearch}
+            className="w-full"
+          />
+        </div>
         <CalendarDragSource className="min-h-0 flex-1 overflow-y-auto">
           <ul
             aria-label={t('collection:calendar.undatedList')}
             className="flex flex-col gap-1 text-xs"
           >
-            {undated.items.map((record) => {
+            {backlogList.items.map((record) => {
               const draggable = !narrow && movable(record)
               return (
                 <li
@@ -337,13 +361,22 @@ export function CalendarView<T, C>({
             })}
             {/* The Show inside the item: a wrapper directly in <ul> is invalid. */}
             <li>
-              <Show when={undated.hasNextPage}>
+              <Show
+                when={backlogList.isSuccess && backlogList.items.length === 0}
+              >
+                <p className="px-1 py-2 text-muted">
+                  {t('collection:board.empty')}
+                </p>
+              </Show>
+            </li>
+            <li>
+              <Show when={backlogList.hasNextPage}>
                 <Button
                   size="sm"
                   look="ghost"
                   className="w-full"
-                  isDisabled={undated.isFetchingNextPage}
-                  onPress={() => void undated.fetchNextPage()}
+                  isDisabled={backlogList.isFetchingNextPage}
+                  onPress={() => void backlogList.fetchNextPage()}
                 >
                   {t('collection:calendar.more')}
                 </Button>

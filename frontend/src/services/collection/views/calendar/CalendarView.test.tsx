@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
 import '../../../i18n'
@@ -103,6 +103,16 @@ test('the toolbar counts the records without a date, and opens their panel (MAS-
   )
   expect(
     within(list).getByRole('button', { name: 'Change the date of Item 006' }),
+  ).toBeInTheDocument()
+  // Its own search narrows the list; the toolbar's count stays the view's.
+  await userEvent.type(
+    within(list.parentElement!.parentElement!).getByRole('searchbox'),
+    'Item 012',
+  )
+  await waitFor(() => expect(list).not.toHaveTextContent('Item 006'))
+  expect(list).toHaveTextContent('Item 012')
+  expect(
+    screen.getByRole('button', { name: '10 without a date' }),
   ).toBeInTheDocument()
   await userEvent.click(
     screen.getByRole('button', { name: 'Close the records without a date' }),

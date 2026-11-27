@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { addTranslations } from '../i18n'
 import { dismissScope } from '../notifications'
-import { entryState, navigate, usePath } from '../navigation'
+import { navigate, usePath } from '../navigation'
 import {
   Button,
   cn,
@@ -14,10 +14,9 @@ import {
   Show,
   Switch,
 } from '../ui-kit'
-import { cache, keys, useCollectionQuery } from './data/collectionQuery'
+import { cache, useCollectionQuery } from './data/collectionQuery'
 import { useRecordActions } from './data/recordActions'
 import { useRecordChanges } from './data/recordChanges'
-import { confirm } from './confirm/confirm'
 import type { CollectionDefinition } from './definition'
 import { listPathOf, stateKeyOf } from './definition'
 import en from './locales/en.json'
@@ -32,7 +31,7 @@ import type { ViewProps } from './views/viewProps'
 import { CalendarView } from './views/calendar/CalendarView'
 import { Kanban } from './views/kanban/Kanban'
 import { ViewMenu } from './views/ViewMenu'
-import { columnsOf, valuesOf, viewsOf } from './views/views'
+import { columnsOf, viewsOf } from './views/views'
 import { RecordRows } from './views/rows/RecordRows'
 import { RecordTable } from './views/table/RecordTable'
 import { readBookmark, useScrollBookmark } from './views/scrollBookmark'
@@ -46,6 +45,7 @@ import { Folds, type Fold } from './drill/Folded'
 import { currentViews } from './drill/viewStack'
 import { OpenLinked } from './record/linked'
 import { current, usePanel } from './record/usePanel'
+import { useNewRecord } from './create/useNewRecord'
 import { LinkedPanel } from './record/LinkedPanel'
 import { useChain } from './record/linked'
 import { LinkedTabs } from './record/LinkedTabs'
@@ -173,65 +173,18 @@ export function Collection<T, C = void>({
     }
   }, [pageId, recordScope])
 
-  // A new record (spec 7.5): ?new=1 in the address; its input waits in the tab.
-  const hasDraft = useCallback(() => {
-    try {
-      return sessionStorage.getItem(newRecordKey(stateKey)) !== null
-    } catch {
-      return false
-    }
-  }, [stateKey])
-  // Values a new record starts with besides the list's (a kanban column's, MAS-36).
-  const [newIn, setNewIn] = useState<Partial<T>>({})
-  const startNew = useCallback(() => {
-    setNewIn({})
-    const wasOpen = Boolean(current().open || current().new)
-    mark(
-      { open: null, new: '1' },
-      wasOpen ? entryState() : { panel: panelMark },
-      wasOpen,
-    )
-  }, [mark, panelMark])
-
-  // Closing with a description not saved yet asks first (spec 7.6): its text waits in the tab.
-  const close = useCallback(async () => {
-    const unsaved = (() => {
-      try {
-        // The description and every rich text value keep unsaved text here.
-        const prefix = `intervio.collection.${key}.${openId}.`
-        return (
-          Object.keys(sessionStorage).find((name) => name.startsWith(prefix)) ??
-          null
-        )
-      } catch {
-        return null
-      }
-    })()
-    if (unsaved !== null) {
-      const leave = await confirm({
-        title: t('collection:description.unsavedTitle'),
-        text: t('collection:description.unsavedText'),
-        button: t('collection:description.leave'),
-        cancel: t('collection:description.keepEditing'),
-      })
-      if (leave) doClose()
-    } else if (isNew && hasDraft()) {
-      const discard = await confirm({
-        title: t('collection:create.discardTitle'),
-        text: t('collection:create.discardText'),
-        button: t('collection:create.discard'),
-        cancel: t('collection:description.keepEditing'),
-        danger: true,
-      })
-      if (!discard) return
-      try {
-        sessionStorage.removeItem(newRecordKey(stateKey))
-      } catch {
-        // storage blocked: nothing kept
-      }
-      doClose()
-    } else doClose()
-  }, [key, stateKey, openId, doClose, isNew, hasDraft, t])
+  // A new record (spec 7.5): starting it, its defaults, its first save, and the
+  // questions before closing with unsaved input.
+  const { startNew, createIn, newDefaults, createRecord, close } = useNewRecord(
+    {
+      definition,
+      context: context as C,
+      stateKey,
+      query: state.query,
+      actions,
+      panel: { isNew, openId, mark, panelMark, doClose },
+    },
+  )
 
   /** "3 items": the collection's own words for a number of its records. */
   const countOf = (count: number) => t(definition.i18n.count, { count })
@@ -304,39 +257,6 @@ export function Collection<T, C = void>({
       if (shown.linked.length) leave()
       else doClose()
   })
-  // A new record takes the values the list is filtered on (the view's locked ones
-  // too), so it stays in the list it was created in (spec 7.5, 12.1, MOH-34). Only
-  // worked out while a new record is open.
-  const newDefaults = useMemo(
-    () =>
-      isNew
-        ? ({
-            ...definition.create?.defaults(context as C),
-            ...valuesOf(definition, state.query.filters),
-            ...newIn,
-          } as Omit<T, 'id'>)
-        : undefined,
-    [isNew, definition, state.query.filters, context, newIn],
-  )
-  const createRecord = useCallback(
-    async (draft: Partial<T>, latest: () => Partial<T>) => {
-      const created = await actions.create(
-        draft,
-        keys.list(key, context, state.query),
-      )
-      mark({ new: null, open: getId(created) }, entryState(), true)
-      // Values typed while it was being created: saved on it, not lost.
-      const typed = latest()
-      const later = Object.fromEntries(
-        Object.entries(typed).filter(
-          ([name, value]) => draft[name as keyof T] !== value,
-        ),
-      ) as Partial<T>
-      if (Object.keys(later).length > 0)
-        void actions.save(created, later).catch(() => {}) // a failure says so
-    },
-    [actions, key, context, getId, state.query, mark],
-  )
   const unavailable = useCallback(
     (id: Id, deleted: boolean) =>
       cache.removed(queryClient, key, id, getId, {
@@ -349,15 +269,6 @@ export function Collection<T, C = void>({
   const canCreate = Boolean(
     definition.create && definition.panel && source.create,
   )
-  /** "+" on a kanban column: a new record with its value (MAS-36). */
-  const createIn = useCallback(
-    (values: Partial<T>) => {
-      startNew()
-      setNewIn(values)
-    },
-    [startNew],
-  )
-
   const onKeyDown = useListKeyboard({
     panelOpen,
     openId,
